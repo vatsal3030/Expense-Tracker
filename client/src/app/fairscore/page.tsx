@@ -5,12 +5,10 @@ import {
   Box,
   Typography,
   Card,
-  CardContent,
   Grid,
   Button,
   Chip,
   Skeleton,
-  Stack,
   LinearProgress,
   Avatar,
   Table,
@@ -19,7 +17,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   EmojiEvents,
@@ -29,7 +28,6 @@ import {
   Flight,
   Star,
   MilitaryTech,
-  Celebration,
   CheckCircle,
   Lock,
   Share,
@@ -47,14 +45,16 @@ const BADGE_ICONS: Record<string, React.ReactNode> = {
 };
 
 const TIER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Diamond: { bg: 'rgba(52,211,153,0.12)', text: '#34d399', border: '#10b981' },
-  Platinum: { bg: 'rgba(16,185,129,0.12)', text: '#10b981', border: '#059669' },
-  Gold: { bg: 'rgba(245,158,11,0.12)', text: '#f59e0b', border: '#d97706' },
-  Silver: { bg: 'rgba(96,165,250,0.12)', text: '#60a5fa', border: '#3b82f6' },
-  Bronze: { bg: 'rgba(148,163,184,0.12)', text: '#94a3b8', border: '#64748b' },
+  Diamond: { bg: 'rgba(14, 98, 69, 0.12)', text: '#0E6245', border: '#0E6245' },
+  Platinum: { bg: 'rgba(16, 185, 129, 0.12)', text: '#10B981', border: '#059669' },
+  Gold: { bg: 'rgba(245, 158, 11, 0.12)', text: '#D97706', border: '#D97706' },
+  Silver: { bg: 'rgba(59, 130, 246, 0.12)', text: '#3B82F6', border: '#3B82F6' },
+  Bronze: { bg: 'rgba(100, 116, 139, 0.12)', text: '#64748B', border: '#64748B' },
 };
 
 export default function FairScorePage() {
+  const theme = useTheme();
+  const isLight = theme.palette.mode === 'light';
   const { session } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -107,18 +107,18 @@ export default function FairScorePage() {
               sx={{
                 p: 1,
                 borderRadius: 2.5,
-                bgcolor: 'rgba(16,185,129,0.12)',
-                color: '#10b981',
+                bgcolor: alpha('#0E6245', 0.1),
+                color: '#0E6245',
                 display: 'flex',
               }}
             >
               <EmojiEvents />
             </Box>
-            <Typography variant="h4" fontWeight={800} sx={{ color: '#f8fafc', letterSpacing: '-0.02em' }}>
+            <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em' }}>
               FairScore & Financial Karma
             </Typography>
           </Box>
-          <Typography variant="body2" sx={{ color: '#94a3b8', mt: 0.5, ml: 5.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, ml: 5.5 }}>
             Earn reliability reputation, build streak momentum, and unlock FinTech achievements with your group
           </Typography>
         </Box>
@@ -129,28 +129,15 @@ export default function FairScorePage() {
           <Grid size={{ xs: 12, md: 7 }}>
             <Card
               sx={{
-                bgcolor: '#0f172a',
-                border: '1px solid #1e293b',
-                borderRadius: 4,
+                bgcolor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 3.5,
+                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
                 p: 4,
                 position: 'relative',
                 overflow: 'hidden',
               }}
             >
-              {/* Subtle background glow */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: -50,
-                  right: -50,
-                  width: 200,
-                  height: 200,
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)',
-                  pointerEvents: 'none',
-                }}
-              />
-
               <Grid container spacing={3} sx={{ alignItems: 'center' }}>
                 <Grid size={{ xs: 12, sm: 5 }} sx={{ textAlign: 'center' }}>
                   {/* Circular SVG Gauge */}
@@ -160,7 +147,7 @@ export default function FairScorePage() {
                         cx="80"
                         cy="80"
                         r="70"
-                        stroke="#1e293b"
+                        stroke={isLight ? '#E9ECEF' : '#222429'}
                         strokeWidth="12"
                         fill="transparent"
                       />
@@ -168,7 +155,7 @@ export default function FairScorePage() {
                         cx="80"
                         cy="80"
                         r="70"
-                        stroke="#10b981"
+                        stroke="#0E6245"
                         strokeWidth="12"
                         strokeDasharray={440}
                         strokeDashoffset={loading ? 440 : strokeDashoffset}
@@ -191,10 +178,10 @@ export default function FairScorePage() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Typography variant="h3" fontWeight={800} sx={{ color: '#f8fafc', lineHeight: 1 }}>
+                      <Typography variant="h3" fontWeight={800} sx={{ color: 'text.primary', lineHeight: 1 }}>
                         {loading ? <Skeleton width={60} /> : score}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mt: 0.5 }}>
                         out of 1000
                       </Typography>
                     </Box>
@@ -214,16 +201,16 @@ export default function FairScorePage() {
                         fontSize: '0.75rem',
                       }}
                     />
-                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                       Top 8% in Peer Network
                     </Typography>
                   </Box>
 
-                  <Typography variant="h6" fontWeight={700} sx={{ color: '#f8fafc', mb: 1 }}>
+                  <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', mb: 1 }}>
                     Ultra-Reliable Splitter
                   </Typography>
 
-                  <Typography variant="body2" sx={{ color: '#94a3b8', lineHeight: 1.6, mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, mb: 2, fontSize: '0.825rem' }}>
                     Your high score means friends trust you to front bills and settle balances fast. Settle all pending debts to unlock Diamond status!
                   </Typography>
 
@@ -232,14 +219,16 @@ export default function FairScorePage() {
                       variant="outlined"
                       size="small"
                       startIcon={<Share fontSize="small" />}
-                      onClick={() => navigator.clipboard.writeText(`My FairScore on FairShare is ${score} (${tier} Tier)!`)}
+                      onClick={() => navigator.clipboard.writeText(`My FairScore on Owino is ${score} (${tier} Tier)!`)}
                       sx={{
-                        borderColor: '#334155',
-                        color: '#f8fafc',
+                        borderColor: theme.palette.divider,
+                        color: 'text.primary',
+                        bgcolor: 'background.paper',
                         borderRadius: 2.5,
                         fontWeight: 600,
                         fontSize: '0.75rem',
-                        '&:hover': { borderColor: '#10b981' },
+                        textTransform: 'none',
+                        '&:hover': { borderColor: '#0E6245', bgcolor: alpha('#0E6245', 0.04) },
                       }}
                     >
                       Share Score
@@ -254,9 +243,10 @@ export default function FairScorePage() {
           <Grid size={{ xs: 12, md: 5 }}>
             <Card
               sx={{
-                bgcolor: '#0f172a',
-                border: '1px solid #1e293b',
-                borderRadius: 4,
+                bgcolor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 3.5,
+                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
                 p: 3.5,
                 height: '100%',
                 display: 'flex',
@@ -267,35 +257,35 @@ export default function FairScorePage() {
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LocalFireDepartment sx={{ color: '#f59e0b', fontSize: 28 }} />
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f8fafc' }}>
+                    <LocalFireDepartment sx={{ color: '#F59E0B', fontSize: 28 }} />
+                    <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary' }}>
                       Clarity Streak
                     </Typography>
                   </Box>
                   <Chip
                     label="Active"
                     size="small"
-                    sx={{ bgcolor: 'rgba(245,158,11,0.12)', color: '#f59e0b', fontWeight: 700 }}
+                    sx={{ bgcolor: alpha('#F59E0B', 0.12), color: '#D97706', fontWeight: 700 }}
                   />
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
-                  <Typography variant="h2" fontWeight={800} sx={{ color: '#f59e0b', lineHeight: 1 }}>
+                  <Typography variant="h2" fontWeight={800} sx={{ color: '#F59E0B', lineHeight: 1 }}>
                     14
                   </Typography>
-                  <Typography variant="subtitle1" fontWeight={600} sx={{ color: '#94a3b8' }}>
+                  <Typography variant="subtitle1" fontWeight={600} color="text.secondary">
                     consecutive days
                   </Typography>
                 </Box>
 
-                <Typography variant="body2" sx={{ color: '#94a3b8', lineHeight: 1.5, mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5, mb: 3, fontSize: '0.825rem' }}>
                   You have logged or verified every group expense for two straight weeks without delay.
                 </Typography>
               </Box>
 
               {/* 7-Day Dot Progress */}
               <Box>
-                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, display: 'block', mb: 1 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 1 }}>
                   THIS WEEK&apos;S STREAK LOG
                 </Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
@@ -306,8 +296,8 @@ export default function FairScorePage() {
                         flex: 1,
                         py: 1,
                         borderRadius: 2,
-                        bgcolor: idx < 6 ? '#059669' : '#1e293b',
-                        color: idx < 6 ? '#ffffff' : '#64748b',
+                        bgcolor: idx < 6 ? '#0E6245' : isLight ? '#E9ECEF' : 'rgba(255, 255, 255, 0.08)',
+                        color: idx < 6 ? '#FFFFFF' : 'text.secondary',
                         textAlign: 'center',
                         fontWeight: 700,
                         fontSize: '0.75rem',
@@ -323,7 +313,7 @@ export default function FairScorePage() {
         </Grid>
 
         {/* 4 Score Pillars */}
-        <Typography variant="h6" fontWeight={800} sx={{ color: '#f8fafc', mb: 2 }}>
+        <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', mb: 2 }}>
           FairScore Factors Breakdown
         </Typography>
 
@@ -334,34 +324,42 @@ export default function FairScorePage() {
               score: data?.scoreBreakdown?.settlementDiscipline || 260,
               max: 300,
               desc: 'How quickly you confirm payments when requested',
-              color: '#10b981',
+              color: '#0E6245',
             },
             {
               title: 'Expense Transparency',
               score: data?.scoreBreakdown?.transparency || 270,
               max: 300,
               desc: 'Receipt attachments, itemized split accuracy',
-              color: '#0ea5e9',
+              color: '#3B82F6',
             },
             {
               title: 'Group Collaboration',
               score: data?.scoreBreakdown?.collaboration || 170,
               max: 200,
               desc: 'Active shared ledgers and balanced contributions',
-              color: '#f59e0b',
+              color: '#F59E0B',
             },
             {
               title: 'Zero Overdue Balance',
               score: data?.scoreBreakdown?.consistency || 180,
               max: 200,
               desc: 'No unsettled balance older than 7 days',
-              color: '#34d399',
+              color: '#10B981',
             },
           ].map((pillar, idx) => (
             <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={idx}>
-              <Card sx={{ bgcolor: '#0f172a', border: '1px solid #1e293b', borderRadius: 3.5, p: 2.5 }}>
+              <Card
+                sx={{
+                  bgcolor: 'background.paper',
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: 3.5,
+                  boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                  p: 2.5,
+                }}
+              >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#f8fafc' }}>
+                  <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.primary' }}>
                     {pillar.title}
                   </Typography>
                   <Typography variant="caption" fontWeight={700} sx={{ color: pillar.color }}>
@@ -374,7 +372,7 @@ export default function FairScorePage() {
                   sx={{
                     height: 6,
                     borderRadius: 3,
-                    bgcolor: '#1e293b',
+                    bgcolor: isLight ? '#E9ECEF' : 'rgba(255, 255, 255, 0.08)',
                     my: 1.5,
                     '& .MuiLinearProgress-bar': {
                       bgcolor: pillar.color,
@@ -382,7 +380,7 @@ export default function FairScorePage() {
                     },
                   }}
                 />
-                <Typography variant="caption" sx={{ color: '#64748b', display: 'block', lineHeight: 1.4 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
                   {pillar.desc}
                 </Typography>
               </Card>
@@ -393,17 +391,17 @@ export default function FairScorePage() {
         {/* Achievement Badges Showcase */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
           <Box>
-            <Typography variant="h6" fontWeight={800} sx={{ color: '#f8fafc' }}>
+            <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
               Financial Badges & Achievements
             </Typography>
-            <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+            <Typography variant="caption" color="text.secondary">
               Milestones unlocked through healthy shared expense habits
             </Typography>
           </Box>
           <Chip
             label={`${(data?.badges || []).filter((b: any) => b.unlocked).length}/6 Unlocked`}
             size="small"
-            sx={{ bgcolor: 'rgba(16,185,129,0.12)', color: '#34d399', fontWeight: 700 }}
+            sx={{ bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', fontWeight: 700 }}
           />
         </Box>
 
@@ -412,25 +410,25 @@ export default function FairScorePage() {
             <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={badge.id}>
               <Card
                 sx={{
-                  bgcolor: '#0f172a',
-                  border: badge.unlocked ? '1px solid #334155' : '1px solid #1e293b',
+                  bgcolor: 'background.paper',
+                  border: badge.unlocked ? `1px solid ${theme.palette.divider}` : `1px dashed ${theme.palette.divider}`,
                   borderRadius: 3.5,
+                  boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
                   p: 3,
                   position: 'relative',
                   opacity: badge.unlocked ? 1 : 0.65,
                   transition: 'all 0.2s',
-                  '&:hover': { borderColor: badge.unlocked ? '#10b981' : '#1e293b' },
+                  '&:hover': { borderColor: badge.unlocked ? '#0E6245' : theme.palette.divider },
                 }}
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box
                     sx={{
-                      w: 44,
-                      h: 44,
-                      p: 1.25,
+                      width: 44,
+                      height: 44,
                       borderRadius: 2.5,
-                      bgcolor: badge.unlocked ? 'rgba(16,185,129,0.12)' : '#1e293b',
-                      color: badge.unlocked ? '#10b981' : '#64748b',
+                      bgcolor: badge.unlocked ? alpha('#0E6245', 0.1) : alpha(theme.palette.text.secondary, 0.08),
+                      color: badge.unlocked ? '#0E6245' : 'text.secondary',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -442,28 +440,28 @@ export default function FairScorePage() {
                   <Chip
                     label={badge.unlocked ? `${badge.points} PTS` : 'LOCKED'}
                     size="small"
-                    icon={badge.unlocked ? <CheckCircle sx={{ '&&': { fontSize: 13, color: '#34d399' } }} /> : <Lock sx={{ '&&': { fontSize: 13, color: '#64748b' } }} />}
+                    icon={badge.unlocked ? <CheckCircle sx={{ '&&': { fontSize: 13, color: '#0E6245' } }} /> : <Lock sx={{ '&&': { fontSize: 13, color: 'text.secondary' } }} />}
                     sx={{
-                      bgcolor: badge.unlocked ? 'rgba(16,185,129,0.1)' : '#1e293b',
-                      color: badge.unlocked ? '#34d399' : '#64748b',
+                      bgcolor: badge.unlocked ? alpha('#0E6245', 0.1) : alpha(theme.palette.text.secondary, 0.08),
+                      color: badge.unlocked ? '#0E6245' : 'text.secondary',
                       fontWeight: 700,
                       fontSize: '0.65rem',
                     }}
                   />
                 </Box>
 
-                <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#f8fafc', mb: 0.5 }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.primary', mb: 0.5 }}>
                   {badge.name}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', mb: 2, minHeight: 32 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, minHeight: 32 }}>
                   {badge.description}
                 </Typography>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                  <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  <Typography variant="caption" color="text.secondary">
                     Progress
                   </Typography>
-                  <Typography variant="caption" fontWeight={600} sx={{ color: badge.unlocked ? '#10b981' : '#94a3b8' }}>
+                  <Typography variant="caption" fontWeight={600} sx={{ color: badge.unlocked ? '#0E6245' : 'text.secondary' }}>
                     {badge.current}/{badge.max}
                   </Typography>
                 </Box>
@@ -473,9 +471,9 @@ export default function FairScorePage() {
                   sx={{
                     height: 5,
                     borderRadius: 3,
-                    bgcolor: '#1e293b',
+                    bgcolor: isLight ? '#E9ECEF' : 'rgba(255, 255, 255, 0.08)',
                     '& .MuiLinearProgress-bar': {
-                      bgcolor: badge.unlocked ? '#10b981' : '#475569',
+                      bgcolor: badge.unlocked ? '#0E6245' : '#64748B',
                       borderRadius: 3,
                     },
                   }}
@@ -486,21 +484,29 @@ export default function FairScorePage() {
         </Grid>
 
         {/* Friend Reliability Leaderboard */}
-        <Typography variant="h6" fontWeight={800} sx={{ color: '#f8fafc', mb: 2 }}>
+        <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', mb: 2 }}>
           Friend Group Leaderboard
         </Typography>
 
-        <Card sx={{ bgcolor: '#0f172a', border: '1px solid #1e293b', borderRadius: 4, overflow: 'hidden' }}>
+        <Card
+          sx={{
+            bgcolor: 'background.paper',
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 3.5,
+            boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+            overflow: 'hidden',
+          }}
+        >
           <TableContainer>
             <Table>
-              <TableHead sx={{ bgcolor: '#090d16' }}>
+              <TableHead sx={{ bgcolor: isLight ? '#F9FAFB' : 'rgba(255, 255, 255, 0.03)' }}>
                 <TableRow>
-                  <TableCell sx={{ color: '#64748b', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>RANK</TableCell>
-                  <TableCell sx={{ color: '#64748b', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>MEMBER</TableCell>
-                  <TableCell sx={{ color: '#64748b', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>FAIRSCORE</TableCell>
-                  <TableCell sx={{ color: '#64748b', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>TIER</TableCell>
-                  <TableCell sx={{ color: '#64748b', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>STREAK</TableCell>
-                  <TableCell align="right" sx={{ color: '#64748b', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>ACTION</TableCell>
+                  <TableCell sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>RANK</TableCell>
+                  <TableCell sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>MEMBER</TableCell>
+                  <TableCell sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>FAIRSCORE</TableCell>
+                  <TableCell sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>TIER</TableCell>
+                  <TableCell sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>STREAK</TableCell>
+                  <TableCell align="right" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>ACTION</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -508,27 +514,27 @@ export default function FairScorePage() {
                   <TableRow
                     key={row.rank}
                     sx={{
-                      bgcolor: row.isCurrentUser ? 'rgba(16,185,129,0.04)' : 'transparent',
-                      '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' },
+                      bgcolor: row.isCurrentUser ? alpha('#0E6245', 0.04) : 'transparent',
+                      '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.02) },
                     }}
                   >
-                    <TableCell sx={{ color: row.rank === 1 ? '#f59e0b' : '#94a3b8', fontWeight: 700 }}>
+                    <TableCell sx={{ color: row.rank === 1 ? '#F59E0B' : 'text.secondary', fontWeight: 700 }}>
                       {row.rank === 1 ? '🥇 #1' : row.rank === 2 ? '🥈 #2' : row.rank === 3 ? '🥉 #3' : `#${row.rank}`}
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Avatar
                           src={row.avatarUrl || undefined}
-                          sx={{ width: 32, height: 32, bgcolor: '#1e293b', fontSize: '0.85rem' }}
+                          sx={{ width: 32, height: 32, bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', fontSize: '0.85rem' }}
                         >
                           {row.name.charAt(0)}
                         </Avatar>
-                        <Typography variant="body2" fontWeight={600} sx={{ color: row.isCurrentUser ? '#34d399' : '#f8fafc' }}>
+                        <Typography variant="body2" fontWeight={600} sx={{ color: row.isCurrentUser ? '#0E6245' : 'text.primary' }}>
                           {row.name} {row.isCurrentUser && '(You)'}
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: '#f8fafc', fontWeight: 700 }}>
+                    <TableCell sx={{ color: 'text.primary', fontWeight: 700 }}>
                       {row.score}
                     </TableCell>
                     <TableCell>
@@ -543,7 +549,7 @@ export default function FairScorePage() {
                         }}
                       />
                     </TableCell>
-                    <TableCell sx={{ color: '#f59e0b', fontWeight: 700 }}>
+                    <TableCell sx={{ color: '#F59E0B', fontWeight: 700 }}>
                       🔥 {row.streak}d
                     </TableCell>
                     <TableCell align="right">
@@ -554,13 +560,14 @@ export default function FairScorePage() {
                           onClick={() => handleCheer(row.name)}
                           sx={{
                             borderRadius: 2,
-                            borderColor: '#334155',
-                            color: cheered[row.name] ? '#34d399' : '#f8fafc',
+                            borderColor: theme.palette.divider,
+                            color: cheered[row.name] ? '#0E6245' : 'text.primary',
                             fontSize: '0.75rem',
                             fontWeight: 600,
                             py: 0.5,
                             px: 1.5,
-                            '&:hover': { borderColor: '#10b981', bgcolor: 'rgba(16,185,129,0.06)' },
+                            textTransform: 'none',
+                            '&:hover': { borderColor: '#0E6245', bgcolor: alpha('#0E6245', 0.04) },
                           }}
                         >
                           {cheered[row.name] ? 'Cheered! 🎉' : 'Cheer 👏'}

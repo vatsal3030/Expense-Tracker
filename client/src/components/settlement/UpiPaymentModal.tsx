@@ -12,6 +12,8 @@ import {
   IconButton,
   Chip,
   Tooltip,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Close,
@@ -42,6 +44,8 @@ export default function UpiPaymentModal({
   currency = 'INR',
   onConfirmSettlement,
 }: UpiPaymentModalProps) {
+  const theme = useTheme();
+  const isLight = theme.palette.mode === 'light';
   const [copied, setCopied] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -53,7 +57,7 @@ export default function UpiPaymentModal({
   // Encoded URL for instant SVG QR code via lightweight SVG service
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
     upiUri
-  )}&bgcolor=0f172a&color=10b981&margin=10`;
+  )}&bgcolor=${isLight ? 'ffffff' : '121316'}&color=${isLight ? '0e6245' : '10b981'}&margin=10`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(payeeUpiId);
@@ -80,10 +84,11 @@ export default function UpiPaymentModal({
         paper: {
           sx: {
             borderRadius: 4,
-            bgcolor: '#0f172a',
-            border: '1px solid #1e293b',
-            color: '#f8fafc',
+            bgcolor: 'background.paper',
+            border: `1px solid ${theme.palette.divider}`,
+            color: 'text.primary',
             backgroundImage: 'none',
+            boxShadow: isLight ? '0 8px 30px rgba(0,0,0,0.08)' : '0 8px 30px rgba(0,0,0,0.5)',
           },
         },
       }}
@@ -94,50 +99,55 @@ export default function UpiPaymentModal({
           justifyContent: 'space-between',
           alignItems: 'center',
           pb: 1,
-          borderBottom: '1px solid #1e293b',
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box
             sx={{
-              w: 32,
-              h: 32,
               p: 0.75,
               borderRadius: 2,
-              bgcolor: 'rgba(16,185,129,0.12)',
-              color: '#10b981',
+              bgcolor: alpha('#0E6245', 0.1),
+              color: '#0E6245',
               display: 'flex',
             }}
           >
-            <QrCode2 fontSize="small" />
+            <QrCode2 />
           </Box>
-          <Typography variant="subtitle1" fontWeight={700}>
-            Instant UPI Settle
-          </Typography>
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ lineHeight: 1.2 }}>
+              Instant UPI Settlement
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Zero transaction fees
+            </Typography>
+          </Box>
         </Box>
-        <IconButton onClick={onClose} size="small" sx={{ color: '#94a3b8' }}>
+        <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
           <Close fontSize="small" />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ textAlign: 'center', pt: 3, pb: 2 }}>
-        <Typography variant="caption" sx={{ color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          Paying {payeeName}
+      <DialogContent sx={{ textAlign: 'center', pt: 3 }}>
+        {/* Payee & Amount Highlight */}
+        <Typography variant="body2" color="text.secondary">
+          Paying <strong>{payeeName}</strong>
         </Typography>
-        <Typography variant="h3" sx={{ fontWeight: 800, color: '#f8fafc', my: 1 }}>
-          ₹{amount.toLocaleString('en-IN')}
+        <Typography variant="h3" fontWeight={800} sx={{ color: '#0E6245', my: 1, letterSpacing: '-0.02em' }}>
+          ₹{amount.toFixed(0)}
         </Typography>
 
-        {/* QR Code container */}
+        {/* QR Code Container */}
         <Box
           sx={{
             display: 'inline-block',
             p: 2,
-            bgcolor: '#090d16',
-            borderRadius: 3,
-            border: '1px solid #1e293b',
-            my: 2,
+            bgcolor: isLight ? '#FFFFFF' : '#121316',
+            borderRadius: 3.5,
+            border: `1px solid ${theme.palette.divider}`,
             position: 'relative',
+            my: 2,
+            boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -146,10 +156,10 @@ export default function UpiPaymentModal({
             alt="UPI QR Code"
             width={180}
             height={180}
-            style={{ borderRadius: 8, display: 'block' }}
+            style={{ borderRadius: 10, display: 'block' }}
           />
           <Chip
-            icon={<Shield sx={{ '&&': { color: '#10b981', fontSize: 14 } }} />}
+            icon={<Shield sx={{ '&&': { color: '#0E6245', fontSize: 14 } }} />}
             label="Verified UPI"
             size="small"
             sx={{
@@ -157,16 +167,16 @@ export default function UpiPaymentModal({
               bottom: -10,
               left: '50%',
               transform: 'translateX(-50%)',
-              bgcolor: '#0f172a',
-              border: '1px solid #1e293b',
-              color: '#34d399',
+              bgcolor: 'background.paper',
+              border: `1px solid ${theme.palette.divider}`,
+              color: '#0E6245',
               fontSize: '0.65rem',
               fontWeight: 700,
             }}
           />
         </Box>
 
-        <Typography variant="body2" sx={{ color: '#94a3b8', mt: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.8rem' }}>
           Scan using any UPI app (GPay, PhonePe, Paytm)
         </Typography>
 
@@ -176,8 +186,8 @@ export default function UpiPaymentModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            bgcolor: '#090d16',
-            border: '1px solid #1e293b',
+            bgcolor: isLight ? '#F4F5F7' : 'rgba(255, 255, 255, 0.04)',
+            border: `1px solid ${theme.palette.divider}`,
             borderRadius: 2.5,
             px: 2,
             py: 1,
@@ -185,14 +195,15 @@ export default function UpiPaymentModal({
           }}
         >
           <Box sx={{ textAlign: 'left', overflow: 'hidden' }}>
-            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.675rem' }}>
               UPI ID (VPA)
             </Typography>
             <Typography
               variant="body2"
               sx={{
-                color: '#f8fafc',
+                color: 'text.primary',
                 fontWeight: 600,
+                fontSize: '0.825rem',
                 textOverflow: 'ellipsis',
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
@@ -202,7 +213,7 @@ export default function UpiPaymentModal({
             </Typography>
           </Box>
           <Tooltip title={copied ? 'Copied!' : 'Copy UPI ID'}>
-            <IconButton onClick={handleCopy} size="small" sx={{ color: copied ? '#10b981' : '#94a3b8' }}>
+            <IconButton onClick={handleCopy} size="small" sx={{ color: copied ? '#0E6245' : 'text.secondary' }}>
               {copied ? <CheckCircle fontSize="small" /> : <ContentCopy fontSize="small" />}
             </IconButton>
           </Tooltip>
@@ -218,12 +229,13 @@ export default function UpiPaymentModal({
           sx={{
             mt: 2,
             borderRadius: 2.5,
-            borderColor: '#334155',
-            color: '#f8fafc',
+            borderColor: theme.palette.divider,
+            color: 'text.primary',
             fontWeight: 600,
+            textTransform: 'none',
             '&:hover': {
-              borderColor: '#10b981',
-              bgcolor: 'rgba(16,185,129,0.06)',
+              borderColor: '#0E6245',
+              bgcolor: alpha('#0E6245', 0.04),
             },
           }}
         >
@@ -231,7 +243,7 @@ export default function UpiPaymentModal({
         </Button>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2.5, borderTop: '1px solid #1e293b', flexDirection: 'column', gap: 1 }}>
+      <DialogActions sx={{ p: 2.5, borderTop: `1px solid ${theme.palette.divider}`, flexDirection: 'column', gap: 1 }}>
         <Button
           fullWidth
           variant="contained"
@@ -241,11 +253,12 @@ export default function UpiPaymentModal({
             py: 1.25,
             borderRadius: 2.5,
             fontWeight: 600,
-            bgcolor: '#059669',
-            color: '#ffffff',
-            boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
+            textTransform: 'none',
+            bgcolor: '#0E6245',
+            color: '#FFFFFF',
+            boxShadow: '0 2px 8px rgba(14, 98, 69, 0.25)',
             '&:hover': {
-              bgcolor: '#047857',
+              bgcolor: '#094A34',
             },
           }}
         >

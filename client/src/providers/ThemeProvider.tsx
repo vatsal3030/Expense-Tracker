@@ -15,13 +15,13 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>('dark');
+  const [mode, setMode] = useState<ThemeMode>('light');
 
   useEffect(() => {
     const saved = localStorage.getItem('fairshare-theme') as ThemeMode;
     if (saved && (saved === 'light' || saved === 'dark')) {
       setMode(saved);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    } else {
       setMode('light');
     }
   }, []);

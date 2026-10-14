@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Drawer,
   List,
@@ -13,6 +13,7 @@ import {
   Divider,
   Tooltip,
   IconButton,
+  Chip,
   useMediaQuery,
   useTheme,
   alpha,
@@ -31,35 +32,55 @@ import {
   Insights as AnalyticsIcon,
   EmojiEvents as FairScoreIcon,
 } from '@mui/icons-material';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/providers/AuthProvider';
 import BrandLogo from '@/components/brand/BrandLogo';
 
-const DRAWER_WIDTH = 280;
-const DRAWER_COLLAPSED_WIDTH = 80;
+const DRAWER_WIDTH = 260;
+const DRAWER_COLLAPSED_WIDTH = 76;
 
 interface NavItem {
   label: string;
   icon: React.ReactElement;
   path: string;
-  badge?: number;
+  badge?: string;
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { label: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
-  { label: 'FairScore', icon: <FairScoreIcon />, path: '/fairscore' },
-  { label: 'Expenses', icon: <ExpenseIcon />, path: '/expenses' },
-  { label: 'Groups', icon: <GroupIcon />, path: '/groups' },
-  { label: 'Settlements', icon: <SettlementIcon />, path: '/settlements' },
-  { label: 'Budgets', icon: <BudgetIcon />, path: '/budgets' },
-  { label: 'Activity', icon: <ActivityIcon />, path: '/activity' },
-  { label: 'Friends', icon: <FriendsIcon />, path: '/friends' },
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
+  {
+    title: 'MAIN MENU',
+    items: [
+      { label: 'Dashboard', icon: <DashboardIcon sx={{ fontSize: 20 }} />, path: '/dashboard' },
+      { label: 'Expenses', icon: <ExpenseIcon sx={{ fontSize: 20 }} />, path: '/expenses' },
+      { label: 'Groups', icon: <GroupIcon sx={{ fontSize: 20 }} />, path: '/groups' },
+      { label: 'Analytics', icon: <AnalyticsIcon sx={{ fontSize: 20 }} />, path: '/analytics' },
+      { label: 'FairScore', icon: <FairScoreIcon sx={{ fontSize: 20 }} />, path: '/fairscore', badge: 'PRO' },
+    ],
+  },
+  {
+    title: 'FINANCES',
+    items: [
+      { label: 'Settlements', icon: <SettlementIcon sx={{ fontSize: 20 }} />, path: '/settlements' },
+      { label: 'Budgets', icon: <BudgetIcon sx={{ fontSize: 20 }} />, path: '/budgets' },
+    ],
+  },
+  {
+    title: 'CONNECTIONS',
+    items: [
+      { label: 'Friends', icon: <FriendsIcon sx={{ fontSize: 20 }} />, path: '/friends' },
+      { label: 'Activity', icon: <ActivityIcon sx={{ fontSize: 20 }} />, path: '/activity' },
+    ],
+  },
 ];
 
 const bottomNavItems: NavItem[] = [
-  { label: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+  { label: 'Settings', icon: <SettingsIcon sx={{ fontSize: 20 }} />, path: '/settings' },
 ];
 
 interface SidebarProps {
@@ -71,19 +92,14 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) {
   const theme = useTheme();
-  const router = useRouter();
   const pathname = usePathname();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { profile } = useAuth();
 
+  const isLight = theme.palette.mode === 'light';
   const drawerWidth = collapsed && !isMobile ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH;
 
-  const handleNavigate = (path: string) => {
-    router.push(path);
-    if (isMobile) onClose();
-  };
-
-  const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/');
+  const isActive = (path: string) => pathname === path || (path !== '/dashboard' && pathname?.startsWith(path));
 
   const drawerContent = (
     <Box
@@ -92,16 +108,19 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        bgcolor: isLight ? '#FFFFFF' : '#0B0C0E',
       }}
     >
-      {/* Logo / Brand */}
+      {/* Brand Header */}
       <Box
         sx={{
-          p: collapsed && !isMobile ? 1.5 : 2.5,
+          px: collapsed && !isMobile ? 1.5 : 2.5,
+          py: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed && !isMobile ? 'center' : 'space-between',
-          minHeight: 72,
+          minHeight: 68,
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
         <BrandLogo
@@ -114,203 +133,267 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
             onClick={onToggleCollapse}
             size="small"
             sx={{
-              ml: collapsed ? 0 : 'auto',
-              mt: collapsed ? 1 : 0,
               color: 'text.secondary',
-              bgcolor: 'action.hover',
-              '&:hover': { bgcolor: 'action.selected', color: 'primary.main' },
+              p: 0.5,
+              borderRadius: 2,
+              '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.05), color: 'text.primary' },
             }}
           >
-            {collapsed ? <ExpandIcon fontSize="small" /> : <CollapseIcon fontSize="small" />}
+            {collapsed ? <ExpandIcon sx={{ fontSize: 18 }} /> : <CollapseIcon sx={{ fontSize: 18 }} />}
           </IconButton>
         )}
       </Box>
 
-      <Divider sx={{ mx: 2, opacity: 0.5 }} />
-
-      {/* Navigation */}
+      {/* Navigation Groups */}
       <Box sx={{ flex: 1, py: 1.5, overflowY: 'auto', overflowX: 'hidden' }}>
-        <List disablePadding>
-          {navItems.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <Tooltip
-                key={item.path}
-                title={collapsed && !isMobile ? item.label : ''}
-                placement="right"
-                arrow
+        {navSections.map((section, sIdx) => (
+          <Box key={section.title} sx={{ mb: 1.5 }}>
+            {(!collapsed || isMobile) && (
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 2.5,
+                  pt: sIdx === 0 ? 0.5 : 1.5,
+                  pb: 0.5,
+                  display: 'block',
+                  fontSize: '0.675rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  color: isLight ? '#9CA3AF' : '#6B7280',
+                  textTransform: 'uppercase',
+                }}
               >
-                <ListItemButton
-                  component={Link}
-                  href={item.path}
-                  prefetch={true}
-                  onClick={() => { if (isMobile) onClose(); }}
-                  sx={{
-                    minHeight: 46,
-                    px: collapsed && !isMobile ? 2.5 : 2.5,
-                    mx: collapsed && !isMobile ? 1 : 1.5,
-                    my: 0.3,
-                    borderRadius: 2.5,
-                    position: 'relative',
-                    justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
-                    bgcolor: active
-                      ? alpha(theme.palette.primary.main, 0.12)
-                      : 'transparent',
-                    color: active ? theme.palette.primary.main : theme.palette.text.secondary,
-                    border: active ? `1px solid ${alpha(theme.palette.primary.main, 0.25)}` : '1px solid transparent',
-                    '&:hover': {
-                      bgcolor: active
-                        ? alpha(theme.palette.primary.main, 0.16)
-                        : alpha(theme.palette.action.hover, 0.08),
-                      color: active ? theme.palette.primary.main : theme.palette.text.primary,
-                      transform: 'translateX(2px)',
-                    },
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: collapsed && !isMobile ? 0 : 44,
-                      justifyContent: 'center',
-                      color: 'inherit',
-                    }}
+                {section.title}
+              </Typography>
+            )}
+
+            <List disablePadding sx={{ px: collapsed && !isMobile ? 1 : 1.5 }}>
+              {section.items.map((item) => {
+                const active = isActive(item.path);
+                return (
+                  <Tooltip
+                    key={item.path}
+                    title={collapsed && !isMobile ? item.label : ''}
+                    placement="right"
+                    arrow
                   >
-                    {item.icon}
-                  </ListItemIcon>
-                  {(!collapsed || isMobile) && (
-                    <ListItemText
-                      primary={
-                        <Typography sx={{ fontWeight: active ? 600 : 500, fontSize: '0.9rem', color: 'inherit' }}>
-                          {item.label}
-                        </Typography>
-                      }
-                    />
-                  )}
-                </ListItemButton>
-              </Tooltip>
-            );
-          })}
-        </List>
+                    <ListItemButton
+                      component={Link}
+                      href={item.path}
+                      prefetch={true}
+                      onClick={() => {
+                        if (isMobile) onClose();
+                      }}
+                      sx={{
+                        minHeight: 42,
+                        px: collapsed && !isMobile ? 1.5 : 1.75,
+                        my: 0.25,
+                        borderRadius: 2.5,
+                        justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
+                        bgcolor: active
+                          ? isLight
+                            ? 'rgba(14, 98, 69, 0.08)' // Soft mint/sage pill (Bonsai style)
+                            : 'rgba(16, 185, 129, 0.12)'
+                          : 'transparent',
+                        color: active
+                          ? isLight
+                            ? '#0E6245' // Deep forest green
+                            : '#10B981'
+                          : 'text.secondary',
+                        border: active
+                          ? `1px solid ${isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(16, 185, 129, 0.25)'}`
+                          : '1px solid transparent',
+                        '&:hover': {
+                          bgcolor: active
+                            ? isLight
+                              ? 'rgba(14, 98, 69, 0.12)'
+                              : 'rgba(16, 185, 129, 0.16)'
+                            : isLight
+                            ? '#F4F5F7'
+                            : 'rgba(255, 255, 255, 0.04)',
+                          color: active
+                            ? isLight
+                              ? '#0E6245'
+                              : '#10B981'
+                            : 'text.primary',
+                        },
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: collapsed && !isMobile ? 0 : 36,
+                          justifyContent: 'center',
+                          color: 'inherit',
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+
+                      {(!collapsed || isMobile) && (
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <Typography
+                                sx={{
+                                  fontWeight: active ? 600 : 500,
+                                  fontSize: '0.85rem',
+                                  color: 'inherit',
+                                  letterSpacing: '-0.01em',
+                                }}
+                              >
+                                {item.label}
+                              </Typography>
+                              {item.badge && (
+                                <Chip
+                                  label={item.badge}
+                                  size="small"
+                                  sx={{
+                                    height: 18,
+                                    fontSize: '0.625rem',
+                                    fontWeight: 700,
+                                    bgcolor: isLight ? 'rgba(14, 98, 69, 0.1)' : 'rgba(16, 185, 129, 0.15)',
+                                    color: isLight ? '#0E6245' : '#10B981',
+                                    borderRadius: 1,
+                                    px: 0.5,
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          }
+                        />
+                      )}
+                    </ListItemButton>
+                  </Tooltip>
+                );
+              })}
+            </List>
+          </Box>
+        ))}
       </Box>
 
-      <Divider sx={{ mx: 2, opacity: 0.5 }} />
-
-      {/* Bottom Items */}
-      <Box sx={{ py: 1 }}>
+      {/* Settings & Bottom Items */}
+      <Box sx={{ p: collapsed && !isMobile ? 1 : 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
         <List disablePadding>
           {bottomNavItems.map((item) => {
             const active = isActive(item.path);
             return (
-              <Tooltip
+              <ListItemButton
                 key={item.path}
-                title={collapsed && !isMobile ? item.label : ''}
-                placement="right"
-                arrow
+                component={Link}
+                href={item.path}
+                prefetch={true}
+                onClick={() => {
+                  if (isMobile) onClose();
+                }}
+                sx={{
+                  minHeight: 40,
+                  px: collapsed && !isMobile ? 1.5 : 1.75,
+                  borderRadius: 2.5,
+                  justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
+                  color: active
+                    ? isLight
+                      ? '#0E6245'
+                      : '#10B981'
+                    : 'text.secondary',
+                  bgcolor: active
+                    ? isLight
+                      ? 'rgba(14, 98, 69, 0.08)'
+                      : 'rgba(16, 185, 129, 0.12)'
+                    : 'transparent',
+                  '&:hover': {
+                    bgcolor: isLight ? '#F4F5F7' : 'rgba(255, 255, 255, 0.04)',
+                    color: 'text.primary',
+                  },
+                }}
               >
-                <ListItemButton
-                  component={Link}
-                  href={item.path}
-                  prefetch={true}
-                  onClick={() => { if (isMobile) onClose(); }}
+                <ListItemIcon
                   sx={{
-                    minHeight: 44,
-                    px: collapsed && !isMobile ? 2.5 : 2.5,
-                    mx: collapsed && !isMobile ? 1 : 1.5,
-                    borderRadius: 2.5,
-                    justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
-                    color: active ? theme.palette.primary.main : theme.palette.text.secondary,
-                    bgcolor: active ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                    border: active ? `1px solid ${alpha(theme.palette.primary.main, 0.2)}` : '1px solid transparent',
-                    '&:hover': {
-                      color: active ? theme.palette.primary.main : theme.palette.text.primary,
-                      bgcolor: alpha(theme.palette.action.hover, 0.08),
-                    },
-                    transition: 'all 0.15s ease',
+                    minWidth: collapsed && !isMobile ? 0 : 36,
+                    justifyContent: 'center',
+                    color: 'inherit',
                   }}
                 >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: collapsed && !isMobile ? 0 : 44,
-                      justifyContent: 'center',
-                      color: 'inherit',
-                    }}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  {(!collapsed || isMobile) && (
-                    <ListItemText
-                      primary={
-                        <Typography sx={{ fontWeight: active ? 600 : 500, fontSize: '0.875rem', color: 'inherit' }}>
-                          {item.label}
-                        </Typography>
-                      }
-                    />
-                  )}
-                </ListItemButton>
-              </Tooltip>
+                  {item.icon}
+                </ListItemIcon>
+                {(!collapsed || isMobile) && (
+                  <ListItemText
+                    primary={
+                      <Typography sx={{ fontWeight: active ? 600 : 500, fontSize: '0.85rem', color: 'inherit' }}>
+                        {item.label}
+                      </Typography>
+                    }
+                  />
+                )}
+              </ListItemButton>
             );
           })}
         </List>
-      </Box>
 
-      {/* User Profile */}
-      <Box
-        sx={{
-          p: collapsed && !isMobile ? 1.5 : 2,
-          borderTop: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
-            p: 1,
-            borderRadius: 3,
-            bgcolor: alpha(theme.palette.primary.main, 0.04),
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
-            },
-          }}
-          onClick={() => handleNavigate('/settings')}
-        >
-          <Avatar
-            src={profile?.avatarUrl || undefined}
+        {/* User Card */}
+        {(!collapsed || isMobile) && (
+          <Box
+            component={Link}
+            href="/settings"
+            prefetch={true}
+            onClick={() => { if (isMobile) onClose(); }}
             sx={{
-              width: 36,
-              height: 36,
-              bgcolor: theme.palette.primary.main,
-              fontSize: '0.875rem',
+              mt: 1,
+              p: 1.25,
+              borderRadius: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              textDecoration: 'none',
+              bgcolor: isLight ? '#F9FAFB' : '#121316',
+              border: `1px solid ${isLight ? '#EAECF0' : '#1D1F24'}`,
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                borderColor: isLight ? '#D0D5DD' : '#2A2D35',
+                bgcolor: isLight ? '#F4F5F7' : '#16181D',
+              },
             }}
           >
-            {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
-          </Avatar>
-          {(!collapsed || isMobile) && (
-            <Box sx={{ overflow: 'hidden' }}>
+            <Avatar
+              src={profile?.avatarUrl || undefined}
+              sx={{
+                width: 32,
+                height: 32,
+                bgcolor: isLight ? '#0E6245' : '#10B981',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+              }}
+            >
+              {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+            </Avatar>
+            <Box sx={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
               <Typography
                 variant="body2"
-                sx={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                  color: 'text.primary',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
               >
                 {profile?.name || 'User'}
               </Typography>
               <Typography
                 variant="caption"
                 sx={{
-                  color: 'text.secondary',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  color: isLight ? '#0E6245' : '#10B981',
+                  fontWeight: 600,
+                  fontSize: '0.675rem',
                   display: 'block',
                 }}
               >
-                {profile?.email || ''}
+                Free SaaS Tier
               </Typography>
             </Box>
-          )}
-        </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   );

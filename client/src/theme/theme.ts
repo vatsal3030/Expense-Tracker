@@ -202,7 +202,7 @@ export const darkTheme = responsiveFontSizes(
 );
 
 // ============================================================================
-// LIGHT THEME — Emerald & Clean Slate
+// LIGHT THEME (Default) — Warm Ivory Canvas, Pure White Cards, Deep Forest Green
 // ============================================================================
 export const lightTheme = responsiveFontSizes(
   createTheme({
@@ -210,15 +210,15 @@ export const lightTheme = responsiveFontSizes(
     palette: {
       mode: 'light',
       primary: {
-        main: '#059669', // Emerald 600
+        main: '#0E6245', // Deep Forest Green (Ocupite/Savexa style)
         light: '#10b981',
-        dark: '#047857',
+        dark: '#064E3B',
         contrastText: '#ffffff',
       },
       secondary: {
-        main: '#475569', // Slate 600
-        light: '#64748b',
-        dark: '#1e293b',
+        main: '#1F2937', // Deep Charcoal Slate
+        light: '#4B5563',
+        dark: '#111827',
         contrastText: '#ffffff',
       },
       success: {
@@ -237,14 +237,14 @@ export const lightTheme = responsiveFontSizes(
         dark: '#dc2626',
       },
       background: {
-        default: '#f8fafc',
-        paper: '#ffffff',
+        default: '#F4F5F7', // Warm ivory / soft stone canvas
+        paper: '#ffffff',   // Crisp white card surface
       },
       text: {
-        primary: '#0f172a',
-        secondary: '#64748b',
+        primary: '#111827',
+        secondary: '#4B5563',
       },
-      divider: '#e2e8f0',
+      divider: '#E5E7EB',
     },
     components: {
       ...baseTheme.components,
@@ -253,10 +253,10 @@ export const lightTheme = responsiveFontSizes(
           root: {
             ...baseTheme.components?.MuiCard?.styleOverrides?.root,
             backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+            border: '1px solid #EAECF0',
+            boxShadow: '0 1px 3px rgba(16, 24, 40, 0.05), 0 1px 2px rgba(16, 24, 40, 0.02)',
             '&:hover': {
-              borderColor: '#cbd5e1',
+              borderColor: '#D0D5DD',
             },
           },
         },
@@ -265,16 +265,16 @@ export const lightTheme = responsiveFontSizes(
         styleOverrides: {
           paper: {
             backgroundColor: '#ffffff',
-            borderRight: '1px solid #e2e8f0',
+            borderRight: '1px solid #EAECF0',
           },
         },
       },
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            '& fieldset': { borderColor: '#e2e8f0' },
-            '&:hover fieldset': { borderColor: '#94a3b8' },
-            '&.Mui-focused fieldset': { borderColor: '#059669', borderWidth: '1.5px' },
+            '& fieldset': { borderColor: '#E5E7EB' },
+            '&:hover fieldset': { borderColor: '#9CA3AF' },
+            '&.Mui-focused fieldset': { borderColor: '#0E6245', borderWidth: '1.5px' },
           },
         },
       },
