@@ -4,11 +4,11 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, Grid, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, MenuItem, IconButton, Avatar,
-  AvatarGroup, Chip, Skeleton, useTheme, alpha, Stack,
+  AvatarGroup, Chip, Skeleton, useTheme, alpha, Stack, FormControlLabel, Switch,
 } from '@mui/material';
 import {
   Add, Close, Home, Flight, Favorite, Business, People, FamilyRestroom,
-  Work, MoreHoriz, ArrowForward,
+  Work, MoreHoriz, ArrowForward, Lock, Security,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -19,7 +19,7 @@ const GROUP_TYPE_CONFIG: Record<string, { icon: React.ReactElement; color: strin
   HOME: { icon: <Home />, color: '#14b8a6' },
   TRIP: { icon: <Flight />, color: '#f59e0b' },
   COUPLE: { icon: <Favorite />, color: '#ec4899' },
-  OFFICE: { icon: <Business />, color: '#3b82f6' },
+  OFFICE: { icon: <Business />, color: '#334155' },
   FRIENDS: { icon: <People />, color: '#0ea5e9' },
   FAMILY: { icon: <FamilyRestroom />, color: '#10b981' },
   PROJECT: { icon: <Work />, color: '#10b981' },
@@ -33,7 +33,16 @@ export default function GroupsPage() {
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', type: 'FRIENDS', currency: 'INR' });
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    type: 'FRIENDS',
+    currency: 'INR',
+    requireApproval: false,
+    isPasswordProtected: false,
+    password: '',
+    inviteContacts: '',
+  });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -59,9 +68,36 @@ export default function GroupsPage() {
     if (!form.name) return;
     setSubmitting(true);
     try {
-      await groupApi.create(form);
+      const payload = {
+        name: form.name,
+        description: form.description,
+        type: form.type,
+        currency: form.currency,
+        password: form.isPasswordProtected ? form.password : undefined,
+        requireAdminApproval: form.requireApproval,
+      };
+      const res = await groupApi.create(payload);
+      if (form.inviteContacts && res.data?.data?.id) {
+        const contacts = form.inviteContacts.split(',').map((c) => c.trim()).filter(Boolean);
+        for (const contact of contacts) {
+          if (contact.includes('@')) {
+            await groupApi.addMember(res.data.data.id, { email: contact }).catch(() => {});
+          } else {
+            await groupApi.addMember(res.data.data.id, { phone: contact }).catch(() => {});
+          }
+        }
+      }
       setDialogOpen(false);
-      setForm({ name: '', description: '', type: 'FRIENDS', currency: 'INR' });
+      setForm({
+        name: '',
+        description: '',
+        type: 'FRIENDS',
+        currency: 'INR',
+        requireApproval: false,
+        isPasswordProtected: false,
+        password: '',
+        inviteContacts: '',
+      });
       fetchGroups();
     } catch (error) {
       console.error('Create group error:', error);
@@ -220,6 +256,71 @@ export default function GroupsPage() {
                   </TextField>
                 </Grid>
               </Grid>
+
+              {/* Access & Protection Options */}
+              <Box sx={{ p: 2, borderRadius: 3, bgcolor: alpha(theme.palette.action.hover, 0.05), border: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Lock sx={{ fontSize: 18, color: 'primary.main' }} />
+                  Access & Security Settings
+                </Typography>
+                
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={form.requireApproval}
+                      onChange={(e) => setForm({ ...form, requireApproval: e.target.checked })}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>Require Admin Approval</Typography>
+                      <Typography variant="caption" color="text.secondary">Prevent annoying users; new joins must be approved by an admin</Typography>
+                    </Box>
+                  }
+                  sx={{ alignItems: 'flex-start', mb: 1.5 }}
+                />
+
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={form.isPasswordProtected}
+                      onChange={(e) => setForm({ ...form, isPasswordProtected: e.target.checked })}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>Group Password / PIN</Typography>
+                      <Typography variant="caption" color="text.secondary">Require secret passcode to join via link</Typography>
+                    </Box>
+                  }
+                  sx={{ alignItems: 'flex-start' }}
+                />
+
+                {form.isPasswordProtected && (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Group Passcode"
+                    type="password"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder="Enter 4-6 digit PIN or secret password"
+                    sx={{ mt: 1.5 }}
+                  />
+                )}
+              </Box>
+
+              {/* Direct Invite by Email / Phone */}
+              <TextField
+                fullWidth
+                label="Invite Initial Members (optional)"
+                placeholder="friend@gmail.com, +919876543210"
+                value={form.inviteContacts}
+                onChange={(e) => setForm({ ...form, inviteContacts: e.target.value })}
+                helperText="Enter emails or phone numbers separated by commas"
+              />
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

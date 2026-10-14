@@ -92,108 +92,122 @@ export default function SignupPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: '#090d16',
+        bgcolor: 'background.default',
         position: 'relative',
         overflow: 'hidden',
-        py: 4,
+        p: { xs: 1.5, sm: 2 },
       }}
     >
       {/* Decorations: Subtle Emerald Vignette */}
       <Box
         sx={{
           position: 'absolute',
-          width: 500,
-          height: 500,
+          width: 450,
+          height: 450,
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)',
-          top: -200,
-          right: -100,
+          top: -150,
+          right: -80,
           filter: 'blur(50px)',
           pointerEvents: 'none',
         }}
       />
 
-      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="xs" disableGutters sx={{ position: 'relative', zIndex: 1 }}>
         <Paper
           elevation={0}
           sx={{
-            p: { xs: 3, sm: 5 },
-            borderRadius: 4,
-            border: '1px solid #1e293b',
-            bgcolor: '#0f172a',
+            p: { xs: 2.5, sm: 3 },
+            borderRadius: 3.5,
+            border: `1px solid ${theme.palette.divider}`,
+            bgcolor: 'background.paper',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
           }}
         >
           {/* Logo */}
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <BrandLogo size="lg" className="justify-center mb-4" />
-            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, color: '#f8fafc' }}>
+          <Box sx={{ textAlign: 'center', mb: 1.5 }}>
+            <BrandLogo size="sm" className="justify-center mb-1" />
+            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', fontSize: '1.25rem' }}>
               Create your account
             </Typography>
-            <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-              Start splitting expenses for free
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+              Start splitting expenses fairly
             </Typography>
           </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }} onClose={() => setError('')}>
+            <Alert severity="error" sx={{ mb: 1.5, borderRadius: 2, py: 0.25, fontSize: '0.78rem' }} onClose={() => setError('')}>
               {error}
             </Alert>
           )}
           {success && (
-            <Alert severity="success" sx={{ mb: 3, borderRadius: 3 }}>
+            <Alert severity="success" sx={{ mb: 1.5, borderRadius: 2, py: 0.25, fontSize: '0.78rem' }}>
               {success}
             </Alert>
           )}
 
-          {/* OAuth */}
-          <Stack spacing={1.5} sx={{ mb: 3 }}>
+          {/* Social OAuth in 2-column row */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1.5 }}>
             <Button
               fullWidth
+              size="small"
               variant="outlined"
-              startIcon={<GoogleIcon />}
+              startIcon={<GoogleIcon sx={{ fontSize: '18px !important' }} />}
               onClick={handleGoogleSignup}
               sx={{
-                py: 1.3, borderRadius: 3, borderColor: theme.palette.divider,
-                color: theme.palette.text.primary, fontWeight: 600,
+                py: 0.7,
+                borderRadius: 2,
+                borderColor: theme.palette.divider,
+                color: theme.palette.text.primary,
+                fontWeight: 600,
+                fontSize: '0.78rem',
+                textTransform: 'none',
                 '&:hover': { borderColor: theme.palette.primary.main },
               }}
             >
-              Sign up with Google
+              Google
             </Button>
             <Button
               fullWidth
+              size="small"
               variant="outlined"
-              startIcon={<GitHubIcon />}
+              startIcon={<GitHubIcon sx={{ fontSize: '18px !important' }} />}
               onClick={handleGithubSignup}
               sx={{
-                py: 1.3, borderRadius: 3, borderColor: theme.palette.divider,
-                color: theme.palette.text.primary, fontWeight: 600,
+                py: 0.7,
+                borderRadius: 2,
+                borderColor: theme.palette.divider,
+                color: theme.palette.text.primary,
+                fontWeight: 600,
+                fontSize: '0.78rem',
+                textTransform: 'none',
                 '&:hover': { borderColor: theme.palette.text.primary },
               }}
             >
-              Sign up with GitHub
+              GitHub
             </Button>
-          </Stack>
+          </Box>
 
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ px: 2 }}>
-              OR
+          <Divider sx={{ my: 1.2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ px: 1, fontSize: '0.7rem' }}>
+              OR WITH EMAIL
             </Typography>
           </Divider>
 
           <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={2.5}>
+            <Stack spacing={1.2}>
               <TextField
                 fullWidth
+                size="small"
                 label="Full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
                 autoComplete="name"
-                autoFocus
               />
               <TextField
                 fullWidth
+                size="small"
                 label="Email address"
                 type="email"
                 value={email}
@@ -203,19 +217,19 @@ export default function SignupPage() {
               />
               <TextField
                 fullWidth
+                size="small"
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                helperText="At least 8 characters"
                 autoComplete="new-password"
                 slotProps={{
                   input: {
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small" aria-label="toggle password visibility">
-                          {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          {showPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
                         </IconButton>
                       </InputAdornment>
                     ),
@@ -224,6 +238,7 @@ export default function SignupPage() {
               />
               <TextField
                 fullWidth
+                size="small"
                 label="Confirm password"
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
@@ -231,19 +246,18 @@ export default function SignupPage() {
                 required
                 autoComplete="new-password"
                 error={confirmPassword.length > 0 && password !== confirmPassword}
-                helperText={confirmPassword.length > 0 && password !== confirmPassword ? 'Passwords don\'t match' : ''}
               />
               <Button
                 fullWidth
                 type="submit"
                 variant="contained"
-                size="large"
                 disabled={loading || !email || !password || !name}
                 sx={{
-                  py: 1.5,
-                  borderRadius: 3,
-                  fontSize: '1rem',
-                  fontWeight: 600,
+                  mt: 0.5,
+                  py: 1,
+                  borderRadius: 2.5,
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
                   bgcolor: '#059669',
                   color: '#ffffff',
                   boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
@@ -253,18 +267,18 @@ export default function SignupPage() {
                   },
                 }}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Create Account'}
+                {loading ? <CircularProgress size={20} color="inherit" /> : 'Create Account'}
               </Button>
             </Stack>
           </Box>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 3, textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1.8, display: 'block', textAlign: 'center' }}>
             Already have an account?{' '}
             <Typography
               component="span"
-              variant="body2"
+              variant="caption"
               color="primary"
-              sx={{ fontWeight: 600, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+              sx={{ fontWeight: 700, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
               onClick={() => router.push('/auth/login')}
             >
               Sign in

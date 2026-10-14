@@ -96,16 +96,29 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = async (retry = true) => {
     try {
-      const [summaryRes, trendRes] = await Promise.all([
+      const [summaryRes, trendRes] = await Promise.allSettled([
         dashboardApi.getSummary(),
         dashboardApi.getSpendingTrend(),
       ]);
-      setData(summaryRes.data.data);
-      setTrendData(trendRes.data.data);
+
+      if (summaryRes.status === 'fulfilled') {
+        setData(summaryRes.value.data?.data);
+      }
+      if (trendRes.status === 'fulfilled') {
+        setTrendData(trendRes.value.data?.data);
+      }
+
+      // If either failed on the first attempt, retry once after a short delay
+      if (retry && (summaryRes.status === 'rejected' || trendRes.status === 'rejected')) {
+        setTimeout(() => fetchDashboard(false), 800);
+      }
     } catch (error) {
       console.error('Dashboard fetch error:', error);
+      if (retry) {
+        setTimeout(() => fetchDashboard(false), 800);
+      }
     } finally {
       setLoading(false);
     }

@@ -172,11 +172,11 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   </ListItemIcon>
                   {(!collapsed || isMobile) && (
                     <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{
-                        fontWeight: active ? 600 : 500,
-                        fontSize: '0.9rem',
-                      }}
+                      primary={
+                        <Typography sx={{ fontWeight: active ? 600 : 500, fontSize: '0.9rem', color: 'inherit' }}>
+                          {item.label}
+                        </Typography>
+                      }
                     />
                   )}
                 </ListItemButton>
@@ -222,8 +222,11 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   </ListItemIcon>
                   {(!collapsed || isMobile) && (
                     <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{ fontWeight: active ? 600 : 500, fontSize: '0.875rem' }}
+                      primary={
+                        <Typography sx={{ fontWeight: active ? 600 : 500, fontSize: '0.875rem', color: 'inherit' }}>
+                          {item.label}
+                        </Typography>
+                      }
                     />
                   )}
                 </ListItemButton>

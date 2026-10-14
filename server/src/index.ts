@@ -16,6 +16,7 @@ import { budgetRouter } from './routes/budget.routes';
 import { activityRouter } from './routes/activity.routes';
 import { dashboardRouter } from './routes/dashboard.routes';
 import { friendRouter } from './routes/friend.routes';
+import { notificationRouter } from './routes/notification.routes';
 import { healthRouter } from './routes/health.routes';
 
 dotenv.config();
@@ -71,6 +72,7 @@ app.use('/api/budgets', budgetRouter);
 app.use('/api/activities', activityRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/friends', friendRouter);
+app.use('/api/notifications', notificationRouter);
 
 // =============================================================================
 // ERROR HANDLING

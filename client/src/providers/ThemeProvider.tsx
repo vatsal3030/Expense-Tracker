@@ -26,6 +26,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      if (mode === 'dark') {
+        root.classList.add('dark');
+        root.classList.remove('light');
+      } else {
+        root.classList.remove('dark');
+        root.classList.add('light');
+      }
+    }
+  }, [mode]);
+
   const toggleTheme = () => {
     setMode((prev) => {
       const next = prev === 'light' ? 'dark' : 'light';

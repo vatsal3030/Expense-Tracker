@@ -208,41 +208,127 @@ export default function FriendsPage() {
           </CardContent>
         </Card>
 
-        {/* Search Dialog */}
+        {/* Search & Invite Dialog */}
         <Dialog open={searchOpen} onClose={() => { setSearchOpen(false); setSearchResults([]); setSearchQuery(''); }} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 4 } } }}>
-          <DialogTitle>
-            <Typography variant="h6" fontWeight={700}>Find Friends</Typography>
+          <DialogTitle sx={{ pb: 1 }}>
+            <Typography variant="h6" fontWeight={700}>Add Friends</Typography>
+            <Typography variant="caption" color="text.secondary">Connect via invite link, email, or phone number</Typography>
           </DialogTitle>
           <DialogContent>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField fullWidth size="small" placeholder="Search by name or email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
-              <Button variant="contained" onClick={handleSearch} disabled={searching || searchQuery.length < 2} sx={{ borderRadius: 3, bgcolor: '#059669', color: '#ffffff', '&:hover': { bgcolor: '#047857' } }}>
-                <Search />
-              </Button>
-            </Box>
-            {searchResults.length > 0 && (
-              <List disablePadding>
-                {searchResults.map(u => (
-                  <ListItem key={u.id} sx={{ px: 1, py: 1.5, borderRadius: 2, '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.06) } }}>
-                    <ListItemAvatar>
-                      <Avatar src={u.avatarUrl || undefined} sx={{ width: 40, height: 40 }}>{u.name?.charAt(0)}</Avatar>
-                    </ListItemAvatar>
-                    <ListItemText primary={u.name} secondary={u.email} />
-                    <Button size="small" variant="outlined" startIcon={<PersonAdd />} onClick={() => handleSendRequest(u.id)} sx={{ borderRadius: 2 }}>
-                      Add
-                    </Button>
-                  </ListItem>
-                ))}
-              </List>
-            )}
-            {searchResults.length === 0 && searchQuery.length >= 2 && !searching && (
-              <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 3 }}>
-                No users found
-              </Typography>
-            )}
+            <Stack spacing={2.5} sx={{ mt: 1 }}>
+              {/* Shareable Invite Link */}
+              <Box sx={{ p: 2, borderRadius: 3, bgcolor: alpha(theme.palette.primary.main, 0.06), border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}` }}>
+                <Typography variant="subtitle2" fontWeight={700} color="primary.main" sx={{ mb: 0.5 }}>
+                  Your Personal Invite Link
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                  Share this link with anyone to instantly connect on FairShare:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={typeof window !== 'undefined' ? `${window.location.origin}/auth/signup?ref=${user?.id || ''}` : ''}
+                    slotProps={{ input: { readOnly: true } }}
+                  />
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        navigator.clipboard.writeText(`${window.location.origin}/auth/signup?ref=${user?.id || ''}`);
+                        alert('Personal invite link copied to clipboard!');
+                      }
+                    }}
+                    sx={{ px: 2, fontWeight: 600, flexShrink: 0 }}
+                  >
+                    Copy
+                  </Button>
+                </Box>
+              </Box>
+
+              <Divider>
+                <Typography variant="caption" color="text.secondary">SEARCH OR ADD DIRECTLY</Typography>
+              </Divider>
+
+              {/* Direct email or phone search / invite */}
+              <Box>
+                <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                  Search by name, or enter Email / Phone
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="friend@gmail.com, +919876543210, or name"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={async () => {
+                      if (searchQuery.includes('@')) {
+                        try {
+                          await friendApi.request({ email: searchQuery.trim() });
+                          alert(`Friend request/invitation sent to ${searchQuery}!`);
+                          setSearchQuery('');
+                          setSearchOpen(false);
+                          fetchData();
+                        } catch (err: any) {
+                          alert(err.response?.data?.error || 'Failed to send invite.');
+                        }
+                      } else if (/^\+?[0-9]{7,15}$/.test(searchQuery.replace(/[\s-]/g, ''))) {
+                        try {
+                          await friendApi.request({ phone: searchQuery.trim() });
+                          alert(`Friend request/invitation sent to ${searchQuery}!`);
+                          setSearchQuery('');
+                          setSearchOpen(false);
+                          fetchData();
+                        } catch (err: any) {
+                          alert(err.response?.data?.error || 'Failed to send invite.');
+                        }
+                      } else {
+                        handleSearch();
+                      }
+                    }}
+                    disabled={searching || searchQuery.length < 2}
+                    sx={{ borderRadius: 2.5, px: 2.5, bgcolor: '#059669', color: '#ffffff', '&:hover': { bgcolor: '#047857' } }}
+                  >
+                    {searchQuery.includes('@') || /^\+?[0-9]{7,15}$/.test(searchQuery.replace(/[\s-]/g, '')) ? 'Invite' : <Search />}
+                  </Button>
+                </Box>
+              </Box>
+
+              {searchResults.length > 0 && (
+                <List disablePadding>
+                  {searchResults.map((u) => (
+                    <ListItem key={u.id} sx={{ px: 1, py: 1.5, borderRadius: 2, '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.06) } }}>
+                      <ListItemAvatar>
+                        <Avatar src={u.avatarUrl || undefined} sx={{ width: 40, height: 40 }}>{u.name?.charAt(0)}</Avatar>
+                      </ListItemAvatar>
+                      <ListItemText primary={u.name} secondary={u.email} />
+                      <Button size="small" variant="outlined" startIcon={<PersonAdd />} onClick={() => handleSendRequest(u.id)} sx={{ borderRadius: 2 }}>
+                        Add
+                      </Button>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+
+              {searchResults.length === 0 && searchQuery.length >= 2 && !searching && !searchQuery.includes('@') && (
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No registered user matching "{searchQuery}".
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Tip: Enter their full email address or phone number to send an invitation.
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2 }}>
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
             <Button onClick={() => { setSearchOpen(false); setSearchResults([]); setSearchQuery(''); }}>Close</Button>
           </DialogActions>
         </Dialog>

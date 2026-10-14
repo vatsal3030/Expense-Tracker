@@ -7,9 +7,25 @@ import prisma from '../lib/prisma';
 export const friendRouter = Router();
 friendRouter.use(authenticate);
 
-// POST /api/friends/request — Send friend request
+// POST /api/friends/request — Send friend request (by friendId, email, or phone)
 const friendRequestSchema = z.object({
-  friendId: z.string().uuid('Invalid user ID'),
+  friendId: z.string().uuid('Invalid user ID').optional(),
+  email: z.string().email('Invalid email address').optional(),
+  phone: z.string().min(5, 'Invalid phone number').optional(),
+}).refine((data) => data.friendId || data.email || data.phone, {
+  message: 'Please provide friendId, email, or phone number',
+});
+
+// GET /api/friends/invite-link — Get shareable friend invite link
+friendRouter.get('/invite-link', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const inviteUrl = `${clientUrl}/friends?invite=${userId}`;
+    res.json({ success: true, data: { inviteUrl } });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: 'Failed to generate invite link.' });
+  }
 });
 
 friendRouter.post(
@@ -17,10 +33,45 @@ friendRouter.post(
   validate({ body: friendRequestSchema }),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const { friendId } = req.body;
+      const { friendId, email, phone } = req.body;
       const userId = req.user!.id;
+      let targetFriendId = friendId;
 
-      if (friendId === userId) {
+      // Look up friend by email or phone if friendId not directly provided
+      if (!targetFriendId && email) {
+        let u = await prisma.user.findFirst({
+          where: { email: { equals: email.trim(), mode: 'insensitive' } },
+        });
+        if (!u) {
+          // Auto-create pending user for invite
+          u = await prisma.user.create({
+            data: {
+              email: email.trim().toLowerCase(),
+              name: email.split('@')[0],
+              isActive: false,
+            },
+          });
+        }
+        targetFriendId = u.id;
+      } else if (!targetFriendId && phone) {
+        let u = await prisma.user.findFirst({
+          where: { phone: phone.trim() },
+        });
+        if (!u) {
+          const cleanPhone = phone.trim().replace(/\D/g, '');
+          u = await prisma.user.create({
+            data: {
+              email: `${cleanPhone}@invited.fairshare.local`,
+              name: `Friend (${phone.trim()})`,
+              phone: phone.trim(),
+              isActive: false,
+            },
+          });
+        }
+        targetFriendId = u.id;
+      }
+
+      if (targetFriendId === userId) {
         res.status(400).json({ success: false, error: 'Cannot send friend request to yourself.' });
         return;
       }
@@ -29,8 +80,8 @@ friendRouter.post(
       const existing = await prisma.friendship.findFirst({
         where: {
           OR: [
-            { userId, friendId },
-            { userId: friendId, friendId: userId },
+            { userId, friendId: targetFriendId },
+            { userId: targetFriendId, friendId: userId },
           ],
         },
       });
@@ -44,7 +95,7 @@ friendRouter.post(
       }
 
       const friendship = await prisma.friendship.create({
-        data: { userId, friendId, status: 'PENDING' },
+        data: { userId, friendId: targetFriendId, status: 'PENDING' },
         include: {
           friend: { select: { id: true, name: true, email: true, avatarUrl: true } },
         },
@@ -54,10 +105,10 @@ friendRouter.post(
       const requester = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
       await prisma.notification.create({
         data: {
-          userId: friendId,
+          userId: targetFriendId,
           type: 'FRIEND_REQUEST',
           title: 'New Friend Request',
-          message: `${requester?.name} sent you a friend request.`,
+          message: `${requester?.name || 'A user'} sent you a friend request.`,
           data: { friendshipId: friendship.id },
         },
       });

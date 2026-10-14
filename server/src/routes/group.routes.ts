@@ -7,6 +7,32 @@ import prisma from '../lib/prisma';
 export const groupRouter = Router();
 groupRouter.use(authenticate);
 
+// Security metadata helpers for password protection and admin approval
+function encodeGroupMeta(description?: string | null, password?: string | null, requireAdminApproval?: boolean | null): string | undefined {
+  if (!password && !requireAdminApproval) return description || undefined;
+  const meta = { pwd: password || null, approval: Boolean(requireAdminApproval) };
+  const clean = (description || '').replace(/\s*<!--fs_meta:.*?-->\s*/g, '').trim();
+  return `${clean}\n<!--fs_meta:${JSON.stringify(meta)}-->`;
+}
+
+export function parseGroupMeta(description?: string | null) {
+  if (!description) return { description: '', isPasswordProtected: false, password: null as string | null, requireAdminApproval: false };
+  const match = description.match(/<!--fs_meta:(.*?)-->/);
+  if (!match) return { description, isPasswordProtected: false, password: null as string | null, requireAdminApproval: false };
+  try {
+    const meta = JSON.parse(match[1]);
+    const clean = description.replace(/\s*<!--fs_meta:.*?-->\s*/g, '').trim();
+    return {
+      description: clean,
+      isPasswordProtected: Boolean(meta.pwd),
+      password: (meta.pwd as string) || null,
+      requireAdminApproval: Boolean(meta.approval),
+    };
+  } catch {
+    return { description, isPasswordProtected: false, password: null as string | null, requireAdminApproval: false };
+  }
+}
+
 // POST /api/groups — Create a new group
 const createGroupSchema = z.object({
   name: z.string().min(1, 'Group name is required').max(100),
@@ -14,6 +40,8 @@ const createGroupSchema = z.object({
   type: z.enum(['HOME', 'TRIP', 'COUPLE', 'OFFICE', 'FRIENDS', 'FAMILY', 'PROJECT', 'OTHER']).optional(),
   currency: z.string().length(3).default('INR'),
   memberIds: z.array(z.string().uuid()).optional(),
+  password: z.string().max(50).optional(),
+  requireAdminApproval: z.boolean().optional(),
 });
 
 groupRouter.post(
@@ -21,12 +49,13 @@ groupRouter.post(
   validate({ body: createGroupSchema }),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const { name, description, type, currency, memberIds } = req.body;
+      const { name, description, type, currency, memberIds, password, requireAdminApproval } = req.body;
+      const finalDescription = encodeGroupMeta(description, password, requireAdminApproval);
 
       const group = await prisma.group.create({
         data: {
           name,
-          description,
+          description: finalDescription,
           type: type || 'OTHER',
           currency: currency || 'INR',
           members: {
@@ -51,7 +80,16 @@ groupRouter.post(
         },
       });
 
-      res.status(201).json({ success: true, data: group });
+      const meta = parseGroupMeta(group.description);
+      res.status(201).json({
+        success: true,
+        data: {
+          ...group,
+          description: meta.description,
+          isPasswordProtected: meta.isPasswordProtected,
+          requireAdminApproval: meta.requireAdminApproval,
+        },
+      });
     } catch (error: any) {
       console.error('Create group error:', error);
       res.status(500).json({ success: false, error: 'Failed to create group.' });
@@ -78,10 +116,63 @@ groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<v
       orderBy: { updatedAt: 'desc' },
     });
 
-    res.json({ success: true, data: groups });
+    const mapped = groups.map((g) => {
+      const meta = parseGroupMeta(g.description);
+      return {
+        ...g,
+        description: meta.description,
+        isPasswordProtected: meta.isPasswordProtected,
+        requireAdminApproval: meta.requireAdminApproval,
+      };
+    });
+
+    res.json({ success: true, data: mapped });
   } catch (error: any) {
     console.error('Get groups error:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch groups.' });
+  }
+});
+
+// GET /api/groups/public/:id — Public info for invite link preview
+groupRouter.get('/public/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, avatarUrl: true } },
+          },
+        },
+      },
+    });
+
+    if (!group) {
+      res.status(404).json({ success: false, error: 'Group not found.' });
+      return;
+    }
+
+    const meta = parseGroupMeta(group.description);
+    const admin = group.members.find((m) => m.role === 'ADMIN');
+    const isMember = group.members.some((m) => m.userId === req.user?.id);
+
+    res.json({
+      success: true,
+      data: {
+        id: group.id,
+        name: group.name,
+        type: group.type,
+        currency: group.currency,
+        memberCount: group.members.length,
+        adminName: admin?.user?.name || 'Admin',
+        isPasswordProtected: meta.isPasswordProtected,
+        requireAdminApproval: meta.requireAdminApproval,
+        isMember,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: 'Failed to fetch group info.' });
   }
 });
 
@@ -118,59 +209,155 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
       return;
     }
 
-    res.json({ success: true, data: group });
+    const meta = parseGroupMeta(group.description);
+    res.json({
+      success: true,
+      data: {
+        ...group,
+        description: meta.description,
+        isPasswordProtected: meta.isPasswordProtected,
+        requireAdminApproval: meta.requireAdminApproval,
+      },
+    });
   } catch (error: any) {
     console.error('Get group error:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch group details.' });
   }
 });
 
-// PUT /api/groups/:id — Update group
-const updateGroupSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).nullable().optional(),
-  type: z.enum(['HOME', 'TRIP', 'COUPLE', 'OFFICE', 'FRIENDS', 'FAMILY', 'PROJECT', 'OTHER']).optional(),
-  currency: z.string().length(3).optional(),
+// GET /api/groups/:id/invite — Generate shareable group invite link
+groupRouter.get('/:id/invite', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const group = await prisma.group.findFirst({
+      where: {
+        id,
+        members: { some: { userId: req.user!.id } },
+      },
+    });
+
+    if (!group) {
+      res.status(404).json({ success: false, error: 'Group not found.' });
+      return;
+    }
+
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const inviteUrl = `${clientUrl}/groups/join/${id}`;
+    const meta = parseGroupMeta(group.description);
+
+    res.json({
+      success: true,
+      data: {
+        inviteUrl,
+        code: id.slice(0, 8).toUpperCase(),
+        isPasswordProtected: meta.isPasswordProtected,
+        requireAdminApproval: meta.requireAdminApproval,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: 'Failed to generate invite link.' });
+  }
 });
 
-groupRouter.put(
-  '/:id',
-  validate({ body: updateGroupSchema }),
-  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    try {
-      const id = req.params.id as string;
+// POST /api/groups/:id/join — Join group via invite link (checks password and admin approval)
+groupRouter.post('/:id/join', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const userId = req.user!.id;
+    const { passcode } = req.body;
 
-      // Check admin access
-      const membership = await prisma.groupMember.findUnique({
-        where: { groupId_userId: { groupId: id, userId: req.user!.id } },
-      });
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        members: { include: { user: { select: { id: true, name: true } } } },
+      },
+    });
 
-      if (!membership || membership.role !== 'ADMIN') {
-        res.status(403).json({ success: false, error: 'Only group admins can update group settings.' });
+    if (!group) {
+      res.status(404).json({ success: false, error: 'Group not found or invite expired.' });
+      return;
+    }
+
+    // Check if already a member
+    const existing = group.members.find((m) => m.userId === userId);
+    if (existing) {
+      res.json({ success: true, message: 'You are already a member of this group.', data: { status: 'ALREADY_MEMBER', groupId: id } });
+      return;
+    }
+
+    const meta = parseGroupMeta(group.description);
+
+    // Verify passcode if protected
+    if (meta.isPasswordProtected && meta.password) {
+      if (!passcode || passcode.trim() !== meta.password.trim()) {
+        res.status(403).json({ success: false, error: 'Invalid group password. Please enter the correct passcode.' });
         return;
       }
+    }
 
-      const updated = await prisma.group.update({
-        where: { id },
-        data: req.body,
-        include: {
-          members: {
-            include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+    // If admin approval is required, send request notification instead of immediate join
+    if (meta.requireAdminApproval) {
+      const adminMember = group.members.find((m) => m.role === 'ADMIN');
+      const requester = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+
+      if (adminMember) {
+        await prisma.notification.create({
+          data: {
+            userId: adminMember.userId,
+            type: 'GROUP_INVITE',
+            title: 'Group Join Request',
+            message: `${requester?.name || 'A user'} requested to join "${group.name}".`,
+            data: { groupId: id, requesterId: userId },
           },
+        });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          status: 'PENDING_APPROVAL',
+          message: 'Join request sent! An admin must approve before you can enter.',
         },
       });
-
-      res.json({ success: true, data: updated });
-    } catch (error: any) {
-      console.error('Update group error:', error);
-      res.status(500).json({ success: false, error: 'Failed to update group.' });
+      return;
     }
-  }
-);
 
-// POST /api/groups/:id/members — Add member to group
+    // Direct join
+    const member = await prisma.groupMember.create({
+      data: { groupId: id, userId, role: 'MEMBER' },
+      include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+    });
+
+    await prisma.activity.create({
+      data: {
+        userId,
+        groupId: id,
+        type: 'GROUP_MEMBER_ADDED',
+        message: `joined the group via invite link`,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        status: 'JOINED',
+        message: 'Successfully joined the group!',
+        member,
+      },
+    });
+  } catch (error: any) {
+    console.error('Join group error:', error);
+    res.status(500).json({ success: false, error: 'Failed to join group.' });
+  }
+});
+
+// POST /api/groups/:id/members — Add member to group (by userId, email, or phone)
 const addMemberSchema = z.object({
-  userId: z.string().uuid('Invalid user ID'),
+  userId: z.string().uuid('Invalid user ID').optional(),
+  email: z.string().email('Invalid email address').optional(),
+  phone: z.string().min(5, 'Invalid phone number').optional(),
+}).refine((data) => data.userId || data.email || data.phone, {
+  message: 'Please provide userId, email, or phone number',
 });
 
 groupRouter.post(
@@ -179,7 +366,7 @@ groupRouter.post(
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const { userId } = req.body;
+      const { userId, email, phone } = req.body;
 
       // Verify requester is group member
       const membership = await prisma.groupMember.findUnique({
@@ -191,9 +378,43 @@ groupRouter.post(
         return;
       }
 
+      let targetUserId = userId;
+
+      if (!targetUserId && email) {
+        let u = await prisma.user.findFirst({
+          where: { email: { equals: email.trim(), mode: 'insensitive' } },
+        });
+        if (!u) {
+          u = await prisma.user.create({
+            data: {
+              email: email.trim().toLowerCase(),
+              name: email.split('@')[0],
+              isActive: false,
+            },
+          });
+        }
+        targetUserId = u.id;
+      } else if (!targetUserId && phone) {
+        let u = await prisma.user.findFirst({
+          where: { phone: phone.trim() },
+        });
+        if (!u) {
+          const cleanPhone = phone.trim().replace(/\D/g, '');
+          u = await prisma.user.create({
+            data: {
+              email: `${cleanPhone}@invited.fairshare.local`,
+              name: `Friend (${phone.trim()})`,
+              phone: phone.trim(),
+              isActive: false,
+            },
+          });
+        }
+        targetUserId = u.id;
+      }
+
       // Check if already a member
       const existingMember = await prisma.groupMember.findUnique({
-        where: { groupId_userId: { groupId: id, userId } },
+        where: { groupId_userId: { groupId: id, userId: targetUserId } },
       });
 
       if (existingMember) {
@@ -202,7 +423,7 @@ groupRouter.post(
       }
 
       const member = await prisma.groupMember.create({
-        data: { groupId: id, userId, role: 'MEMBER' },
+        data: { groupId: id, userId: targetUserId, role: 'MEMBER' },
         include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
       });
 
@@ -215,6 +436,17 @@ groupRouter.post(
           message: `added ${member.user.name} to the group`,
         },
       });
+
+      // Notify added user
+      await prisma.notification.create({
+        data: {
+          userId: targetUserId,
+          type: 'GROUP_JOINED',
+          title: 'Added to Group',
+          message: `You were added to group "${membership.groupId}" by ${req.user!.email}.`,
+          data: { groupId: id },
+        },
+      }).catch(() => {});
 
       res.status(201).json({ success: true, data: member });
     } catch (error: any) {

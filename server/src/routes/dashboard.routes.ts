@@ -5,179 +5,203 @@ import prisma from '../lib/prisma';
 export const dashboardRouter = Router();
 dashboardRouter.use(authenticate);
 
+// Fast in-memory cache for dashboard endpoints (15s TTL)
+const dashboardCache = new Map<string, { data: any; expiresAt: number }>();
+
 // GET /api/dashboard/summary — Get dashboard summary data
 dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const userId = req.user!.id;
+  const cacheKey = `summary:${userId}`;
+  const cached = dashboardCache.get(cacheKey);
+
   try {
-    const userId = req.user!.id;
+    if (cached && cached.expiresAt > Date.now()) {
+      res.json({ success: true, data: cached.data });
+      return;
+    }
+
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
-    // Total you owe (sum of your unpaid shares in expenses you didn't pay for)
-    const youOweData = await prisma.expenseShare.aggregate({
-      where: {
-        userId,
-        isPaid: false,
-        expense: {
-          isDeleted: false,
-          paidById: { not: userId },
+    // Parallel resilient execution of all summary metrics
+    const results = await Promise.allSettled([
+      prisma.expenseShare.aggregate({
+        where: {
+          userId,
+          isPaid: false,
+          expense: {
+            isDeleted: false,
+            paidById: { not: userId },
+          },
         },
-      },
-      _sum: { amount: true },
-    });
-
-    // Total owed to you (sum of unpaid shares from others in expenses you paid for)
-    const owedToYouData = await prisma.expenseShare.aggregate({
-      where: {
-        userId: { not: userId },
-        isPaid: false,
-        expense: {
-          isDeleted: false,
-          paidById: userId,
+        _sum: { amount: true },
+      }),
+      prisma.expenseShare.aggregate({
+        where: {
+          userId: { not: userId },
+          isPaid: false,
+          expense: {
+            isDeleted: false,
+            paidById: userId,
+          },
         },
-      },
-      _sum: { amount: true },
-    });
-
-    // This month's spending
-    const thisMonthSpending = await prisma.expense.aggregate({
-      where: {
-        isDeleted: false,
-        date: { gte: startOfMonth, lte: endOfMonth },
-        OR: [
-          { paidById: userId },
-          { shares: { some: { userId } } },
-        ],
-      },
-      _sum: { amount: true },
-      _count: true,
-    });
-
-    // Last month's spending (for comparison)
-    const lastMonthSpending = await prisma.expense.aggregate({
-      where: {
-        isDeleted: false,
-        date: { gte: startOfLastMonth, lte: endOfLastMonth },
-        OR: [
-          { paidById: userId },
-          { shares: { some: { userId } } },
-        ],
-      },
-      _sum: { amount: true },
-    });
-
-    // Category breakdown for this month
-    const categoryBreakdown = await prisma.expense.groupBy({
-      by: ['category'],
-      where: {
-        isDeleted: false,
-        date: { gte: startOfMonth, lte: endOfMonth },
-        OR: [
-          { paidById: userId },
-          { shares: { some: { userId } } },
-        ],
-      },
-      _sum: { amount: true },
-      _count: true,
-      orderBy: { _sum: { amount: 'desc' } },
-    });
-
-    // Groups count
-    const groupsCount = await prisma.groupMember.count({
-      where: { userId },
-    });
-
-    // Recent activities
-    const recentActivities = await prisma.activity.findMany({
-      where: {
-        OR: [
-          { userId },
-          { group: { members: { some: { userId } } } },
-        ],
-      },
-      include: {
-        user: { select: { id: true, name: true, avatarUrl: true } },
-        group: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-    });
-
-    // Pending settlements
-    const pendingSettlements = await prisma.settlement.count({
-      where: {
-        OR: [
-          { payerId: userId },
-          { payeeId: userId },
-        ],
-        status: 'PENDING',
-      },
-    });
-
-    const thisMonthTotal = Number(thisMonthSpending._sum.amount || 0);
-    const lastMonthTotal = Number(lastMonthSpending._sum.amount || 0);
-    const monthOverMonthChange = lastMonthTotal > 0
-      ? Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100)
-      : 0;
-
-    res.json({
-      success: true,
-      data: {
-        youOwe: Number(youOweData._sum.amount || 0),
-        owedToYou: Number(owedToYouData._sum.amount || 0),
-        totalBalance: Number(owedToYouData._sum.amount || 0) - Number(youOweData._sum.amount || 0),
-        thisMonth: {
-          total: thisMonthTotal,
-          count: thisMonthSpending._count,
-          change: monthOverMonthChange,
-        },
-        categoryBreakdown: categoryBreakdown.map((c) => ({
-          category: c.category,
-          amount: Number(c._sum.amount || 0),
-          count: c._count,
-        })),
-        groupsCount,
-        pendingSettlements,
-        recentActivities,
-      },
-    });
-  } catch (error: any) {
-    console.error('Dashboard summary error:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch dashboard data.' });
-  }
-});
-
-// GET /api/dashboard/spending-trend — Monthly spending trend (last 6 months)
-dashboardRouter.get('/spending-trend', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const userId = req.user!.id;
-    const months = [];
-    const now = new Date();
-
-    for (let i = 5; i >= 0; i--) {
-      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
-
-      const spending = await prisma.expense.aggregate({
+        _sum: { amount: true },
+      }),
+      prisma.expense.groupBy({
+        by: ['category'],
         where: {
           isDeleted: false,
-          date: { gte: start, lte: end },
+          date: { gte: startOfMonth, lte: endOfMonth },
           OR: [
             { paidById: userId },
             { shares: { some: { userId } } },
           ],
         },
         _sum: { amount: true },
-      });
+        _count: true,
+        orderBy: { _sum: { amount: 'desc' } },
+      }),
+      prisma.expense.aggregate({
+        where: {
+          isDeleted: false,
+          date: { gte: startOfLastMonth, lte: endOfLastMonth },
+          OR: [
+            { paidById: userId },
+            { shares: { some: { userId } } },
+          ],
+        },
+        _sum: { amount: true },
+      }),
+      prisma.groupMember.count({
+        where: { userId },
+      }),
+      prisma.activity.findMany({
+        where: {
+          OR: [
+            { userId },
+            { group: { members: { some: { userId } } } },
+          ],
+        },
+        include: {
+          user: { select: { id: true, name: true, avatarUrl: true } },
+          group: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      prisma.settlement.count({
+        where: {
+          OR: [
+            { payerId: userId },
+            { payeeId: userId },
+          ],
+          status: 'PENDING',
+        },
+      }),
+    ]);
 
-      months.push({
-        month: start.toLocaleString('default', { month: 'short', year: 'numeric' }),
-        amount: Number(spending._sum.amount || 0),
+    const youOweData = results[0].status === 'fulfilled' ? results[0].value : { _sum: { amount: 0 } };
+    const owedToYouData = results[1].status === 'fulfilled' ? results[1].value : { _sum: { amount: 0 } };
+    const categoryBreakdown = results[2].status === 'fulfilled' ? results[2].value : [];
+    const lastMonthSpending = results[3].status === 'fulfilled' ? results[3].value : { _sum: { amount: 0 } };
+    const groupsCount = results[4].status === 'fulfilled' ? results[4].value : 0;
+    const recentActivities = results[5].status === 'fulfilled' ? results[5].value : [];
+    const pendingSettlements = results[6].status === 'fulfilled' ? results[6].value : 0;
+
+    const thisMonthTotal = categoryBreakdown.reduce((sum, c) => sum + Number(c._sum.amount || 0), 0);
+    const thisMonthCount = categoryBreakdown.reduce((sum, c) => sum + (c._count || 0), 0);
+    const lastMonthTotal = Number(lastMonthSpending._sum?.amount || 0);
+    const monthOverMonthChange = lastMonthTotal > 0
+      ? Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100)
+      : 0;
+
+    const resultData = {
+      youOwe: Number(youOweData._sum?.amount || 0),
+      owedToYou: Number(owedToYouData._sum?.amount || 0),
+      totalBalance: Number(owedToYouData._sum?.amount || 0) - Number(youOweData._sum?.amount || 0),
+      thisMonth: {
+        total: thisMonthTotal,
+        count: thisMonthCount,
+        change: monthOverMonthChange,
+      },
+      categoryBreakdown: categoryBreakdown.map((c: any) => ({
+        category: c.category,
+        amount: Number(c._sum?.amount || 0),
+        count: c._count || 0,
+      })),
+      groupsCount,
+      pendingSettlements,
+      recentActivities,
+    };
+
+    dashboardCache.set(cacheKey, { data: resultData, expiresAt: Date.now() + 30000 });
+    res.json({ success: true, data: resultData });
+  } catch (error: any) {
+    console.error('Dashboard summary error:', error);
+    if (cached) {
+      res.json({ success: true, data: cached.data });
+      return;
+    }
+    res.status(500).json({ success: false, error: 'Failed to fetch dashboard data.' });
+  }
+});
+
+// GET /api/dashboard/spending-trend — Monthly spending trend (last 6 months, single query)
+dashboardRouter.get('/spending-trend', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const cacheKey = `trend:${userId}`;
+    const cached = dashboardCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      res.json({ success: true, data: cached.data });
+      return;
+    }
+
+    const now = new Date();
+    const monthRanges = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+      monthRanges.push({
+        label: start.toLocaleString('default', { month: 'short', year: 'numeric' }),
+        start,
+        end,
       });
     }
 
+    // Single query for the 6-month period instead of 6 separate roundtrips
+    const earliestDate = monthRanges[0].start;
+    const allExpenses = await prisma.expense.findMany({
+      where: {
+        isDeleted: false,
+        date: { gte: earliestDate },
+        OR: [
+          { paidById: userId },
+          { shares: { some: { userId } } },
+        ],
+      },
+      select: { date: true, amount: true },
+    });
+
+    const months = monthRanges.map((m) => {
+      const totalForMonth = allExpenses
+        .filter((e) => {
+          const d = new Date(e.date);
+          return d >= m.start && d <= m.end;
+        })
+        .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      return {
+        month: m.label,
+        amount: totalForMonth,
+      };
+    });
+
+    dashboardCache.set(cacheKey, { data: months, expiresAt: Date.now() + 15000 });
     res.json({ success: true, data: months });
   } catch (error: any) {
     console.error('Spending trend error:', error);

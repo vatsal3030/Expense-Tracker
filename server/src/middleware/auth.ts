@@ -14,6 +14,17 @@ export interface AuthenticatedRequest extends Request {
  * Authentication middleware that validates Supabase JWT tokens
  * and attaches the user to the request object.
  */
+// Fast in-memory token cache (3 minute TTL) to eliminate redundant network roundtrips to Supabase
+interface CachedUserSession {
+  user: {
+    id: string;
+    email: string;
+    supabaseId: string;
+  };
+  expiresAt: number;
+}
+const tokenCache = new Map<string, CachedUserSession>();
+
 export const authenticate = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -32,10 +43,19 @@ export const authenticate = async (
 
     const token = authHeader.split(' ')[1];
 
+    // Check high-speed in-memory cache first
+    const cached = tokenCache.get(token);
+    if (cached && cached.expiresAt > Date.now()) {
+      req.user = cached.user;
+      next();
+      return;
+    }
+
     // Verify token with Supabase
     const { data: { user: supabaseUser }, error } = await supabaseAdmin.auth.getUser(token);
 
     if (error || !supabaseUser) {
+      tokenCache.delete(token);
       res.status(401).json({
         success: false,
         error: 'Invalid or expired token. Please sign in again.',
@@ -62,18 +82,29 @@ export const authenticate = async (
         },
       });
     } else {
-      // Update last login
-      await prisma.user.update({
-        where: { id: dbUser.id },
-        data: { lastLoginAt: new Date() },
-      });
+      // Update last login timestamp asynchronously without blocking the request
+      const lastLogin = dbUser.lastLoginAt ? new Date(dbUser.lastLoginAt).getTime() : 0;
+      if (Date.now() - lastLogin > 1000 * 60 * 30) {
+        prisma.user.update({
+          where: { id: dbUser.id },
+          data: { lastLoginAt: new Date() },
+        }).catch((err) => console.error('Background lastLogin update error:', err));
+      }
     }
 
-    req.user = {
+    const userPayload = {
       id: dbUser.id,
       email: dbUser.email,
       supabaseId: supabaseUser.id,
     };
+
+    req.user = userPayload;
+
+    // Cache valid session for 3 minutes
+    tokenCache.set(token, {
+      user: userPayload,
+      expiresAt: Date.now() + 1000 * 60 * 3,
+    });
 
     next();
   } catch (error) {

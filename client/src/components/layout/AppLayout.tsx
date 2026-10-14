@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import Sidebar, { DRAWER_WIDTH, DRAWER_COLLAPSED_WIDTH } from './Sidebar';
 import Header from './Header';
+import MobileBottomNav from './MobileBottomNav';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -39,6 +40,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           ml: { md: `${drawerWidth}px` },
           mt: { xs: '64px', sm: '70px' },
           p: { xs: 2, sm: 3 },
+          pb: { xs: '84px', md: 3 },
           transition: theme.transitions.create(['width', 'margin'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
@@ -48,6 +50,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
       >
         {children}
       </Box>
+
+      {/* PWA Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </Box>
   );
 }

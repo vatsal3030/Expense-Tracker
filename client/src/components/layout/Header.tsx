@@ -28,7 +28,13 @@ import {
   Person as PersonIcon,
   Settings as SettingsIcon,
   Search as SearchIcon,
+  CheckCircle as CheckCircleIcon,
+  Receipt as ReceiptIcon,
+  Group as GroupIcon,
+  Warning as WarningIcon,
+  DoneAll as DoneAllIcon,
 } from '@mui/icons-material';
+import { Chip, Button } from '@mui/material';
 import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
 import { useRouter } from 'next/navigation';
@@ -45,6 +51,144 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
   const { profile, signOut } = useAuth();
   const { mode, toggleTheme } = useThemeMode();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [notifAnchorEl, setNotifAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const [notifications, setNotifications] = React.useState<any[]>([
+    {
+      id: '1',
+      title: 'Settlement Confirmed',
+      message: 'Sam Wilson confirmed receiving ₹4,200 via UPI.',
+      time: '5m ago',
+      isRead: false,
+      type: 'SETTLEMENT',
+      actionUrl: '/settlements',
+    },
+    {
+      id: '2',
+      title: 'New Expense Added',
+      message: 'Alex added "Beach Villa 3 Nights" (₹16,000) to Goa Weekend Trip.',
+      time: '1h ago',
+      isRead: false,
+      type: 'EXPENSE',
+      actionUrl: '/expenses',
+    },
+    {
+      id: '3',
+      title: 'Group Join Request',
+      message: 'Rahul Sharma requested to join "Flat 402".',
+      time: '3h ago',
+      isRead: false,
+      type: 'GROUP',
+      actionUrl: '/groups',
+    },
+    {
+      id: '4',
+      title: 'Budget Alert',
+      message: 'You have reached 82% of your monthly Dining budget limit.',
+      time: '1d ago',
+      isRead: true,
+      type: 'BUDGET',
+      actionUrl: '/budgets',
+    },
+  ]);
+
+  React.useEffect(() => {
+    if (profile) {
+      import('@/lib/api').then(({ notificationApi }) => {
+        notificationApi.list(20)
+          .then((res) => {
+            const serverNotifs = res.data?.data?.notifications;
+            if (serverNotifs && serverNotifs.length > 0) {
+              setNotifications(serverNotifs.map((n: any) => ({
+                id: n.id,
+                title: n.title,
+                message: n.message,
+                isRead: n.isRead,
+                type: n.type || 'SYSTEM',
+                data: n.data,
+                time: new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                actionUrl: n.type?.includes('EXPENSE') ? '/expenses' : n.type?.includes('SETTLEMENT') ? '/settlements' : '/groups',
+              })));
+            }
+          })
+          .catch(() => {});
+      });
+    }
+  }, [profile]);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const handleNotifOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setNotifAnchorEl(event.currentTarget);
+  };
+
+  const handleNotifClose = () => setNotifAnchorEl(null);
+
+  const handleMarkAllRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    try {
+      const { notificationApi } = await import('@/lib/api');
+      await notificationApi.markAllRead();
+    } catch {}
+  };
+
+  const handleClearNotifs = async () => {
+    setNotifications([]);
+    handleNotifClose();
+    try {
+      const { notificationApi } = await import('@/lib/api');
+      await notificationApi.clear();
+    } catch {}
+  };
+
+  const handleNotifClick = async (item: any) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
+    );
+    handleNotifClose();
+    try {
+      const { notificationApi } = await import('@/lib/api');
+      await notificationApi.markRead(item.id);
+    } catch {}
+    if (item.actionUrl) router.push(item.actionUrl);
+  };
+
+  const handleApproveJoin = async (e: React.MouseEvent, item: any) => {
+    e.stopPropagation();
+    try {
+      const { groupApi, notificationApi } = await import('@/lib/api');
+      if (item.data?.groupId && item.data?.requesterId) {
+        await groupApi.addMember(item.data.groupId, { userId: item.data.requesterId });
+      }
+      await notificationApi.markRead(item.id);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === item.id
+            ? { ...n, isRead: true, message: `${n.message} (Approved)` }
+            : n
+        )
+      );
+    } catch (err: any) {
+      console.error('Approve join error:', err);
+    }
+  };
+
+  const handleRejectJoin = async (e: React.MouseEvent, item: any) => {
+    e.stopPropagation();
+    try {
+      const { notificationApi } = await import('@/lib/api');
+      await notificationApi.markRead(item.id);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === item.id
+            ? { ...n, isRead: true, message: `${n.message} (Declined)` }
+            : n
+        )
+      );
+    } catch (err: any) {
+      console.error('Reject join error:', err);
+    }
+  };
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -147,7 +291,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 py: 0.5,
                 mr: 1,
                 borderRadius: 20,
-                border: '1px solid #1e293b',
+                border: `1px solid ${theme.palette.divider}`,
                 bgcolor: 'rgba(16,185,129,0.08)',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -185,9 +329,9 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
 
           {/* Notifications */}
           <Tooltip title="Notifications">
-            <IconButton>
+            <IconButton onClick={handleNotifOpen}>
               <Badge
-                badgeContent={3}
+                badgeContent={unreadCount}
                 color="error"
                 sx={{
                   '& .MuiBadge-badge': {
@@ -252,17 +396,176 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           <Divider />
           <MenuItem onClick={() => { handleMenuClose(); router.push('/settings'); }}>
             <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
-            <ListItemText>Profile</ListItemText>
+            <ListItemText primary="Profile" />
           </MenuItem>
           <MenuItem onClick={() => { handleMenuClose(); router.push('/settings'); }}>
             <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
-            <ListItemText>Settings</ListItemText>
+            <ListItemText primary="Settings" />
           </MenuItem>
           <Divider />
           <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
             <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
-            <ListItemText>Sign Out</ListItemText>
+            <ListItemText primary="Sign Out" />
           </MenuItem>
+        </Menu>
+
+        {/* Notifications Dropdown */}
+        <Menu
+          anchorEl={notifAnchorEl}
+          open={Boolean(notifAnchorEl)}
+          onClose={handleNotifClose}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          slotProps={{
+            paper: {
+              sx: {
+                mt: 1.5,
+                width: { xs: 320, sm: 380 },
+                maxHeight: 480,
+                borderRadius: 3,
+                boxShadow: '0 12px 48px rgba(0,0,0,0.2)',
+                border: `1px solid ${theme.palette.divider}`,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+              },
+            },
+          }}
+        >
+          <Box
+            sx={{
+              px: 2.5,
+              py: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: `1px solid ${theme.palette.divider}`,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="subtitle1" fontWeight={700}>
+                Notifications
+              </Typography>
+              {unreadCount > 0 && (
+                <Chip
+                  label={`${unreadCount} new`}
+                  size="small"
+                  color="primary"
+                  sx={{ height: 20, fontSize: '0.7rem', fontWeight: 700 }}
+                />
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <Tooltip title="Mark all as read">
+                <IconButton size="small" onClick={handleMarkAllRead}>
+                  <DoneAllIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
+
+          <Box sx={{ flex: 1, overflowY: 'auto' }}>
+            {notifications.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  All caught up! No notifications.
+                </Typography>
+              </Box>
+            ) : (
+              notifications.map((item) => (
+                <MenuItem
+                  key={item.id}
+                  onClick={() => handleNotifClick(item)}
+                  sx={{
+                    py: 1.5,
+                    px: 2,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1.5,
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+                    bgcolor: item.isRead ? 'transparent' : alpha(theme.palette.primary.main, 0.04),
+                    whiteSpace: 'normal',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      bgcolor:
+                        item.type === 'SETTLEMENT'
+                          ? alpha(theme.palette.success.main, 0.12)
+                          : item.type === 'EXPENSE'
+                          ? alpha(theme.palette.primary.main, 0.12)
+                          : item.type === 'GROUP' || item.type === 'GROUP_INVITE'
+                          ? alpha('#0ea5e9', 0.12)
+                          : alpha(theme.palette.warning.main, 0.12),
+                      color:
+                        item.type === 'SETTLEMENT'
+                          ? theme.palette.success.main
+                          : item.type === 'EXPENSE'
+                          ? theme.palette.primary.main
+                          : item.type === 'GROUP' || item.type === 'GROUP_INVITE'
+                          ? '#0ea5e9'
+                          : theme.palette.warning.main,
+                    }}
+                  >
+                    {item.type === 'SETTLEMENT' && <CheckCircleIcon sx={{ fontSize: 18 }} />}
+                    {item.type === 'EXPENSE' && <ReceiptIcon sx={{ fontSize: 18 }} />}
+                    {(item.type === 'GROUP' || item.type === 'GROUP_INVITE') && <GroupIcon sx={{ fontSize: 18 }} />}
+                    {item.type === 'BUDGET' && <WarningIcon sx={{ fontSize: 18 }} />}
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.3 }}>
+                      <Typography variant="body2" fontWeight={item.isRead ? 600 : 700} sx={{ fontSize: '0.825rem' }}>
+                        {item.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                        {item.time}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                      {item.message}
+                    </Typography>
+                    {item.type === 'GROUP_INVITE' && !item.isRead && item.data?.groupId && (
+                      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="primary"
+                          onClick={(e) => handleApproveJoin(e, item)}
+                          sx={{ fontSize: '0.7rem', py: 0.25, px: 1.25, minHeight: 24, borderRadius: 1 }}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="inherit"
+                          onClick={(e) => handleRejectJoin(e, item)}
+                          sx={{ fontSize: '0.7rem', py: 0.25, px: 1.25, minHeight: 24, borderRadius: 1 }}
+                        >
+                          Decline
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
+                  {!item.isRead && (
+                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'primary.main', mt: 1, flexShrink: 0 }} />
+                  )}
+                </MenuItem>
+              ))
+            )}
+          </Box>
+          <Box sx={{ p: 1, textAlign: 'center', borderTop: `1px solid ${theme.palette.divider}` }}>
+            <Button size="small" fullWidth onClick={handleClearNotifs} sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+              Clear all notifications
+            </Button>
+          </Box>
         </Menu>
       </Toolbar>
     </AppBar>

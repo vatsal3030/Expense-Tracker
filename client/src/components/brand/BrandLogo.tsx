@@ -107,11 +107,11 @@ export default function BrandLogo({
       {logoMark}
       {showText && (
         <div className="flex flex-col justify-center leading-none">
-          <div className={cn("font-heading font-extrabold tracking-tight flex items-baseline gap-0.5", textStyles, textColor || "text-slate-100")}>
+          <div className={cn("font-heading font-extrabold tracking-tight flex items-baseline gap-0.5", textStyles, textColor || "text-slate-900 dark:text-slate-100")}>
             <span>Fair</span>
             <span className="text-emerald-500 font-black">Share</span>
           </div>
-          <span className="font-heading text-[10px] uppercase font-bold tracking-widest text-slate-400 mt-0.5">
+          <span className="font-heading text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 mt-0.5">
             Smart Expense SaaS
           </span>
         </div>

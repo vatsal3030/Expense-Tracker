@@ -11,15 +11,19 @@ const bodyFontFamily = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", 
 const baseTheme = {
   typography: {
     fontFamily: bodyFontFamily,
-    h1: { fontFamily: headingFontFamily, fontWeight: 800, letterSpacing: '-0.025em' },
-    h2: { fontFamily: headingFontFamily, fontWeight: 700, letterSpacing: '-0.02em' },
-    h3: { fontFamily: headingFontFamily, fontWeight: 700, letterSpacing: '-0.015em' },
-    h4: { fontFamily: headingFontFamily, fontWeight: 600, letterSpacing: '-0.01em' },
-    h5: { fontFamily: headingFontFamily, fontWeight: 600, letterSpacing: '-0.01em' },
-    h6: { fontFamily: headingFontFamily, fontWeight: 600, letterSpacing: '-0.005em' },
-    subtitle1: { fontWeight: 500, letterSpacing: '0.005em' },
-    subtitle2: { fontWeight: 500, letterSpacing: '0.005em' },
-    button: { fontFamily: headingFontFamily, fontWeight: 600, textTransform: 'none' as const, letterSpacing: '0.01em' },
+    fontSize: 13.5,
+    h1: { fontFamily: headingFontFamily, fontSize: '1.85rem', fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.2 },
+    h2: { fontFamily: headingFontFamily, fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.25 },
+    h3: { fontFamily: headingFontFamily, fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.015em', lineHeight: 1.3 },
+    h4: { fontFamily: headingFontFamily, fontSize: '1.1rem', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.35 },
+    h5: { fontFamily: headingFontFamily, fontSize: '0.95rem', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.4 },
+    h6: { fontFamily: headingFontFamily, fontSize: '0.875rem', fontWeight: 600, letterSpacing: '-0.005em', lineHeight: 1.4 },
+    body1: { fontSize: '0.875rem', lineHeight: 1.5, letterSpacing: '0.005em' },
+    body2: { fontSize: '0.8125rem', lineHeight: 1.5, letterSpacing: '0.005em' },
+    subtitle1: { fontSize: '0.875rem', fontWeight: 500, letterSpacing: '0.005em' },
+    subtitle2: { fontSize: '0.8125rem', fontWeight: 600, letterSpacing: '0.005em' },
+    caption: { fontSize: '0.725rem', lineHeight: 1.4, letterSpacing: '0.01em' },
+    button: { fontFamily: headingFontFamily, fontSize: '0.8125rem', fontWeight: 600, textTransform: 'none' as const, letterSpacing: '0.01em' },
   },
   shape: {
     borderRadius: 12,
@@ -184,6 +188,15 @@ export const darkTheme = responsiveFontSizes(
           },
         },
       },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            '& fieldset': { borderColor: '#1e293b' },
+            '&:hover fieldset': { borderColor: '#334155' },
+            '&.Mui-focused fieldset': { borderColor: '#10b981', borderWidth: '1.5px' },
+          },
+        },
+      },
     },
   } as any)
 );
@@ -253,6 +266,15 @@ export const lightTheme = responsiveFontSizes(
           paper: {
             backgroundColor: '#ffffff',
             borderRight: '1px solid #e2e8f0',
+          },
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            '& fieldset': { borderColor: '#e2e8f0' },
+            '&:hover fieldset': { borderColor: '#94a3b8' },
+            '&.Mui-focused fieldset': { borderColor: '#059669', borderWidth: '1.5px' },
           },
         },
       },

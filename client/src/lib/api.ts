@@ -90,11 +90,14 @@ export const groupApi = {
   get: (id: string) => api.get(`/groups/${id}`),
   create: (data: any) => api.post('/groups', data),
   update: (id: string, data: any) => api.put(`/groups/${id}`, data),
-  addMember: (groupId: string, userId: string) =>
-    api.post(`/groups/${groupId}/members`, { userId }),
+  addMember: (groupId: string, payload: { userId?: string; email?: string; phone?: string } | string) =>
+    api.post(`/groups/${groupId}/members`, typeof payload === 'string' ? { userId: payload } : payload),
   removeMember: (groupId: string, userId: string) =>
     api.delete(`/groups/${groupId}/members/${userId}`),
   getBalances: (groupId: string) => api.get(`/groups/${groupId}/balances`),
+  getInviteLink: (groupId: string) => api.get(`/groups/${groupId}/invite`),
+  getPublicInfo: (groupId: string) => api.get(`/groups/public/${groupId}`),
+  join: (groupId: string, data?: { passcode?: string }) => api.post(`/groups/${groupId}/join`, data || {}),
 };
 
 // Settlements
@@ -122,9 +125,11 @@ export const activityApi = {
 export const friendApi = {
   list: () => api.get('/friends'),
   pending: () => api.get('/friends/pending'),
-  request: (friendId: string) => api.post('/friends/request', { friendId }),
+  request: (payload: { friendId?: string; email?: string; phone?: string } | string) =>
+    api.post('/friends/request', typeof payload === 'string' ? { friendId: payload } : payload),
   accept: (id: string) => api.patch(`/friends/${id}/accept`),
   remove: (id: string) => api.delete(`/friends/${id}`),
+  getInviteLink: () => api.get('/friends/invite-link'),
 };
 
 // Users
@@ -133,3 +138,12 @@ export const userApi = {
   updateProfile: (data: any) => api.put('/users/profile', data),
   search: (query: string) => api.get('/users/search', { params: { q: query } }),
 };
+
+// Notifications
+export const notificationApi = {
+  list: (limit?: number) => api.get(`/notifications${limit ? `?limit=${limit}` : ''}`),
+  markRead: (id: string) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.post('/notifications/mark-all-read'),
+  clear: () => api.delete('/notifications'),
+};
+
