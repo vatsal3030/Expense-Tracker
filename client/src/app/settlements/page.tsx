@@ -6,11 +6,12 @@ import {
   ListItemText, Avatar, Chip, Skeleton, useTheme, alpha, IconButton, Divider,
   Tabs, Tab, Pagination,
 } from '@mui/material';
-import { Check, Close, ArrowForward, Handshake } from '@mui/icons-material';
+import { Check, Close, ArrowForward, Handshake, QrCode2 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { settlementApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 
 export default function SettlementsPage() {
   const theme = useTheme();
@@ -21,6 +22,16 @@ export default function SettlementsPage() {
   const [tab, setTab] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [upiModal, setUpiModal] = useState<{
+    open: boolean;
+    payeeName: string;
+    amount: number;
+    settlementId?: string;
+  }>({
+    open: false,
+    payeeName: '',
+    amount: 0,
+  });
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
@@ -146,6 +157,34 @@ export default function SettlementsPage() {
                         />
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Typography variant="h6" fontWeight={700}>{formatCurrency(Number(s.amount))}</Typography>
+                          {s.status === 'PENDING' && (
+                            <Button
+                              size="small"
+                              variant="contained"
+                              startIcon={<QrCode2 fontSize="small" />}
+                              onClick={() =>
+                                setUpiModal({
+                                  open: true,
+                                  payeeName: s.payee?.name || 'Friend',
+                                  amount: Number(s.amount),
+                                  settlementId: s.id,
+                                })
+                              }
+                              sx={{
+                                borderRadius: 2,
+                                fontWeight: 600,
+                                fontSize: '0.75rem',
+                                py: 0.5,
+                                px: 1.5,
+                                bgcolor: '#059669',
+                                color: '#ffffff',
+                                boxShadow: '0 2px 8px rgba(5,150,105,0.25)',
+                                '&:hover': { bgcolor: '#047857' },
+                              }}
+                            >
+                              Pay UPI
+                            </Button>
+                          )}
                           {canConfirm && (
                             <>
                               <IconButton size="small" onClick={() => handleConfirm(s.id)} sx={{ color: 'success.main', bgcolor: alpha(theme.palette.success.main, 0.1) }}>
@@ -171,6 +210,19 @@ export default function SettlementsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Instant UPI Payment Modal */}
+        <UpiPaymentModal
+          open={upiModal.open}
+          onClose={() => setUpiModal((prev) => ({ ...prev, open: false }))}
+          payeeName={upiModal.payeeName}
+          amount={upiModal.amount}
+          onConfirmSettlement={() => {
+            if (upiModal.settlementId) {
+              handleConfirm(upiModal.settlementId);
+            }
+          }}
+        />
       </Box>
     </AppLayout>
   );

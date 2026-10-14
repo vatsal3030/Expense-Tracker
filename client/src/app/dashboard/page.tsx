@@ -19,6 +19,7 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  Button,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -30,6 +31,8 @@ import {
   Receipt,
   Group,
   Handshake,
+  EmojiEvents,
+  Insights,
 } from '@mui/icons-material';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
@@ -234,15 +237,143 @@ export default function DashboardPage() {
           ))}
         </Grid>
 
+        {/* FairScore & Telemetry Spotlight */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Card
+              sx={{
+                p: 2.5,
+                borderRadius: 3.5,
+                bgcolor: '#0f172a',
+                border: '1px solid #1e293b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 2,
+                cursor: 'pointer',
+                transition: 'border-color 0.2s',
+                '&:hover': { borderColor: '#10b981' },
+              }}
+              onClick={() => router.push('/fairscore')}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 3,
+                    bgcolor: 'rgba(16,185,129,0.12)',
+                    color: '#10b981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <EmojiEvents fontSize="medium" />
+                </Box>
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f8fafc' }}>
+                      FairScore: 880 / 1000
+                    </Typography>
+                    <Chip label="Diamond Tier" size="small" sx={{ bgcolor: 'rgba(52,211,153,0.12)', color: '#34d399', fontWeight: 700, height: 22, fontSize: '0.7rem' }} />
+                  </Box>
+                  <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                    You are in the top 8% of reliable friends. 4 badges unlocked!
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
+                  <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontWeight: 600 }}>
+                    CURRENT STREAK
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ color: '#f59e0b', fontWeight: 800 }}>
+                    🔥 14 Days Active
+                  </Typography>
+                </Box>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  endIcon={<ArrowForward fontSize="small" />}
+                  sx={{
+                    borderColor: '#334155',
+                    color: '#f8fafc',
+                    borderRadius: 2.5,
+                    fontWeight: 600,
+                    '&:hover': { borderColor: '#10b981', bgcolor: 'rgba(16,185,129,0.06)' },
+                  }}
+                >
+                  View Karma
+                </Button>
+              </Box>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card
+              sx={{
+                p: 2.5,
+                borderRadius: 3.5,
+                bgcolor: '#0f172a',
+                border: '1px solid #1e293b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                height: '100%',
+                cursor: 'pointer',
+                transition: 'border-color 0.2s',
+                '&:hover': { borderColor: '#0ea5e9' },
+              }}
+              onClick={() => router.push('/analytics')}
+            >
+              <Box>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
+                  Financial Telemetry
+                </Typography>
+                <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#f8fafc', mt: 0.5 }}>
+                  Spending Velocity
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#34d399', fontWeight: 600 }}>
+                  94.2% reimbursement efficiency
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  p: 1.25,
+                  borderRadius: 2.5,
+                  bgcolor: 'rgba(14,165,233,0.12)',
+                  color: '#0ea5e9',
+                  display: 'flex',
+                }}
+              >
+                <Insights />
+              </Box>
+            </Card>
+          </Grid>
+        </Grid>
+
         {/* Charts Row */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {/* Spending Trend */}
           <Grid size={{ xs: 12, md: 8 }}>
             <Card sx={{ height: '100%' }}>
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>
-                  Spending Trend
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" fontWeight={700}>
+                    Spending Trend
+                  </Typography>
+                  <Button
+                    size="small"
+                    endIcon={<ArrowForward fontSize="small" />}
+                    onClick={() => router.push('/analytics')}
+                    sx={{ color: '#10b981', fontWeight: 600, fontSize: '0.8rem' }}
+                  >
+                    Deep Analytics
+                  </Button>
+                </Box>
                 {loading ? (
                   <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 3 }} />
                 ) : (

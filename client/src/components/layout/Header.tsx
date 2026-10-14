@@ -135,6 +135,37 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
 
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {/* FairScore & Streak Badge */}
+          <Tooltip title="FairScore: 880 (Diamond Tier) • 14-day streak">
+            <Box
+              onClick={() => router.push('/fairscore')}
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+                alignItems: 'center',
+                gap: 1,
+                px: 1.5,
+                py: 0.5,
+                mr: 1,
+                borderRadius: 20,
+                border: '1px solid #1e293b',
+                bgcolor: 'rgba(16,185,129,0.08)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: '#10b981',
+                  bgcolor: 'rgba(16,185,129,0.15)',
+                },
+              }}
+            >
+              <Typography variant="caption" sx={{ color: '#34d399', fontWeight: 700 }}>
+                ⭐ 880
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#f59e0b', fontWeight: 700 }}>
+                🔥 14d
+              </Typography>
+            </Box>
+          </Tooltip>
+
           {/* Theme Toggle */}
           <Tooltip title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
             <IconButton

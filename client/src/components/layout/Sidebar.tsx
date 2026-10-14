@@ -28,6 +28,8 @@ import {
   Settings as SettingsIcon,
   ChevronLeft as CollapseIcon,
   ChevronRight as ExpandIcon,
+  Insights as AnalyticsIcon,
+  EmojiEvents as FairScoreIcon,
 } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
@@ -45,6 +47,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+  { label: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
+  { label: 'FairScore', icon: <FairScoreIcon />, path: '/fairscore' },
   { label: 'Expenses', icon: <ExpenseIcon />, path: '/expenses' },
   { label: 'Groups', icon: <GroupIcon />, path: '/groups' },
   { label: 'Settlements', icon: <SettlementIcon />, path: '/settlements' },
