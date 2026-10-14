@@ -1,0 +1,37 @@
+{
+  "name": "fairshare",
+  "version": "1.0.0",
+  "description": "FairShare — Production-ready expense splitting & tracking SaaS platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "concurrently \"npm run build:client\" \"npm run build:server\"",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "start": "concurrently \"npm run start:client\" \"npm run start:server\"",
+    "start:client": "cd client && npm start",
+    "start:server": "cd server && npm start",
+    "lint": "concurrently \"npm run lint:client\" \"npm run lint:server\"",
+    "lint:client": "cd client && npm run lint",
+    "lint:server": "cd server && npm run lint",
+    "db:migrate": "cd server && npx prisma migrate dev",
+    "db:generate": "cd server && npx prisma generate",
+    "db:push": "cd server && npx prisma db push",
+    "db:studio": "cd server && npx prisma studio",
+    "postinstall": "cd client && npm install && cd ../server && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vatsal3030/Expense-Tracker.git"
+  },
+  "author": "Vatsal",
+  "license": "MIT"
+}

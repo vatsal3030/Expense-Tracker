@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+client/.next/
+client/out/
+
+# Production builds
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Prisma
+server/prisma/*.db
+server/prisma/migrations/**/migration_lock.toml
+
+# PWA
+client/public/sw.js
+client/public/workbox-*.js
+client/public/sw.js.map
+client/public/workbox-*.js.map
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+*.log
+*.pid
+*.seed
+*.pid.lock
