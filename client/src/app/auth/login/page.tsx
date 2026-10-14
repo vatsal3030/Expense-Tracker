@@ -45,7 +45,7 @@ function LoginForm() {
     if (!authLoading && user) {
       router.push(redirectTarget);
     }
-  }, [user, authLoading, router, redirectTarget]);
+  }, [user?.id, authLoading, router, redirectTarget]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

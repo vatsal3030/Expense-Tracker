@@ -45,7 +45,7 @@ export default function SignupPage() {
     if (!authLoading && user) {
       router.push('/dashboard');
     }
-  }, [user, authLoading, router]);
+  }, [user?.id, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
@@ -35,6 +35,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const userRef = useRef<User | null>(null);
+  const sessionRef = useRef<Session | null>(null);
+
   const fetchProfile = useCallback(async (accessToken: string) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/me`, {
@@ -56,7 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
+        sessionRef.current = currentSession;
         setSession(currentSession);
+        userRef.current = currentSession?.user ?? null;
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.access_token) {
@@ -74,16 +79,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
+        const prevUserId = userRef.current?.id;
+        const nextUserId = newSession?.user?.id;
 
-        if (newSession?.access_token) {
-          await fetchProfile(newSession.access_token);
-        } else {
+        // User signed out
+        if (event === 'SIGNED_OUT' || !nextUserId) {
+          userRef.current = null;
+          sessionRef.current = null;
+          setUser(null);
           setProfile(null);
+          setSession(null);
+          return;
         }
 
-        if (event === 'SIGNED_OUT') {
+        // Keep current session token fresh in state & ref
+        sessionRef.current = newSession;
+        setSession(newSession);
+
+        // If the user identity is the same (e.g. tab switch, window focus, periodic token refresh)
+        if (prevUserId === nextUserId) {
+          // DO NOT call setUser(...) with a new object instance or re-fetch profile!
+          // This keeps the user & profile references completely stable across tab switches,
+          // preventing all pages from re-rendering and re-fetching.
+          return;
+        }
+
+        // Only when the user actually changed (e.g. newly signed in user)
+        userRef.current = newSession.user;
+        setUser(newSession.user);
+
+        if (newSession.access_token) {
+          await fetchProfile(newSession.access_token);
+        } else {
           setProfile(null);
         }
       }

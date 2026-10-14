@@ -133,14 +133,18 @@ export default function ExpensesPage() {
     setForm((f) => ({ ...f, date: new Date().toISOString().split('T')[0] }));
   }, []);
 
+  const hasLoadedExpensesRef = React.useRef(false);
+
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
-  }, [user, authLoading, router]);
+  }, [user?.id, authLoading, router]);
 
   // Fetch expenses with all active filters
   const fetchExpenses = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedExpensesRef.current) {
+        setLoading(true);
+      }
       const params: Record<string, any> = {
         page,
         limit: 15,
@@ -176,6 +180,7 @@ export default function ExpensesPage() {
         setTotalPages(res.data.pagination?.totalPages || 1);
         setTotalCount(res.data.pagination?.total || res.data.data.length);
       }
+      hasLoadedExpensesRef.current = true;
     } catch (error) {
       console.error('Fetch expenses error:', error);
     } finally {
@@ -184,14 +189,14 @@ export default function ExpensesPage() {
   }, [page, searchQuery, filterCategory, filterGroup, filterSplitType, filterDatePreset, sortBy, minAmount, maxAmount]);
 
   useEffect(() => {
-    if (user) fetchExpenses();
-  }, [user, fetchExpenses]);
+    if (user?.id) fetchExpenses();
+  }, [user?.id, fetchExpenses]);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       groupApi.list().then((res) => setGroups(res.data.data || [])).catch(console.error);
     }
-  }, [user]);
+  }, [user?.id]);
 
   // Fast Optimistic UI Creation (0ms UI lag strategy)
   const handleCreate = async () => {

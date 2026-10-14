@@ -35,11 +35,11 @@ export default function BudgetsPage() {
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
-  }, [user, authLoading, router]);
+  }, [user?.id, authLoading, router]);
 
   useEffect(() => {
-    if (user) fetchBudgets();
-  }, [user]);
+    if (user?.id) fetchBudgets();
+  }, [user?.id]);
 
   const fetchBudgets = async () => {
     try {

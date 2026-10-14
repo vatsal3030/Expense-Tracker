@@ -63,15 +63,19 @@ export default function SettlementsPage() {
     amount: 0,
   });
 
+  const hasLoadedSettlementsRef = React.useRef(false);
+
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
-  }, [user, authLoading, router]);
+  }, [user?.id, authLoading, router]);
 
   const statusFilter = ['', 'PENDING', 'CONFIRMED'][tab];
 
   const fetchSettlements = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedSettlementsRef.current) {
+        setLoading(true);
+      }
       const params: Record<string, any> = { page, limit: 15 };
       if (statusFilter) params.status = statusFilter;
 
@@ -87,6 +91,7 @@ export default function SettlementsPage() {
       if (simplifiedRes.status === 'fulfilled') {
         setSimplifiedData(simplifiedRes.value.data?.data || null);
       }
+      hasLoadedSettlementsRef.current = true;
     } catch (error) {
       console.error('Fetch settlements error:', error);
     } finally {
@@ -95,8 +100,8 @@ export default function SettlementsPage() {
   }, [page, statusFilter]);
 
   useEffect(() => {
-    if (user) fetchSettlements();
-  }, [user, fetchSettlements]);
+    if (user?.id) fetchSettlements();
+  }, [user?.id, fetchSettlements]);
 
   // Fast optimistic confirmation (0ms UI lag)
   const handleConfirm = async (id: string) => {

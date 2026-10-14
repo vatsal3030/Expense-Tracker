@@ -131,15 +131,15 @@ function NewExpenseContent() {
   // Auth redirect
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
-  }, [user, authLoading, router]);
+  }, [user?.id, authLoading, router]);
 
   // Initial Data Load (Runs once when user is authenticated)
   useEffect(() => {
-    if (user && !hasLoadedInitialRef.current) {
+    if (user?.id && !hasLoadedInitialRef.current) {
       hasLoadedInitialRef.current = true;
       loadInitialData();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const loadInitialData = async () => {
     try {

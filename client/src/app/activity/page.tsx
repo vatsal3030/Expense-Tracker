@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Avatar, List, ListItem, ListItemAvatar,
   ListItemText, Divider, Skeleton, useTheme, alpha, Pagination, Chip,
@@ -39,16 +39,21 @@ export default function ActivityPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'EXPENSES' | 'SETTLEMENTS' | 'GROUPS' | 'BUDGETS'>('ALL');
 
+  const hasLoadedActivitiesRef = useRef(false);
+
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
-  }, [user, authLoading, router]);
+  }, [user?.id, authLoading, router]);
 
   const fetchActivities = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedActivitiesRef.current) {
+        setLoading(true);
+      }
       const res = await activityApi.list({ page, limit: 25 });
       setActivities(res.data?.data || []);
       setTotalPages(res.data?.pagination?.totalPages || 1);
+      hasLoadedActivitiesRef.current = true;
     } catch (error) {
       console.error('Fetch activities error:', error);
     } finally {
@@ -57,8 +62,8 @@ export default function ActivityPage() {
   }, [page]);
 
   useEffect(() => {
-    if (user) fetchActivities();
-  }, [user, fetchActivities]);
+    if (user?.id) fetchActivities();
+  }, [user?.id, fetchActivities]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);

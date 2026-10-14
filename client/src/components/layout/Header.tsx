@@ -114,7 +114,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           .catch(() => {});
       });
     }
-  }, [profile]);
+  }, [profile?.id]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 

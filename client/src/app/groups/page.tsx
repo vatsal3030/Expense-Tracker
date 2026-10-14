@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, Grid, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, MenuItem, IconButton, Avatar,
@@ -53,19 +53,24 @@ export default function GroupsPage() {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !user) router.push('/auth/login');
-  }, [user, authLoading, router]);
+  const hasLoadedGroupsRef = useRef(false);
 
   useEffect(() => {
-    if (user) fetchGroups();
-  }, [user]);
+    if (!authLoading && !user) router.push('/auth/login');
+  }, [user?.id, authLoading, router]);
+
+  useEffect(() => {
+    if (user?.id) fetchGroups();
+  }, [user?.id]);
 
   const fetchGroups = async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedGroupsRef.current) {
+        setLoading(true);
+      }
       const res = await groupApi.list();
       setGroups(res.data?.data || []);
+      hasLoadedGroupsRef.current = true;
     } catch (error) {
       console.error('Fetch groups error:', error);
     } finally {

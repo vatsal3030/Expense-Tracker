@@ -41,12 +41,15 @@ export default function SettingsPage() {
   const [otpSuccessToast, setOtpSuccessToast] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
 
-  useEffect(() => {
-    if (!authLoading && !user) router.push('/auth/login');
-  }, [user, authLoading, router]);
+  const hasLoadedProfileRef = React.useRef(false);
 
   useEffect(() => {
-    if (profile) {
+    if (!authLoading && !user) router.push('/auth/login');
+  }, [user?.id, authLoading, router]);
+
+  useEffect(() => {
+    if (profile && !hasLoadedProfileRef.current) {
+      hasLoadedProfileRef.current = true;
       setForm({
         name: profile.name || '',
         phone: profile.phone || '',

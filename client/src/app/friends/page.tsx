@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, Avatar, List, ListItem,
   ListItemAvatar, ListItemText, ListItemSecondaryAction, Divider,
@@ -39,23 +39,28 @@ export default function FriendsPage() {
   const [toastMessage, setToastMessage] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !user) router.push('/auth/login');
-  }, [user, authLoading, router]);
+  const hasLoadedFriendsRef = useRef(false);
 
   useEffect(() => {
-    if (user) fetchData();
-  }, [user]);
+    if (!authLoading && !user) router.push('/auth/login');
+  }, [user?.id, authLoading, router]);
+
+  useEffect(() => {
+    if (user?.id) fetchData();
+  }, [user?.id]);
 
   const fetchData = async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedFriendsRef.current) {
+        setLoading(true);
+      }
       const [friendsRes, pendingRes] = await Promise.all([
         friendApi.list(),
         friendApi.pending(),
       ]);
       setFriends(friendsRes.data?.data || []);
       setPending(pendingRes.data?.data || []);
+      hasLoadedFriendsRef.current = true;
     } catch (error) {
       console.error('Fetch friends error:', error);
     } finally {

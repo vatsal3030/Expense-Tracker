@@ -27,7 +27,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       const redirectUrl = `/auth/login?redirect=${encodeURIComponent(pathname || '/dashboard')}`;
       router.push(redirectUrl);
     }
-  }, [user, loading, pathname, router]);
+  }, [user?.id, loading, pathname, router]);
 
   // While auth session is restoring from Supabase, show the animated category loader
   if (loading) {

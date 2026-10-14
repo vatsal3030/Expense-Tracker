@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState, useMemo } from 'react';
+import React, { Suspense, useEffect, useState, useMemo, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, Avatar, AvatarGroup, Chip,
   List, ListItem, ListItemAvatar, ListItemText, Divider, Button,
@@ -54,23 +54,28 @@ function GroupDetailContent() {
     amount: 0,
   });
 
-  useEffect(() => {
-    if (!authLoading && !user) router.push('/auth/login');
-  }, [user, authLoading, router]);
+  const hasLoadedGroupRef = useRef(false);
 
   useEffect(() => {
-    if (user && params.id) fetchGroup();
-  }, [user, params.id]);
+    if (!authLoading && !user) router.push('/auth/login');
+  }, [user?.id, authLoading, router]);
+
+  useEffect(() => {
+    if (user?.id && params.id) fetchGroup();
+  }, [user?.id, params.id]);
 
   const fetchGroup = async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedGroupRef.current) {
+        setLoading(true);
+      }
       const [groupRes, balancesRes] = await Promise.all([
         groupApi.get(params.id as string),
         groupApi.getBalances(params.id as string),
       ]);
       setGroup(groupRes.data?.data);
       setBalances(balancesRes.data?.data);
+      hasLoadedGroupRef.current = true;
     } catch (error) {
       console.error('Fetch group error:', error);
     } finally {

@@ -98,17 +98,20 @@ export default function DashboardPage() {
     setMounted(true);
   }, []);
 
+  const hasLoadedDashboardRef = React.useRef(false);
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth/login');
     }
-  }, [user, authLoading, router]);
+  }, [user?.id, authLoading, router]);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id && !hasLoadedDashboardRef.current) {
+      hasLoadedDashboardRef.current = true;
       fetchDashboard();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const fetchDashboard = async (retry = true) => {
     try {
