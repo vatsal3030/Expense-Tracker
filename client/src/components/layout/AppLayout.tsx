@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
+import { useRouter, usePathname } from 'next/navigation';
 import Sidebar, { DRAWER_WIDTH, DRAWER_COLLAPSED_WIDTH } from './Sidebar';
 import Header from './Header';
 import MobileBottomNav from './MobileBottomNav';
+import { useAuth } from '@/providers/AuthProvider';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -12,9 +15,29 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const theme = useTheme();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, loading } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      const redirectUrl = `/auth/login?redirect=${encodeURIComponent(pathname || '/dashboard')}`;
+      router.push(redirectUrl);
+    }
+  }, [user, loading, pathname, router]);
+
+  // While auth session is restoring from Supabase, show the animated category loader
+  if (loading) {
+    return <CategoryCycleLoader fullPage={true} />;
+  }
+
+  // If unauthenticated, keep showing loader while redirect finishes
+  if (!user) {
+    return <CategoryCycleLoader fullPage={true} message="Authenticating session..." />;
+  }
 
   const drawerWidth = collapsed && !isMobile ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH;
 

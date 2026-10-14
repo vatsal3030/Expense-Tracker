@@ -148,14 +148,14 @@ export const darkTheme = responsiveFontSizes(
         contrastText: '#ffffff',
       },
       background: {
-        default: '#090d16', // Deep FinTech background
-        paper: '#0f172a',   // Slate card surface
+        default: '#0B0C0E', // True Obsidian Carbon (eradicates generic AI blue-navy)
+        paper: '#121316',   // High-end matte surface panel
       },
       text: {
-        primary: '#f8fafc',
-        secondary: '#94a3b8',
+        primary: '#F3F4F6',
+        secondary: '#9CA3AF',
       },
-      divider: '#1e293b',
+      divider: '#1D1F24',
     },
     components: {
       ...baseTheme.components,
@@ -163,11 +163,11 @@ export const darkTheme = responsiveFontSizes(
         styleOverrides: {
           root: {
             ...baseTheme.components?.MuiCard?.styleOverrides?.root,
-            backgroundColor: '#0f172a',
-            border: '1px solid #1e293b',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+            backgroundColor: '#121316',
+            border: '1px solid #1D1F24',
+            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
             '&:hover': {
-              borderColor: '#334155',
+              borderColor: '#2A2D35',
             },
           },
         },
@@ -175,7 +175,7 @@ export const darkTheme = responsiveFontSizes(
       MuiPaper: {
         styleOverrides: {
           root: {
-            backgroundColor: '#0f172a',
+            backgroundColor: '#121316',
             backgroundImage: 'none',
           },
         },
@@ -183,16 +183,16 @@ export const darkTheme = responsiveFontSizes(
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: '#090d16',
-            borderRight: '1px solid #1e293b',
+            backgroundColor: '#0B0C0E',
+            borderRight: '1px solid #1D1F24',
           },
         },
       },
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            '& fieldset': { borderColor: '#1e293b' },
-            '&:hover fieldset': { borderColor: '#334155' },
+            '& fieldset': { borderColor: '#1D1F24' },
+            '&:hover fieldset': { borderColor: '#2A2D35' },
             '&.Mui-focused fieldset': { borderColor: '#10b981', borderWidth: '1.5px' },
           },
         },

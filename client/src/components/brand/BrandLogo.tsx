@@ -53,8 +53,8 @@ export default function BrandLogo({
             <stop offset="1" stopColor="#334155" />
           </linearGradient>
           <linearGradient id="coinFill" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#0f172a" />
-            <stop offset="1" stopColor="#090d16" />
+            <stop stopColor="#16181D" />
+            <stop offset="1" stopColor="#0B0C0E" />
           </linearGradient>
         </defs>
 
@@ -66,7 +66,7 @@ export default function BrandLogo({
           height="42"
           rx="12"
           fill="url(#coinFill)"
-          stroke="#1e293b"
+          stroke="#1D1F24"
           strokeWidth="1.5"
         />
 
@@ -107,12 +107,14 @@ export default function BrandLogo({
       {logoMark}
       {showText && (
         <div className="flex flex-col justify-center leading-none">
-          <div className={cn("font-heading font-extrabold tracking-tight flex items-baseline gap-0.5", textStyles, textColor || "text-slate-900 dark:text-slate-100")}>
-            <span>Fair</span>
-            <span className="text-emerald-500 font-black">Share</span>
+          <div className={cn("font-heading font-extrabold tracking-tight flex items-center gap-1.5", textStyles, textColor || "text-slate-900 dark:text-slate-100")}>
+            <span>Owino</span>
+            <span className="text-emerald-500 font-semibold text-[11px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25">
+              FairShare
+            </span>
           </div>
           <span className="font-heading text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 mt-0.5">
-            Smart Expense SaaS
+            Smart Expense Splitting
           </span>
         </div>
       )}

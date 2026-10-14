@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import {
   Box,
   Button,
@@ -23,13 +23,16 @@ import {
   Google as GoogleIcon,
   GitHub as GitHubIcon,
 } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import BrandLogo from '@/components/brand/BrandLogo';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
-export default function LoginPage() {
+function LoginForm() {
   const theme = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get('redirect') || '/dashboard';
   const { signIn, signInWithGoogle, signInWithGithub, user, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -40,9 +43,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/dashboard');
+      router.push(redirectTarget);
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, redirectTarget]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +56,7 @@ export default function LoginPage() {
     if (result.error) {
       setError(result.error);
     } else {
-      router.push('/dashboard');
+      router.push(redirectTarget);
     }
     setLoading(false);
   };
@@ -72,129 +75,133 @@ export default function LoginPage() {
     <Box
       sx={{
         minHeight: '100vh',
+        height: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        px: 2,
+        py: 1,
         bgcolor: 'background.default',
-        position: 'relative',
         overflow: 'hidden',
-        p: { xs: 1.5, sm: 2 },
       }}
     >
-      {/* Background decorations: Subtle Emerald Vignette */}
-      <Box
-        sx={{
-          position: 'absolute',
-          width: 450,
-          height: 450,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)',
-          top: -150,
-          left: -100,
-          filter: 'blur(50px)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      <Container maxWidth="xs" disableGutters sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="xs" disableGutters sx={{ maxHeight: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <Paper
           elevation={0}
           sx={{
-            p: { xs: 2.5, sm: 3 },
+            p: { xs: 2.5, sm: 3.5 },
             borderRadius: 3.5,
             border: `1px solid ${theme.palette.divider}`,
             bgcolor: 'background.paper',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
+            boxShadow: theme.palette.mode === 'dark' ? '0 12px 36px rgba(0,0,0,0.45)' : '0 12px 36px rgba(0,0,0,0.06)',
+            width: '100%',
           }}
         >
-          {/* Logo */}
-          <Box sx={{ textAlign: 'center', mb: 1.5 }}>
-            <BrandLogo size="sm" className="justify-center mb-1" />
-            <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', fontSize: '1.25rem' }}>
+          {/* Logo & Header */}
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Box sx={{ display: 'inline-flex', mb: 0.8 }}>
+              <BrandLogo size="md" asLink={false} />
+            </Box>
+            <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: '-0.02em', mb: 0.3 }}>
               Welcome back
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-              Sign in to your FairShare account
+            <Typography variant="caption" color="text.secondary">
+              Sign in to manage your shared expenses
             </Typography>
           </Box>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 1.5, borderRadius: 2, py: 0.25, fontSize: '0.78rem' }} onClose={() => setError('')}>
-              {error}
-            </Alert>
-          )}
-
-          {/* Social OAuth in 2-column row */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1.5 }}>
+          {/* Social Logins */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1.8 }}>
             <Button
               fullWidth
-              size="small"
               variant="outlined"
-              startIcon={<GoogleIcon sx={{ fontSize: '18px !important' }} />}
+              size="small"
+              startIcon={<GoogleIcon sx={{ fontSize: 17 }} />}
               onClick={handleGoogleLogin}
               sx={{
-                py: 0.7,
-                borderRadius: 2,
+                py: 0.8,
+                borderRadius: 2.5,
                 borderColor: theme.palette.divider,
-                color: theme.palette.text.primary,
-                fontWeight: 600,
+                color: 'text.primary',
                 fontSize: '0.78rem',
+                fontWeight: 600,
                 textTransform: 'none',
-                '&:hover': { borderColor: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.04) },
+                '&:hover': {
+                  borderColor: theme.palette.primary.main,
+                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                },
               }}
             >
               Google
             </Button>
             <Button
               fullWidth
-              size="small"
               variant="outlined"
-              startIcon={<GitHubIcon sx={{ fontSize: '18px !important' }} />}
+              size="small"
+              startIcon={<GitHubIcon sx={{ fontSize: 17 }} />}
               onClick={handleGithubLogin}
               sx={{
-                py: 0.7,
-                borderRadius: 2,
+                py: 0.8,
+                borderRadius: 2.5,
                 borderColor: theme.palette.divider,
-                color: theme.palette.text.primary,
-                fontWeight: 600,
+                color: 'text.primary',
                 fontSize: '0.78rem',
+                fontWeight: 600,
                 textTransform: 'none',
-                '&:hover': { borderColor: theme.palette.text.primary },
+                '&:hover': {
+                  borderColor: theme.palette.primary.main,
+                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                },
               }}
             >
               GitHub
             </Button>
           </Box>
 
-          <Divider sx={{ my: 1.2 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ px: 1, fontSize: '0.7rem' }}>
-              OR WITH EMAIL
+          <Divider sx={{ my: 1.5 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+              OR CONTINUE WITH EMAIL
             </Typography>
           </Divider>
 
-          {/* Email form */}
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={1.4}>
+          {/* Error Alert */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 1.5, py: 0.3, px: 1.5, borderRadius: 2, fontSize: '0.78rem' }}>
+              {error}
+            </Alert>
+          )}
+
+          {/* Form */}
+          <Box component="form" onSubmit={handleSubmit} noValidate>
+            <Stack spacing={1.5}>
               <TextField
                 fullWidth
                 size="small"
-                label="Email address"
-                type="email"
+                id="email"
+                label="Email"
+                name="email"
+                autoComplete="email"
+                autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
+                slotProps={{
+                  htmlInput: { sx: { py: 1, fontSize: '0.85rem' } },
+                  inputLabel: { sx: { fontSize: '0.85rem' } },
+                }}
               />
               <TextField
                 fullWidth
                 size="small"
+                name="password"
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
+                id="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
                 slotProps={{
+                  htmlInput: { sx: { py: 1, fontSize: '0.85rem' } },
+                  inputLabel: { sx: { fontSize: '0.85rem' } },
                   input: {
                     endAdornment: (
                       <InputAdornment position="end">
@@ -238,7 +245,7 @@ export default function LoginPage() {
               variant="caption"
               color="primary"
               sx={{ fontWeight: 700, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-              onClick={() => router.push('/auth/signup')}
+              onClick={() => router.push(`/auth/signup${redirectTarget !== '/dashboard' ? `?redirect=${encodeURIComponent(redirectTarget)}` : ''}`)}
             >
               Create one for free
             </Typography>
@@ -246,5 +253,13 @@ export default function LoginPage() {
         </Paper>
       </Container>
     </Box>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<CategoryCycleLoader fullPage={true} />}>
+      <LoginForm />
+    </Suspense>
   );
 }

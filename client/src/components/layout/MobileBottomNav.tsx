@@ -10,6 +10,7 @@ import {
   People as FriendsIcon,
 } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function MobileBottomNav() {
   const theme = useTheme();
@@ -44,7 +45,7 @@ export default function MobileBottomNav() {
         px: 1,
         pb: 'env(safe-area-inset-bottom, 0px)',
         zIndex: 1200,
-        bgcolor: alpha(theme.palette.background.paper, 0.92),
+        bgcolor: alpha(theme.palette.background.paper, 0.94),
         backdropFilter: 'blur(20px)',
         borderTop: `1px solid ${theme.palette.divider}`,
       }}
@@ -54,7 +55,9 @@ export default function MobileBottomNav() {
           return (
             <Box key={index} sx={{ position: 'relative', top: -14 }}>
               <IconButton
-                onClick={() => router.push('/expenses?new=true')}
+                component={Link}
+                href="/expenses?new=true"
+                prefetch={true}
                 sx={{
                   width: 52,
                   height: 52,
@@ -81,7 +84,9 @@ export default function MobileBottomNav() {
         return (
           <Box
             key={item.label}
-            onClick={() => item.path && router.push(item.path)}
+            component={Link}
+            href={item.path || '/dashboard'}
+            prefetch={true}
             sx={{
               display: 'flex',
               flexDirection: 'column',
@@ -90,7 +95,7 @@ export default function MobileBottomNav() {
               py: 0.8,
               px: 1.5,
               borderRadius: 2,
-              cursor: 'pointer',
+              textDecoration: 'none',
               color: active ? 'primary.main' : 'text.secondary',
               transition: 'all 0.15s ease',
               '&:active': { transform: 'scale(0.95)' },

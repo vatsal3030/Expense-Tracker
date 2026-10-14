@@ -32,6 +32,7 @@ import {
   EmojiEvents as FairScoreIcon,
 } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/providers/AuthProvider';
 import BrandLogo from '@/components/brand/BrandLogo';
 
@@ -140,25 +141,31 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                 arrow
               >
                 <ListItemButton
-                  onClick={() => handleNavigate(item.path)}
+                  component={Link}
+                  href={item.path}
+                  prefetch={true}
+                  onClick={() => { if (isMobile) onClose(); }}
                   sx={{
-                    minHeight: 48,
+                    minHeight: 46,
                     px: collapsed && !isMobile ? 2.5 : 2.5,
                     mx: collapsed && !isMobile ? 1 : 1.5,
                     my: 0.3,
-                    borderRadius: 3,
+                    borderRadius: 2.5,
+                    position: 'relative',
                     justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                     bgcolor: active
                       ? alpha(theme.palette.primary.main, 0.12)
                       : 'transparent',
                     color: active ? theme.palette.primary.main : theme.palette.text.secondary,
+                    border: active ? `1px solid ${alpha(theme.palette.primary.main, 0.25)}` : '1px solid transparent',
                     '&:hover': {
                       bgcolor: active
                         ? alpha(theme.palette.primary.main, 0.16)
                         : alpha(theme.palette.action.hover, 0.08),
-                      transform: 'translateX(4px)',
+                      color: active ? theme.palette.primary.main : theme.palette.text.primary,
+                      transform: 'translateX(2px)',
                     },
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   <ListItemIcon
@@ -201,14 +208,24 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                 arrow
               >
                 <ListItemButton
-                  onClick={() => handleNavigate(item.path)}
+                  component={Link}
+                  href={item.path}
+                  prefetch={true}
+                  onClick={() => { if (isMobile) onClose(); }}
                   sx={{
                     minHeight: 44,
                     px: collapsed && !isMobile ? 2.5 : 2.5,
                     mx: collapsed && !isMobile ? 1 : 1.5,
-                    borderRadius: 3,
+                    borderRadius: 2.5,
                     justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                     color: active ? theme.palette.primary.main : theme.palette.text.secondary,
+                    bgcolor: active ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                    border: active ? `1px solid ${alpha(theme.palette.primary.main, 0.2)}` : '1px solid transparent',
+                    '&:hover': {
+                      color: active ? theme.palette.primary.main : theme.palette.text.primary,
+                      bgcolor: alpha(theme.palette.action.hover, 0.08),
+                    },
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   <ListItemIcon
