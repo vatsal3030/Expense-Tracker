@@ -101,3 +101,57 @@ html {
 .fintech-card:hover {
   border-color: #334155;
 }
+
+/* Ocean Wave Theme Transition (Top-Right to Bottom-Left) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+  animation: oceanWaveSweep 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes oceanWaveSweep {
+  0% {
+    clip-path: circle(0% at calc(100% - 60px) 30px);
+    filter: drop-shadow(-10px 10px 30px rgba(14, 98, 69, 0.45));
+  }
+  50% {
+    filter: drop-shadow(-20px 20px 50px rgba(14, 98, 69, 0.35));
+  }
+  100% {
+    clip-path: circle(180% at calc(100% - 60px) 30px);
+    filter: none;
+  }
+}
+
+/* Fallback ocean wave pulse if View Transitions API is unsupported */
+.ocean-wave-active {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+  background: radial-gradient(circle at top right, rgba(14, 98, 69, 0.25) 0%, rgba(16, 185, 129, 0.05) 50%, transparent 80%);
+  animation: oceanWaveOverlay 0.7s ease-out forwards;
+}
+
+@keyframes oceanWaveOverlay {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.6);
+    transform-origin: top right;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.2);
+    transform-origin: top right;
+  }
+}
+

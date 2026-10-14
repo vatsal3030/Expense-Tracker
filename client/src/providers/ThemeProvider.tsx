@@ -40,11 +40,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [mode]);
 
   const toggleTheme = () => {
-    setMode((prev) => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem('fairshare-theme', next);
-      return next;
-    });
+    const applyToggle = () => {
+      setMode((prev) => {
+        const next = prev === 'light' ? 'dark' : 'light';
+        localStorage.setItem('fairshare-theme', next);
+        return next;
+      });
+    };
+
+    if (typeof window !== 'undefined') {
+      const win = window as any;
+      if (win.document?.startViewTransition) {
+        win.document.startViewTransition(applyToggle);
+      } else {
+        const wave = win.document?.createElement('div');
+        if (wave && win.document?.body) {
+          wave.className = 'ocean-wave-active';
+          win.document.body.appendChild(wave);
+          setTimeout(() => wave.remove(), 750);
+        }
+        applyToggle();
+      }
+    } else {
+      applyToggle();
+    }
   };
 
   const handleSetMode = (newMode: ThemeMode) => {

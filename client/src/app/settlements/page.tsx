@@ -2,11 +2,36 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Box, Typography, Card, CardContent, Button, List, ListItem, ListItemAvatar,
-  ListItemText, Avatar, Chip, Skeleton, useTheme, alpha, IconButton, Divider,
-  Tabs, Tab, Pagination,
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Button,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Avatar,
+  Chip,
+  Skeleton,
+  useTheme,
+  alpha,
+  IconButton,
+  Divider,
+  Tabs,
+  Tab,
+  Pagination,
+  Grid,
 } from '@mui/material';
-import { Check, Close, ArrowForward, Handshake, QrCode2 } from '@mui/icons-material';
+import {
+  Check,
+  Close,
+  ArrowForward,
+  Handshake,
+  QrCode2,
+  AutoAwesome,
+  TrendingFlat,
+} from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { settlementApi } from '@/lib/api';
@@ -18,6 +43,11 @@ export default function SettlementsPage() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const [settlements, setSettlements] = useState<any[]>([]);
+  const [simplifiedData, setSimplifiedData] = useState<{
+    simplifiedDebts: Array<{ from: any; to: any; amount: number }>;
+    currentUserBalance: number;
+    savingsCount: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState(0);
   const [page, setPage] = useState(1);
@@ -44,9 +74,19 @@ export default function SettlementsPage() {
       setLoading(true);
       const params: Record<string, any> = { page, limit: 15 };
       if (statusFilter) params.status = statusFilter;
-      const res = await settlementApi.list(params);
-      setSettlements(res.data.data);
-      setTotalPages(res.data.pagination.totalPages);
+
+      const [listRes, simplifiedRes] = await Promise.allSettled([
+        settlementApi.list(params),
+        settlementApi.getSimplified(),
+      ]);
+
+      if (listRes.status === 'fulfilled') {
+        setSettlements(listRes.value.data?.data || []);
+        setTotalPages(listRes.value.data?.pagination?.totalPages || 1);
+      }
+      if (simplifiedRes.status === 'fulfilled') {
+        setSimplifiedData(simplifiedRes.value.data?.data || null);
+      }
     } catch (error) {
       console.error('Fetch settlements error:', error);
     } finally {
@@ -58,21 +98,33 @@ export default function SettlementsPage() {
     if (user) fetchSettlements();
   }, [user, fetchSettlements]);
 
+  // Fast optimistic confirmation (0ms UI lag)
   const handleConfirm = async (id: string) => {
+    const previousSnapshot = [...settlements];
+    setSettlements((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: 'CONFIRMED' } : s))
+    );
+
     try {
       await settlementApi.confirm(id);
-      fetchSettlements();
     } catch (error) {
       console.error('Confirm error:', error);
+      setSettlements(previousSnapshot);
     }
   };
 
+  // Fast optimistic rejection
   const handleReject = async (id: string) => {
+    const previousSnapshot = [...settlements];
+    setSettlements((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: 'REJECTED' } : s))
+    );
+
     try {
       await settlementApi.reject(id);
-      fetchSettlements();
     } catch (error) {
       console.error('Reject error:', error);
+      setSettlements(previousSnapshot);
     }
   };
 
@@ -89,44 +141,191 @@ export default function SettlementsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" fontWeight={800}>Settlements</Typography>
-          <Typography variant="body1" color="text.secondary">Track and confirm payments</Typography>
+      <Box className="animate-fade-in" sx={{ pb: 6 }}>
+        {/* Page Header */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+            Settlements & Debt Simplification
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Verify completed UPI payments and eliminate redundant group transfers
+          </Typography>
         </Box>
 
-        <Card sx={{ mb: 3 }}>
+        {/* Splitwise-style Debt Simplification Spotlight Card */}
+        <Card
+          sx={{
+            mb: 4,
+            bgcolor: 'background.paper',
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 3.5,
+            p: 3,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 2.5,
+                  bgcolor: alpha('#0E6245', 0.1),
+                  color: '#0E6245',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <AutoAwesome fontSize="small" />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Splitwise Min-Cash-Flow Simplification
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  If A owes B ₹100 and B owes C ₹100, Owino routes A → C directly.
+                </Typography>
+              </Box>
+            </Box>
+            <Chip
+              label={`${simplifiedData?.savingsCount || 0} Redundant Transfers Eliminated`}
+              size="small"
+              sx={{ bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', fontWeight: 700, fontSize: '0.7rem' }}
+            />
+          </Box>
+
+          {simplifiedData?.simplifiedDebts && simplifiedData.simplifiedDebts.length > 0 ? (
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              {simplifiedData.simplifiedDebts.map((debt, idx) => {
+                const isUserPaying = debt.from.id === (profile?.id || user?.id);
+                const isUserReceiving = debt.to.id === (profile?.id || user?.id);
+
+                return (
+                  <Grid size={{ xs: 12, md: 6 }} key={idx}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 3,
+                        border: `1px solid ${isUserPaying ? alpha('#EF4444', 0.3) : isUserReceiving ? alpha('#0E6245', 0.3) : theme.palette.divider}`,
+                        bgcolor: isUserPaying ? alpha('#EF4444', 0.03) : isUserReceiving ? alpha('#0E6245', 0.03) : 'background.paper',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', fontSize: '0.8rem', fontWeight: 700 }}>
+                          {debt.from.name.charAt(0)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            {debt.from.name} {isUserPaying && '(You)'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            owes {debt.to.name} {isUserReceiving && '(You)'}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Typography variant="subtitle1" fontWeight={800} sx={{ color: isUserPaying ? '#EF4444' : '#0E6245' }}>
+                          {formatCurrency(debt.amount)}
+                        </Typography>
+                        {isUserPaying && (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            startIcon={<QrCode2 fontSize="small" />}
+                            onClick={() =>
+                              setUpiModal({
+                                open: true,
+                                payeeName: debt.to.name,
+                                amount: debt.amount,
+                              })
+                            }
+                            sx={{
+                              bgcolor: '#0E6245',
+                              color: '#FFFFFF',
+                              textTransform: 'none',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              borderRadius: 2,
+                              py: 0.5,
+                              px: 1.5,
+                              '&:hover': { bgcolor: '#094A34' },
+                            }}
+                          >
+                            Pay UPI
+                          </Button>
+                        )}
+                      </Box>
+                    </Box>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+              All balances are currently settled or balanced. No active simplified debts.
+            </Typography>
+          )}
+        </Card>
+
+        {/* Tab Filter */}
+        <Card sx={{ mb: 3, bgcolor: 'background.paper', border: `1px solid ${theme.palette.divider}`, borderRadius: 3.5 }}>
           <Tabs
             value={tab}
-            onChange={(_, v) => { setTab(v); setPage(1); }}
+            onChange={(_, v) => {
+              setTab(v);
+              setPage(1);
+            }}
             sx={{ px: 2, borderBottom: `1px solid ${theme.palette.divider}` }}
           >
-            <Tab label="All" />
-            <Tab label="Pending" />
-            <Tab label="Confirmed" />
+            <Tab label="All Settlements" sx={{ textTransform: 'none', fontWeight: 600 }} />
+            <Tab label="Pending Confirmation" sx={{ textTransform: 'none', fontWeight: 600 }} />
+            <Tab label="Confirmed" sx={{ textTransform: 'none', fontWeight: 600 }} />
           </Tabs>
         </Card>
 
-        <Card>
+        {/* Settlements Log */}
+        <Card
+          sx={{
+            bgcolor: 'background.paper',
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 3.5,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            overflow: 'hidden',
+          }}
+        >
           <CardContent sx={{ p: 0 }}>
-            {loading ? (
+            {loading && settlements.length === 0 ? (
               <Box sx={{ p: 3 }}>
-                {[1, 2, 3].map(i => (
+                {[1, 2, 3].map((i) => (
                   <Box key={i} sx={{ display: 'flex', gap: 2, py: 2 }}>
                     <Skeleton variant="circular" width={44} height={44} />
-                    <Box sx={{ flex: 1 }}><Skeleton width="50%" /><Skeleton width="30%" /></Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Skeleton width="50%" />
+                      <Skeleton width="30%" />
+                    </Box>
                   </Box>
                 ))}
               </Box>
             ) : settlements.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 8 }}>
                 <Handshake sx={{ fontSize: 64, color: 'text.secondary', opacity: 0.3, mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">No settlements yet</Typography>
+                <Typography variant="h6" color="text.secondary">
+                  No settlements found
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Record payments to balance out group or friend ledgers.
+                </Typography>
               </Box>
             ) : (
               <List disablePadding>
                 {settlements.map((s, i) => {
-                  const isPayee = s.payeeId === profile?.id;
+                  const isPayee = s.payeeId === (profile?.id || user?.id);
+                  const isPayer = s.payerId === (profile?.id || user?.id);
                   const canConfirm = isPayee && s.status === 'PENDING';
                   const cfg = statusConfig[s.status] || statusConfig.PENDING;
 
@@ -134,30 +333,63 @@ export default function SettlementsPage() {
                     <React.Fragment key={s.id}>
                       <ListItem sx={{ px: 3, py: 2 }}>
                         <ListItemAvatar>
-                          <Avatar sx={{ width: 44, height: 44, bgcolor: alpha(theme.palette.primary.main, 0.12), color: theme.palette.primary.main }}>
+                          <Avatar sx={{ width: 44, height: 44, bgcolor: alpha('#0E6245', 0.1), color: '#0E6245' }}>
                             <Handshake />
                           </Avatar>
                         </ListItemAvatar>
+
                         <ListItemText
                           primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="body1" fontWeight={600}>{s.payer?.name}</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                              <Typography variant="body1" fontWeight={600}>
+                                {s.payer?.name} {isPayer && '(You)'}
+                              </Typography>
                               <ArrowForward sx={{ fontSize: 16, color: 'text.secondary' }} />
-                              <Typography variant="body1" fontWeight={600}>{s.payee?.name}</Typography>
-                              <Chip label={cfg.label} size="small" color={cfg.color} sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600 }} />
+                              <Typography variant="body1" fontWeight={600}>
+                                {s.payee?.name} {isPayee && '(You)'}
+                              </Typography>
+                              <Chip
+                                label={cfg.label}
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: '0.675rem',
+                                  fontWeight: 700,
+                                  bgcolor:
+                                    s.status === 'CONFIRMED'
+                                      ? alpha('#0E6245', 0.1)
+                                      : s.status === 'PENDING'
+                                      ? alpha('#F59E0B', 0.1)
+                                      : alpha('#EF4444', 0.1),
+                                  color:
+                                    s.status === 'CONFIRMED'
+                                      ? '#0E6245'
+                                      : s.status === 'PENDING'
+                                      ? '#D97706'
+                                      : '#EF4444',
+                                }}
+                              />
                             </Box>
                           }
                           secondary={
                             <Typography variant="caption" color="text.secondary">
                               {s.group?.name ? `${s.group.name} • ` : ''}
-                              {new Date(s.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              {new Date(s.createdAt).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
                               {s.notes ? ` • ${s.notes}` : ''}
                             </Typography>
                           }
                         />
+
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Typography variant="h6" fontWeight={700}>{formatCurrency(Number(s.amount))}</Typography>
-                          {s.status === 'PENDING' && (
+                          <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
+                            {formatCurrency(Number(s.amount))}
+                          </Typography>
+
+                          {s.status === 'PENDING' && isPayer && (
                             <Button
                               size="small"
                               variant="contained"
@@ -174,35 +406,45 @@ export default function SettlementsPage() {
                                 borderRadius: 2,
                                 fontWeight: 600,
                                 fontSize: '0.75rem',
+                                textTransform: 'none',
                                 py: 0.5,
                                 px: 1.5,
-                                bgcolor: '#059669',
+                                bgcolor: '#0E6245',
                                 color: '#ffffff',
-                                boxShadow: '0 2px 8px rgba(5,150,105,0.25)',
-                                '&:hover': { bgcolor: '#047857' },
+                                '&:hover': { bgcolor: '#094A34' },
                               }}
                             >
                               Pay UPI
                             </Button>
                           )}
+
                           {canConfirm && (
-                            <>
-                              <IconButton size="small" onClick={() => handleConfirm(s.id)} sx={{ color: 'success.main', bgcolor: alpha(theme.palette.success.main, 0.1) }}>
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleConfirm(s.id)}
+                                sx={{ color: '#0E6245', bgcolor: alpha('#0E6245', 0.1) }}
+                              >
                                 <Check fontSize="small" />
                               </IconButton>
-                              <IconButton size="small" onClick={() => handleReject(s.id)} sx={{ color: 'error.main', bgcolor: alpha(theme.palette.error.main, 0.1) }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleReject(s.id)}
+                                sx={{ color: '#EF4444', bgcolor: alpha('#EF4444', 0.1) }}
+                              >
                                 <Close fontSize="small" />
                               </IconButton>
-                            </>
+                            </Box>
                           )}
                         </Box>
                       </ListItem>
-                      {i < settlements.length - 1 && <Divider />}
+                      {i < settlements.length - 1 && <Divider component="li" sx={{ borderColor: theme.palette.divider }} />}
                     </React.Fragment>
                   );
                 })}
               </List>
             )}
+
             {totalPages > 1 && (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
                 <Pagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} color="primary" shape="rounded" />
@@ -211,7 +453,7 @@ export default function SettlementsPage() {
           </CardContent>
         </Card>
 
-        {/* Instant UPI Payment Modal */}
+        {/* UPI Payment Modal */}
         <UpiPaymentModal
           open={upiModal.open}
           onClose={() => setUpiModal((prev) => ({ ...prev, open: false }))}

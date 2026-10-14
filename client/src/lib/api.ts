@@ -106,6 +106,7 @@ export const settlementApi = {
   create: (data: any) => api.post('/settlements', data),
   confirm: (id: string) => api.patch(`/settlements/${id}/confirm`),
   reject: (id: string) => api.patch(`/settlements/${id}/reject`),
+  getSimplified: () => api.get('/settlements/simplified'),
 };
 
 // Budgets

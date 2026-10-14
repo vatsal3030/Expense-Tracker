@@ -226,8 +226,8 @@ export default function GroupsPage() {
 
         {/* Create Group Dialog */}
         <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 4 } } }}>
-          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
-            <Typography variant="h6" fontWeight={700}>Create Group</Typography>
+          <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+            <Typography variant="h6" component="span" fontWeight={700}>Create Group</Typography>
             <IconButton onClick={() => setDialogOpen(false)} size="small"><Close /></IconButton>
           </DialogTitle>
           <DialogContent>

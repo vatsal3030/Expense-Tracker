@@ -3,14 +3,14 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 
 export const expenseRouter = Router();
 expenseRouter.use(authenticate);
 
 // POST /api/expenses — Create a new expense
 const createExpenseSchema = z.object({
-  groupId: z.string().uuid().optional().nullable(),
+  groupId: z.string().nullish().transform((val) => (val && val.trim() !== '' ? val : null)),
   description: z.string().min(1, 'Description is required').max(200),
   amount: z.number().positive('Amount must be positive').max(99999999.99),
   currency: z.string().length(3).default('INR'),
@@ -20,11 +20,11 @@ const createExpenseSchema = z.object({
     'GIFTS', 'DONATIONS', 'INVESTMENTS', 'SALARY', 'FREELANCE', 'GENERAL', 'OTHER',
   ]).default('GENERAL'),
   splitType: z.enum(['EQUAL', 'EXACT', 'PERCENTAGE', 'SHARES']).default('EQUAL'),
-  date: z.string().datetime().optional(),
-  notes: z.string().max(500).optional(),
-  paidById: z.string().uuid().optional(),
+  date: z.any().optional(),
+  notes: z.string().max(500).nullish(),
+  paidById: z.string().nullish(),
   splits: z.array(z.object({
-    userId: z.string().uuid(),
+    userId: z.string(),
     amount: z.number().optional(),
     percentage: z.number().optional(),
     shares: z.number().optional(),
@@ -38,12 +38,37 @@ expenseRouter.post(
     try {
       const { groupId, description, amount, currency, category, splitType, date, notes, paidById, splits } = req.body;
 
-      const actualPaidBy = paidById || req.user!.id;
+      const actualPaidBy = paidById && paidById.trim() !== '' ? paidById : req.user!.id;
+
+      // Resolve user IDs in splits (map Supabase ID to internal Postgres ID if needed)
+      const inputUserIds = Array.from(new Set([actualPaidBy, ...splits.map((s: any) => s.userId)]));
+      const dbUsers = await prisma.user.findMany({
+        where: {
+          OR: [
+            { id: { in: inputUserIds } },
+            { supabaseId: { in: inputUserIds } },
+          ],
+        },
+        select: { id: true, supabaseId: true },
+      });
+
+      const idMap = new Map<string, string>();
+      dbUsers.forEach((u) => {
+        idMap.set(u.id, u.id);
+        if (u.supabaseId) idMap.set(u.supabaseId, u.id);
+      });
+
+      const resolvedPaidById = idMap.get(actualPaidBy) || req.user!.id;
+
+      const resolvedSplits = splits.map((s: any) => ({
+        ...s,
+        userId: idMap.get(s.userId) || s.userId,
+      }));
 
       // Validate that payer is in the group (if group expense)
       if (groupId) {
         const payerMembership = await prisma.groupMember.findUnique({
-          where: { groupId_userId: { groupId, userId: actualPaidBy } },
+          where: { groupId_userId: { groupId, userId: resolvedPaidById } },
         });
         if (!payerMembership) {
           res.status(400).json({ success: false, error: 'Payer must be a group member.' });
@@ -52,34 +77,36 @@ expenseRouter.post(
       }
 
       // Calculate shares based on split type
-      const calculatedShares = calculateShares(splitType, amount, splits);
+      const calculatedShares = calculateShares(splitType, amount, resolvedSplits);
 
       // Validate total shares equal the expense amount
       const totalShares = calculatedShares.reduce((sum, s) => sum + s.amount, 0);
-      if (Math.abs(totalShares - amount) > 0.01) {
+      if (Math.abs(totalShares - amount) > 0.05) {
         res.status(400).json({
           success: false,
-          error: `Split amounts (${totalShares.toFixed(2)}) don't match expense amount (${amount.toFixed(2)}).`,
+          error: `Split amounts (₹${totalShares.toFixed(2)}) don't match expense amount (₹${amount.toFixed(2)}).`,
         });
         return;
       }
 
+      const expenseDate = date ? new Date(date) : new Date();
+
       const expense = await prisma.expense.create({
         data: {
           groupId: groupId || null,
-          paidById: actualPaidBy,
+          paidById: resolvedPaidById,
           createdById: req.user!.id,
           description,
-          amount: new Decimal(amount),
+          amount: new Prisma.Decimal(amount),
           currency,
           category,
           splitType,
-          date: date ? new Date(date) : new Date(),
-          notes,
+          date: isNaN(expenseDate.getTime()) ? new Date() : expenseDate,
+          notes: notes || null,
           shares: {
             create: calculatedShares.map((s) => ({
               userId: s.userId,
-              amount: new Decimal(s.amount),
+              amount: new Prisma.Decimal(s.amount),
             })),
           },
         },
@@ -109,13 +136,25 @@ expenseRouter.post(
   }
 );
 
-// GET /api/expenses — Get expenses (with filters)
+// GET /api/expenses — Get expenses with rich sorting, filtering & search
 expenseRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { groupId, category, startDate, endDate, page = '1', limit = '20' } = req.query;
+    const {
+      groupId,
+      category,
+      splitType,
+      search,
+      minAmount,
+      maxAmount,
+      startDate,
+      endDate,
+      sortBy = 'date_desc',
+      page = '1',
+      limit = '20',
+    } = req.query;
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = Math.min(parseInt(limit as string, 10), 50);
+    const pageNum = parseInt(page as string, 10) || 1;
+    const limitNum = Math.min(parseInt(limit as string, 10) || 20, 50);
     const skip = (pageNum - 1) * limitNum;
 
     const where: any = {
@@ -126,23 +165,65 @@ expenseRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise
       ],
     };
 
-    if (groupId) where.groupId = groupId;
-    if (category) where.category = category;
+    if (groupId && typeof groupId === 'string' && groupId.trim() !== '') {
+      where.groupId = groupId;
+    }
+    if (category && typeof category === 'string' && category.trim() !== '') {
+      where.category = category;
+    }
+    if (splitType && typeof splitType === 'string' && splitType.trim() !== '') {
+      where.splitType = splitType;
+    }
+    if (search && typeof search === 'string' && search.trim() !== '') {
+      where.OR = [
+        { description: { contains: search.trim(), mode: 'insensitive' } },
+        { notes: { contains: search.trim(), mode: 'insensitive' } },
+      ];
+    }
+    if (minAmount || maxAmount) {
+      where.amount = {};
+      if (minAmount) where.amount.gte = new Prisma.Decimal(Number(minAmount));
+      if (maxAmount) where.amount.lte = new Prisma.Decimal(Number(maxAmount));
+    }
     if (startDate || endDate) {
       where.date = {};
       if (startDate) where.date.gte = new Date(startDate as string);
       if (endDate) where.date.lte = new Date(endDate as string);
     }
 
+    // Dynamic sorting
+    let orderBy: any = { date: 'desc' };
+    switch (sortBy) {
+      case 'date_asc':
+        orderBy = { date: 'asc' };
+        break;
+      case 'amount_desc':
+        orderBy = { amount: 'desc' };
+        break;
+      case 'amount_asc':
+        orderBy = { amount: 'asc' };
+        break;
+      case 'desc_asc':
+        orderBy = { description: 'asc' };
+        break;
+      case 'desc_desc':
+        orderBy = { description: 'desc' };
+        break;
+      case 'date_desc':
+      default:
+        orderBy = { date: 'desc' };
+        break;
+    }
+
     const [expenses, total] = await Promise.all([
       prisma.expense.findMany({
         where,
         include: {
-          paidBy: { select: { id: true, name: true, avatarUrl: true } },
-          shares: { include: { user: { select: { id: true, name: true } } } },
+          paidBy: { select: { id: true, name: true, avatarUrl: true, email: true } },
+          shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, email: true } } } },
           group: { select: { id: true, name: true } },
         },
-        orderBy: { date: 'desc' },
+        orderBy,
         skip,
         take: limitNum,
       }),
@@ -165,7 +246,7 @@ expenseRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise
   }
 });
 
-// GET /api/expenses/:id — Get single expense
+// GET /api/expenses/:id — Get single expense with complete split details
 expenseRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
@@ -180,8 +261,12 @@ expenseRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Prom
       },
       include: {
         paidBy: { select: { id: true, name: true, avatarUrl: true, email: true } },
-        createdBy: { select: { id: true, name: true } },
-        shares: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
+        createdBy: { select: { id: true, name: true, avatarUrl: true } },
+        shares: {
+          include: {
+            user: { select: { id: true, name: true, avatarUrl: true, email: true } },
+          },
+        },
         group: { select: { id: true, name: true } },
       },
     });
@@ -207,11 +292,11 @@ const updateExpenseSchema = z.object({
     'HEALTH', 'EDUCATION', 'TRAVEL', 'GROCERIES', 'SUBSCRIPTIONS', 'INSURANCE',
     'GIFTS', 'DONATIONS', 'INVESTMENTS', 'SALARY', 'FREELANCE', 'GENERAL', 'OTHER',
   ]).optional(),
-  date: z.string().datetime().optional(),
+  date: z.any().optional(),
   notes: z.string().max(500).nullable().optional(),
   splitType: z.enum(['EQUAL', 'EXACT', 'PERCENTAGE', 'SHARES']).optional(),
   splits: z.array(z.object({
-    userId: z.string().uuid(),
+    userId: z.string(),
     amount: z.number().optional(),
     percentage: z.number().optional(),
     shares: z.number().optional(),
@@ -224,25 +309,31 @@ expenseRouter.put(
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const { description, amount, category, date, notes, splitType, splits } = req.body;
+
       const existing = await prisma.expense.findFirst({
         where: { id, createdById: req.user!.id, isDeleted: false },
+        include: { shares: true },
       });
 
       if (!existing) {
-        res.status(404).json({ success: false, error: 'Expense not found or you do not have permission to edit it.' });
+        res.status(404).json({ success: false, error: 'Expense not found or unauthorized.' });
         return;
       }
 
-      const { splits, splitType, amount, ...updateData } = req.body;
-      const finalAmount = amount || Number(existing.amount);
-      const finalSplitType = splitType || existing.splitType;
+      const updateData: any = {};
+      if (description) updateData.description = description;
+      if (category) updateData.category = category;
+      if (date) updateData.date = new Date(date);
+      if (notes !== undefined) updateData.notes = notes;
 
-      // If splits are being updated, recalculate
-      if (splits) {
-        const calculatedShares = calculateShares(finalSplitType, finalAmount, splits);
+      if (splits && splits.length > 0) {
+        const effectiveAmount = amount || Number(existing.amount);
+        const effectiveSplitType = splitType || existing.splitType;
+        const calculatedShares = calculateShares(effectiveSplitType, effectiveAmount, splits);
+
         const totalShares = calculatedShares.reduce((sum, s) => sum + s.amount, 0);
-
-        if (Math.abs(totalShares - finalAmount) > 0.01) {
+        if (Math.abs(totalShares - effectiveAmount) > 0.05) {
           res.status(400).json({
             success: false,
             error: `Split amounts don't match expense amount.`,
@@ -250,13 +341,12 @@ expenseRouter.put(
           return;
         }
 
-        // Delete existing shares and create new ones
         await prisma.expenseShare.deleteMany({ where: { expenseId: id } });
         await prisma.expenseShare.createMany({
           data: calculatedShares.map((s) => ({
             expenseId: id,
             userId: s.userId,
-            amount: new Decimal(s.amount),
+            amount: new Prisma.Decimal(s.amount),
           })),
         });
       }
@@ -265,7 +355,7 @@ expenseRouter.put(
         where: { id },
         data: {
           ...updateData,
-          ...(amount && { amount: new Decimal(amount) }),
+          ...(amount && { amount: new Prisma.Decimal(amount) }),
           ...(splitType && { splitType }),
         },
         include: {
@@ -338,7 +428,6 @@ function calculateShares(
   switch (splitType) {
     case 'EQUAL': {
       const perPerson = totalAmount / splits.length;
-      // Handle rounding: give the remainder to the first person
       const rounded = Math.floor(perPerson * 100) / 100;
       const remainder = Math.round((totalAmount - rounded * splits.length) * 100) / 100;
 

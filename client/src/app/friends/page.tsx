@@ -210,8 +210,8 @@ export default function FriendsPage() {
 
         {/* Search & Invite Dialog */}
         <Dialog open={searchOpen} onClose={() => { setSearchOpen(false); setSearchResults([]); setSearchQuery(''); }} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 4 } } }}>
-          <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h6" fontWeight={700}>Add Friends</Typography>
+          <DialogTitle component="div" sx={{ pb: 1 }}>
+            <Typography variant="h6" component="span" fontWeight={700} sx={{ display: 'block' }}>Add Friends</Typography>
             <Typography variant="caption" color="text.secondary">Connect via invite link, email, or phone number</Typography>
           </DialogTitle>
           <DialogContent>
