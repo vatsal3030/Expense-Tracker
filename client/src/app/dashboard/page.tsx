@@ -148,8 +148,8 @@ export default function DashboardPage() {
       title: 'This Month',
       value: data?.thisMonth?.total ?? 0,
       icon: data?.thisMonth?.change && data.thisMonth.change > 0 ? <TrendingUp /> : <TrendingDown />,
-      gradient: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
-      shadowColor: 'rgba(59,130,246,0.3)',
+      gradient: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
+      shadowColor: 'rgba(51,65,85,0.25)',
       change: data?.thisMonth?.change,
     },
   ];

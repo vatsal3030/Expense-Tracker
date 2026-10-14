@@ -5,18 +5,21 @@ import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 // FairShare Production Design System — Emerald & Slate FinTech
 // ============================================================================
 
+const headingFontFamily = '"Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const bodyFontFamily = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
 const baseTheme = {
   typography: {
-    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    h1: { fontWeight: 800, letterSpacing: '-0.025em' },
-    h2: { fontWeight: 700, letterSpacing: '-0.02em' },
-    h3: { fontWeight: 700, letterSpacing: '-0.015em' },
-    h4: { fontWeight: 600, letterSpacing: '-0.01em' },
-    h5: { fontWeight: 600 },
-    h6: { fontWeight: 600 },
+    fontFamily: bodyFontFamily,
+    h1: { fontFamily: headingFontFamily, fontWeight: 800, letterSpacing: '-0.025em' },
+    h2: { fontFamily: headingFontFamily, fontWeight: 700, letterSpacing: '-0.02em' },
+    h3: { fontFamily: headingFontFamily, fontWeight: 700, letterSpacing: '-0.015em' },
+    h4: { fontFamily: headingFontFamily, fontWeight: 600, letterSpacing: '-0.01em' },
+    h5: { fontFamily: headingFontFamily, fontWeight: 600, letterSpacing: '-0.01em' },
+    h6: { fontFamily: headingFontFamily, fontWeight: 600, letterSpacing: '-0.005em' },
     subtitle1: { fontWeight: 500, letterSpacing: '0.005em' },
     subtitle2: { fontWeight: 500, letterSpacing: '0.005em' },
-    button: { fontWeight: 600, textTransform: 'none' as const, letterSpacing: '0.01em' },
+    button: { fontFamily: headingFontFamily, fontWeight: 600, textTransform: 'none' as const, letterSpacing: '0.01em' },
   },
   shape: {
     borderRadius: 12,
