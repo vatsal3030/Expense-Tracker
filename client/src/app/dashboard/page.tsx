@@ -90,8 +90,13 @@ export default function DashboardPage() {
   const [trendData, setTrendData] = useState<Array<{ month: string; amount: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'balances' | 'activity'>('overview');
+  const [mounted, setMounted] = useState(false);
 
   const isLight = theme.palette.mode === 'light';
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -268,6 +273,7 @@ export default function DashboardPage() {
         </Box>
 
         {/* Financial Metrics Cards (Savexa & Ocupite clean white surface style) */}
+        {(activeTab === 'overview' || activeTab === 'balances') && (
         <Grid container spacing={2.5} sx={{ mb: 4 }}>
           {/* Card 1: Net Balance */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -515,8 +521,74 @@ export default function DashboardPage() {
             </Card>
           </Grid>
         </Grid>
+        )}
+
+        {/* Balances & Settlement Action Spotlight */}
+        {activeTab === 'balances' && (
+          <Card
+            sx={{
+              p: 3,
+              mb: 4,
+              borderRadius: 3.5,
+              bgcolor: 'background.paper',
+              border: `1px solid ${theme.palette.divider}`,
+              boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: { xs: 'flex-start', md: 'center' },
+              justifyContent: 'space-between',
+              gap: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 2.5,
+                  bgcolor: alpha('#0E6245', 0.1),
+                  color: '#0E6245',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Handshake sx={{ fontSize: 24 }} />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
+                  Smart Debt Simplification & Direct Settlements
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem' }}>
+                  {data?.pendingSettlements || 0} pending settlements. Settle directly with UPI QR codes in 1 click without extra transactions.
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1.5, alignSelf: { xs: 'stretch', md: 'center' } }}>
+              <Button
+                variant="contained"
+                component={Link}
+                href="/settlements"
+                prefetch={true}
+                startIcon={<CheckCircleOutlined fontSize="small" />}
+                sx={{
+                  borderRadius: 2.5,
+                  fontWeight: 700,
+                  bgcolor: '#0E6245',
+                  color: '#FFFFFF',
+                  textTransform: 'none',
+                  px: 3,
+                  '&:hover': { bgcolor: '#094A34' },
+                }}
+              >
+                Review & Settle Up
+              </Button>
+            </Box>
+          </Card>
+        )}
 
         {/* Karma & Telemetry Spotlight (Replaces generic dark cards with crisp white FinTech cards) */}
+        {activeTab === 'overview' && (
         <Grid container spacing={2.5} sx={{ mb: 4 }}>
           <Grid size={{ xs: 12, md: 8 }}>
             <Card
@@ -652,8 +724,10 @@ export default function DashboardPage() {
             </Card>
           </Grid>
         </Grid>
+        )}
 
         {/* Charts & Analytics Row (Savexa Area Curve + Ocupite Progress Breakdown) */}
+        {(activeTab === 'overview' || activeTab === 'breakdown') && (
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {/* Spending Trend Chart */}
           <Grid size={{ xs: 12, md: 7 }}>
@@ -695,8 +769,8 @@ export default function DashboardPage() {
                     <Receipt sx={{ fontSize: 48, opacity: 0.3, mb: 1 }} />
                     <Typography variant="body2">No trend data available yet</Typography>
                   </Box>
-                ) : (
-                  <ResponsiveContainer width="100%" height={280}>
+                ) : mounted ? (
+                  <ResponsiveContainer minWidth={100} width="100%" height={280}>
                     <AreaChart data={trendData}>
                       <defs>
                         <linearGradient id="spendingCurve" x1="0" y1="0" x2="0" y2="1">
@@ -737,6 +811,8 @@ export default function DashboardPage() {
                       />
                     </AreaChart>
                   </ResponsiveContainer>
+                ) : (
+                  <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 3 }} />
                 )}
               </CardContent>
             </Card>
@@ -829,10 +905,13 @@ export default function DashboardPage() {
             </Card>
           </Grid>
         </Grid>
+        )}
 
         {/* Quick Stats & Recent Activity */}
+        {(activeTab === 'overview' || activeTab === 'activity') && (
         <Grid container spacing={3}>
           {/* Quick Metrics */}
+          {activeTab === 'overview' && (
           <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
@@ -889,9 +968,10 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </Grid>
+          )}
 
           {/* Recent Activity */}
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid size={{ xs: 12, md: activeTab === 'activity' ? 12 : 8 }}>
             <Card
               sx={{
                 bgcolor: 'background.paper',
@@ -982,6 +1062,7 @@ export default function DashboardPage() {
             </Card>
           </Grid>
         </Grid>
+        )}
       </Box>
     </AppLayout>
   );

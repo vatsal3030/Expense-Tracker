@@ -1,23 +1,24 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, useMemo } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, Avatar, AvatarGroup, Chip,
   List, ListItem, ListItemAvatar, ListItemText, Divider, Button,
   Skeleton, useTheme, alpha, IconButton, Tooltip, Stack, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tabs, Tab,
+  Alert, Snackbar,
 } from '@mui/material';
 import {
-  ArrowBack, Add, ArrowForward, Share, ContentCopy,
+  ArrowBack, Add, Share, ContentCopy,
   WhatsApp, PersonAdd, Check, Lock, Security,
+  AccountBalanceWallet, ArrowForward, QrCode2,
+  TrendingUp, TrendingDown, ReceiptLong, People,
 } from '@mui/icons-material';
-import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, InputAdornment, Alert, Snackbar,
-} from '@mui/material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
-import { groupApi } from '@/lib/api';
+import { groupApi, settlementApi } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
+import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   FOOD: '🍔', TRANSPORT: '🚗', ENTERTAINMENT: '🎬', SHOPPING: '🛍️',
@@ -29,14 +30,29 @@ function GroupDetailContent() {
   const theme = useTheme();
   const router = useRouter();
   const params = useParams();
-  const { user, loading: authLoading } = useAuth();
+  const isLight = theme.palette.mode === 'light';
+  const { user, profile, loading: authLoading } = useAuth();
+
   const [group, setGroup] = useState<any>(null);
   const [balances, setBalances] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState(0);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteContact, setInviteContact] = useState('');
   const [copied, setCopied] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // UPI Payment Modal State
+  const [upiModal, setUpiModal] = useState<{
+    open: boolean;
+    payeeName: string;
+    amount: number;
+    payeeUpiId?: string;
+  }>({
+    open: false,
+    payeeName: '',
+    amount: 0,
+  });
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
@@ -48,12 +64,13 @@ function GroupDetailContent() {
 
   const fetchGroup = async () => {
     try {
+      setLoading(true);
       const [groupRes, balancesRes] = await Promise.all([
         groupApi.get(params.id as string),
         groupApi.getBalances(params.id as string),
       ]);
-      setGroup(groupRes.data.data);
-      setBalances(balancesRes.data.data);
+      setGroup(groupRes.data?.data);
+      setBalances(balancesRes.data?.data);
     } catch (error) {
       console.error('Fetch group error:', error);
     } finally {
@@ -75,12 +92,12 @@ function GroupDetailContent() {
   };
 
   const handleShareWhatsApp = () => {
-    const text = `Hey! Join our "${group?.name}" group on FairShare to split bills: ${inviteLink}`;
+    const text = `Hey! Join our "${group?.name}" group on FairShare to split expenses: ${inviteLink}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleDirectInvite = async () => {
-    if (!inviteContact.trim()) return;
+    if (!inviteContact.trim() || !group?.id) return;
     try {
       const isEmail = inviteContact.includes('@');
       await groupApi.addMember(group.id, isEmail ? { email: inviteContact.trim() } : { phone: inviteContact.trim() });
@@ -93,62 +110,165 @@ function GroupDetailContent() {
   };
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: group?.currency || 'INR', maximumFractionDigits: 0 }).format(amount);
 
-  if (authLoading || loading) return (
-    <AppLayout>
-      <Box sx={{ p: 3 }}>
-        <Skeleton width={200} height={40} />
-        <Skeleton width={300} sx={{ mt: 1 }} />
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-          {[1, 2, 3].map(i => (
-            <Grid size={{ xs: 12, md: 4 }} key={i}><Card><CardContent><Skeleton height={100} /></CardContent></Card></Grid>
-          ))}
-        </Grid>
-      </Box>
-    </AppLayout>
-  );
+  const totalSpent = useMemo(() => {
+    if (!group?.expenses) return 0;
+    return group.expenses.reduce((acc: number, exp: any) => acc + Number(exp.amount || 0), 0);
+  }, [group]);
+
+  const myBalance = useMemo(() => {
+    if (!balances?.balances || !user) return 0;
+    const currentMember = balances.balances.find((b: any) => b.user.id === user.id || b.user.supabase_id === user.id);
+    return currentMember ? currentMember.balance : 0;
+  }, [balances, user]);
+
+  const handleSettleUpi = (payeeName: string, amount: number) => {
+    setUpiModal({
+      open: true,
+      payeeName,
+      amount,
+      payeeUpiId: `${payeeName.toLowerCase().replace(/\s+/g, '')}@okaxis`,
+    });
+  };
+
+  const handleRecordSettlement = async (toUserId: string, amount: number) => {
+    try {
+      await settlementApi.create({
+        payeeId: toUserId,
+        amount,
+        groupId: group.id,
+        notes: 'Group settlement via FairShare',
+      });
+      setToastMessage('Settlement recorded successfully!');
+      fetchGroup();
+    } catch (err: any) {
+      setToastMessage(err.response?.data?.error || 'Failed to record settlement.');
+    }
+  };
+
+  if (authLoading || (loading && !group)) {
+    return (
+      <AppLayout>
+        <Box sx={{ p: 3 }}>
+          <Skeleton width={220} height={40} />
+          <Skeleton width={320} sx={{ mt: 1 }} />
+          <Grid container spacing={3} sx={{ mt: 2 }}>
+            {[1, 2, 3].map((i) => (
+              <Grid size={{ xs: 12, md: 4 }} key={i}>
+                <Card sx={{ borderRadius: 3.5, p: 3 }}>
+                  <Skeleton height={90} />
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in">
-        {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+      <Box className="animate-fade-in" sx={{ pb: 6 }}>
+        {/* Top Header Row */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            mb: 3,
+            gap: 2,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton onClick={() => router.push('/groups')} sx={{ bgcolor: alpha(theme.palette.action.hover, 0.08) }}>
-              <ArrowBack />
+            <IconButton
+              onClick={() => router.push('/groups')}
+              sx={{
+                bgcolor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 2.5,
+                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
+              }}
+            >
+              <ArrowBack fontSize="small" />
             </IconButton>
             <Box>
-              <Typography variant="h4" fontWeight={800}>{group?.name}</Typography>
-              {group?.description && <Typography variant="body2" color="text.secondary">{group.description}</Typography>}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+                  {group?.name}
+                </Typography>
+                <Chip
+                  label={group?.type?.toLowerCase() || 'friends'}
+                  size="small"
+                  sx={{
+                    textTransform: 'capitalize',
+                    fontWeight: 700,
+                    height: 22,
+                    fontSize: '0.7rem',
+                    bgcolor: alpha('#0E6245', 0.1),
+                    color: '#0E6245',
+                  }}
+                />
+                {(group?.isPasswordProtected || group?.requireAdminApproval) && (
+                  <Chip
+                    icon={<Lock sx={{ fontSize: '13px !important' }} />}
+                    label="Protected"
+                    size="small"
+                    sx={{
+                      height: 22,
+                      fontSize: '0.675rem',
+                      fontWeight: 700,
+                      bgcolor: alpha(theme.palette.text.secondary, 0.08),
+                      color: 'text.secondary',
+                    }}
+                  />
+                )}
+              </Box>
+              {group?.description && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                  {group.description}
+                </Typography>
+              )}
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Button
               variant="outlined"
-              startIcon={<Share />}
+              startIcon={<Share fontSize="small" />}
               onClick={() => setInviteOpen(true)}
               sx={{
                 borderRadius: 2.5,
                 borderColor: theme.palette.divider,
+                color: 'text.primary',
+                bgcolor: 'background.paper',
                 fontWeight: 600,
                 textTransform: 'none',
-                '&:hover': { borderColor: theme.palette.primary.main },
+                px: 2,
+                py: 0.75,
+                '&:hover': {
+                  borderColor: '#0E6245',
+                  bgcolor: alpha('#0E6245', 0.04),
+                },
               }}
             >
               Invite People
             </Button>
             <Button
               variant="contained"
-              startIcon={<Add />}
+              startIcon={<Add fontSize="small" />}
               onClick={() => router.push(`/expenses/new?groupId=${group?.id}`)}
               sx={{
                 borderRadius: 2.5,
                 fontWeight: 600,
                 textTransform: 'none',
-                bgcolor: 'primary.main',
-                '&:hover': { bgcolor: 'primary.dark' },
+                bgcolor: '#0E6245',
+                color: '#FFFFFF',
+                px: 2.5,
+                py: 0.75,
+                boxShadow: '0 2px 6px rgba(14, 98, 69, 0.25)',
+                '&:hover': { bgcolor: '#094A34' },
               }}
             >
               Add Expense
@@ -156,137 +276,524 @@ function GroupDetailContent() {
           </Box>
         </Box>
 
-        <Grid container spacing={3}>
-          {/* Members */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
-                  Members ({group?.members?.length || 0})
-                </Typography>
-                <List disablePadding>
-                  {group?.members?.map((m: any, i: number) => (
-                    <React.Fragment key={m.user.id}>
-                      <ListItem disablePadding sx={{ py: 1 }}>
-                        <ListItemAvatar>
-                          <Avatar src={m.user.avatarUrl || undefined} sx={{ width: 36, height: 36, bgcolor: theme.palette.primary.main, fontSize: '0.85rem' }}>
-                            {m.user.name?.charAt(0)}
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={<Typography variant="body2" fontWeight={600}>{m.user.name}</Typography>}
-                          secondary={<Typography variant="caption" color="text.secondary">{m.role === 'ADMIN' ? '👑 Admin' : 'Member'}</Typography>}
-                        />
-                      </ListItem>
-                      {i < group.members.length - 1 && <Divider variant="inset" />}
-                    </React.Fragment>
-                  ))}
-                </List>
-              </CardContent>
+        {/* Financial Summary Cards for this Group */}
+        <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Card
+              sx={{
+                p: 2.5,
+                borderRadius: 3.5,
+                bgcolor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
+                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Total Group Spend
+              </Typography>
+              <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', mt: 0.5, letterSpacing: '-0.02em' }}>
+                {formatCurrency(totalSpent)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {group?.expenses?.length || 0} bills across {group?.members?.length || 0} members
+              </Typography>
             </Card>
           </Grid>
 
-          {/* Balances */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>Balances</Typography>
-                {balances?.balances?.map((b: any, i: number) => (
-                  <Box key={b.user.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, borderBottom: i < balances.balances.length - 1 ? `1px solid ${theme.palette.divider}` : 'none' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Avatar src={b.user.avatarUrl || undefined} sx={{ width: 32, height: 32, fontSize: '0.8rem', bgcolor: theme.palette.primary.main }}>{b.user.name?.charAt(0)}</Avatar>
-                      <Typography variant="body2" fontWeight={500}>{b.user.name}</Typography>
-                    </Box>
-                    <Typography variant="body2" fontWeight={700} color={b.balance >= 0 ? 'success.main' : 'error.main'}>
-                      {b.balance >= 0 ? '+' : ''}{formatCurrency(b.balance)}
-                    </Typography>
-                  </Box>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Simplified Debts */}
-            {balances?.simplifiedDebts?.length > 0 && (
-              <Card sx={{ mt: 3 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>Settle Up</Typography>
-                  {balances.simplifiedDebts.map((debt: any, i: number) => (
-                    <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1.5, borderBottom: i < balances.simplifiedDebts.length - 1 ? `1px solid ${theme.palette.divider}` : 'none' }}>
-                      <Typography variant="body2" fontWeight={600} color="error.main">{debt.from.name}</Typography>
-                      <ArrowForward sx={{ fontSize: 16, color: 'text.secondary' }} />
-                      <Typography variant="body2" fontWeight={600} color="success.main">{debt.to.name}</Typography>
-                      <Box sx={{ flex: 1 }} />
-                      <Chip label={formatCurrency(debt.amount)} size="small" color="primary" variant="outlined" sx={{ fontWeight: 700 }} />
-                    </Box>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </Grid>
-
-          {/* Recent Expenses */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>Recent Expenses</Typography>
-                {group?.expenses?.length > 0 ? (
-                  <List disablePadding>
-                    {group.expenses.slice(0, 10).map((exp: any, i: number) => (
-                      <React.Fragment key={exp.id}>
-                        <ListItem disablePadding sx={{ py: 1 }}>
-                          <ListItemAvatar>
-                            <Avatar sx={{ width: 36, height: 36, bgcolor: alpha(theme.palette.primary.main, 0.1), fontSize: '1.1rem' }}>
-                              {CATEGORY_EMOJI[exp.category] || '📋'}
-                            </Avatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={<Typography variant="body2" fontWeight={600}>{exp.description}</Typography>}
-                            secondary={`${exp.paidBy?.name} • ${new Date(exp.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`}
-                          />
-                          <Typography variant="body2" fontWeight={700}>
-                            {formatCurrency(Number(exp.amount))}
-                          </Typography>
-                        </ListItem>
-                        {i < Math.min(group.expenses.length, 10) - 1 && <Divider variant="inset" />}
-                      </React.Fragment>
-                    ))}
-                  </List>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Card
+              sx={{
+                p: 2.5,
+                borderRadius: 3.5,
+                bgcolor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
+                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Your Group Balance
+              </Typography>
+              <Typography
+                variant="h4"
+                fontWeight={800}
+                sx={{
+                  color: myBalance > 0 ? '#0E6245' : myBalance < 0 ? '#DC2626' : 'text.primary',
+                  mt: 0.5,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {myBalance > 0 ? '+' : ''}{formatCurrency(myBalance)}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                {myBalance > 0 ? (
+                  <Chip label="You are owed" size="small" sx={{ height: 20, fontSize: '0.675rem', fontWeight: 700, bgcolor: alpha('#0E6245', 0.1), color: '#0E6245' }} />
+                ) : myBalance < 0 ? (
+                  <Chip label="You owe" size="small" sx={{ height: 20, fontSize: '0.675rem', fontWeight: 700, bgcolor: alpha('#EF4444', 0.1), color: '#DC2626' }} />
                 ) : (
-                  <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-                    <Typography variant="body2">No expenses yet</Typography>
-                  </Box>
+                  <Chip label="Settled up" size="small" sx={{ height: 20, fontSize: '0.675rem', fontWeight: 700, bgcolor: alpha(theme.palette.text.secondary, 0.1), color: 'text.secondary' }} />
                 )}
-              </CardContent>
+              </Box>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Card
+              sx={{
+                p: 2.5,
+                borderRadius: 3.5,
+                bgcolor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
+                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Debt Simplification
+              </Typography>
+              <Box sx={{ mt: 0.5 }}>
+                <Typography variant="h6" fontWeight={800} sx={{ color: '#0E6245' }}>
+                  {balances?.simplifiedDebts?.length || 0} Pending Debts
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Greedy cash-flow algorithm active
+                </Typography>
+              </Box>
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => setActiveTab(1)}
+                sx={{
+                  color: '#0E6245',
+                  p: 0,
+                  justifyContent: 'flex-start',
+                  fontWeight: 700,
+                  fontSize: '0.775rem',
+                  textTransform: 'none',
+                  '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+                }}
+              >
+                Review Settlements →
+              </Button>
             </Card>
           </Grid>
         </Grid>
 
-        {/* Invite Members Dialog */}
-        <Dialog open={inviteOpen} onClose={() => setInviteOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 3.5 } } }}>
-          <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
-            Invite to {group?.name}
-          </DialogTitle>
-          <DialogContent>
-            <Stack spacing={2.5} sx={{ mt: 1 }}>
-              {/* Security info banner if protected or requires approval */}
-              {(group?.isPasswordProtected || group?.requireAdminApproval) && (
-                <Box sx={{ p: 2, borderRadius: 2.5, bgcolor: alpha(theme.palette.primary.main, 0.08), border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}` }}>
-                  <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                    <Security sx={{ fontSize: 16 }} /> Group Security Enabled
+        {/* Tab Controls (Expenses | Balances & Settle Up | Members & Security) */}
+        <Box sx={{ borderBottom: `1px solid ${theme.palette.divider}`, mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, val) => setActiveTab(val)}
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                minWidth: 120,
+              },
+            }}
+          >
+            <Tab label={`Expenses (${group?.expenses?.length || 0})`} />
+            <Tab label={`Balances & Settle Up (${balances?.balances?.length || 0})`} />
+            <Tab label={`Members (${group?.members?.length || 0})`} />
+          </Tabs>
+        </Box>
+
+        {/* TAB 0: EXPENSES */}
+        {activeTab === 0 && (
+          <Card
+            sx={{
+              borderRadius: 3.5,
+              bgcolor: 'background.paper',
+              border: `1px solid ${theme.palette.divider}`,
+              boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
+              {group?.expenses && group.expenses.length > 0 ? (
+                <List disablePadding>
+                  {group.expenses.map((exp: any, i: number) => (
+                    <React.Fragment key={exp.id}>
+                      <ListItem
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          transition: 'all 0.15s ease',
+                          cursor: 'pointer',
+                          '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.04) },
+                        }}
+                        onClick={() => router.push(`/expenses?id=${exp.id}`)}
+                      >
+                        <ListItemAvatar>
+                          <Avatar
+                            sx={{
+                              width: 44,
+                              height: 44,
+                              bgcolor: alpha('#0E6245', 0.1),
+                              fontSize: '1.25rem',
+                            }}
+                          >
+                            {CATEGORY_EMOJI[exp.category] || '📋'}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary' }}>
+                              {exp.description}
+                            </Typography>
+                          }
+                          secondary={
+                            <Typography variant="caption" color="text.secondary">
+                              Paid by <strong>{exp.paidBy?.name}</strong> •{' '}
+                              {new Date(exp.date).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}{' '}
+                              • {exp.splitType}
+                            </Typography>
+                          }
+                        />
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary' }}>
+                            {formatCurrency(Number(exp.amount))}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {exp.shares?.length || group.members?.length || 1} shares
+                          </Typography>
+                        </Box>
+                      </ListItem>
+                      {i < group.expenses.length - 1 && (
+                        <Divider component="li" sx={{ borderColor: theme.palette.divider }} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </List>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
+                  <ReceiptLong sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
+                  <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', mb: 0.5 }}>
+                    No expenses yet
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                    {group.isPasswordProtected && '• Passcode required to enter.\n'}
-                    {group.requireAdminApproval && '• Admin approval required for new members.'}
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Record your first group bill or expense to start splitting.
                   </Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => router.push(`/expenses/new?groupId=${group?.id}`)}
+                    sx={{
+                      bgcolor: '#0E6245',
+                      color: '#FFFFFF',
+                      borderRadius: 2.5,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      '&:hover': { bgcolor: '#094A34' },
+                    }}
+                  >
+                    Add First Expense
+                  </Button>
                 </Box>
               )}
+            </CardContent>
+          </Card>
+        )}
 
-              {/* Shareable Link */}
-              <Box>
+        {/* TAB 1: BALANCES & SETTLE UP */}
+        {activeTab === 1 && (
+          <Grid container spacing={3}>
+            {/* Member Balances */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Card
+                sx={{
+                  borderRadius: 3.5,
+                  bgcolor: 'background.paper',
+                  border: `1px solid ${theme.palette.divider}`,
+                  p: 3,
+                }}
+              >
+                <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
+                  Individual Balances
+                </Typography>
+                <List disablePadding>
+                  {balances?.balances?.map((b: any, i: number) => {
+                    const isPositive = b.balance > 0;
+                    const isZero = Math.abs(b.balance) < 1;
+
+                    return (
+                      <React.Fragment key={b.user.id}>
+                        <ListItem disablePadding sx={{ py: 1.5 }}>
+                          <ListItemAvatar>
+                            <Avatar
+                              src={b.user.avatarUrl || undefined}
+                              sx={{
+                                width: 38,
+                                height: 38,
+                                bgcolor: '#0E6245',
+                                fontSize: '0.85rem',
+                                fontWeight: 700,
+                              }}
+                            >
+                              {b.user.name?.charAt(0)}
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={<Typography variant="body2" fontWeight={600}>{b.user.name}</Typography>}
+                            secondary={
+                              <Typography variant="caption" color="text.secondary">
+                                {isZero ? 'All settled' : isPositive ? 'Gets back' : 'Owes to group'}
+                              </Typography>
+                            }
+                          />
+                          <Typography
+                            variant="body2"
+                            fontWeight={800}
+                            sx={{
+                              color: isZero ? 'text.secondary' : isPositive ? '#0E6245' : '#DC2626',
+                            }}
+                          >
+                            {isPositive ? '+' : ''}{formatCurrency(b.balance)}
+                          </Typography>
+                        </ListItem>
+                        {i < balances.balances.length - 1 && (
+                          <Divider component="li" sx={{ borderColor: theme.palette.divider }} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </List>
+              </Card>
+            </Grid>
+
+            {/* Splitwise Debt Simplification & Direct UPI Settle */}
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Card
+                sx={{
+                  borderRadius: 3.5,
+                  bgcolor: 'background.paper',
+                  border: `1px solid ${theme.palette.divider}`,
+                  p: 3,
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700}>
+                      Simplified Debt Settlements
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Minimum transactions needed to settle all debts
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label="Greedy Algorithm"
+                    size="small"
+                    sx={{
+                      height: 22,
+                      fontSize: '0.675rem',
+                      fontWeight: 700,
+                      bgcolor: alpha('#0E6245', 0.1),
+                      color: '#0E6245',
+                    }}
+                  />
+                </Box>
+
+                {balances?.simplifiedDebts && balances.simplifiedDebts.length > 0 ? (
+                  <Stack spacing={2} sx={{ mt: 2 }}>
+                    {balances.simplifiedDebts.map((debt: any, i: number) => {
+                      const isMyDebt = user && (debt.from.id === user.id || debt.from.supabase_id === user.id);
+
+                      return (
+                        <Card
+                          key={i}
+                          variant="outlined"
+                          sx={{
+                            p: 2,
+                            borderRadius: 3,
+                            borderColor: theme.palette.divider,
+                            display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            alignItems: { xs: 'flex-start', sm: 'center' },
+                            justifyContent: 'space-between',
+                            gap: 1.5,
+                            bgcolor: isMyDebt ? alpha('#EF4444', 0.04) : 'background.paper',
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Avatar
+                              src={debt.from.avatarUrl || undefined}
+                              sx={{ width: 34, height: 34, fontSize: '0.8rem', bgcolor: '#EF4444' }}
+                            >
+                              {debt.from.name?.charAt(0)}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
+                                {debt.from.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                owes {debt.to.name}
+                              </Typography>
+                            </Box>
+                            <ArrowForward sx={{ fontSize: 18, color: 'text.secondary', mx: 0.5 }} />
+                            <Avatar
+                              src={debt.to.avatarUrl || undefined}
+                              sx={{ width: 34, height: 34, fontSize: '0.8rem', bgcolor: '#0E6245' }}
+                            >
+                              {debt.to.name?.charAt(0)}
+                            </Avatar>
+                            <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
+                              {debt.to.name}
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, alignSelf: { xs: 'flex-end', sm: 'center' } }}>
+                            <Typography variant="subtitle1" fontWeight={800} sx={{ color: '#0E6245' }}>
+                              {formatCurrency(debt.amount)}
+                            </Typography>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              startIcon={<QrCode2 fontSize="small" />}
+                              onClick={() => handleSettleUpi(debt.to.name, debt.amount)}
+                              sx={{
+                                borderRadius: 2,
+                                fontWeight: 700,
+                                fontSize: '0.775rem',
+                                bgcolor: '#0E6245',
+                                color: '#FFFFFF',
+                                textTransform: 'none',
+                                px: 2,
+                                '&:hover': { bgcolor: '#094A34' },
+                              }}
+                            >
+                              Pay UPI
+                            </Button>
+                          </Box>
+                        </Card>
+                      );
+                    })}
+                  </Stack>
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
+                    <Check sx={{ fontSize: 44, color: '#0E6245', mb: 1 }} />
+                    <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary' }}>
+                      All settled up!
+                    </Typography>
+                    <Typography variant="caption">No pending debts in this group right now.</Typography>
+                  </Box>
+                )}
+              </Card>
+            </Grid>
+          </Grid>
+        )}
+
+        {/* TAB 2: MEMBERS & SECURITY */}
+        {activeTab === 2 && (
+          <Grid container spacing={3}>
+            {/* Members List */}
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Card
+                sx={{
+                  borderRadius: 3.5,
+                  bgcolor: 'background.paper',
+                  border: `1px solid ${theme.palette.divider}`,
+                  p: 3,
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" fontWeight={700}>
+                    Group Members ({group?.members?.length || 0})
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<PersonAdd fontSize="small" />}
+                    onClick={() => setInviteOpen(true)}
+                    sx={{
+                      borderRadius: 2,
+                      borderColor: theme.palette.divider,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                    }}
+                  >
+                    Add Member
+                  </Button>
+                </Box>
+
+                <List disablePadding>
+                  {group?.members?.map((m: any, i: number) => (
+                    <React.Fragment key={m.user?.id || i}>
+                      <ListItem disablePadding sx={{ py: 1.5 }}>
+                        <ListItemAvatar>
+                          <Avatar
+                            src={m.user?.avatarUrl || undefined}
+                            sx={{ width: 40, height: 40, bgcolor: '#0E6245', fontSize: '0.9rem', fontWeight: 700 }}
+                          >
+                            {m.user?.name?.charAt(0) || '?'}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={<Typography variant="body2" fontWeight={700}>{m.user?.name}</Typography>}
+                          secondary={m.user?.email || m.user?.phone || 'Member'}
+                        />
+                        <Chip
+                          label={m.role === 'ADMIN' ? '👑 Admin' : 'Member'}
+                          size="small"
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: '0.7rem',
+                            bgcolor: m.role === 'ADMIN' ? alpha('#F59E0B', 0.1) : alpha(theme.palette.text.secondary, 0.08),
+                            color: m.role === 'ADMIN' ? '#D97706' : 'text.secondary',
+                          }}
+                        />
+                      </ListItem>
+                      {i < group.members.length - 1 && (
+                        <Divider component="li" sx={{ borderColor: theme.palette.divider }} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </List>
+              </Card>
+            </Grid>
+
+            {/* Quick Invite & Security Info */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Card
+                sx={{
+                  borderRadius: 3.5,
+                  bgcolor: 'background.paper',
+                  border: `1px solid ${theme.palette.divider}`,
+                  p: 3,
+                }}
+              >
+                <Typography variant="h6" fontWeight={700} sx={{ mb: 1.5 }}>
+                  Invite & Security
+                </Typography>
+
+                {(group?.isPasswordProtected || group?.requireAdminApproval) && (
+                  <Box
+                    sx={{
+                      p: 2,
+                      mb: 2.5,
+                      borderRadius: 2.5,
+                      bgcolor: alpha('#0E6245', 0.06),
+                      border: `1px solid ${alpha('#0E6245', 0.15)}`,
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={700} color="#0E6245" sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                      <Security sx={{ fontSize: 16 }} /> Group Security Active
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                      {group.isPasswordProtected && '• Passcode required to join via link.\n'}
+                      {group.requireAdminApproval && '• Admin approval required for joining.'}
+                    </Typography>
+                  </Box>
+                )}
+
                 <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
                   Shareable Invite Link
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -298,14 +805,76 @@ function GroupDetailContent() {
                     variant="contained"
                     onClick={handleCopyLink}
                     startIcon={copied ? <Check /> : <ContentCopy />}
-                    sx={{ px: 2.5, fontWeight: 600, flexShrink: 0, bgcolor: copied ? 'success.main' : 'primary.main' }}
+                    sx={{
+                      px: 2,
+                      fontWeight: 700,
+                      flexShrink: 0,
+                      bgcolor: copied ? 'success.main' : '#0E6245',
+                      color: '#FFFFFF',
+                      textTransform: 'none',
+                    }}
+                  >
+                    {copied ? 'Copied' : 'Copy'}
+                  </Button>
+                </Box>
+
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<WhatsApp sx={{ color: '#25D366' }} />}
+                  onClick={handleShareWhatsApp}
+                  sx={{
+                    py: 1,
+                    borderRadius: 2.5,
+                    fontWeight: 600,
+                    borderColor: alpha('#25D366', 0.5),
+                    color: theme.palette.text.primary,
+                    textTransform: 'none',
+                    '&:hover': { borderColor: '#25D366', bgcolor: alpha('#25D366', 0.08) },
+                  }}
+                >
+                  Share via WhatsApp
+                </Button>
+              </Card>
+            </Grid>
+          </Grid>
+        )}
+
+        {/* Invite Dialog */}
+        <Dialog
+          open={inviteOpen}
+          onClose={() => setInviteOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          slotProps={{ paper: { sx: { borderRadius: 4, bgcolor: 'background.paper' } } }}
+        >
+          <DialogTitle component="div" sx={{ pb: 1, pt: 2.5, px: 3 }}>
+            <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>
+              Invite to {group?.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              Add friends via link, WhatsApp, email, or phone
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ px: 3 }}>
+            <Stack spacing={2.5} sx={{ mt: 1 }}>
+              <Box>
+                <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                  Shareable Link
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField fullWidth size="small" value={inviteLink} slotProps={{ input: { readOnly: true } }} />
+                  <Button
+                    variant="contained"
+                    onClick={handleCopyLink}
+                    startIcon={copied ? <Check /> : <ContentCopy />}
+                    sx={{ px: 2.5, fontWeight: 700, bgcolor: copied ? 'success.main' : '#0E6245', color: '#FFFFFF', textTransform: 'none' }}
                   >
                     {copied ? 'Copied' : 'Copy'}
                   </Button>
                 </Box>
               </Box>
 
-              {/* WhatsApp Share */}
               <Button
                 variant="outlined"
                 fullWidth
@@ -317,17 +886,16 @@ function GroupDetailContent() {
                   fontWeight: 600,
                   borderColor: alpha('#25D366', 0.5),
                   color: theme.palette.text.primary,
-                  '&:hover': { borderColor: '#25D366', bgcolor: alpha('#25D366', 0.08) },
+                  textTransform: 'none',
                 }}
               >
                 Share via WhatsApp
               </Button>
 
-              <Divider sx={{ my: 1 }}>
+              <Divider>
                 <Typography variant="caption" color="text.secondary">OR INVITE DIRECTLY</Typography>
               </Divider>
 
-              {/* Direct Add by Email or Phone */}
               <Box>
                 <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
                   Add by Email or Phone Number
@@ -336,7 +904,7 @@ function GroupDetailContent() {
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="name@email.com or +919876543210"
+                    placeholder="friend@email.com or +919876543210"
                     value={inviteContact}
                     onChange={(e) => setInviteContact(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleDirectInvite(); }}
@@ -346,21 +914,35 @@ function GroupDetailContent() {
                     onClick={handleDirectInvite}
                     disabled={!inviteContact.trim()}
                     startIcon={<PersonAdd />}
-                    sx={{ px: 2.5, fontWeight: 600, flexShrink: 0 }}
+                    sx={{ px: 2.5, fontWeight: 700, bgcolor: '#0E6245', color: '#FFFFFF', textTransform: 'none' }}
                   >
                     Add
                   </Button>
                 </Box>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                  If they don't have an account, an invitation will be reserved for them.
-                </Typography>
               </Box>
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2.5 }}>
-            <Button onClick={() => setInviteOpen(false)} sx={{ borderRadius: 2 }}>Close</Button>
+            <Button onClick={() => setInviteOpen(false)} sx={{ borderRadius: 2, textTransform: 'none' }}>
+              Close
+            </Button>
           </DialogActions>
         </Dialog>
+
+        {/* UPI Payment Modal */}
+        <UpiPaymentModal
+          open={upiModal.open}
+          onClose={() => setUpiModal({ ...upiModal, open: false })}
+          payeeName={upiModal.payeeName}
+          payeeUpiId={upiModal.payeeUpiId}
+          amount={upiModal.amount}
+          currency={group?.currency || 'INR'}
+          onConfirmSettlement={() => {
+            setUpiModal({ ...upiModal, open: false });
+            setToastMessage(`Payment of ${formatCurrency(upiModal.amount)} to ${upiModal.payeeName} initiated!`);
+            fetchGroup();
+          }}
+        />
 
         {/* Feedback Snackbar */}
         <Snackbar
@@ -391,4 +973,3 @@ export default function GroupDetailPage() {
     </Suspense>
   );
 }
-
