@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 interface UserProfile {
   id: string;
@@ -93,6 +93,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProfile]);
 
   const signUp = async (email: string, password: string, name: string) => {
+    if (!isSupabaseConfigured()) {
+      return {
+        error:
+          'Supabase API key is missing. Please copy your anon public key from Supabase Dashboard (Project Settings > API) and paste it into client/.env.local.',
+      };
+    }
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -102,46 +108,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
-      if (error) return { error: error.message };
+      if (error) {
+        if (error.message.includes('API key') || error.message.includes('401')) {
+          return {
+            error:
+              'Invalid Supabase API key. Please check your NEXT_PUBLIC_SUPABASE_ANON_KEY in client/.env.local (from Supabase Dashboard > Settings > API).',
+          };
+        }
+        return { error: error.message };
+      }
       return { error: null };
     } catch {
-      return { error: 'An unexpected error occurred.' };
+      return { error: 'An unexpected error occurred during signup.' };
     }
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured()) {
+      return {
+        error:
+          'Supabase API key is missing. Please copy your anon public key from Supabase Dashboard (Project Settings > API) and paste it into client/.env.local.',
+      };
+    }
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return { error: error.message };
+      if (error) {
+        if (error.message.includes('API key') || error.message.includes('401')) {
+          return {
+            error:
+              'Invalid Supabase API key. Please check your NEXT_PUBLIC_SUPABASE_ANON_KEY in client/.env.local.',
+          };
+        }
+        return { error: error.message };
+      }
       return { error: null };
     } catch {
-      return { error: 'An unexpected error occurred.' };
+      return { error: 'An unexpected error occurred during sign in.' };
     }
   };
 
   const signInWithGoogle = async () => {
+    if (!isSupabaseConfigured()) {
+      return {
+        error:
+          'Supabase API key is missing. Please copy your anon public key from Supabase Dashboard (Project Settings > API) and paste it into client/.env.local.',
+      };
+    }
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
-      if (error) return { error: error.message };
+      if (error) {
+        if (error.message.includes('not enabled') || error.message.includes('validation_failed')) {
+          return {
+            error:
+              'Google Sign-in is not enabled in your Supabase project. In Supabase Dashboard, go to Authentication > Sign In / Providers > Google, enable it, or use Email & Password instead.',
+          };
+        }
+        return { error: error.message };
+      }
       return { error: null };
     } catch {
-      return { error: 'Google sign-in failed.' };
+      return { error: 'Google sign-in failed. Please use Email & Password.' };
     }
   };
 
   const signInWithGithub = async () => {
+    if (!isSupabaseConfigured()) {
+      return {
+        error:
+          'Supabase API key is missing. Please copy your anon public key from Supabase Dashboard (Project Settings > API) and paste it into client/.env.local.',
+      };
+    }
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
-      if (error) return { error: error.message };
+      if (error) {
+        if (error.message.includes('not enabled') || error.message.includes('validation_failed')) {
+          return {
+            error:
+              'GitHub Sign-in is not enabled in your Supabase project. In Supabase Dashboard, go to Authentication > Sign In / Providers > GitHub, enable it, or use Email & Password instead.',
+          };
+        }
+        return { error: error.message };
+      }
       return { error: null };
     } catch {
-      return { error: 'GitHub sign-in failed.' };
+      return { error: 'GitHub sign-in failed. Please use Email & Password.' };
     }
   };
 

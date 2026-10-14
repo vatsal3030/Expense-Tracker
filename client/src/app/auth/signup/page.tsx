@@ -73,6 +73,18 @@ export default function SignupPage() {
     setLoading(false);
   };
 
+  const handleGoogleSignup = async () => {
+    setError('');
+    const res = await signInWithGoogle();
+    if (res.error) setError(res.error);
+  };
+
+  const handleGithubSignup = async () => {
+    setError('');
+    const res = await signInWithGithub();
+    if (res.error) setError(res.error);
+  };
+
   return (
     <Box
       sx={{
@@ -139,7 +151,7 @@ export default function SignupPage() {
               fullWidth
               variant="outlined"
               startIcon={<GoogleIcon />}
-              onClick={() => signInWithGoogle()}
+              onClick={handleGoogleSignup}
               sx={{
                 py: 1.3, borderRadius: 3, borderColor: theme.palette.divider,
                 color: theme.palette.text.primary, fontWeight: 600,
@@ -152,7 +164,7 @@ export default function SignupPage() {
               fullWidth
               variant="outlined"
               startIcon={<GitHubIcon />}
-              onClick={() => signInWithGithub()}
+              onClick={handleGithubSignup}
               sx={{
                 py: 1.3, borderRadius: 3, borderColor: theme.palette.divider,
                 color: theme.palette.text.primary, fontWeight: 600,
