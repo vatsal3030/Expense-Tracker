@@ -19,7 +19,7 @@ const createExpenseSchema = z.object({
     'HEALTH', 'EDUCATION', 'TRAVEL', 'GROCERIES', 'SUBSCRIPTIONS', 'INSURANCE',
     'GIFTS', 'DONATIONS', 'INVESTMENTS', 'SALARY', 'FREELANCE', 'GENERAL', 'OTHER',
   ]).default('GENERAL'),
-  splitType: z.enum(['EQUAL', 'EXACT', 'PERCENTAGE', 'SHARES']).default('EQUAL'),
+  splitType: z.enum(['EQUAL', 'EXACT', 'PERCENTAGE', 'SHARES', 'ADJUSTMENT']).default('EQUAL'),
   date: z.any().optional(),
   notes: z.string().max(500).nullish(),
   paidById: z.string().nullish(),
@@ -28,6 +28,7 @@ const createExpenseSchema = z.object({
     amount: z.number().optional(),
     percentage: z.number().optional(),
     shares: z.number().optional(),
+    adjustment: z.number().optional(),
   })).min(1, 'At least one split is required'),
 });
 
@@ -100,7 +101,7 @@ expenseRouter.post(
           amount: new Prisma.Decimal(amount),
           currency,
           category,
-          splitType,
+          splitType: splitType === 'ADJUSTMENT' ? 'EXACT' : splitType,
           date: isNaN(expenseDate.getTime()) ? new Date() : expenseDate,
           notes: notes || null,
           shares: {
@@ -127,6 +128,32 @@ expenseRouter.post(
           message: `added "${description}" — ₹${amount.toFixed(2)}`,
         },
       });
+
+      // Notify ONLY those users who are actually involved in this transaction (excluding the creator)
+      const involvedUserIds = Array.from(
+        new Set(
+          calculatedShares
+            .map((s) => s.userId)
+            .filter((uid) => uid !== req.user!.id)
+        )
+      );
+
+      if (involvedUserIds.length > 0) {
+        const creatorName = expense.paidBy?.name || 'A friend';
+        await prisma.notification.createMany({
+          data: involvedUserIds.map((targetUid) => {
+            const userShare = calculatedShares.find((s) => s.userId === targetUid);
+            const shareAmount = userShare ? userShare.amount.toFixed(2) : '0.00';
+            return {
+              userId: targetUid,
+              type: 'EXPENSE_ADDED',
+              title: 'New Shared Expense',
+              message: `${creatorName} added "${description}". Your share is ₹${shareAmount}.`,
+              data: { expenseId: expense.id, groupId: groupId || null },
+            };
+          }),
+        }).catch((err) => console.error('Notification creation error:', err));
+      }
 
       res.status(201).json({ success: true, data: expense });
     } catch (error: any) {
@@ -418,51 +445,87 @@ expenseRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): P
 });
 
 /**
- * Calculate individual shares based on split type.
+ * Calculate individual shares based on split type with exact penny/cent mathematical balance.
  */
 function calculateShares(
   splitType: string,
   totalAmount: number,
-  splits: Array<{ userId: string; amount?: number; percentage?: number; shares?: number }>
+  splits: Array<{ userId: string; amount?: number; percentage?: number; shares?: number; adjustment?: number }>
 ): Array<{ userId: string; amount: number }> {
+  const round2 = (val: number) => Math.round(val * 100) / 100;
+
   switch (splitType) {
     case 'EQUAL': {
-      const perPerson = totalAmount / splits.length;
-      const rounded = Math.floor(perPerson * 100) / 100;
-      const remainder = Math.round((totalAmount - rounded * splits.length) * 100) / 100;
+      const count = splits.length || 1;
+      const perPerson = Math.floor((totalAmount / count) * 100) / 100;
+      const remainder = round2(totalAmount - perPerson * count);
 
       return splits.map((s, i) => ({
         userId: s.userId,
-        amount: i === 0 ? rounded + remainder : rounded,
+        amount: i === 0 ? round2(perPerson + remainder) : perPerson,
       }));
     }
 
     case 'EXACT': {
       return splits.map((s) => ({
         userId: s.userId,
-        amount: s.amount || 0,
+        amount: round2(s.amount || 0),
       }));
     }
 
     case 'PERCENTAGE': {
-      return splits.map((s) => ({
+      const calculated = splits.map((s) => ({
         userId: s.userId,
-        amount: Math.round((totalAmount * (s.percentage || 0)) / 100 * 100) / 100,
+        amount: round2((totalAmount * (s.percentage || 0)) / 100),
       }));
+      const sum = round2(calculated.reduce((acc, curr) => acc + curr.amount, 0));
+      const diff = round2(totalAmount - sum);
+      if (diff !== 0 && calculated.length > 0) {
+        calculated[0].amount = round2(calculated[0].amount + diff);
+      }
+      return calculated;
     }
 
     case 'SHARES': {
       const totalShares = splits.reduce((sum, s) => sum + (s.shares || 1), 0);
-      return splits.map((s) => ({
+      const safeShares = totalShares > 0 ? totalShares : 1;
+      const calculated = splits.map((s) => ({
         userId: s.userId,
-        amount: Math.round((totalAmount * (s.shares || 1)) / totalShares * 100) / 100,
+        amount: round2((totalAmount * (s.shares || 1)) / safeShares),
       }));
+      const sum = round2(calculated.reduce((acc, curr) => acc + curr.amount, 0));
+      const diff = round2(totalAmount - sum);
+      if (diff !== 0 && calculated.length > 0) {
+        calculated[0].amount = round2(calculated[0].amount + diff);
+      }
+      return calculated;
     }
 
-    default:
-      return splits.map((s) => ({
+    case 'ADJUSTMENT': {
+      const count = splits.length || 1;
+      const totalAdj = splits.reduce((acc, s) => acc + (s.adjustment || 0), 0);
+      const baseShare = (totalAmount - totalAdj) / count;
+      const calculated = splits.map((s) => ({
         userId: s.userId,
-        amount: totalAmount / splits.length,
+        amount: Math.max(0, round2(baseShare + (s.adjustment || 0))),
       }));
+      const sum = round2(calculated.reduce((acc, curr) => acc + curr.amount, 0));
+      const diff = round2(totalAmount - sum);
+      if (diff !== 0 && calculated.length > 0) {
+        calculated[0].amount = round2(calculated[0].amount + diff);
+      }
+      return calculated;
+    }
+
+    default: {
+      const count = splits.length || 1;
+      const perPerson = Math.floor((totalAmount / count) * 100) / 100;
+      const remainder = round2(totalAmount - perPerson * count);
+      return splits.map((s, i) => ({
+        userId: s.userId,
+        amount: i === 0 ? round2(perPerson + remainder) : perPerson,
+      }));
+    }
   }
 }
+

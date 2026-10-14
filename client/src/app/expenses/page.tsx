@@ -40,6 +40,8 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  Menu,
+  ListItemIcon,
 } from '@mui/material';
 import {
   Add,
@@ -56,6 +58,11 @@ import {
   HourglassEmpty,
   Group as GroupIcon,
   CalendarToday,
+  TableChart,
+  Code,
+  Print,
+  KeyboardArrowDown,
+  Description,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -107,6 +114,7 @@ export default function ExpensesPage() {
   });
 
   const [groups, setGroups] = useState<any[]>([]);
+  const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
 
   // Add Expense Form state
   const [form, setForm] = useState({
@@ -280,24 +288,87 @@ export default function ExpensesPage() {
     }
   };
 
-  // Export filtered expenses to CSV
+  // Multi-format Export Handlers
   const handleExportCSV = () => {
+    setExportAnchorEl(null);
     if (expenses.length === 0) return;
-    const headers = 'Description,Category,Amount,Currency,Paid By,Group,Date\n';
+    const headers = 'Description,Category,Amount,Currency,Paid By,Group,Split Type,Date\n';
     const rows = expenses
       .map(
         (e) =>
-          `"${e.description.replace(/"/g, '""')}",${e.category},${Number(e.amount)},${e.currency || 'INR'},"${
-            e.paidBy?.name || ''
-          }","${e.group?.name || 'Personal'}",${new Date(e.date).toISOString().split('T')[0]}`
+          `"${(e.description || '').replace(/"/g, '""')}",${e.category},${Number(e.amount)},${e.currency || 'INR'},"${
+            (e.paidBy?.name || '').replace(/"/g, '""')
+          }","${(e.group?.name || 'Personal').replace(/"/g, '""')}",${e.splitType || 'EQUAL'},${new Date(e.date).toISOString().split('T')[0]}`
       )
       .join('\n');
-    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `owino_expenses_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `fairshare_expenses_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExportJSON = () => {
+    setExportAnchorEl(null);
+    if (expenses.length === 0) return;
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      totalExpenses: expenses.length,
+      records: expenses.map((e) => ({
+        id: e.id,
+        description: e.description,
+        amount: Number(e.amount),
+        currency: e.currency || 'INR',
+        category: e.category,
+        splitType: e.splitType,
+        date: e.date,
+        notes: e.notes,
+        paidBy: e.paidBy ? { id: e.paidBy.id, name: e.paidBy.name } : null,
+        group: e.group ? { id: e.group.id, name: e.group.name } : null,
+        shares: (e.shares || []).map((s: any) => ({
+          userId: s.userId,
+          amount: Number(s.amount),
+          userName: s.user?.name,
+        })),
+      })),
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fairshare_expenses_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExportTXT = () => {
+    setExportAnchorEl(null);
+    if (expenses.length === 0) return;
+    const totalSum = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+    const header = `====================================================\nFAIRSHARE EXPENSE STATEMENT\nGenerated: ${new Date().toLocaleString()}\nTotal Records: ${expenses.length} | Total Value: ₹${totalSum.toFixed(2)}\n====================================================\n\n`;
+    const lines = expenses
+      .map((e, idx) => {
+        const d = new Date(e.date).toLocaleDateString();
+        const paid = e.paidBy?.name || 'Unknown';
+        const grp = e.group?.name || 'Personal';
+        return `${idx + 1}. [${d}] ${e.description.padEnd(25)} | ₹${Number(e.amount).toFixed(2).padStart(9)} | ${e.category.padEnd(12)} | Paid: ${paid} | Group: ${grp}`;
+      })
+      .join('\n');
+    const footer = `\n\n====================================================\nEnd of Statement\n====================================================`;
+    const blob = new Blob([header + lines + footer], { type: 'text/plain;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fairshare_statement_${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handlePrintStatement = () => {
+    setExportAnchorEl(null);
+    window.print();
   };
 
   const hasActiveFilters = Boolean(
@@ -349,7 +420,8 @@ export default function ExpensesPage() {
               variant="outlined"
               size="small"
               startIcon={<Download fontSize="small" />}
-              onClick={handleExportCSV}
+              endIcon={<KeyboardArrowDown fontSize="small" />}
+              onClick={(e) => setExportAnchorEl(e.currentTarget)}
               sx={{
                 borderRadius: 2.5,
                 borderColor: theme.palette.divider,
@@ -362,8 +434,50 @@ export default function ExpensesPage() {
                 '&:hover': { borderColor: '#0E6245', bgcolor: alpha('#0E6245', 0.04) },
               }}
             >
-              Export CSV
+              Export Data
             </Button>
+            <Menu
+              anchorEl={exportAnchorEl}
+              open={Boolean(exportAnchorEl)}
+              onClose={() => setExportAnchorEl(null)}
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: 2.5,
+                    minWidth: 210,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    border: `1px solid ${theme.palette.divider}`,
+                    mt: 1,
+                  },
+                },
+              }}
+            >
+              <MenuItem onClick={handleExportCSV}>
+                <ListItemIcon>
+                  <TableChart fontSize="small" sx={{ color: '#0E6245' }} />
+                </ListItemIcon>
+                <ListItemText primary="Export CSV" secondary="Excel / Spreadsheet (.csv)" />
+              </MenuItem>
+              <MenuItem onClick={handleExportJSON}>
+                <ListItemIcon>
+                  <Code fontSize="small" sx={{ color: '#0284c7' }} />
+                </ListItemIcon>
+                <ListItemText primary="Export JSON" secondary="Structured data (.json)" />
+              </MenuItem>
+              <MenuItem onClick={handleExportTXT}>
+                <ListItemIcon>
+                  <Description fontSize="small" sx={{ color: '#b45309' }} />
+                </ListItemIcon>
+                <ListItemText primary="Export Summary" secondary="Plain text ledger (.txt)" />
+              </MenuItem>
+              <Divider sx={{ my: 0.5 }} />
+              <MenuItem onClick={handlePrintStatement}>
+                <ListItemIcon>
+                  <Print fontSize="small" sx={{ color: theme.palette.text.primary }} />
+                </ListItemIcon>
+                <ListItemText primary="Print Statement" secondary="PDF / Printable statement" />
+              </MenuItem>
+            </Menu>
             <Button
               variant="contained"
               size="small"

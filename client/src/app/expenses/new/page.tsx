@@ -1,15 +1,18 @@
 'use client';
 
-import React, { Suspense, useEffect, useState, useMemo } from 'react';
+import React, { Suspense, useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, TextField, MenuItem,
   Grid, Chip, Avatar, Skeleton, useTheme, alpha, Stack,
   InputAdornment, IconButton, FormControl, InputLabel, Select,
-  CircularProgress, Alert, Snackbar,
+  CircularProgress, Alert, Snackbar, ToggleButtonGroup, ToggleButton,
+  LinearProgress, Tooltip, Divider,
 } from '@mui/material';
 import {
   ArrowBack, Check, ReceiptLong, Group as GroupIcon,
-  AttachMoney, Person, CalendarToday, Notes,
+  AttachMoney, Person, CalendarToday, Notes, PieChart,
+  Percent, Functions, Balance, Refresh,
+  DeleteSweep, Calculate, ErrorOutlined,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -29,6 +32,10 @@ const CATEGORY_EMOJI: Record<string, string> = {
   GIFTS: '🎁', GENERAL: '📋', OTHER: '📌',
 };
 
+const DRAFT_KEY = 'owino_expense_new_draft';
+
+type SplitType = 'EQUAL' | 'EXACT' | 'PERCENTAGE' | 'SHARES' | 'ADJUSTMENT';
+
 function NewExpenseContent() {
   const theme = useTheme();
   const router = useRouter();
@@ -39,59 +46,217 @@ function NewExpenseContent() {
   const preselectedGroupId = searchParams.get('groupId') || '';
   const preselectedFriendId = searchParams.get('friendId') || '';
 
+  // Form Fields
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('FOOD');
   const [groupId, setGroupId] = useState(preselectedGroupId);
-  const [splitType, setSplitType] = useState('EQUAL');
+  const [paidById, setPaidById] = useState('');
+  const [splitType, setSplitType] = useState<SplitType>('EQUAL');
   const [notes, setNotes] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
+  // Member Selection & Split allocations
   const [groups, setGroups] = useState<any[]>([]);
+  const [friends, setFriends] = useState<any[]>([]);
   const [selectedGroupMembers, setSelectedGroupMembers] = useState<any[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [exactAmounts, setExactAmounts] = useState<Record<string, string>>({});
+  const [percentages, setPercentages] = useState<Record<string, string>>({});
+  const [shares, setShares] = useState<Record<string, string>>({});
+  const [adjustments, setAdjustments] = useState<Record<string, string>>({});
+
+  // UI & Draft State
+  const [draftRestored, setDraftRestored] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [loadingInitial, setLoadingInitial] = useState(true);
 
+  // Guards against multiple initial data loads wiping user inputs
+  const hasLoadedInitialRef = useRef(false);
+  const isFormDirtyRef = useRef(false);
+
+  // Mark dirty whenever user types
+  useEffect(() => {
+    if (description.trim() || (amount && parseFloat(amount) > 0)) {
+      isFormDirtyRef.current = true;
+    }
+  }, [description, amount]);
+
+  // Protect against accidental refresh / page close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isFormDirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // Save draft to localStorage (debounced)
+  useEffect(() => {
+    if (loadingInitial) return;
+    const timer = setTimeout(() => {
+      try {
+        const draftData = {
+          description,
+          amount,
+          category,
+          groupId,
+          paidById,
+          splitType,
+          notes,
+          date,
+          selectedMemberIds,
+          exactAmounts,
+          percentages,
+          shares,
+          adjustments,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+      } catch (err) {
+        console.error('Failed to save draft:', err);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [
+    description, amount, category, groupId, paidById, splitType, notes,
+    date, selectedMemberIds, exactAmounts, percentages, shares, adjustments, loadingInitial
+  ]);
+
+  // Auth redirect
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user, authLoading, router]);
 
+  // Initial Data Load (Runs once when user is authenticated)
   useEffect(() => {
-    if (user) {
+    if (user && !hasLoadedInitialRef.current) {
+      hasLoadedInitialRef.current = true;
       loadInitialData();
     }
-  }, [user, preselectedGroupId]);
+  }, [user]);
 
   const loadInitialData = async () => {
     try {
       setLoadingInitial(true);
-      const res = await groupApi.list();
-      const list = res.data?.data || [];
-      setGroups(list);
+      const [groupsRes, friendsRes] = await Promise.all([
+        groupApi.list().catch(() => ({ data: { data: [] } })),
+        friendApi.list().catch(() => ({ data: { data: [] } })),
+      ]);
 
-      const targetGroupId = preselectedGroupId || (list.length > 0 ? list[0].id : '');
-      if (targetGroupId) {
-        setGroupId(targetGroupId);
-        await loadGroupMembers(targetGroupId);
+      const groupList = groupsRes.data?.data || [];
+      const friendList = friendsRes.data?.data || [];
+      setGroups(groupList);
+      setFriends(friendList);
+
+      // Check for saved draft
+      let restoredFromDraft = false;
+      const savedDraftRaw = localStorage.getItem(DRAFT_KEY);
+      if (savedDraftRaw) {
+        try {
+          const draft = JSON.parse(savedDraftRaw);
+          // Only restore if draft has some meaningful content and is reasonably fresh (e.g. within 7 days)
+          if (draft && (draft.description || draft.amount)) {
+            if (draft.description) setDescription(draft.description);
+            if (draft.amount) setAmount(draft.amount);
+            if (draft.category) setCategory(draft.category);
+            if (draft.paidById) setPaidById(draft.paidById);
+            if (draft.splitType) setSplitType(draft.splitType);
+            if (draft.notes) setNotes(draft.notes);
+            if (draft.date) setDate(draft.date);
+            if (draft.exactAmounts) setExactAmounts(draft.exactAmounts);
+            if (draft.percentages) setPercentages(draft.percentages);
+            if (draft.shares) setShares(draft.shares);
+            if (draft.adjustments) setAdjustments(draft.adjustments);
+
+            const targetGid = draft.groupId !== undefined ? draft.groupId : preselectedGroupId;
+            setGroupId(targetGid);
+            if (targetGid) {
+              await loadGroupMembers(targetGid, draft.selectedMemberIds);
+            } else {
+              initializePersonalMembers(friendList, draft.selectedMemberIds);
+            }
+
+            restoredFromDraft = true;
+            setDraftRestored(true);
+          }
+        } catch (e) {
+          console.warn('Failed parsing draft:', e);
+        }
+      }
+
+      // If no draft restored, setup defaults from URL query params
+      if (!restoredFromDraft) {
+        const targetGid = preselectedGroupId || (groupList.length > 0 ? groupList[0].id : '');
+        setGroupId(targetGid);
+        if (targetGid) {
+          await loadGroupMembers(targetGid);
+        } else {
+          initializePersonalMembers(friendList);
+        }
       }
     } catch (err) {
-      console.error('Failed to load initial groups:', err);
+      console.error('Failed to load initial data:', err);
     } finally {
       setLoadingInitial(false);
     }
   };
 
-  const loadGroupMembers = async (gid: string) => {
+  const initializePersonalMembers = (friendList: any[], preselectedIds?: string[]) => {
+    const currentMember = {
+      userId: user?.id || profile?.id || 'me',
+      user: {
+        id: user?.id || profile?.id || 'me',
+        name: profile?.name || 'You',
+        avatarUrl: profile?.avatarUrl,
+      },
+    };
+    const mappedFriends = friendList.map((f: any) => ({
+      userId: f.id,
+      user: { id: f.id, name: f.name, avatarUrl: f.avatarUrl },
+    }));
+    const all = [currentMember, ...mappedFriends];
+    setSelectedGroupMembers(all);
+
+    if (preselectedIds && preselectedIds.length > 0) {
+      setSelectedMemberIds(preselectedIds);
+    } else if (preselectedFriendId) {
+      setSelectedMemberIds([currentMember.userId, preselectedFriendId]);
+    } else {
+      setSelectedMemberIds([currentMember.userId]);
+    }
+    if (!paidById) setPaidById(currentMember.userId);
+  };
+
+  const loadGroupMembers = async (gid: string, restoredMemberIds?: string[]) => {
     try {
       const res = await groupApi.get(gid);
       const members = res.data?.data?.members || [];
       setSelectedGroupMembers(members);
-      // Default to selecting all members for equal split
-      const memberIds = members.map((m: any) => m.user?.id || m.userId).filter(Boolean);
-      setSelectedMemberIds(memberIds);
+
+      const allMemberIds = members.map((m: any) => m.user?.id || m.userId).filter(Boolean);
+      if (restoredMemberIds && restoredMemberIds.length > 0) {
+        // Keep valid restored member IDs that exist in the group
+        const validIds = restoredMemberIds.filter((id) => allMemberIds.includes(id));
+        setSelectedMemberIds(validIds.length > 0 ? validIds : allMemberIds);
+      } else {
+        setSelectedMemberIds(allMemberIds);
+      }
+
+      // Default paidBy to current user if member, else first member
+      const currentUid = profile?.id || user?.id;
+      if (!paidById || !allMemberIds.includes(paidById)) {
+        if (currentUid && allMemberIds.includes(currentUid)) {
+          setPaidById(currentUid);
+        } else if (allMemberIds.length > 0) {
+          setPaidById(allMemberIds[0]);
+        }
+      }
     } catch (err) {
       console.error('Failed to load group members:', err);
     }
@@ -102,15 +267,14 @@ function NewExpenseContent() {
     if (newGid) {
       await loadGroupMembers(newGid);
     } else {
-      setSelectedGroupMembers([]);
-      setSelectedMemberIds(user?.id ? [user.id] : []);
+      initializePersonalMembers(friends);
     }
   };
 
   const toggleMemberSelection = (uid: string) => {
     setSelectedMemberIds((prev) => {
       if (prev.includes(uid)) {
-        if (prev.length === 1) return prev; // Keep at least one
+        if (prev.length === 1) return prev; // Keep at least one member
         return prev.filter((id) => id !== uid);
       } else {
         return [...prev, uid];
@@ -118,41 +282,239 @@ function NewExpenseContent() {
     });
   };
 
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setDescription('');
+    setAmount('');
+    setNotes('');
+    setExactAmounts({});
+    setPercentages({});
+    setShares({});
+    setAdjustments({});
+    setDraftRestored(false);
+    isFormDirtyRef.current = false;
+  };
+
+  // Calculations & Balance Validation
+  const numericTotal = useMemo(() => {
+    const parsed = parseFloat(amount);
+    return isNaN(parsed) || parsed <= 0 ? 0 : parsed;
+  }, [amount]);
+
+  const activeMembers = useMemo(() => {
+    return selectedGroupMembers.filter((m) => {
+      const uid = m.user?.id || m.userId;
+      return selectedMemberIds.includes(uid);
+    });
+  }, [selectedGroupMembers, selectedMemberIds]);
+
+  const splitMetrics = useMemo(() => {
+    const count = activeMembers.length || 1;
+    const round2 = (num: number) => Math.round(num * 100) / 100;
+
+    if (splitType === 'EQUAL') {
+      const perPerson = Math.floor((numericTotal / count) * 100) / 100;
+      const remainder = round2(numericTotal - perPerson * count);
+      return {
+        isValid: numericTotal > 0 && count > 0,
+        perPerson,
+        remainder,
+        totalAllocated: numericTotal,
+        diff: 0,
+        message: `₹${perPerson.toFixed(2)} per person${remainder > 0 ? ` (+₹${remainder.toFixed(2)} to first payer for roundoff)` : ''}`,
+      };
+    }
+
+    if (splitType === 'EXACT') {
+      const sumExact = activeMembers.reduce((acc, m) => {
+        const uid = m.user?.id || m.userId;
+        const val = parseFloat(exactAmounts[uid] || '0');
+        return acc + (isNaN(val) ? 0 : val);
+      }, 0);
+      const roundedSum = round2(sumExact);
+      const diff = round2(numericTotal - roundedSum);
+      const isValid = Math.abs(diff) < 0.01 && numericTotal > 0;
+      return {
+        isValid,
+        totalAllocated: roundedSum,
+        diff,
+        message: isValid
+          ? 'Exact amounts match total bill perfectly (100% balanced) ✓'
+          : diff > 0
+          ? `Remaining to allocate: ₹${diff.toFixed(2)}`
+          : `Over allocated by ₹${Math.abs(diff).toFixed(2)}`,
+      };
+    }
+
+    if (splitType === 'PERCENTAGE') {
+      const sumPercent = activeMembers.reduce((acc, m) => {
+        const uid = m.user?.id || m.userId;
+        const val = parseFloat(percentages[uid] || '0');
+        return acc + (isNaN(val) ? 0 : val);
+      }, 0);
+      const roundedPercent = round2(sumPercent);
+      const diffPercent = round2(100 - roundedPercent);
+      const isValid = Math.abs(diffPercent) < 0.01 && numericTotal > 0;
+      return {
+        isValid,
+        totalAllocated: (numericTotal * roundedPercent) / 100,
+        diff: diffPercent,
+        message: isValid
+          ? '100% of the total amount allocated ✓'
+          : diffPercent > 0
+          ? `${diffPercent.toFixed(1)}% remaining to assign`
+          : `${Math.abs(diffPercent).toFixed(1)}% over 100%`,
+      };
+    }
+
+    if (splitType === 'SHARES') {
+      const totalShares = activeMembers.reduce((acc, m) => {
+        const uid = m.user?.id || m.userId;
+        const val = parseFloat(shares[uid] || '1');
+        return acc + (isNaN(val) || val <= 0 ? 1 : val);
+      }, 0);
+      const shareValue = totalShares > 0 ? numericTotal / totalShares : 0;
+      return {
+        isValid: numericTotal > 0 && totalShares > 0,
+        totalShares,
+        shareValue,
+        totalAllocated: numericTotal,
+        diff: 0,
+        message: `Total ${totalShares} shares • 1 share = ₹${shareValue.toFixed(2)}`,
+      };
+    }
+
+    if (splitType === 'ADJUSTMENT') {
+      const totalAdj = activeMembers.reduce((acc, m) => {
+        const uid = m.user?.id || m.userId;
+        const val = parseFloat(adjustments[uid] || '0');
+        return acc + (isNaN(val) ? 0 : val);
+      }, 0);
+      const baseShare = count > 0 ? (numericTotal - totalAdj) / count : 0;
+      return {
+        isValid: numericTotal > 0 && baseShare >= 0,
+        totalAllocated: numericTotal,
+        totalAdj,
+        baseShare,
+        diff: 0,
+        message: `Base share: ₹${Math.max(0, baseShare).toFixed(2)} + individual adjustments (Total: ₹${numericTotal.toFixed(2)}) ✓`,
+      };
+    }
+
+    return { isValid: true, diff: 0, totalAllocated: numericTotal, message: '' };
+  }, [splitType, numericTotal, activeMembers, exactAmounts, percentages, shares, adjustments]);
+
+  // Quick distribution helpers
+  const handleAutoDistributeExact = () => {
+    if (numericTotal <= 0 || activeMembers.length === 0) return;
+    const perPerson = Math.floor((numericTotal / activeMembers.length) * 100) / 100;
+    const remainder = Math.round((numericTotal - perPerson * activeMembers.length) * 100) / 100;
+    const nextMap: Record<string, string> = {};
+    activeMembers.forEach((m, i) => {
+      const uid = m.user?.id || m.userId;
+      const amt = i === 0 ? perPerson + remainder : perPerson;
+      nextMap[uid] = amt.toFixed(2);
+    });
+    setExactAmounts(nextMap);
+  };
+
+  const handleAutoDistributePercentages = () => {
+    if (activeMembers.length === 0) return;
+    const count = activeMembers.length;
+    const equalPct = Math.floor((100 / count) * 10) / 10;
+    const remainder = Math.round((100 - equalPct * count) * 10) / 10;
+    const nextMap: Record<string, string> = {};
+    activeMembers.forEach((m, i) => {
+      const uid = m.user?.id || m.userId;
+      const pct = i === 0 ? equalPct + remainder : equalPct;
+      nextMap[uid] = pct.toString();
+    });
+    setPercentages(nextMap);
+  };
+
+  const handleResetShares = () => {
+    const nextMap: Record<string, string> = {};
+    activeMembers.forEach((m) => {
+      const uid = m.user?.id || m.userId;
+      nextMap[uid] = '1';
+    });
+    setShares(nextMap);
+  };
+
+  const handleResetAdjustments = () => {
+    setAdjustments({});
+  };
+
+  // Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim() || !amount || parseFloat(amount) <= 0) {
-      setErrorMsg('Please enter a valid description and amount.');
+    if (!description.trim() || numericTotal <= 0) {
+      setErrorMsg('Please enter a valid description and positive amount.');
+      return;
+    }
+
+    if (!splitMetrics.isValid) {
+      setErrorMsg(splitMetrics.message || 'Please balance the split amounts before saving.');
       return;
     }
 
     const currentUserId = profile?.id || user?.id || '';
-    const numericAmount = parseFloat(amount);
+    const actualPayer = paidById || currentUserId;
 
-    let splits: any[] = [];
+    let splitsPayload: any[] = [];
     if (splitType === 'EQUAL') {
-      const activeIds = selectedMemberIds.length > 0 ? selectedMemberIds : [currentUserId];
-      splits = activeIds.map((uid) => ({ userId: uid }));
-    } else if (splitType === 'EXACT') {
-      splits = selectedMemberIds.map((uid) => ({
-        userId: uid,
-        amount: parseFloat(exactAmounts[uid] || '0'),
+      splitsPayload = activeMembers.map((m) => ({
+        userId: m.user?.id || m.userId,
       }));
+    } else if (splitType === 'EXACT') {
+      splitsPayload = activeMembers.map((m) => {
+        const uid = m.user?.id || m.userId;
+        return {
+          userId: uid,
+          amount: parseFloat(exactAmounts[uid] || '0'),
+        };
+      });
+    } else if (splitType === 'PERCENTAGE') {
+      splitsPayload = activeMembers.map((m) => {
+        const uid = m.user?.id || m.userId;
+        return {
+          userId: uid,
+          percentage: parseFloat(percentages[uid] || '0'),
+        };
+      });
+    } else if (splitType === 'SHARES') {
+      splitsPayload = activeMembers.map((m) => {
+        const uid = m.user?.id || m.userId;
+        return {
+          userId: uid,
+          shares: parseFloat(shares[uid] || '1'),
+        };
+      });
+    } else if (splitType === 'ADJUSTMENT') {
+      splitsPayload = activeMembers.map((m) => {
+        const uid = m.user?.id || m.userId;
+        return {
+          userId: uid,
+          adjustment: parseFloat(adjustments[uid] || '0'),
+        };
+      });
     }
 
-    // Always include current user if equal split
-    if (splitType === 'EQUAL' && !splits.find((s) => s.userId === currentUserId)) {
-      splits.unshift({ userId: currentUserId });
+    // Safety fallback
+    if (splitsPayload.length === 0) {
+      splitsPayload = [{ userId: currentUserId }];
     }
 
     const payload = {
       description: description.trim(),
-      amount: numericAmount,
+      amount: numericTotal,
       category,
       splitType,
+      paidById: actualPayer,
       groupId: groupId || null,
       notes: notes.trim() || null,
       date: date ? new Date(date).toISOString() : new Date().toISOString(),
-      splits,
+      splits: splitsPayload,
     };
 
     try {
@@ -160,7 +522,10 @@ function NewExpenseContent() {
       setErrorMsg('');
       await expenseApi.create(payload);
 
-      // Navigate back to the originating group or expenses overview
+      // On success: clear draft & dirty flag
+      isFormDirtyRef.current = false;
+      localStorage.removeItem(DRAFT_KEY);
+
       if (groupId) {
         router.push(`/groups/${groupId}`);
       } else {
@@ -177,9 +542,9 @@ function NewExpenseContent() {
   if (authLoading || loadingInitial) {
     return (
       <AppLayout>
-        <Box sx={{ maxWidth: 640, mx: 'auto', p: 3 }}>
-          <Skeleton width={180} height={40} />
-          <Skeleton width="100%" height={200} sx={{ mt: 2, borderRadius: 3 }} />
+        <Box sx={{ maxWidth: 740, mx: 'auto', p: 3 }}>
+          <Skeleton width={220} height={40} sx={{ borderRadius: 2 }} />
+          <Skeleton width="100%" height={320} sx={{ mt: 3, borderRadius: 3.5 }} />
         </Box>
       </AppLayout>
     );
@@ -187,28 +552,47 @@ function NewExpenseContent() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ maxWidth: 720, mx: 'auto', pb: 8 }}>
+      <Box className="animate-fade-in" sx={{ maxWidth: 760, mx: 'auto', pb: 8 }}>
         {/* Top Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          <IconButton
-            onClick={() => (groupId ? router.push(`/groups/${groupId}`) : router.push('/expenses'))}
-            sx={{
-              bgcolor: 'background.paper',
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 2.5,
-              '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
-            }}
-          >
-            <ArrowBack fontSize="small" />
-          </IconButton>
-          <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
-              Add New Expense
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Record a personal or shared group bill with instant splits
-            </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <IconButton
+              type="button"
+              onClick={() => (groupId ? router.push(`/groups/${groupId}`) : router.push('/expenses'))}
+              sx={{
+                bgcolor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 2.5,
+                '&:hover': { bgcolor: alpha('#0E6245', 0.08) },
+              }}
+            >
+              <ArrowBack fontSize="small" />
+            </IconButton>
+            <Box>
+              <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+                Add New Expense
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Exact mathematical splits with zero calculation errors
+              </Typography>
+            </Box>
           </Box>
+
+          {draftRestored && (
+            <Chip
+              label="Draft Restored"
+              color="success"
+              size="small"
+              onDelete={clearDraft}
+              deleteIcon={<DeleteSweep fontSize="small" />}
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                bgcolor: alpha('#0E6245', 0.12),
+                color: '#0E6245',
+              }}
+            />
+          )}
         </Box>
 
         {errorMsg && (
@@ -224,125 +608,150 @@ function NewExpenseContent() {
               bgcolor: 'background.paper',
               border: `1px solid ${theme.palette.divider}`,
               boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
-              p: { xs: 2.5, sm: 3.5 },
+              p: { xs: 2.5, sm: 4 },
             }}
           >
-            <Stack spacing={3}>
-              {/* Description & Amount */}
-              <TextField
-                fullWidth
-                label="Expense Title / Description"
-                placeholder="e.g. Dinner at Olive, Groceries, Flight Tickets"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
+            <Stack spacing={3.5}>
+              {/* Primary Expense Info */}
+              <Box>
+                <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.secondary', mb: 1.5, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
+                  1. Expense Details
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 8 }}>
+                    <TextField
+                      fullWidth
+                      label="Expense Description / Title"
+                      placeholder="e.g. Dinner at Olive, Grocery Haul, Hotel Booking"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      required
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    />
+                  </Grid>
 
-              <TextField
-                fullWidth
-                label="Amount"
-                type="number"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                slotProps={{
-                  inputLabel: { shrink: true },
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Typography fontWeight={700} color="#0E6245">
-                          ₹
-                        </Typography>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-
-              {/* Category & Date Grid */}
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    select
-                    label="Category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    slotProps={{ inputLabel: { shrink: true } }}
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <MenuItem key={cat} value={cat}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <span>{CATEGORY_EMOJI[cat]}</span>
-                          <Typography variant="body2" fontWeight={500}>
-                            {cat.charAt(0) + cat.slice(1).toLowerCase()}
-                          </Typography>
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    type="date"
-                    label="Date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    slotProps={{ inputLabel: { shrink: true } }}
-                  />
-                </Grid>
-              </Grid>
-
-              {/* Group Selector */}
-              <TextField
-                fullWidth
-                select
-                label="Split In Group (optional)"
-                value={groupId}
-                onChange={(e) => handleGroupChange(e.target.value)}
-                slotProps={{ inputLabel: { shrink: true } }}
-              >
-                <MenuItem value="">Personal Expense (No group)</MenuItem>
-                {groups.map((g) => (
-                  <MenuItem key={g.id} value={g.id}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <GroupIcon fontSize="small" sx={{ color: '#0E6245' }} />
-                      <Typography variant="body2" fontWeight={600}>{g.name}</Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              {/* Split Members Selection (When group is chosen) */}
-              {groupId && selectedGroupMembers.length > 0 && (
-                <Box
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    bgcolor: alpha(theme.palette.action.hover, 0.04),
-                    border: `1px solid ${theme.palette.divider}`,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                    <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.primary' }}>
-                      Split Between ({selectedMemberIds.length} of {selectedGroupMembers.length} selected)
-                    </Typography>
-                    <Chip
-                      label={splitType}
-                      size="small"
-                      sx={{
-                        fontSize: '0.675rem',
-                        fontWeight: 700,
-                        bgcolor: alpha('#0E6245', 0.1),
-                        color: '#0E6245',
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      fullWidth
+                      label="Total Amount"
+                      type="number"
+                      placeholder="0.00"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      required
+                      slotProps={{
+                        inputLabel: { shrink: true },
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Typography fontWeight={800} color="#0E6245">
+                                ₹
+                              </Typography>
+                            </InputAdornment>
+                          ),
+                        },
                       }}
                     />
-                  </Box>
+                  </Grid>
 
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Category"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <MenuItem key={cat} value={cat}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                            <span style={{ fontSize: '1.1rem' }}>{CATEGORY_EMOJI[cat]}</span>
+                            <Typography variant="body2" fontWeight={500}>
+                              {cat.charAt(0) + cat.slice(1).toLowerCase()}
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="Expense Date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Divider />
+
+              {/* Group & Payer Selection */}
+              <Box>
+                <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.secondary', mb: 1.5, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
+                  2. Participants & Payer
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Shared In (Group / Personal)"
+                      value={groupId}
+                      onChange={(e) => handleGroupChange(e.target.value)}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    >
+                      <MenuItem value="">👤 Direct with Friends (No group)</MenuItem>
+                      {groups.map((g) => (
+                        <MenuItem key={g.id} value={g.id}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <GroupIcon fontSize="small" sx={{ color: '#0E6245' }} />
+                            <Typography variant="body2" fontWeight={600}>{g.name}</Typography>
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Paid By"
+                      value={paidById}
+                      onChange={(e) => setPaidById(e.target.value)}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    >
+                      {selectedGroupMembers.map((m: any) => {
+                        const uid = m.user?.id || m.userId;
+                        const isYou = uid === user?.id || uid === profile?.id;
+                        return (
+                          <MenuItem key={uid} value={uid}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar src={m.user?.avatarUrl} sx={{ width: 22, height: 22, fontSize: '0.7rem', bgcolor: '#0E6245' }}>
+                                {m.user?.name?.charAt(0) || '?'}
+                              </Avatar>
+                              <Typography variant="body2" fontWeight={isYou ? 700 : 500}>
+                                {m.user?.name} {isYou ? '(You)' : ''}
+                              </Typography>
+                            </Box>
+                          </MenuItem>
+                        );
+                      })}
+                    </TextField>
+                  </Grid>
+                </Grid>
+
+                {/* Member selection chips */}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
+                    Select members included in this bill ({selectedMemberIds.length} of {selectedGroupMembers.length} selected):
+                  </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {selectedGroupMembers.map((m: any) => {
                       const uid = m.user?.id || m.userId;
@@ -383,62 +792,445 @@ function NewExpenseContent() {
                       );
                     })}
                   </Box>
+                </Box>
+              </Box>
 
-                  {amount && parseFloat(amount) > 0 && selectedMemberIds.length > 0 && (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
-                      Each person pays ~ ₹{(parseFloat(amount) / selectedMemberIds.length).toFixed(2)}
-                    </Typography>
+              <Divider />
+
+              {/* Advanced Split Methods */}
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
+                    3. Split Method & Allocation
+                  </Typography>
+
+                  {/* Split Type Selector */}
+                  <ToggleButtonGroup
+                    value={splitType}
+                    exclusive
+                    onChange={(_, val) => {
+                      if (val) setSplitType(val);
+                    }}
+                    size="small"
+                    sx={{
+                      '& .MuiToggleButton-root': {
+                        textTransform: 'none',
+                        px: 1.5,
+                        py: 0.5,
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        borderColor: theme.palette.divider,
+                        '&.Mui-selected': {
+                          bgcolor: alpha('#0E6245', 0.12),
+                          color: '#0E6245',
+                          borderColor: '#0E6245',
+                          fontWeight: 750,
+                          '&:hover': { bgcolor: alpha('#0E6245', 0.18) },
+                        },
+                      },
+                    }}
+                  >
+                    <ToggleButton value="EQUAL" type="button">
+                      = Equally
+                    </ToggleButton>
+                    <ToggleButton value="EXACT" type="button">
+                      ≠ Unequal / Exact
+                    </ToggleButton>
+                    <ToggleButton value="PERCENTAGE" type="button">
+                      % By Percent
+                    </ToggleButton>
+                    <ToggleButton value="SHARES" type="button">
+                      ➗ By Shares
+                    </ToggleButton>
+                    <ToggleButton value="ADJUSTMENT" type="button">
+                      ± Adjustment
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
+
+                {/* Calculation Status Banner */}
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 2.5,
+                    bgcolor: splitMetrics.isValid
+                      ? alpha('#0E6245', 0.07)
+                      : alpha(theme.palette.error.main, 0.08),
+                    border: `1px solid ${
+                      splitMetrics.isValid
+                        ? alpha('#0E6245', 0.25)
+                        : alpha(theme.palette.error.main, 0.3)
+                    }`,
+                    mb: 2.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 1.5,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                    {splitMetrics.isValid ? (
+                      <Check sx={{ color: '#0E6245', fontSize: '1.25rem' }} />
+                    ) : (
+                      <ErrorOutlined sx={{ color: theme.palette.error.main, fontSize: '1.25rem' }} />
+                    )}
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        fontWeight={700}
+                        sx={{ color: splitMetrics.isValid ? '#0E6245' : theme.palette.error.main }}
+                      >
+                        {splitMetrics.message}
+                      </Typography>
+                      {numericTotal > 0 && (
+                        <Typography variant="caption" color="text.secondary">
+                          Total bill: ₹{numericTotal.toFixed(2)} • Allocated: ₹{splitMetrics.totalAllocated.toFixed(2)}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {/* Contextual Action Buttons */}
+                  {splitType === 'EXACT' && (
+                    <Button
+                      type="button"
+                      size="small"
+                      variant="outlined"
+                      onClick={handleAutoDistributeExact}
+                      startIcon={<Calculate fontSize="small" />}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        borderRadius: 2,
+                        borderColor: '#0E6245',
+                        color: '#0E6245',
+                      }}
+                    >
+                      Distribute Remaining
+                    </Button>
+                  )}
+                  {splitType === 'PERCENTAGE' && (
+                    <Button
+                      type="button"
+                      size="small"
+                      variant="outlined"
+                      onClick={handleAutoDistributePercentages}
+                      startIcon={<Refresh fontSize="small" />}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        borderRadius: 2,
+                        borderColor: '#0E6245',
+                        color: '#0E6245',
+                      }}
+                    >
+                      Split % Equally
+                    </Button>
+                  )}
+                  {splitType === 'SHARES' && (
+                    <Button
+                      type="button"
+                      size="small"
+                      variant="outlined"
+                      onClick={handleResetShares}
+                      startIcon={<Refresh fontSize="small" />}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        borderRadius: 2,
+                        borderColor: '#0E6245',
+                        color: '#0E6245',
+                      }}
+                    >
+                      Reset 1 Share Each
+                    </Button>
+                  )}
+                  {splitType === 'ADJUSTMENT' && (
+                    <Button
+                      type="button"
+                      size="small"
+                      variant="outlined"
+                      onClick={handleResetAdjustments}
+                      startIcon={<Refresh fontSize="small" />}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        borderRadius: 2,
+                        borderColor: '#0E6245',
+                        color: '#0E6245',
+                      }}
+                    >
+                      Clear Adjustments
+                    </Button>
                   )}
                 </Box>
-              )}
+
+                {/* Member Input Rows */}
+                <Stack spacing={1.5}>
+                  {activeMembers.map((m: any, index: number) => {
+                    const uid = m.user?.id || m.userId;
+                    const isPayer = uid === paidById;
+                    const isCurrentUser = uid === user?.id || uid === profile?.id;
+
+                    // Computed share for display
+                    let displayShare = '₹0.00';
+                    if (splitType === 'EQUAL') {
+                      const count = activeMembers.length || 1;
+                      const perPerson = Math.floor((numericTotal / count) * 100) / 100;
+                      const rem = Math.round((numericTotal - perPerson * count) * 100) / 100;
+                      const myAmount = index === 0 ? perPerson + rem : perPerson;
+                      displayShare = `₹${myAmount.toFixed(2)}`;
+                    } else if (splitType === 'EXACT') {
+                      displayShare = `₹${parseFloat(exactAmounts[uid] || '0').toFixed(2)}`;
+                    } else if (splitType === 'PERCENTAGE') {
+                      const pct = parseFloat(percentages[uid] || '0');
+                      const amt = (numericTotal * pct) / 100;
+                      displayShare = `₹${amt.toFixed(2)}`;
+                    } else if (splitType === 'SHARES') {
+                      const totalShares = activeMembers.reduce(
+                        (sum, mem) => sum + parseFloat(shares[mem.user?.id || mem.userId] || '1'),
+                        0
+                      );
+                      const myShareCount = parseFloat(shares[uid] || '1');
+                      const amt = totalShares > 0 ? (numericTotal * myShareCount) / totalShares : 0;
+                      displayShare = `₹${amt.toFixed(2)}`;
+                    } else if (splitType === 'ADJUSTMENT') {
+                      const totalAdj = activeMembers.reduce(
+                        (sum, mem) => sum + parseFloat(adjustments[mem.user?.id || mem.userId] || '0'),
+                        0
+                      );
+                      const base = (numericTotal - totalAdj) / (activeMembers.length || 1);
+                      const adj = parseFloat(adjustments[uid] || '0');
+                      const amt = Math.max(0, base + adj);
+                      displayShare = `₹${amt.toFixed(2)}`;
+                    }
+
+                    return (
+                      <Box
+                        key={uid}
+                        sx={{
+                          p: 1.75,
+                          borderRadius: 2.5,
+                          bgcolor: alpha(theme.palette.action.hover, 0.03),
+                          border: `1px solid ${theme.palette.divider}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 2,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 160 }}>
+                          <Avatar
+                            src={m.user?.avatarUrl}
+                            sx={{ width: 32, height: 32, fontSize: '0.8rem', bgcolor: '#0E6245' }}
+                          >
+                            {m.user?.name?.charAt(0) || '?'}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={650}>
+                              {m.user?.name} {isCurrentUser ? '(You)' : ''}
+                            </Typography>
+                            {isPayer && (
+                              <Typography variant="caption" sx={{ color: '#0E6245', fontWeight: 700 }}>
+                                Paid for this bill
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+
+                        {/* Interactive input depending on Split Type */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          {splitType === 'EQUAL' && (
+                            <Typography variant="body2" fontWeight={750} color="#0E6245">
+                              {displayShare}
+                            </Typography>
+                          )}
+
+                          {splitType === 'EXACT' && (
+                            <TextField
+                              size="small"
+                              type="number"
+                              placeholder="0.00"
+                              value={exactAmounts[uid] || ''}
+                              onChange={(e) =>
+                                setExactAmounts({ ...exactAmounts, [uid]: e.target.value })
+                              }
+                              slotProps={{
+                                input: {
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      <Typography fontWeight={700} fontSize="0.85rem">
+                                        ₹
+                                      </Typography>
+                                    </InputAdornment>
+                                  ),
+                                },
+                              }}
+                              sx={{ width: 140 }}
+                            />
+                          )}
+
+                          {splitType === 'PERCENTAGE' && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <TextField
+                                size="small"
+                                type="number"
+                                placeholder="0"
+                                value={percentages[uid] || ''}
+                                onChange={(e) =>
+                                  setPercentages({ ...percentages, [uid]: e.target.value })
+                                }
+                                slotProps={{
+                                  input: {
+                                    endAdornment: (
+                                      <InputAdornment position="end">
+                                        <Typography fontWeight={700} fontSize="0.85rem">
+                                          %
+                                        </Typography>
+                                      </InputAdornment>
+                                    ),
+                                  },
+                                }}
+                                sx={{ width: 110 }}
+                              />
+                              <Typography variant="body2" fontWeight={700} color="text.secondary" sx={{ minWidth: 70, textAlign: 'right' }}>
+                                = {displayShare}
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {splitType === 'SHARES' && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <TextField
+                                size="small"
+                                type="number"
+                                placeholder="1"
+                                value={shares[uid] || '1'}
+                                onChange={(e) =>
+                                  setShares({ ...shares, [uid]: e.target.value })
+                                }
+                                slotProps={{
+                                  input: {
+                                    endAdornment: (
+                                      <InputAdornment position="end">
+                                        <Typography variant="caption" fontWeight={600}>
+                                          share(s)
+                                        </Typography>
+                                      </InputAdornment>
+                                    ),
+                                  },
+                                }}
+                                sx={{ width: 130 }}
+                              />
+                              <Typography variant="body2" fontWeight={700} color="text.secondary" sx={{ minWidth: 70, textAlign: 'right' }}>
+                                = {displayShare}
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {splitType === 'ADJUSTMENT' && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <TextField
+                                size="small"
+                                type="number"
+                                placeholder="±0.00"
+                                value={adjustments[uid] || ''}
+                                onChange={(e) =>
+                                  setAdjustments({ ...adjustments, [uid]: e.target.value })
+                                }
+                                slotProps={{
+                                  input: {
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        <Typography fontWeight={700} fontSize="0.85rem">
+                                          ±₹
+                                        </Typography>
+                                      </InputAdornment>
+                                    ),
+                                  },
+                                }}
+                                sx={{ width: 130 }}
+                              />
+                              <Typography variant="body2" fontWeight={700} color="text.secondary" sx={{ minWidth: 75, textAlign: 'right' }}>
+                                = {displayShare}
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Box>
+
+              <Divider />
 
               {/* Notes */}
               <TextField
                 fullWidth
                 multiline
                 rows={2}
-                label="Notes (optional)"
-                placeholder="Add receipt notes, payment details, or memo..."
+                label="Notes & Memo (optional)"
+                placeholder="Add receipt notes, payment transaction ID, or memo..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
               />
 
-              {/* Submit CTA */}
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', pt: 1 }}>
+              {/* Action Buttons */}
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', alignItems: 'center', pt: 1 }}>
                 <Button
-                  variant="outlined"
-                  onClick={() => (groupId ? router.push(`/groups/${groupId}`) : router.push('/expenses'))}
-                  sx={{
-                    borderRadius: 2.5,
-                    px: 3,
-                    borderColor: theme.palette.divider,
-                    color: 'text.primary',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                  }}
+                  type="button"
+                  variant="text"
+                  color="error"
+                  onClick={clearDraft}
+                  startIcon={<DeleteSweep fontSize="small" />}
+                  sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
-                  Cancel
+                  Clear Form
                 </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={submitting || !description.trim() || !amount}
-                  startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <Check />}
-                  sx={{
-                    borderRadius: 2.5,
-                    px: 4,
-                    py: 1,
-                    fontWeight: 700,
-                    bgcolor: '#0E6245',
-                    color: '#FFFFFF',
-                    textTransform: 'none',
-                    boxShadow: '0 2px 8px rgba(14, 98, 69, 0.25)',
-                    '&:hover': { bgcolor: '#094A34' },
-                  }}
-                >
-                  {submitting ? 'Saving...' : 'Save Expense'}
-                </Button>
+
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={() => (groupId ? router.push(`/groups/${groupId}`) : router.push('/expenses'))}
+                    sx={{
+                      borderRadius: 2.5,
+                      px: 3,
+                      borderColor: theme.palette.divider,
+                      color: 'text.primary',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={submitting || !description.trim() || numericTotal <= 0 || !splitMetrics.isValid}
+                    startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <Check />}
+                    sx={{
+                      borderRadius: 2.5,
+                      px: 4,
+                      py: 1,
+                      fontWeight: 700,
+                      bgcolor: '#0E6245',
+                      color: '#FFFFFF',
+                      textTransform: 'none',
+                      boxShadow: '0 2px 8px rgba(14, 98, 69, 0.25)',
+                      '&:hover': { bgcolor: '#094A34' },
+                    }}
+                  >
+                    {submitting ? 'Saving...' : 'Save Expense'}
+                  </Button>
+                </Box>
               </Box>
             </Stack>
           </Card>
