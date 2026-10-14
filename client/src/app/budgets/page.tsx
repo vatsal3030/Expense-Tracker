@@ -96,7 +96,12 @@ export default function BudgetsPage() {
             <Typography variant="body1" color="text.secondary">Set and track spending limits</Typography>
           </Box>
           <Button variant="contained" startIcon={<Add />} onClick={() => setDialogOpen(true)}
-            sx={{ borderRadius: 3, px: 3, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', boxShadow: '0 4px 16px rgba(99,102,241,0.3)' }}>
+            sx={{
+              borderRadius: 3, px: 3, fontWeight: 600,
+              bgcolor: '#059669', color: '#ffffff',
+              boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
+              '&:hover': { bgcolor: '#047857', boxShadow: '0 6px 20px rgba(5,150,105,0.35)' },
+            }}>
             Set Budget
           </Button>
         </Box>
@@ -176,7 +181,7 @@ export default function BudgetsPage() {
         )}
 
         {/* Create Budget Dialog */}
-        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 4 } } }}>
           <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', pb: 1 }}>
             <Typography variant="h6" fontWeight={700}>Set Budget</Typography>
             <IconButton onClick={() => setDialogOpen(false)} size="small"><Close /></IconButton>
@@ -198,7 +203,7 @@ export default function BudgetsPage() {
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setDialogOpen(false)} sx={{ borderRadius: 3 }}>Cancel</Button>
-            <Button variant="contained" onClick={handleCreate} disabled={submitting || !form.amount} sx={{ borderRadius: 3, px: 4, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}>
+            <Button variant="contained" onClick={handleCreate} disabled={submitting || !form.amount} sx={{ borderRadius: 3, px: 4, fontWeight: 600, bgcolor: '#059669', color: '#ffffff', '&:hover': { bgcolor: '#047857' } }}>
               {submitting ? 'Creating...' : 'Set Budget'}
             </Button>
           </DialogActions>

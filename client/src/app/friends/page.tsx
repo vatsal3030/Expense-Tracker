@@ -100,7 +100,12 @@ export default function FriendsPage() {
             <Typography variant="body1" color="text.secondary">Manage your connections</Typography>
           </Box>
           <Button variant="contained" startIcon={<PersonAdd />} onClick={() => setSearchOpen(true)}
-            sx={{ borderRadius: 3, px: 3, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', boxShadow: '0 4px 16px rgba(99,102,241,0.3)' }}>
+            sx={{
+              borderRadius: 3, px: 3, fontWeight: 600,
+              bgcolor: '#059669', color: '#ffffff',
+              boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
+              '&:hover': { bgcolor: '#047857', boxShadow: '0 6px 20px rgba(5,150,105,0.35)' },
+            }}>
             Add Friend
           </Button>
         </Box>
@@ -204,7 +209,7 @@ export default function FriendsPage() {
         </Card>
 
         {/* Search Dialog */}
-        <Dialog open={searchOpen} onClose={() => { setSearchOpen(false); setSearchResults([]); setSearchQuery(''); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+        <Dialog open={searchOpen} onClose={() => { setSearchOpen(false); setSearchResults([]); setSearchQuery(''); }} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 4 } } }}>
           <DialogTitle>
             <Typography variant="h6" fontWeight={700}>Find Friends</Typography>
           </DialogTitle>
@@ -212,7 +217,7 @@ export default function FriendsPage() {
             <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
               <TextField fullWidth size="small" placeholder="Search by name or email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
-              <Button variant="contained" onClick={handleSearch} disabled={searching || searchQuery.length < 2} sx={{ borderRadius: 3 }}>
+              <Button variant="contained" onClick={handleSearch} disabled={searching || searchQuery.length < 2} sx={{ borderRadius: 3, bgcolor: '#059669', color: '#ffffff', '&:hover': { bgcolor: '#047857' } }}>
                 <Search />
               </Button>
             </Box>

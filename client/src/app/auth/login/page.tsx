@@ -185,14 +185,16 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
-                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small" aria-label="toggle password visibility">
+                          {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
               <Button
@@ -205,10 +207,13 @@ export default function LoginPage() {
                   py: 1.5,
                   borderRadius: 3,
                   fontSize: '1rem',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                  boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
+                  fontWeight: 600,
+                  bgcolor: '#059669',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
                   '&:hover': {
-                    boxShadow: '0 8px 24px rgba(99,102,241,0.4)',
+                    bgcolor: '#047857',
+                    boxShadow: '0 6px 20px rgba(5,150,105,0.35)',
                   },
                 }}
               >

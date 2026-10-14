@@ -154,8 +154,14 @@ export default function ExpensesPage() {
             sx={{
               borderRadius: 3,
               px: 3,
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
+              fontWeight: 600,
+              bgcolor: '#059669',
+              color: '#ffffff',
+              boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
+              '&:hover': {
+                bgcolor: '#047857',
+                boxShadow: '0 6px 20px rgba(5,150,105,0.35)',
+              },
             }}
           >
             Add Expense
@@ -318,7 +324,10 @@ export default function ExpensesPage() {
             position: 'fixed',
             bottom: 24,
             right: 24,
-            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+            bgcolor: '#059669',
+            color: '#ffffff',
+            boxShadow: '0 4px 14px rgba(5,150,105,0.3)',
+            '&:hover': { bgcolor: '#047857' },
           }}
         >
           <Add />
@@ -330,7 +339,7 @@ export default function ExpensesPage() {
           onClose={() => setDialogOpen(false)}
           maxWidth="sm"
           fullWidth
-          PaperProps={{ sx: { borderRadius: 4 } }}
+          slotProps={{ paper: { sx: { borderRadius: 4 } } }}
         >
           <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
             <Typography variant="h6" fontWeight={700}>Add Expense</Typography>
@@ -352,8 +361,10 @@ export default function ExpensesPage() {
                 type="number"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                  },
                 }}
                 required
               />
@@ -429,7 +440,10 @@ export default function ExpensesPage() {
               sx={{
                 borderRadius: 3,
                 px: 4,
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                fontWeight: 600,
+                bgcolor: '#059669',
+                color: '#ffffff',
+                '&:hover': { bgcolor: '#047857' },
               }}
             >
               {submitting ? 'Adding...' : 'Add Expense'}

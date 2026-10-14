@@ -121,8 +121,8 @@ export default function DashboardPage() {
       title: 'Total Balance',
       value: data?.totalBalance ?? 0,
       icon: <AccountBalanceWallet />,
-      gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-      shadowColor: 'rgba(99,102,241,0.3)',
+      gradient: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+      shadowColor: 'rgba(16,185,129,0.25)',
       positive: (data?.totalBalance ?? 0) >= 0,
     },
     {
@@ -387,7 +387,7 @@ export default function DashboardPage() {
                   Quick Stats
                 </Typography>
                 {[
-                  { icon: <Receipt fontSize="small" />, label: 'Expenses this month', value: data?.thisMonth?.count ?? 0, color: '#6366f1' },
+                  { icon: <Receipt fontSize="small" />, label: 'Expenses this month', value: data?.thisMonth?.count ?? 0, color: '#10b981' },
                   { icon: <Group fontSize="small" />, label: 'Active groups', value: data?.groupsCount ?? 0, color: '#10b981' },
                   { icon: <Handshake fontSize="small" />, label: 'Pending settlements', value: data?.pendingSettlements ?? 0, color: '#f59e0b' },
                 ].map((stat, i) => (

@@ -129,8 +129,11 @@ export default function SettingsPage() {
                     onClick={handleSave}
                     disabled={saving}
                     sx={{
-                      borderRadius: 3, px: 4,
-                      background: saved ? theme.palette.success.main : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                      borderRadius: 3, px: 4, fontWeight: 600,
+                      bgcolor: '#059669',
+                      color: '#ffffff',
+                      boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
+                      '&:hover': { bgcolor: '#047857', boxShadow: '0 6px 20px rgba(5,150,105,0.35)' },
                     }}
                   >
                     {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Changes'}

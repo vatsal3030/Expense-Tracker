@@ -147,7 +147,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               {mode === 'dark' ? (
                 <LightModeIcon sx={{ color: '#fbbf24' }} />
               ) : (
-                <DarkModeIcon sx={{ color: '#6366f1' }} />
+                <DarkModeIcon sx={{ color: '#64748b' }} />
               )}
             </IconButton>
           </Tooltip>
@@ -198,13 +198,15 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           onClose={handleMenuClose}
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-          PaperProps={{
-            sx: {
-              mt: 1.5,
-              minWidth: 220,
-              borderRadius: 3,
-              boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-              border: `1px solid ${theme.palette.divider}`,
+          slotProps={{
+            paper: {
+              sx: {
+                mt: 1.5,
+                minWidth: 220,
+                borderRadius: 3,
+                boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                border: `1px solid ${theme.palette.divider}`,
+              },
             },
           }}
         >

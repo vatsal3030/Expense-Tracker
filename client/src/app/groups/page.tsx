@@ -20,9 +20,9 @@ const GROUP_TYPE_CONFIG: Record<string, { icon: React.ReactElement; color: strin
   TRIP: { icon: <Flight />, color: '#f59e0b' },
   COUPLE: { icon: <Favorite />, color: '#ec4899' },
   OFFICE: { icon: <Business />, color: '#3b82f6' },
-  FRIENDS: { icon: <People />, color: '#8b5cf6' },
+  FRIENDS: { icon: <People />, color: '#0ea5e9' },
   FAMILY: { icon: <FamilyRestroom />, color: '#10b981' },
-  PROJECT: { icon: <Work />, color: '#6366f1' },
+  PROJECT: { icon: <Work />, color: '#10b981' },
   OTHER: { icon: <MoreHoriz />, color: '#64748b' },
 };
 
@@ -85,9 +85,10 @@ export default function GroupsPage() {
             startIcon={<Add />}
             onClick={() => setDialogOpen(true)}
             sx={{
-              borderRadius: 3, px: 3,
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
+              borderRadius: 3, px: 3, fontWeight: 600,
+              bgcolor: '#059669', color: '#ffffff',
+              boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
+              '&:hover': { bgcolor: '#047857', boxShadow: '0 6px 20px rgba(5,150,105,0.35)' },
             }}
           >
             Create Group
@@ -188,7 +189,7 @@ export default function GroupsPage() {
         )}
 
         {/* Create Group Dialog */}
-        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 4 } } }}>
           <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
             <Typography variant="h6" fontWeight={700}>Create Group</Typography>
             <IconButton onClick={() => setDialogOpen(false)} size="small"><Close /></IconButton>
@@ -223,7 +224,7 @@ export default function GroupsPage() {
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={() => setDialogOpen(false)} sx={{ borderRadius: 3 }}>Cancel</Button>
-            <Button variant="contained" onClick={handleCreate} disabled={submitting || !form.name} sx={{ borderRadius: 3, px: 4, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}>
+            <Button variant="contained" onClick={handleCreate} disabled={submitting || !form.name} sx={{ borderRadius: 3, px: 4, fontWeight: 600, bgcolor: '#059669', color: '#ffffff', '&:hover': { bgcolor: '#047857' } }}>
               {submitting ? 'Creating...' : 'Create Group'}
             </Button>
           </DialogActions>

@@ -198,14 +198,16 @@ export default function SignupPage() {
                 required
                 helperText="At least 8 characters"
                 autoComplete="new-password"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
-                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small" aria-label="toggle password visibility">
+                          {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
               <TextField
@@ -229,8 +231,14 @@ export default function SignupPage() {
                   py: 1.5,
                   borderRadius: 3,
                   fontSize: '1rem',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                  boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
+                  fontWeight: 600,
+                  bgcolor: '#059669',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
+                  '&:hover': {
+                    bgcolor: '#047857',
+                    boxShadow: '0 6px 20px rgba(5,150,105,0.35)',
+                  },
                 }}
               >
                 {loading ? <CircularProgress size={24} color="inherit" /> : 'Create Account'}
