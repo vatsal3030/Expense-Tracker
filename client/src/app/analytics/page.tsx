@@ -131,37 +131,41 @@ export default function AnalyticsPage() {
 
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
             <Box
+              className="glass-control-surface"
               sx={{
-                bgcolor: isLight ? '#E9ECEF' : 'rgba(255, 255, 255, 0.06)',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 2.5,
                 p: 0.5,
                 display: 'flex',
                 gap: 0.5,
               }}
             >
-              {(['30D', '90D', '6M'] as const).map((tf) => (
-                <Button
-                  key={tf}
-                  size="small"
-                  onClick={() => setTimeframe(tf)}
-                  sx={{
-                    px: 1.5,
-                    py: 0.5,
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    borderRadius: 2,
-                    minWidth: 'auto',
-                    color: timeframe === tf ? '#FFFFFF' : 'text.secondary',
-                    bgcolor: timeframe === tf ? (isLight ? '#1A1D1F' : '#0E6245') : 'transparent',
-                    '&:hover': {
-                      bgcolor: timeframe === tf ? (isLight ? '#1A1D1F' : '#0E6245') : alpha(theme.palette.text.primary, 0.05),
-                    },
-                  }}
-                >
-                  {tf}
-                </Button>
-              ))}
+              {(['30D', '90D', '6M'] as const).map((tf) => {
+                const active = timeframe === tf;
+                return (
+                  <Button
+                    key={tf}
+                    size="small"
+                    onClick={() => setTimeframe(tf)}
+                    className={active ? "glass-emerald-active" : undefined}
+                    sx={{
+                      px: 1.75,
+                      py: 0.5,
+                      fontSize: '0.75rem',
+                      fontWeight: active ? 750 : 600,
+                      borderRadius: 2,
+                      minWidth: 'auto',
+                      color: active ? '#FFFFFF' : 'text.secondary',
+                      bgcolor: active ? (isLight ? '#1A1D1F' : 'rgba(16, 185, 129, 0.25)') : 'transparent',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: active ? undefined : alpha(theme.palette.text.primary, 0.05),
+                      },
+                    }}
+                  >
+                    {tf}
+                  </Button>
+                );
+              })}
             </Box>
 
             <Button
@@ -169,18 +173,17 @@ export default function AnalyticsPage() {
               size="small"
               startIcon={<Download fontSize="small" />}
               onClick={handleExportCSV}
+              className="glass-tertiary"
               sx={{
-                borderColor: theme.palette.divider,
                 color: 'text.primary',
-                bgcolor: 'background.paper',
                 borderRadius: 2.5,
                 fontWeight: 600,
                 textTransform: 'none',
                 py: 0.75,
                 px: 2,
                 '&:hover': {
-                  borderColor: theme.palette.primary.main,
-                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  borderColor: '#10B981',
+                  bgcolor: alpha('#10B981', 0.08),
                 },
               }}
             >
@@ -193,35 +196,34 @@ export default function AnalyticsPage() {
         <Grid container spacing={2.5} sx={{ mb: 4 }}>
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <Card
+              className="glass-secondary glass-specular-top glass-accent-emerald"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
                 p: 2.5,
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase' }}>
+                  <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#34D399' : 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     30-Day Spending
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
                     {loading ? <Skeleton width={100} /> : `₹${totalSpend.toLocaleString('en-IN')}`}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 1, borderRadius: 2, bgcolor: alpha('#0E6245', 0.1), color: '#0E6245' }}>
+                <Box className="glass-tertiary" sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981' }}>
                   <AccountBalanceWallet fontSize="small" />
                 </Box>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.5 }}>
                 <Chip
                   size="small"
-                  icon={<ArrowUpward sx={{ '&&': { fontSize: 12, color: '#0E6245' } }} />}
+                  icon={<ArrowUpward sx={{ '&&': { fontSize: 12, color: '#34D399' } }} />}
                   label="12% vs last month"
                   sx={{
-                    bgcolor: alpha('#0E6245', 0.1),
-                    color: '#0E6245',
+                    bgcolor: 'rgba(16, 185, 129, 0.15)',
+                    color: '#34D399',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
                     fontSize: '0.7rem',
                     fontWeight: 700,
                     height: 22,
@@ -233,24 +235,22 @@ export default function AnalyticsPage() {
 
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
                 p: 2.5,
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase' }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Daily Burn Rate
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
                     {loading ? <Skeleton width={100} /> : `₹${dailyAverage.toLocaleString('en-IN')}`}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 1, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}>
+                <Box className="glass-tertiary" sx={{ p: 1, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.15), border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981' }}>
                   <TrendingUp fontSize="small" />
                 </Box>
               </Box>
@@ -262,24 +262,22 @@ export default function AnalyticsPage() {
 
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
                 p: 2.5,
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase' }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Reimbursement Rate
                   </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#0E6245', mt: 0.5 }}>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#10B981', mt: 0.5 }}>
                     94.2%
                   </Typography>
                 </Box>
-                <Box sx={{ p: 1, borderRadius: 2, bgcolor: alpha('#0E6245', 0.1), color: '#0E6245' }}>
+                <Box className="glass-tertiary" sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981' }}>
                   <CheckCircle fontSize="small" />
                 </Box>
               </Box>
@@ -291,24 +289,22 @@ export default function AnalyticsPage() {
 
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
                 p: 2.5,
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase' }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Active Shared Bills
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
                     {loading ? <Skeleton width={60} /> : categories.reduce((sum: number, c: any) => sum + c.count, 0)}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 1, borderRadius: 2, bgcolor: alpha('#F59E0B', 0.1), color: '#F59E0B' }}>
+                <Box className="glass-tertiary" sx={{ p: 1, borderRadius: 2, bgcolor: alpha('#F59E0B', 0.15), border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FBBF24' }}>
                   <ReceiptLong fontSize="small" />
                 </Box>
               </Box>
@@ -324,17 +320,16 @@ export default function AnalyticsPage() {
           {/* Daily Cumulative Spend Curve */}
           <Grid size={{ xs: 12, lg: 8 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 p: 3,
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box>
-                  <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary' }}>
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
                     Daily Spending Velocity
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -345,8 +340,9 @@ export default function AnalyticsPage() {
                   label="Real-time"
                   size="small"
                   sx={{
-                    bgcolor: alpha('#0E6245', 0.1),
-                    color: '#0E6245',
+                    bgcolor: 'rgba(16, 185, 129, 0.15)',
+                    color: '#34D399',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
                     fontWeight: 700,
                     height: 22,
                     fontSize: '0.7rem',
@@ -362,8 +358,8 @@ export default function AnalyticsPage() {
                     <AreaChart data={data.dailyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#0E6245" stopOpacity={0.25} />
-                          <stop offset="95%" stopColor="#0E6245" stopOpacity={0.0} />
+                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
+                          <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.6)} vertical={false} />
@@ -384,11 +380,12 @@ export default function AnalyticsPage() {
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: theme.palette.background.paper,
-                          border: `1px solid ${theme.palette.divider}`,
-                          borderRadius: '10px',
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.9)',
+                          backdropFilter: 'blur(20px)',
+                          border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                          borderRadius: '12px',
                           color: theme.palette.text.primary,
-                          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                           fontSize: '0.8rem',
                         }}
                         formatter={(val: any) => [`₹${Number(val).toLocaleString()}`, 'Cumulative']}
@@ -396,7 +393,7 @@ export default function AnalyticsPage() {
                       <Area
                         type="monotone"
                         dataKey="cumulative"
-                        stroke="#0E6245"
+                        stroke="#10B981"
                         strokeWidth={2.5}
                         fillOpacity={1}
                         fill="url(#emeraldGradient)"
@@ -411,11 +408,10 @@ export default function AnalyticsPage() {
           {/* Category Donut & Progress */}
           <Grid size={{ xs: 12, lg: 4 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 p: 3,
                 height: '100%',
               }}
@@ -513,17 +509,16 @@ export default function AnalyticsPage() {
           {/* Monthly Inflow vs Outflow */}
           <Grid size={{ xs: 12, md: 7 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 p: 3,
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box>
-                  <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary' }}>
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
                     Cashflow: Outflow vs Reimbursed
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -536,7 +531,7 @@ export default function AnalyticsPage() {
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Paid Out</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: 2, bgcolor: '#0E6245' }} />
+                    <Box sx={{ width: 10, height: 10, borderRadius: 2, bgcolor: '#10B981' }} />
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Reimbursed</Typography>
                   </Box>
                 </Box>
@@ -553,16 +548,17 @@ export default function AnalyticsPage() {
                       <YAxis stroke={theme.palette.text.secondary} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: theme.palette.background.paper,
-                          border: `1px solid ${theme.palette.divider}`,
-                          borderRadius: '10px',
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.9)',
+                          backdropFilter: 'blur(20px)',
+                          border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                          borderRadius: '12px',
                           color: theme.palette.text.primary,
-                          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                           fontSize: '0.8rem',
                         }}
                       />
                       <Bar dataKey="paidOut" name="Paid Out" fill="#EF4444" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="reimbursed" name="Reimbursed" fill="#0E6245" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="reimbursed" name="Reimbursed" fill="#10B981" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -573,18 +569,17 @@ export default function AnalyticsPage() {
           {/* Day of Week Intensity */}
           <Grid size={{ xs: 12, md: 5 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 p: 3,
                 height: '100%',
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box>
-                  <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary' }}>
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
                     Weekly Spending Rhythm
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -605,11 +600,12 @@ export default function AnalyticsPage() {
                       <YAxis stroke={theme.palette.text.secondary} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: theme.palette.background.paper,
-                          border: `1px solid ${theme.palette.divider}`,
-                          borderRadius: '10px',
+                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.9)',
+                          backdropFilter: 'blur(20px)',
+                          border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                          borderRadius: '12px',
                           color: theme.palette.text.primary,
-                          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                           fontSize: '0.8rem',
                         }}
                         formatter={(val: any) => [`₹${Number(val).toLocaleString()}`, 'Total Spend']}
@@ -632,33 +628,35 @@ export default function AnalyticsPage() {
           {(data?.insights || []).map((ins: any) => (
             <Grid size={{ xs: 12, md: 4 }} key={ins.id}>
               <Card
+                className="glass-secondary glass-specular-top"
                 sx={{
-                  bgcolor: 'background.paper',
-                  border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 3.5,
-                  boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                  boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                   p: 3,
                   height: '100%',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                   '&:hover': {
-                    borderColor: '#0E6245',
-                    boxShadow: '0 4px 12px rgba(14, 98, 69, 0.08)',
+                    borderColor: isLight ? 'rgba(0, 0, 0, 0.14) !important' : 'rgba(255, 255, 255, 0.22) !important',
+                    boxShadow: isLight ? '0 12px 32px rgba(15, 23, 42, 0.08)' : '0 16px 40px -8px rgba(0, 0, 0, 0.65)',
+                    transform: 'translateY(-2px)',
                   },
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
                   <Box
+                    className="glass-tertiary"
                     sx={{
                       p: 1,
                       borderRadius: 2,
-                      bgcolor: ins.impact === 'HIGH' ? alpha('#EF4444', 0.1) : alpha('#0E6245', 0.1),
-                      color: ins.impact === 'HIGH' ? '#EF4444' : '#0E6245',
+                      bgcolor: ins.impact === 'HIGH' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                      border: `1px solid ${ins.impact === 'HIGH' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+                      color: ins.impact === 'HIGH' ? '#EF4444' : '#10B981',
                       display: 'flex',
                     }}
                   >
                     <Lightbulb fontSize="small" />
                   </Box>
-                  <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.primary' }}>
+                  <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.primary' }}>
                     {ins.title}
                   </Typography>
                 </Box>

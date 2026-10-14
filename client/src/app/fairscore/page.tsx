@@ -128,11 +128,10 @@ export default function FairScorePage() {
           {/* Main FairScore Gauge */}
           <Grid size={{ xs: 12, md: 7 }}>
             <Card
+              className="glass-secondary glass-specular-top glass-emerald-ambient"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 p: 4,
                 position: 'relative',
                 overflow: 'hidden',
@@ -140,14 +139,14 @@ export default function FairScorePage() {
             >
               <Grid container spacing={3} sx={{ alignItems: 'center' }}>
                 <Grid size={{ xs: 12, sm: 5 }} sx={{ textAlign: 'center' }}>
-                  {/* Circular SVG Gauge */}
+                  {/* Circular SVG Gauge with liquid glow */}
                   <Box sx={{ position: 'relative', width: 170, height: 170, mx: 'auto' }}>
                     <svg width="170" height="170" viewBox="0 0 160 160" style={{ transform: 'rotate(-90deg)' }}>
                       <circle
                         cx="80"
                         cy="80"
                         r="70"
-                        stroke={isLight ? '#E9ECEF' : '#222429'}
+                        stroke={isLight ? '#E9ECEF' : 'rgba(255, 255, 255, 0.08)'}
                         strokeWidth="12"
                         fill="transparent"
                       />
@@ -155,13 +154,16 @@ export default function FairScorePage() {
                         cx="80"
                         cy="80"
                         r="70"
-                        stroke="#0E6245"
+                        stroke="#10B981"
                         strokeWidth="12"
                         strokeDasharray={440}
                         strokeDashoffset={loading ? 440 : strokeDashoffset}
                         strokeLinecap="round"
                         fill="transparent"
-                        style={{ transition: 'stroke-dashoffset 1.2s ease-in-out' }}
+                        style={{
+                          transition: 'stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          filter: 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.5))',
+                        }}
                       />
                     </svg>
 
@@ -178,7 +180,7 @@ export default function FairScorePage() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Typography variant="h3" fontWeight={800} sx={{ color: 'text.primary', lineHeight: 1 }}>
+                      <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : 'text.primary', lineHeight: 1 }}>
                         {loading ? <Skeleton width={60} /> : score}
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mt: 0.5 }}>
@@ -206,7 +208,7 @@ export default function FairScorePage() {
                     </Typography>
                   </Box>
 
-                  <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', mb: 1 }}>
+                  <Typography variant="h6" fontWeight={750} sx={{ color: 'text.primary', mb: 1 }}>
                     Ultra-Reliable Splitter
                   </Typography>
 
@@ -220,15 +222,14 @@ export default function FairScorePage() {
                       size="small"
                       startIcon={<Share fontSize="small" />}
                       onClick={() => navigator.clipboard.writeText(`My FairScore on Owino is ${score} (${tier} Tier)!`)}
+                      className="glass-tertiary"
                       sx={{
-                        borderColor: theme.palette.divider,
                         color: 'text.primary',
-                        bgcolor: 'background.paper',
                         borderRadius: 2.5,
                         fontWeight: 600,
                         fontSize: '0.75rem',
                         textTransform: 'none',
-                        '&:hover': { borderColor: '#0E6245', bgcolor: alpha('#0E6245', 0.04) },
+                        '&:hover': { borderColor: '#10B981', bgcolor: alpha('#10B981', 0.08) },
                       }}
                     >
                       Share Score
@@ -242,11 +243,10 @@ export default function FairScorePage() {
           {/* Active Streak Card */}
           <Grid size={{ xs: 12, md: 5 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 3.5,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 p: 3.5,
                 height: '100%',
                 display: 'flex',
@@ -258,14 +258,14 @@ export default function FairScorePage() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <LocalFireDepartment sx={{ color: '#F59E0B', fontSize: 28 }} />
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary' }}>
+                    <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
                       Clarity Streak
                     </Typography>
                   </Box>
                   <Chip
                     label="Active"
                     size="small"
-                    sx={{ bgcolor: alpha('#F59E0B', 0.12), color: '#D97706', fontWeight: 700 }}
+                    sx={{ bgcolor: alpha('#F59E0B', 0.15), color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 700 }}
                   />
                 </Box>
 
@@ -292,6 +292,7 @@ export default function FairScorePage() {
                   {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => (
                     <Box
                       key={idx}
+                      className={idx < 6 ? "glass-emerald-active" : undefined}
                       sx={{
                         flex: 1,
                         py: 1,
@@ -350,16 +351,20 @@ export default function FairScorePage() {
           ].map((pillar, idx) => (
             <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={idx}>
               <Card
+                className="glass-secondary glass-specular-top"
                 sx={{
-                  bgcolor: 'background.paper',
-                  border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 3.5,
-                  boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                  boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                   p: 2.5,
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  '&:hover': {
+                    borderColor: 'rgba(16, 185, 129, 0.4) !important',
+                    transform: 'translateY(-2px)',
+                  },
                 }}
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.primary' }}>
+                  <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.primary' }}>
                     {pillar.title}
                   </Typography>
                   <Typography variant="caption" fontWeight={700} sx={{ color: pillar.color }}>
@@ -401,7 +406,7 @@ export default function FairScorePage() {
           <Chip
             label={`${(data?.badges || []).filter((b: any) => b.unlocked).length}/6 Unlocked`}
             size="small"
-            sx={{ bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', fontWeight: 700 }}
+            sx={{ bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 700 }}
           />
         </Box>
 
@@ -409,26 +414,31 @@ export default function FairScorePage() {
           {(data?.badges || []).map((badge: any) => (
             <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={badge.id}>
               <Card
+                className={badge.unlocked ? "glass-secondary glass-specular-top" : "glass-tertiary"}
                 sx={{
-                  bgcolor: 'background.paper',
-                  border: badge.unlocked ? `1px solid ${theme.palette.divider}` : `1px dashed ${theme.palette.divider}`,
                   borderRadius: 3.5,
-                  boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                  boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                   p: 3,
                   position: 'relative',
                   opacity: badge.unlocked ? 1 : 0.65,
-                  transition: 'all 0.2s',
-                  '&:hover': { borderColor: badge.unlocked ? '#0E6245' : theme.palette.divider },
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  border: badge.unlocked ? undefined : `1px dashed ${theme.palette.divider}`,
+                  '&:hover': {
+                    borderColor: badge.unlocked ? 'rgba(16, 185, 129, 0.5) !important' : undefined,
+                    transform: badge.unlocked ? 'translateY(-3px)' : undefined,
+                  },
                 }}
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box
+                    className="glass-tertiary"
                     sx={{
                       width: 44,
                       height: 44,
                       borderRadius: 2.5,
-                      bgcolor: badge.unlocked ? alpha('#0E6245', 0.1) : alpha(theme.palette.text.secondary, 0.08),
-                      color: badge.unlocked ? '#0E6245' : 'text.secondary',
+                      bgcolor: badge.unlocked ? 'rgba(16, 185, 129, 0.15)' : alpha(theme.palette.text.secondary, 0.08),
+                      border: badge.unlocked ? '1px solid rgba(16, 185, 129, 0.3)' : undefined,
+                      color: badge.unlocked ? '#10B981' : 'text.secondary',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -440,17 +450,18 @@ export default function FairScorePage() {
                   <Chip
                     label={badge.unlocked ? `${badge.points} PTS` : 'LOCKED'}
                     size="small"
-                    icon={badge.unlocked ? <CheckCircle sx={{ '&&': { fontSize: 13, color: '#0E6245' } }} /> : <Lock sx={{ '&&': { fontSize: 13, color: 'text.secondary' } }} />}
+                    icon={badge.unlocked ? <CheckCircle sx={{ '&&': { fontSize: 13, color: '#34D399' } }} /> : <Lock sx={{ '&&': { fontSize: 13, color: 'text.secondary' } }} />}
                     sx={{
-                      bgcolor: badge.unlocked ? alpha('#0E6245', 0.1) : alpha(theme.palette.text.secondary, 0.08),
-                      color: badge.unlocked ? '#0E6245' : 'text.secondary',
+                      bgcolor: badge.unlocked ? 'rgba(16, 185, 129, 0.15)' : alpha(theme.palette.text.secondary, 0.08),
+                      color: badge.unlocked ? '#34D399' : 'text.secondary',
+                      border: badge.unlocked ? '1px solid rgba(16, 185, 129, 0.3)' : undefined,
                       fontWeight: 700,
                       fontSize: '0.65rem',
                     }}
                   />
                 </Box>
 
-                <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.primary', mb: 0.5 }}>
+                <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.primary', mb: 0.5 }}>
                   {badge.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, minHeight: 32 }}>
@@ -461,7 +472,7 @@ export default function FairScorePage() {
                   <Typography variant="caption" color="text.secondary">
                     Progress
                   </Typography>
-                  <Typography variant="caption" fontWeight={600} sx={{ color: badge.unlocked ? '#0E6245' : 'text.secondary' }}>
+                  <Typography variant="caption" fontWeight={600} sx={{ color: badge.unlocked ? '#10B981' : 'text.secondary' }}>
                     {badge.current}/{badge.max}
                   </Typography>
                 </Box>
@@ -473,7 +484,7 @@ export default function FairScorePage() {
                     borderRadius: 3,
                     bgcolor: isLight ? '#E9ECEF' : 'rgba(255, 255, 255, 0.08)',
                     '& .MuiLinearProgress-bar': {
-                      bgcolor: badge.unlocked ? '#0E6245' : '#64748B',
+                      bgcolor: badge.unlocked ? '#10B981' : '#64748B',
                       borderRadius: 3,
                     },
                   }}
@@ -489,17 +500,16 @@ export default function FairScorePage() {
         </Typography>
 
         <Card
+          className="glass-secondary glass-specular-top"
           sx={{
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.divider}`,
             borderRadius: 3.5,
-            boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+            boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
             overflow: 'hidden',
           }}
         >
           <TableContainer>
             <Table>
-              <TableHead sx={{ bgcolor: isLight ? '#F9FAFB' : 'rgba(255, 255, 255, 0.03)' }}>
+              <TableHead sx={{ bgcolor: isLight ? '#F9FAFB' : 'rgba(255, 255, 255, 0.02)' }}>
                 <TableRow>
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>RANK</TableCell>
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.75rem', py: 1.5 }}>MEMBER</TableCell>
@@ -514,8 +524,8 @@ export default function FairScorePage() {
                   <TableRow
                     key={row.rank}
                     sx={{
-                      bgcolor: row.isCurrentUser ? alpha('#0E6245', 0.04) : 'transparent',
-                      '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.02) },
+                      bgcolor: row.isCurrentUser ? 'rgba(16, 185, 129, 0.08)' : 'transparent',
+                      '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.04) },
                     }}
                   >
                     <TableCell sx={{ color: row.rank === 1 ? '#F59E0B' : 'text.secondary', fontWeight: 700 }}>
@@ -525,11 +535,12 @@ export default function FairScorePage() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Avatar
                           src={row.avatarUrl || undefined}
-                          sx={{ width: 32, height: 32, bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', fontSize: '0.85rem' }}
+                          className="glass-tertiary"
+                          sx={{ width: 32, height: 32, bgcolor: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981', fontSize: '0.85rem' }}
                         >
                           {row.name.charAt(0)}
                         </Avatar>
-                        <Typography variant="body2" fontWeight={600} sx={{ color: row.isCurrentUser ? '#0E6245' : 'text.primary' }}>
+                        <Typography variant="body2" fontWeight={600} sx={{ color: row.isCurrentUser ? '#10B981' : 'text.primary' }}>
                           {row.name} {row.isCurrentUser && '(You)'}
                         </Typography>
                       </Box>
@@ -558,16 +569,16 @@ export default function FairScorePage() {
                           size="small"
                           variant="outlined"
                           onClick={() => handleCheer(row.name)}
+                          className="glass-tertiary"
                           sx={{
                             borderRadius: 2,
-                            borderColor: theme.palette.divider,
-                            color: cheered[row.name] ? '#0E6245' : 'text.primary',
+                            color: cheered[row.name] ? '#10B981' : 'text.primary',
                             fontSize: '0.75rem',
                             fontWeight: 600,
                             py: 0.5,
                             px: 1.5,
                             textTransform: 'none',
-                            '&:hover': { borderColor: '#0E6245', bgcolor: alpha('#0E6245', 0.04) },
+                            '&:hover': { borderColor: '#10B981', bgcolor: alpha('#10B981', 0.08) },
                           }}
                         >
                           {cheered[row.name] ? 'Cheered! 🎉' : 'Cheer 👏'}

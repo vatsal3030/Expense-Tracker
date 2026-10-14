@@ -41,8 +41,31 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const drawerWidth = collapsed && !isMobile ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH;
 
+  const isLight = theme.palette.mode === 'light';
+
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', position: 'relative', overflowX: 'hidden' }}>
+      {/* Sophisticated Apple FinTech Atmospheric Canvas */}
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          pointerEvents: 'none',
+          zIndex: 0,
+          overflow: 'hidden',
+          background: isLight
+            ? `
+                radial-gradient(ellipse 1100px 700px at 85% -5%, rgba(14, 98, 69, 0.035) 0%, transparent 65%),
+                radial-gradient(ellipse 1000px 800px at 15% 105%, rgba(148, 163, 184, 0.08) 0%, transparent 70%)
+              `
+            : `
+                radial-gradient(ellipse 1100px 700px at 85% -5%, rgba(16, 185, 129, 0.05) 0%, transparent 65%),
+                radial-gradient(ellipse 1000px 800px at 15% 105%, rgba(30, 41, 59, 0.15) 0%, transparent 70%)
+              `,
+        }}
+      />
+
       <Sidebar
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
@@ -58,17 +81,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <Box
         component="main"
         sx={{
+          position: 'relative',
+          zIndex: 1,
           flexGrow: 1,
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          mt: { xs: '64px', sm: '70px' },
+          mt: { xs: '76px', sm: '86px' },
           p: { xs: 2, sm: 3 },
           pb: { xs: '84px', md: 3 },
           transition: theme.transitions.create(['width', 'margin'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),
-          minHeight: 'calc(100vh - 70px)',
+          minHeight: 'calc(100vh - 86px)',
         }}
       >
         {children}

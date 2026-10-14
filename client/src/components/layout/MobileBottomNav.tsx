@@ -63,7 +63,7 @@ export default function MobileBottomNav() {
                   height: 52,
                   bgcolor: 'primary.main',
                   color: '#ffffff',
-                  boxShadow: '0 8px 20px rgba(5, 150, 105, 0.4)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
                   border: `3px solid ${theme.palette.background.paper}`,
                   transition: 'transform 0.15s ease',
                   '&:active': { transform: 'scale(0.92)' },

@@ -202,29 +202,68 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
     router.push('/auth/login');
   };
 
+  const isLight = mode === 'light';
+
   return (
     <AppBar
       position="fixed"
       elevation={0}
+      className="glass-nav-island"
       sx={{
-        width: { md: `calc(100% - ${drawerWidth}px)` },
-        ml: { md: `${drawerWidth}px` },
-        bgcolor: alpha(theme.palette.background.default, 0.8),
-        backdropFilter: 'blur(20px)',
-        borderBottom: `1px solid ${theme.palette.divider}`,
+        top: { xs: 8, md: 12 },
+        left: { xs: 8, md: `${drawerWidth + 16}px` },
+        right: { xs: 8, md: 16 },
+        width: 'auto',
+        borderRadius: { xs: '16px', sm: '20px' },
+        border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.14)'}`,
+        borderTopColor: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.35)',
+        borderLeftColor: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.22)',
+        background: isLight
+          ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(246, 248, 252, 0.65) 100%)'
+          : 'linear-gradient(135deg, rgba(16, 22, 34, 0.75) 0%, rgba(10, 14, 22, 0.65) 100%)',
+        backdropFilter: 'blur(28px) saturate(200%) contrast(106%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(200%) contrast(106%)',
+        boxShadow: isLight
+          ? 'inset 0 1px 0 rgba(255, 255, 255, 1), 0 14px 36px -8px rgba(15, 23, 42, 0.08), 0 3px 8px -1px rgba(15, 23, 42, 0.04)'
+          : 'inset 0 1px 0 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 0 rgba(0, 0, 0, 0.45), 0 20px 48px -10px rgba(0, 0, 0, 0.65), 0 4px 14px -2px rgba(0, 0, 0, 0.40)',
         color: theme.palette.text.primary,
-        transition: theme.transitions.create(['width', 'margin'], {
+        transition: theme.transitions.create(['left', 'margin'], {
           easing: theme.transitions.easing.sharp,
           duration: theme.transitions.duration.leavingScreen,
         }),
+        zIndex: theme.zIndex.drawer + 1,
       }}
     >
-      <Toolbar sx={{ gap: 1, minHeight: { xs: 64, sm: 70 } }}>
+      {/* Hairline Specular Edge */}
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '1px',
+          borderTopLeftRadius: 'inherit',
+          borderTopRightRadius: 'inherit',
+          background: isLight
+            ? 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <Toolbar sx={{ gap: 1, minHeight: { xs: 56, sm: 62 }, px: { xs: 1.5, sm: 2.25 } }}>
         {/* Mobile menu button */}
         <IconButton
           edge="start"
           onClick={onMenuToggle}
-          sx={{ display: { md: 'none' }, mr: 1, color: 'text.secondary' }}
+          sx={{
+            display: { md: 'none' },
+            mr: 1,
+            color: 'text.secondary',
+            bgcolor: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
+          }}
         >
           <MenuIcon />
         </IconButton>
@@ -234,23 +273,27 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           <BrandLogo size="sm" />
         </Box>
 
-        {/* Search Bar */}
+        {/* Search Bar (Tertiary Glass Pill) */}
         <Box
           sx={{
             display: { xs: 'none', sm: 'flex' },
             alignItems: 'center',
-            bgcolor: alpha(theme.palette.action.hover, 0.06),
-            borderRadius: 3,
+            bgcolor: isLight ? 'rgba(255, 255, 255, 0.65)' : 'rgba(26, 34, 48, 0.45)',
+            backdropFilter: 'blur(14px)',
+            borderRadius: 9999,
             px: 2,
-            py: 0.5,
+            py: 0.6,
             flex: 1,
             maxWidth: 480,
-            border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-            transition: 'all 0.2s ease',
+            border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.10)'}`,
+            boxShadow: isLight
+              ? 'inset 0 1px 1.5px rgba(255,255,255,0.9), 0 2px 6px rgba(0,0,0,0.02)'
+              : 'inset 0 1px 1.5px rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.25)',
+            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
             '&:focus-within': {
-              bgcolor: alpha(theme.palette.action.hover, 0.1),
-              borderColor: theme.palette.primary.main,
-              boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}`,
+              bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(32, 42, 60, 0.65)',
+              borderColor: isLight ? '#0E6245' : '#10B981',
+              boxShadow: `0 0 0 2px ${isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(16, 185, 129, 0.20)'}`,
             },
           }}
         >
@@ -263,10 +306,11 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             variant="caption"
             sx={{
               color: 'text.secondary',
-              bgcolor: alpha(theme.palette.action.hover, 0.1),
+              bgcolor: isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)',
+              border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.10)'}`,
               px: 1,
               py: 0.25,
-              borderRadius: 1,
+              borderRadius: 1.5,
               fontSize: '0.7rem',
               fontWeight: 600,
             }}
@@ -278,30 +322,33 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
         <Box sx={{ flex: 1 }} />
 
         {/* Actions */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {/* FairScore & Streak Badge */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/* FairScore & Streak Badge (Tertiary Glass Pill) */}
           <Tooltip title="FairScore: 880 (Diamond Tier) • 14-day streak">
             <Box
               onClick={() => router.push('/fairscore')}
               sx={{
                 display: { xs: 'none', sm: 'flex' },
                 alignItems: 'center',
-                gap: 1,
-                px: 1.5,
-                py: 0.5,
-                mr: 1,
-                borderRadius: 20,
-                border: `1px solid ${theme.palette.divider}`,
-                bgcolor: 'rgba(16,185,129,0.08)',
+                gap: 1.25,
+                px: 1.75,
+                py: 0.6,
+                borderRadius: 9999,
+                border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.10)'}`,
+                bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
+                backdropFilter: 'blur(14px)',
+                boxShadow: 'none',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
-                  borderColor: '#10b981',
-                  bgcolor: 'rgba(16,185,129,0.15)',
+                  borderColor: isLight ? '#0E6245' : '#10b981',
+                  bgcolor: isLight ? 'rgba(14, 98, 69, 0.06)' : 'rgba(16, 185, 129, 0.08)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                  transform: 'translateY(-1px)',
                 },
               }}
             >
-              <Typography variant="caption" sx={{ color: '#34d399', fontWeight: 700 }}>
+              <Typography variant="caption" sx={{ color: isLight ? '#0E6245' : '#34d399', fontWeight: 700 }}>
                 ⭐ 880
               </Typography>
               <Typography variant="caption" sx={{ color: '#f59e0b', fontWeight: 700 }}>
@@ -310,26 +357,46 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             </Box>
           </Tooltip>
 
-          {/* Theme Toggle */}
+          {/* Theme Toggle (Glass Circle) */}
           <Tooltip title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
             <IconButton
               onClick={toggleTheme}
               sx={{
-                transition: 'all 0.3s ease',
-                '&:hover': { transform: 'rotate(180deg)' },
+                bgcolor: isLight ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.05)',
+                border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)'}`,
+                backdropFilter: 'blur(12px)',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                '&:hover': {
+                  bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(255, 255, 255, 0.10)',
+                  borderColor: isLight ? '#0E6245' : 'rgba(255, 255, 255, 0.20)',
+                  transform: 'scale(1.05)',
+                },
               }}
             >
               {mode === 'dark' ? (
-                <LightModeIcon sx={{ color: '#fbbf24' }} />
+                <LightModeIcon sx={{ color: '#fbbf24', fontSize: 20 }} />
               ) : (
-                <DarkModeIcon sx={{ color: '#64748b' }} />
+                <DarkModeIcon sx={{ color: '#64748b', fontSize: 20 }} />
               )}
             </IconButton>
           </Tooltip>
 
-          {/* Notifications */}
+          {/* Notifications (Glass Circle) */}
           <Tooltip title="Notifications">
-            <IconButton onClick={handleNotifOpen}>
+            <IconButton
+              onClick={handleNotifOpen}
+              sx={{
+                bgcolor: isLight ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.05)',
+                border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)'}`,
+                backdropFilter: 'blur(12px)',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                '&:hover': {
+                  bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(255, 255, 255, 0.10)',
+                  borderColor: isLight ? '#0E6245' : 'rgba(255, 255, 255, 0.20)',
+                  transform: 'translateY(-1px)',
+                },
+              }}
+            >
               <Badge
                 badgeContent={unreadCount}
                 color="error"
@@ -338,26 +405,41 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                     fontSize: '0.65rem',
                     height: 18,
                     minWidth: 18,
+                    fontWeight: 700,
                   },
                 }}
               >
-                <NotificationsIcon />
+                <NotificationsIcon sx={{ fontSize: 20 }} />
               </Badge>
             </IconButton>
           </Tooltip>
 
           {/* Profile */}
           <Tooltip title="Account">
-            <IconButton onClick={handleProfileMenuOpen} sx={{ ml: 0.5 }}>
+            <IconButton
+              onClick={handleProfileMenuOpen}
+              sx={{
+                ml: 0.5,
+                p: 0.4,
+                borderRadius: 9999,
+                border: `1.5px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'}`,
+                bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                '&:hover': {
+                  borderColor: isLight ? '#0E6245' : '#10b981',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+                  transform: 'scale(1.04)',
+                },
+              }}
+            >
               <Avatar
                 src={profile?.avatarUrl || undefined}
                 sx={{
-                  width: 34,
-                  height: 34,
-                  bgcolor: theme.palette.primary.main,
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                  width: 32,
+                  height: 32,
+                  bgcolor: isLight ? '#0E6245' : theme.palette.primary.main,
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
                 }}
               >
                 {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -375,41 +457,51 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           slotProps={{
             paper: {
+              className: 'glass-deep',
               sx: {
                 mt: 1.5,
-                minWidth: 220,
-                borderRadius: 3,
-                boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-                border: `1px solid ${theme.palette.divider}`,
+                minWidth: 230,
+                borderRadius: 3.5,
+                p: 0.75,
+                border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.12)'}`,
               },
             },
           }}
         >
           <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography variant="subtitle2" fontWeight={600}>
+            <Typography variant="subtitle2" fontWeight={700}>
               {profile?.name || 'User'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {profile?.email || ''}
             </Typography>
           </Box>
-          <Divider />
-          <MenuItem onClick={() => { handleMenuClose(); router.push('/settings'); }}>
-            <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
+          <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
+          <MenuItem
+            onClick={() => { handleMenuClose(); router.push('/settings'); }}
+            sx={{ borderRadius: 2, my: 0.25, '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' } }}
+          >
+            <ListItemIcon><PersonIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
             <ListItemText primary="Profile" />
           </MenuItem>
-          <MenuItem onClick={() => { handleMenuClose(); router.push('/settings'); }}>
-            <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
+          <MenuItem
+            onClick={() => { handleMenuClose(); router.push('/settings'); }}
+            sx={{ borderRadius: 2, my: 0.25, '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' } }}
+          >
+            <ListItemIcon><SettingsIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
             <ListItemText primary="Settings" />
           </MenuItem>
-          <Divider />
-          <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+          <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
+          <MenuItem
+            onClick={handleLogout}
+            sx={{ borderRadius: 2, my: 0.25, color: 'error.main', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+          >
             <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
             <ListItemText primary="Sign Out" />
           </MenuItem>
         </Menu>
 
-        {/* Notifications Dropdown */}
+        {/* Notifications Dropdown (Deep Glass) */}
         <Menu
           anchorEl={notifAnchorEl}
           open={Boolean(notifAnchorEl)}
@@ -418,13 +510,13 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           slotProps={{
             paper: {
+              className: 'glass-deep',
               sx: {
                 mt: 1.5,
                 width: { xs: 320, sm: 380 },
                 maxHeight: 480,
-                borderRadius: 3,
-                boxShadow: '0 12px 48px rgba(0,0,0,0.2)',
-                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 3.5,
+                border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.12)'}`,
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
@@ -435,11 +527,11 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           <Box
             sx={{
               px: 2.5,
-              py: 1.5,
+              py: 1.75,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              borderBottom: `1px solid ${theme.palette.divider}`,
+              borderBottom: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)'}`,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

@@ -40,6 +40,7 @@ import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 
 export default function SettlementsPage() {
   const theme = useTheme();
+  const isLight = theme.palette.mode === 'light';
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const [settlements, setSettlements] = useState<any[]>([]);
@@ -159,24 +160,24 @@ export default function SettlementsPage() {
 
         {/* Splitwise-style Debt Simplification Spotlight Card */}
         <Card
+          className="glass-secondary glass-specular-top glass-emerald-ambient"
           sx={{
             mb: 4,
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.divider}`,
             borderRadius: 3.5,
             p: 3,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
               <Box
+                className="glass-tertiary"
                 sx={{
-                  width: 36,
-                  height: 36,
+                  width: 38,
+                  height: 38,
                   borderRadius: 2.5,
-                  bgcolor: alpha('#0E6245', 0.1),
-                  color: '#0E6245',
+                  bgcolor: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#10B981',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -185,10 +186,10 @@ export default function SettlementsPage() {
                 <AutoAwesome fontSize="small" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={700}>
+                <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
                   Splitwise Min-Cash-Flow Simplification
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   If A owes B ₹100 and B owes C ₹100, Owino routes A → C directly.
                 </Typography>
               </Box>
@@ -196,7 +197,7 @@ export default function SettlementsPage() {
             <Chip
               label={`${simplifiedData?.savingsCount || 0} Redundant Transfers Eliminated`}
               size="small"
-              sx={{ bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', fontWeight: 700, fontSize: '0.7rem' }}
+              sx={{ bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 700, fontSize: '0.7rem' }}
             />
           </Box>
 
@@ -209,22 +210,23 @@ export default function SettlementsPage() {
                 return (
                   <Grid size={{ xs: 12, md: 6 }} key={idx}>
                     <Box
+                      className="glass-tertiary"
                       sx={{
                         p: 2,
                         borderRadius: 3,
-                        border: `1px solid ${isUserPaying ? alpha('#EF4444', 0.3) : isUserReceiving ? alpha('#0E6245', 0.3) : theme.palette.divider}`,
-                        bgcolor: isUserPaying ? alpha('#EF4444', 0.03) : isUserReceiving ? alpha('#0E6245', 0.03) : 'background.paper',
+                        borderColor: isUserPaying ? 'rgba(239, 68, 68, 0.35) !important' : isUserReceiving ? 'rgba(16, 185, 129, 0.35) !important' : undefined,
+                        bgcolor: isUserPaying ? 'rgba(239, 68, 68, 0.06)' : isUserReceiving ? 'rgba(16, 185, 129, 0.06)' : undefined,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar sx={{ width: 32, height: 32, bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', fontSize: '0.8rem', fontWeight: 700 }}>
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: isUserPaying ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)', color: isUserPaying ? '#EF4444' : '#10B981', fontSize: '0.8rem', fontWeight: 700 }}>
                           {debt.from.name.charAt(0)}
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" fontWeight={600} sx={{ color: 'text.primary' }}>
                             {debt.from.name} {isUserPaying && '(You)'}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -234,7 +236,7 @@ export default function SettlementsPage() {
                       </Box>
 
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Typography variant="subtitle1" fontWeight={800} sx={{ color: isUserPaying ? '#EF4444' : '#0E6245' }}>
+                        <Typography variant="subtitle1" fontWeight={800} sx={{ color: isUserPaying ? '#EF4444' : '#10B981' }}>
                           {formatCurrency(debt.amount)}
                         </Typography>
                         {isUserPaying && (
@@ -249,6 +251,7 @@ export default function SettlementsPage() {
                                 amount: debt.amount,
                               })
                             }
+                            className="glass-emerald-active"
                             sx={{
                               bgcolor: '#0E6245',
                               color: '#FFFFFF',
@@ -277,29 +280,60 @@ export default function SettlementsPage() {
           )}
         </Card>
 
-        {/* Tab Filter */}
-        <Card sx={{ mb: 3, bgcolor: 'background.paper', border: `1px solid ${theme.palette.divider}`, borderRadius: 3.5 }}>
+        {/* Tab Filter (Floating Control Layer - Z2) */}
+        <Box
+          className="glass-control-surface"
+          sx={{
+            mb: 3,
+            borderRadius: 3,
+            p: 0.5,
+            display: 'inline-flex',
+            maxWidth: '100%',
+          }}
+        >
           <Tabs
             value={tab}
             onChange={(_, v) => {
               setTab(v);
               setPage(1);
             }}
-            sx={{ px: 2, borderBottom: `1px solid ${theme.palette.divider}` }}
+            sx={{
+              minHeight: 40,
+              '& .MuiTabs-indicator': {
+                height: '100%',
+                borderRadius: 2.5,
+                bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 98, 69, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                zIndex: 0,
+              },
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 700,
+                fontSize: '0.875rem',
+                minWidth: 120,
+                minHeight: 40,
+                zIndex: 1,
+                borderRadius: 2.5,
+                transition: 'all 0.2s ease',
+                color: 'text.secondary',
+                '&.Mui-selected': {
+                  color: theme.palette.mode === 'dark' ? '#34D399' : '#0E6245',
+                },
+              },
+            }}
           >
-            <Tab label="All Settlements" sx={{ textTransform: 'none', fontWeight: 600 }} />
-            <Tab label="Pending Confirmation" sx={{ textTransform: 'none', fontWeight: 600 }} />
-            <Tab label="Confirmed" sx={{ textTransform: 'none', fontWeight: 600 }} />
+            <Tab label="All Settlements" />
+            <Tab label="Pending Confirmation" />
+            <Tab label="Confirmed" />
           </Tabs>
-        </Card>
+        </Box>
 
         {/* Settlements Log */}
         <Card
+          className="glass-secondary glass-specular-top"
           sx={{
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.divider}`,
             borderRadius: 3.5,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
             overflow: 'hidden',
           }}
         >
@@ -336,9 +370,27 @@ export default function SettlementsPage() {
 
                   return (
                     <React.Fragment key={s.id}>
-                      <ListItem sx={{ px: 3, py: 2 }}>
+                      <ListItem
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          '&:hover': {
+                            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+                          },
+                        }}
+                      >
                         <ListItemAvatar>
-                          <Avatar sx={{ width: 44, height: 44, bgcolor: alpha('#0E6245', 0.1), color: '#0E6245' }}>
+                          <Avatar
+                            className="glass-tertiary"
+                            sx={{
+                              width: 44,
+                              height: 44,
+                              bgcolor: 'rgba(16, 185, 129, 0.15)',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                              color: '#10B981',
+                            }}
+                          >
                             <Handshake />
                           </Avatar>
                         </ListItemAvatar>

@@ -185,12 +185,18 @@ export default function GroupsPage() {
               borderRadius: 2.5,
               px: 3,
               py: 1,
-              fontWeight: 700,
-              bgcolor: '#0E6245',
+              fontWeight: 600,
+              bgcolor: isLight ? '#0E6245' : '#059669',
               color: '#FFFFFF',
-              boxShadow: '0 2px 8px rgba(14, 98, 69, 0.25)',
+              boxShadow: isLight
+                ? '0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
+                : '0 1px 3px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.25)',
               textTransform: 'none',
-              '&:hover': { bgcolor: '#094A34', boxShadow: '0 4px 14px rgba(14, 98, 69, 0.35)' },
+              '&:hover': {
+                bgcolor: isLight ? '#0A4B35' : '#047857',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
+                transform: 'translateY(-1px)',
+              },
             }}
           >
             Create New Group
@@ -201,23 +207,24 @@ export default function GroupsPage() {
         <Grid container spacing={2} sx={{ mb: 3.5 }}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
                 p: 2,
                 borderRadius: 3,
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 2,
               }}
             >
               <Box
+                className="glass-tertiary"
                 sx={{
                   width: 42,
                   height: 42,
                   borderRadius: 2.5,
-                  bgcolor: alpha('#0E6245', 0.1),
-                  color: '#0E6245',
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.15)' : alpha('#0E6245', 0.1),
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#10B981',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -226,7 +233,7 @@ export default function GroupsPage() {
                 <People sx={{ fontSize: 22 }} />
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#34D399' : 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Total Groups
                 </Typography>
                 <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
@@ -238,23 +245,24 @@ export default function GroupsPage() {
 
           <Grid size={{ xs: 12, sm: 4 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
                 p: 2,
                 borderRadius: 3,
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 2,
               }}
             >
               <Box
+                className="glass-tertiary"
                 sx={{
                   width: 42,
                   height: 42,
                   borderRadius: 2.5,
-                  bgcolor: alpha('#3B82F6', 0.1),
-                  color: '#3B82F6',
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(59, 130, 246, 0.15)' : alpha('#3B82F6', 0.1),
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  color: '#60A5FA',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -263,7 +271,7 @@ export default function GroupsPage() {
                 <GroupAdd sx={{ fontSize: 22 }} />
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#93C5FD' : 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Connected Members
                 </Typography>
                 <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
@@ -275,23 +283,24 @@ export default function GroupsPage() {
 
           <Grid size={{ xs: 12, sm: 4 }}>
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
                 p: 2,
                 borderRadius: 3,
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 2,
               }}
             >
               <Box
+                className="glass-tertiary"
                 sx={{
                   width: 42,
                   height: 42,
                   borderRadius: 2.5,
-                  bgcolor: alpha('#F59E0B', 0.1),
-                  color: '#F59E0B',
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.15)' : alpha('#F59E0B', 0.1),
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  color: '#FBBF24',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -300,7 +309,7 @@ export default function GroupsPage() {
                 <ReceiptLong sx={{ fontSize: 22 }} />
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#FCD34D' : 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Shared Expenses
                 </Typography>
                 <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
@@ -328,18 +337,18 @@ export default function GroupsPage() {
             placeholder="Search groups by name or purpose..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="glass-tertiary"
             slotProps={{
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Search sx={{ color: 'text.secondary', fontSize: 20 }} />
+                    <Search sx={{ color: '#10B981', fontSize: 20 }} />
                   </InputAdornment>
                 ),
               },
             }}
             sx={{
               maxWidth: { xs: '100%', md: 360 },
-              bgcolor: 'background.paper',
               borderRadius: 2.5,
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2.5,
@@ -365,21 +374,20 @@ export default function GroupsPage() {
                   label={typeKey === 'ALL' ? 'All Types' : typeKey.charAt(0) + typeKey.slice(1).toLowerCase()}
                   size="small"
                   onClick={() => setSelectedType(typeKey)}
+                  className={active ? 'glass-emerald-active' : 'glass-tertiary'}
                   sx={{
                     px: 1,
                     py: 1.75,
                     fontSize: '0.775rem',
                     fontWeight: active ? 700 : 500,
                     bgcolor: active
-                      ? (isLight ? '#1A1D1F' : '#0E6245')
-                      : 'background.paper',
+                      ? (isLight ? '#1A1D1F' : 'rgba(16, 185, 129, 0.2)')
+                      : undefined,
                     color: active ? '#FFFFFF' : 'text.primary',
-                    border: `1px solid ${active ? 'transparent' : theme.palette.divider}`,
                     cursor: 'pointer',
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                      bgcolor: active
-                        ? (isLight ? '#1A1D1F' : '#0E6245')
-                        : alpha(theme.palette.text.primary, 0.05),
+                      transform: 'translateY(-1px)',
                     },
                   }}
                 />
@@ -450,20 +458,19 @@ export default function GroupsPage() {
               return (
                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={group.id}>
                   <Card
+                    className="glass-secondary glass-specular-top"
                     sx={{
                       cursor: 'pointer',
                       borderRadius: 3.5,
-                      bgcolor: 'background.paper',
-                      border: `1px solid ${theme.palette.divider}`,
-                      boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
-                      transition: 'all 0.2s ease',
+                      boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
                       height: '100%',
                       '&:hover': {
-                        borderColor: '#0E6245',
-                        boxShadow: '0 4px 16px rgba(14, 98, 69, 0.08)',
+                        borderColor: isLight ? 'rgba(0,0,0,0.14) !important' : 'rgba(255, 255, 255, 0.22) !important',
+                        boxShadow: isLight ? '0 12px 32px rgba(15, 23, 42, 0.08)' : '0 16px 40px -8px rgba(0, 0, 0, 0.65)',
                         transform: 'translateY(-2px)',
                       },
                     }}
@@ -622,7 +629,15 @@ export default function GroupsPage() {
           onClose={() => setDialogOpen(false)}
           maxWidth="sm"
           fullWidth
-          slotProps={{ paper: { sx: { borderRadius: 4, bgcolor: 'background.paper' } } }}
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: 4,
+                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+              },
+            },
+          }}
         >
           <DialogTitle
             component="div"

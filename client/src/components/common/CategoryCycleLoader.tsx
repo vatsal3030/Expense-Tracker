@@ -15,15 +15,14 @@ import {
 } from '@mui/icons-material';
 
 const pulseGlow = keyframes`
-  0% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-  50% { transform: scale(1.04); box-shadow: 0 0 24px 6px rgba(16, 185, 129, 0.25); }
-  100% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  0% { transform: scale(0.98); opacity: 0.4; }
+  50% { transform: scale(1.03); opacity: 0.75; }
+  100% { transform: scale(0.98); opacity: 0.4; }
 `;
 
 const iconPop = keyframes`
-  0% { opacity: 0; transform: scale(0.7) rotate(-10deg); }
-  60% { opacity: 1; transform: scale(1.12) rotate(4deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  0% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
 `;
 
 const shimmer = keyframes`
@@ -68,10 +67,12 @@ export default function CategoryCycleLoader({
   size = 'md',
 }: CategoryCycleLoaderProps) {
   const theme = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [index, setIndex] = useState(0);
   const [msgIndex, setMsgIndex] = useState(0);
 
   useEffect(() => {
+    setMounted(true);
     const iconInterval = setInterval(() => {
       setIndex((prev) => (prev + 1) % CATEGORIES.length);
     }, 450);
@@ -85,6 +86,8 @@ export default function CategoryCycleLoader({
       clearInterval(msgInterval);
     };
   }, []);
+
+  if (!mounted) return null;
 
   const current = CATEGORIES[index];
   const currentMsg = message || MESSAGES[msgIndex];
@@ -133,14 +136,14 @@ export default function CategoryCycleLoader({
             width: circleSize,
             height: circleSize,
             borderRadius: '50%',
-            bgcolor: theme.palette.mode === 'dark' ? '#16181F' : '#ffffff',
-            border: `1.5px solid ${alpha(current.color, 0.5)}`,
-            boxShadow: `0 8px 24px ${alpha(current.color, 0.25)}`,
+            bgcolor: theme.palette.mode === 'dark' ? '#14171F' : '#ffffff',
+            border: `1px solid ${alpha(current.color, 0.35)}`,
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.40)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: current.color,
-            animation: `${iconPop} 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`,
+            animation: `${iconPop} 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
             transform: `scale(${iconScale})`,
             zIndex: 1,
           }}

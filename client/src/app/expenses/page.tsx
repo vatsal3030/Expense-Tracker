@@ -86,6 +86,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
 
 export default function ExpensesPage() {
   const theme = useTheme();
+  const isLight = theme.palette.mode === 'light';
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -427,16 +428,20 @@ export default function ExpensesPage() {
               startIcon={<Download fontSize="small" />}
               endIcon={<KeyboardArrowDown fontSize="small" />}
               onClick={(e) => setExportAnchorEl(e.currentTarget)}
+              className="glass-tertiary"
               sx={{
                 borderRadius: 2.5,
-                borderColor: theme.palette.divider,
+                borderColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)',
                 color: 'text.primary',
-                bgcolor: 'background.paper',
                 fontWeight: 600,
                 textTransform: 'none',
                 py: 0.85,
                 px: 2,
-                '&:hover': { borderColor: '#0E6245', bgcolor: alpha('#0E6245', 0.04) },
+                '&:hover': {
+                  borderColor: isLight ? '#0E6245' : '#10b981',
+                  bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                  transform: 'translateY(-1px)',
+                },
               }}
             >
               Export Data
@@ -447,36 +452,37 @@ export default function ExpensesPage() {
               onClose={() => setExportAnchorEl(null)}
               slotProps={{
                 paper: {
+                  className: 'glass-deep',
                   sx: {
-                    borderRadius: 2.5,
-                    minWidth: 210,
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 3.5,
+                    minWidth: 220,
+                    p: 0.75,
+                    border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.12)'}`,
                     mt: 1,
                   },
                 },
               }}
             >
-              <MenuItem onClick={handleExportCSV}>
+              <MenuItem onClick={handleExportCSV} sx={{ borderRadius: 2, my: 0.25 }}>
                 <ListItemIcon>
-                  <TableChart fontSize="small" sx={{ color: '#0E6245' }} />
+                  <TableChart fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} />
                 </ListItemIcon>
                 <ListItemText primary="Export CSV" secondary="Excel / Spreadsheet (.csv)" />
               </MenuItem>
-              <MenuItem onClick={handleExportJSON}>
+              <MenuItem onClick={handleExportJSON} sx={{ borderRadius: 2, my: 0.25 }}>
                 <ListItemIcon>
                   <Code fontSize="small" sx={{ color: '#0284c7' }} />
                 </ListItemIcon>
                 <ListItemText primary="Export JSON" secondary="Structured data (.json)" />
               </MenuItem>
-              <MenuItem onClick={handleExportTXT}>
+              <MenuItem onClick={handleExportTXT} sx={{ borderRadius: 2, my: 0.25 }}>
                 <ListItemIcon>
                   <Description fontSize="small" sx={{ color: '#b45309' }} />
                 </ListItemIcon>
                 <ListItemText primary="Export Summary" secondary="Plain text ledger (.txt)" />
               </MenuItem>
-              <Divider sx={{ my: 0.5 }} />
-              <MenuItem onClick={handlePrintStatement}>
+              <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' }} />
+              <MenuItem onClick={handlePrintStatement} sx={{ borderRadius: 2, my: 0.25 }}>
                 <ListItemIcon>
                   <Print fontSize="small" sx={{ color: theme.palette.text.primary }} />
                 </ListItemIcon>
@@ -490,14 +496,20 @@ export default function ExpensesPage() {
               onClick={() => setDialogOpen(true)}
               sx={{
                 borderRadius: 2.5,
-                px: 2.5,
+                px: 2.75,
                 py: 0.85,
                 fontWeight: 600,
                 textTransform: 'none',
-                bgcolor: '#0E6245',
+                bgcolor: isLight ? '#0E6245' : '#059669',
                 color: '#ffffff',
-                boxShadow: '0 2px 6px rgba(14,98,69,0.25)',
-                '&:hover': { bgcolor: '#094A34' },
+                boxShadow: isLight
+                  ? '0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
+                  : '0 1px 3px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.25)',
+                '&:hover': {
+                  bgcolor: isLight ? '#0A4B35' : '#047857',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
+                  transform: 'translateY(-1px)',
+                },
               }}
             >
               Add Expense
@@ -505,14 +517,12 @@ export default function ExpensesPage() {
           </Box>
         </Box>
 
-        {/* Rich Search, Filter & Sort Control Panel */}
+        {/* Rich Search, Filter & Sort Control Panel (Floating Control Surface - Layer 2: Z2) */}
         <Card
+          className="glass-filter-surface glass-specular-top"
           sx={{
-            mb: 3,
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 3.5,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            mb: 3.5,
+            borderRadius: 4,
           }}
         >
           <CardContent sx={{ p: 2.5 }}>
@@ -684,12 +694,11 @@ export default function ExpensesPage() {
 
         {/* Expenses List Card */}
         <Card
+          className="glass-secondary glass-specular-top"
           sx={{
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.divider}`,
             borderRadius: 3.5,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             overflow: 'hidden',
+            boxShadow: theme.palette.mode === 'dark' ? '0 18px 45px rgba(0,0,0,0.45)' : '0 10px 30px rgba(0,0,0,0.05)',
           }}
         >
           <CardContent sx={{ p: 0 }}>
@@ -716,7 +725,7 @@ export default function ExpensesPage() {
                   {hasActiveFilters ? 'Try adjusting your filters or search keywords.' : 'Start tracking by adding your first expense.'}
                 </Typography>
                 {hasActiveFilters ? (
-                  <Button variant="outlined" onClick={clearAllFilters} sx={{ textTransform: 'none' }}>
+                  <Button variant="outlined" onClick={clearAllFilters} sx={{ textTransform: 'none', borderRadius: 2.5 }}>
                     Reset Filters
                   </Button>
                 ) : (
@@ -724,7 +733,15 @@ export default function ExpensesPage() {
                     variant="contained"
                     startIcon={<Add />}
                     onClick={() => setDialogOpen(true)}
-                    sx={{ bgcolor: '#0E6245', '&:hover': { bgcolor: '#094A34' } }}
+                    sx={{
+                      bgcolor: isLight ? '#0E6245' : '#059669',
+                      color: '#ffffff',
+                      textTransform: 'none',
+                      borderRadius: 2.5,
+                      fontWeight: 600,
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.20)',
+                      '&:hover': { bgcolor: isLight ? '#0A4B35' : '#047857' },
+                    }}
                   >
                     Add Expense
                   </Button>
@@ -740,16 +757,20 @@ export default function ExpensesPage() {
                         px: 3,
                         py: 2,
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                        '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.04) },
+                        transition: 'background-color 0.18s ease',
+                        '&:hover': {
+                          bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+                        },
                       }}
                     >
                       <ListItemAvatar>
                         <Avatar
+                          className="glass-tertiary"
                           sx={{
                             width: 44,
                             height: 44,
-                            bgcolor: alpha('#0E6245', 0.1),
+                            bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.12)' : alpha('#0E6245', 0.1),
+                            border: '1px solid rgba(16, 185, 129, 0.25)',
                             fontSize: '1.3rem',
                           }}
                         >
@@ -793,7 +814,16 @@ export default function ExpensesPage() {
 
                       <ListItemSecondaryAction>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
+                          <Typography
+                            variant="h6"
+                            fontWeight={700}
+                            sx={{
+                              color: 'text.primary',
+                              fontVariantNumeric: 'tabular-nums',
+                              fontFeatureSettings: '"tnum"',
+                              letterSpacing: '-0.02em',
+                            }}
+                          >
                             {formatCurrency(Number(expense.amount))}
                           </Typography>
                           <Tooltip title="Delete">
@@ -856,13 +886,14 @@ export default function ExpensesPage() {
           open={Boolean(selectedExpense)}
           onClose={() => setSelectedExpense(null)}
           slotProps={{
-            backdrop: { sx: { bgcolor: 'rgba(0,0,0,0.3)' } },
+            backdrop: { sx: { bgcolor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' } },
             paper: {
+              className: 'glass-deep glass-specular-top',
               sx: {
-                width: { xs: '100%', sm: 460 },
-                bgcolor: 'background.paper',
-                borderLeft: (th) => `1px solid ${th.palette.divider}`,
+                width: { xs: '100%', sm: 480 },
                 p: 3,
+                borderLeft: (th) => `1px solid ${th.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+                boxShadow: '-10px 0 40px rgba(0,0,0,0.4)',
               },
             },
           }}
@@ -872,11 +903,11 @@ export default function ExpensesPage() {
               {/* Header */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Avatar sx={{ bgcolor: alpha('#0E6245', 0.1), width: 44, height: 44, fontSize: '1.3rem' }}>
+                  <Avatar className="glass-tertiary" sx={{ bgcolor: alpha('#10B981', 0.12), border: '1px solid rgba(16,185,129,0.3)', width: 44, height: 44, fontSize: '1.3rem' }}>
                     {CATEGORY_EMOJI[selectedExpense.category] || '📋'}
                   </Avatar>
                   <Box>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase' }}>
+                    <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       {selectedExpense.category}
                     </Typography>
                     <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.2 }}>
@@ -884,19 +915,27 @@ export default function ExpensesPage() {
                     </Typography>
                   </Box>
                 </Box>
-                <IconButton onClick={() => setSelectedExpense(null)} size="small">
+                <IconButton onClick={() => setSelectedExpense(null)} size="small" className="glass-tertiary">
                   <Close fontSize="small" />
                 </IconButton>
               </Box>
 
               <Divider sx={{ my: 1.5, borderColor: theme.palette.divider }} />
 
-              {/* Total Amount Card */}
-              <Card sx={{ p: 2.5, bgcolor: alpha('#0E6245', 0.06), borderRadius: 3, border: `1px solid ${alpha('#0E6245', 0.15)}`, mb: 3 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              {/* Total Amount Card with Liquid Emerald Glow */}
+              <Card
+                className="glass-emerald-ambient glass-specular-top"
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  mb: 3,
+                  boxShadow: '0 8px 30px rgba(16,185,129,0.12)',
+                }}
+              >
+                <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#34D399' : '#0E6245', fontWeight: 700, letterSpacing: '0.04em' }}>
                   TOTAL EXPENSE AMOUNT
                 </Typography>
-                <Typography variant="h3" fontWeight={800} sx={{ color: '#0E6245', my: 0.5 }}>
+                <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : '#0E6245', my: 0.5 }}>
                   {formatCurrency(Number(selectedExpense.amount))}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
@@ -1039,7 +1078,16 @@ export default function ExpensesPage() {
           onClose={() => setDialogOpen(false)}
           maxWidth="sm"
           fullWidth
-          slotProps={{ paper: { sx: { borderRadius: 4 } } }}
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: 4,
+                overflow: 'hidden',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+              },
+            },
+          }}
         >
           <DialogTitle
             component="div"

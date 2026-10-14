@@ -324,19 +324,17 @@ export default function SettingsPage() {
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
             <Button
               variant="contained"
+              color="primary"
               startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Save />}
               onClick={handleSaveAll}
               disabled={saving}
               sx={{
                 borderRadius: 2.5,
                 px: 3.5,
-                py: 0.9,
-                fontWeight: 750,
-                bgcolor: '#0E6245',
+                py: 1,
+                fontWeight: 650,
                 color: '#ffffff',
-                boxShadow: '0 2px 8px rgba(14, 98, 69, 0.25)',
                 textTransform: 'none',
-                '&:hover': { bgcolor: '#094A34' },
               }}
             >
               {saving ? 'Saving...' : 'Save All Preferences'}
@@ -346,13 +344,13 @@ export default function SettingsPage() {
 
         {/* User Identity Snapshot Card */}
         <Card
+          className="glass-secondary glass-specular-top glass-emerald-ambient"
           sx={{
             mb: 3.5,
             borderRadius: 3.5,
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.divider}`,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             p: 3,
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
           <Box
@@ -370,26 +368,27 @@ export default function SettingsPage() {
                 sx={{
                   width: 68,
                   height: 68,
-                  bgcolor: '#0E6245',
+                  bgcolor: 'rgba(16, 185, 129, 0.15)',
+                  color: '#10B981',
+                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
                   fontSize: '1.75rem',
-                  fontWeight: 800,
-                  boxShadow: '0 4px 14px rgba(14, 98, 69, 0.25)',
+                  fontWeight: 700,
                 }}
               >
                 {form.name?.charAt(0)?.toUpperCase() || 'U'}
               </Avatar>
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                  <Typography variant="h6" fontWeight={800}>
+                  <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em', color: 'text.primary' }}>
                     {form.name || 'User'}
                   </Typography>
                   {isPhoneVerified && (
                     <Tooltip title="Phone Number Verified via OTP">
-                      <CheckCircle sx={{ color: '#0E6245', fontSize: '1.1rem' }} />
+                      <CheckCircle sx={{ color: '#34D399', fontSize: '1.1rem' }} />
                     </Tooltip>
                   )}
                 </Box>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   {user?.email}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
@@ -404,6 +403,7 @@ export default function SettingsPage() {
                 <Button
                   size="small"
                   variant="outlined"
+                  className="glass-tertiary"
                   onClick={handleCopyAccountId}
                   startIcon={<ContentCopy fontSize="small" />}
                   sx={{
@@ -411,8 +411,12 @@ export default function SettingsPage() {
                     textTransform: 'none',
                     fontWeight: 600,
                     fontSize: '0.75rem',
-                    borderColor: theme.palette.divider,
                     color: 'text.secondary',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    '&:hover': {
+                      borderColor: 'rgba(16, 185, 129, 0.4)',
+                      color: '#34D399',
+                    },
                   }}
                 >
                   {copiedId ? 'Copied ID ✓' : `ID: ${user?.id?.slice(0, 8)}...`}
@@ -421,57 +425,81 @@ export default function SettingsPage() {
               <Chip
                 label="● Active Session"
                 size="small"
+                className="glass-tertiary"
                 sx={{
-                  bgcolor: alpha('#0E6245', 0.1),
-                  color: '#0E6245',
+                  bgcolor: 'rgba(16, 185, 129, 0.15)',
+                  color: '#34D399',
                   fontWeight: 700,
                   fontSize: '0.72rem',
-                  borderRadius: 1.5,
+                  borderRadius: 2,
+                  border: '1px solid rgba(52, 211, 153, 0.25)',
                 }}
               />
             </Box>
           </Box>
         </Card>
 
-        {/* Tabbed Navigation Layout */}
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs
-            value={activeTab}
-            onChange={(_, val) => setActiveTab(val)}
-            variant="scrollable"
-            scrollButtons="auto"
+        {/* Segmented Liquid Glass Tabs */}
+        <Box sx={{ mb: 3 }}>
+          <Box
+            className="glass-tertiary"
             sx={{
-              '& .MuiTab-root': {
-                textTransform: 'none',
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                minHeight: 48,
-                color: 'text.secondary',
-                '&.Mui-selected': {
-                  color: '#0E6245',
-                },
-              },
-              '& .MuiTabs-indicator': {
-                bgcolor: '#0E6245',
-                height: 3,
-                borderRadius: '3px 3px 0 0',
-              },
+              display: 'inline-flex',
+              p: 0.5,
+              borderRadius: 3,
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              maxWidth: '100%',
+              overflowX: 'auto',
             }}
           >
-            <Tab icon={<Person fontSize="small" />} iconPosition="start" label="Profile & Identity" />
-            <Tab icon={<Payment fontSize="small" />} iconPosition="start" label="Payments & Splits" />
-            <Tab icon={<NotificationsIcon fontSize="small" />} iconPosition="start" label="Alerts & Rules" />
-            <Tab icon={<Palette fontSize="small" />} iconPosition="start" label="Appearance & UI" />
-            <Tab icon={<Security fontSize="small" />} iconPosition="start" label="Security & Data" />
-          </Tabs>
+            <Tabs
+              value={activeTab}
+              onChange={(_, val) => setActiveTab(val)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                minHeight: 40,
+                '& .MuiTabs-indicator': {
+                  height: '100%',
+                  borderRadius: 2.5,
+                  bgcolor: 'rgba(16, 185, 129, 0.2)',
+                  border: '1px solid rgba(52, 211, 153, 0.4)',
+                  zIndex: 0,
+                },
+                '& .MuiTab-root': {
+                  zIndex: 1,
+                  textTransform: 'none',
+                  fontWeight: 650,
+                  fontSize: '0.85rem',
+                  minHeight: 38,
+                  px: 2.5,
+                  borderRadius: 2.5,
+                  color: 'text.secondary',
+                  transition: 'all 0.2s ease',
+                  '&.Mui-selected': {
+                    color: '#34D399',
+                  },
+                },
+              }}
+            >
+              <Tab icon={<Person fontSize="small" />} iconPosition="start" label="Profile & Identity" />
+              <Tab icon={<Payment fontSize="small" />} iconPosition="start" label="Payments & Splits" />
+              <Tab icon={<NotificationsIcon fontSize="small" />} iconPosition="start" label="Alerts & Rules" />
+              <Tab icon={<Palette fontSize="small" />} iconPosition="start" label="Appearance & UI" />
+              <Tab icon={<Security fontSize="small" />} iconPosition="start" label="Security & Data" />
+            </Tabs>
+          </Box>
         </Box>
 
         {/* TAB 0: Profile & Identity */}
         {activeTab === 0 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 8 }}>
-              <Card sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 }, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2 }}>
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+              >
+                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                   Personal Identity
                 </Typography>
                 <Stack spacing={3}>
@@ -500,28 +528,32 @@ export default function SettingsPage() {
                       </Typography>
                       {form.phone && isPhoneVerified ? (
                         <Chip
-                          icon={<CheckCircle fontSize="small" sx={{ color: '#0E6245 !important' }} />}
+                          icon={<CheckCircle fontSize="small" sx={{ color: '#34D399 !important' }} />}
                           label="Verified ✓"
                           size="small"
+                          className="glass-tertiary"
                           sx={{
                             fontWeight: 750,
                             fontSize: '0.72rem',
-                            bgcolor: alpha('#0E6245', 0.12),
-                            color: '#0E6245',
-                            borderRadius: 1.5,
+                            bgcolor: 'rgba(16, 185, 129, 0.15)',
+                            color: '#34D399',
+                            borderRadius: 2,
+                            border: '1px solid rgba(52, 211, 153, 0.3)',
                           }}
                         />
                       ) : form.phone ? (
                         <Chip
-                          icon={<WarningAmber fontSize="small" sx={{ color: '#d97706 !important' }} />}
+                          icon={<WarningAmber fontSize="small" sx={{ color: '#F59E0B !important' }} />}
                           label="Unverified"
                           size="small"
+                          className="glass-tertiary"
                           sx={{
                             fontWeight: 700,
                             fontSize: '0.72rem',
-                            bgcolor: alpha('#d97706', 0.12),
-                            color: '#b45309',
-                            borderRadius: 1.5,
+                            bgcolor: 'rgba(245, 158, 11, 0.12)',
+                            color: '#F59E0B',
+                            borderRadius: 2,
+                            border: '1px solid rgba(245, 158, 11, 0.3)',
                           }}
                         />
                       ) : null}
@@ -546,7 +578,7 @@ export default function SettingsPage() {
                                   type="button"
                                   size="small"
                                   disabled
-                                  sx={{ textTransform: 'none', fontWeight: 600, color: '#0E6245' }}
+                                  sx={{ textTransform: 'none', fontWeight: 600, color: '#34D399' }}
                                 >
                                   Linked
                                 </Button>
@@ -555,16 +587,15 @@ export default function SettingsPage() {
                                   type="button"
                                   size="small"
                                   variant="contained"
+                                  className="glass-emerald-active"
                                   onClick={handleOpenOtpModal}
                                   sx={{
                                     textTransform: 'none',
                                     fontWeight: 700,
                                     fontSize: '0.75rem',
-                                    bgcolor: '#0E6245',
                                     color: '#FFFFFF',
                                     borderRadius: 2,
-                                    px: 1.5,
-                                    '&:hover': { bgcolor: '#094A34' },
+                                    px: 1.75,
                                   }}
                                 >
                                   Verify via OTP
@@ -595,7 +626,18 @@ export default function SettingsPage() {
                         ),
                         endAdornment: (
                           <InputAdornment position="end">
-                            <Chip label="Verified" size="small" sx={{ bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', fontWeight: 700, fontSize: '0.7rem' }} />
+                            <Chip
+                              label="Verified"
+                              size="small"
+                              className="glass-tertiary"
+                              sx={{
+                                bgcolor: 'rgba(16, 185, 129, 0.15)',
+                                color: '#34D399',
+                                fontWeight: 700,
+                                fontSize: '0.7rem',
+                                border: '1px solid rgba(52, 211, 153, 0.25)',
+                              }}
+                            />
                           </InputAdornment>
                         ),
                       },
@@ -607,8 +649,11 @@ export default function SettingsPage() {
 
             {/* Avatar Selector */}
             <Grid size={{ xs: 12, md: 4 }}>
-              <Card sx={{ borderRadius: 3.5, p: 3, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1 }}>
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{ borderRadius: 3.5, p: 3 }}
+              >
+                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
                   Avatar Selection
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -629,11 +674,13 @@ export default function SettingsPage() {
                               height: 52,
                               mx: 'auto',
                               cursor: 'pointer',
-                              border: isSelected ? '3px solid #0E6245' : `2px solid ${alpha(theme.palette.divider, 0.6)}`,
-                              bgcolor: alpha('#0E6245', 0.06),
-                              boxShadow: isSelected ? '0 4px 14px rgba(14,98,69,0.35)' : 'none',
-                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                              '&:hover': { transform: 'scale(1.12)', borderColor: '#0E6245' },
+                              border: isSelected ? '2px solid #10B981' : '1px solid rgba(255, 255, 255, 0.12)',
+                              bgcolor: 'rgba(255, 255, 255, 0.04)',
+                              boxShadow: isSelected ? '0 0 0 2px rgba(16, 185, 129, 0.35)' : 'none',
+                              transition: 'all 0.15s ease',
+                              '&:hover': {
+                                borderColor: '#10B981',
+                              },
                             }}
                           />
                           <Typography
@@ -641,7 +688,7 @@ export default function SettingsPage() {
                             sx={{
                               fontSize: '0.65rem',
                               fontWeight: isSelected ? 750 : 500,
-                              color: isSelected ? '#0E6245' : 'text.secondary',
+                              color: isSelected ? '#34D399' : 'text.secondary',
                               display: 'block',
                               mt: 0.5,
                               whiteSpace: 'nowrap',
@@ -675,8 +722,11 @@ export default function SettingsPage() {
         {activeTab === 1 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 8 }}>
-              <Card sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 }, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2 }}>
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+              >
+                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                   Settlement & UPI Configuration
                 </Typography>
                 <Stack spacing={3}>
@@ -693,7 +743,7 @@ export default function SettingsPage() {
                         input: {
                           startAdornment: (
                             <InputAdornment position="start">
-                              <Payment fontSize="small" sx={{ color: '#0E6245' }} />
+                              <Payment fontSize="small" sx={{ color: '#34D399' }} />
                             </InputAdornment>
                           ),
                           endAdornment: (
@@ -701,9 +751,19 @@ export default function SettingsPage() {
                               <Button
                                 size="small"
                                 variant="outlined"
+                                className="glass-tertiary"
                                 onClick={() => setQrModalOpen(true)}
                                 startIcon={<QrCode2 fontSize="small" />}
-                                sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 600, borderColor: '#0E6245', color: '#0E6245' }}
+                                sx={{
+                                  textTransform: 'none',
+                                  borderRadius: 2,
+                                  fontWeight: 600,
+                                  color: '#34D399',
+                                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                                  '&:hover': {
+                                    bgcolor: 'rgba(16, 185, 129, 0.1)',
+                                  },
+                                }}
                               >
                                 Preview QR
                               </Button>
@@ -717,9 +777,9 @@ export default function SettingsPage() {
                     </Typography>
                   </Box>
 
-                  <Divider />
+                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
-                  <Typography variant="subtitle1" fontWeight={750}>
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
                     Default Expense Split Strategy
                   </Typography>
 
@@ -739,24 +799,34 @@ export default function SettingsPage() {
                           <Grid key={s.val} size={{ xs: 12, sm: 6 }}>
                             <Box
                               onClick={() => setPreferences({ ...preferences, defaultSplitType: s.val })}
+                              className="glass-tertiary"
                               sx={{
                                 p: 1.75,
                                 borderRadius: 2.5,
-                                border: `1px solid ${
-                                  preferences.defaultSplitType === s.val ? '#0E6245' : theme.palette.divider
-                                }`,
-                                bgcolor:
-                                  preferences.defaultSplitType === s.val
-                                    ? alpha('#0E6245', 0.06)
-                                    : 'transparent',
+                                border: preferences.defaultSplitType === s.val
+                                  ? '1px solid rgba(16, 185, 129, 0.45)'
+                                  : '1px solid rgba(255, 255, 255, 0.08)',
+                                bgcolor: preferences.defaultSplitType === s.val
+                                  ? 'rgba(16, 185, 129, 0.10)'
+                                  : undefined,
                                 cursor: 'pointer',
-                                transition: 'all 0.15s ease',
-                                '&:hover': { bgcolor: alpha('#0E6245', 0.04) },
+                                transition: 'border-color 0.15s ease, background-color 0.15s ease',
+                                '&:hover': {
+                                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                                },
                               }}
                             >
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Radio checked={preferences.defaultSplitType === s.val} size="small" sx={{ color: '#0E6245', '&.Mui-checked': { color: '#0E6245' }, p: 0 }} />
-                                <Typography variant="body2" fontWeight={700}>
+                                <Radio
+                                  checked={preferences.defaultSplitType === s.val}
+                                  size="small"
+                                  sx={{
+                                    color: 'rgba(255, 255, 255, 0.3)',
+                                    '&.Mui-checked': { color: '#34D399' },
+                                    p: 0,
+                                  }}
+                                />
+                                <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
                                   {s.title}
                                 </Typography>
                               </Box>
@@ -770,11 +840,11 @@ export default function SettingsPage() {
                     </RadioGroup>
                   </FormControl>
 
-                  <Divider />
+                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box>
-                      <Typography variant="body2" fontWeight={700}>
+                      <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
                         Auto-Debt Simplification (Graph Reduction)
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
@@ -793,8 +863,11 @@ export default function SettingsPage() {
 
             {/* Currency & Financial Preferences */}
             <Grid size={{ xs: 12, md: 4 }}>
-              <Card sx={{ borderRadius: 3.5, p: 3, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2 }}>
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{ borderRadius: 3.5, p: 3 }}
+              >
+                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary' }}>
                   Currency & Format
                 </Typography>
                 <Stack spacing={2.5}>
@@ -833,11 +906,11 @@ export default function SettingsPage() {
                     <MenuItem value="Australia/Sydney">Australia/Sydney (AEST - UTC+10:00)</MenuItem>
                   </TextField>
 
-                  <Divider />
+                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box>
-                      <Typography variant="body2" fontWeight={650}>
+                      <Typography variant="body2" fontWeight={650} sx={{ color: 'text.primary' }}>
                         Indian Number System
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
@@ -859,14 +932,17 @@ export default function SettingsPage() {
         {activeTab === 2 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 8 }}>
-              <Card sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 }, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2 }}>
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+              >
+                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                   Notification Rules & Channels
                 </Typography>
                 <Stack spacing={3}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ pr: 2 }}>
-                      <Typography variant="body2" fontWeight={700}>
+                      <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
                         Targeted In-App Alerts (Relevant Activity Only)
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
@@ -880,11 +956,11 @@ export default function SettingsPage() {
                     />
                   </Box>
 
-                  <Divider />
+                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ pr: 2 }}>
-                      <Typography variant="body2" fontWeight={700}>
+                      <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
                         Audio Feedback (Sound Effects)
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
@@ -898,10 +974,10 @@ export default function SettingsPage() {
                     />
                   </Box>
 
-                  <Divider />
+                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
                   <Box>
-                    <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
+                    <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5, color: 'text.primary' }}>
                       Budget Alert Threshold
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
@@ -912,7 +988,7 @@ export default function SettingsPage() {
                       size="small"
                       value={preferences.budgetAlertThreshold}
                       onChange={(e) => setPreferences({ ...preferences, budgetAlertThreshold: e.target.value })}
-                      sx={{ width: 220 }}
+                      sx={{ width: 240 }}
                     >
                       <MenuItem value="50">At 50% of budget limit</MenuItem>
                       <MenuItem value="75">At 75% of budget limit</MenuItem>
@@ -922,10 +998,10 @@ export default function SettingsPage() {
                     </TextField>
                   </Box>
 
-                  <Divider />
+                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
                   <Box>
-                    <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
+                    <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5, color: 'text.primary' }}>
                       Email Digest Frequency
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
@@ -936,7 +1012,7 @@ export default function SettingsPage() {
                       size="small"
                       value={preferences.emailFrequency}
                       onChange={(e) => setPreferences({ ...preferences, emailFrequency: e.target.value })}
-                      sx={{ width: 220 }}
+                      sx={{ width: 240 }}
                     >
                       <MenuItem value="instant">Instant Real-time Alerts</MenuItem>
                       <MenuItem value="daily">Daily Morning Digest (9:00 AM)</MenuItem>
@@ -949,8 +1025,11 @@ export default function SettingsPage() {
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
-              <Card sx={{ borderRadius: 3.5, p: 3, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1 }}>
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{ borderRadius: 3.5, p: 3 }}
+              >
+                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
                   Notification Audit
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -959,9 +1038,20 @@ export default function SettingsPage() {
                 <Button
                   fullWidth
                   variant="outlined"
+                  className="glass-tertiary"
                   onClick={() => alert('Test notification sent to in-app bell!')}
                   startIcon={<NotificationsIcon fontSize="small" />}
-                  sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 600, borderColor: theme.palette.divider }}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: 2.5,
+                    fontWeight: 650,
+                    color: 'text.primary',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    '&:hover': {
+                      borderColor: 'rgba(16, 185, 129, 0.4)',
+                      color: '#34D399',
+                    },
+                  }}
                 >
                   Send Test Alert
                 </Button>
@@ -974,14 +1064,17 @@ export default function SettingsPage() {
         {activeTab === 3 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 8 }}>
-              <Card sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 }, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2 }}>
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+              >
+                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                   Display & Workspace Density
                 </Typography>
                 <Stack spacing={3}>
                   {/* Theme Mode Segmented */}
                   <Box>
-                    <Typography variant="body2" fontWeight={700} sx={{ mb: 1 }}>
+                    <Typography variant="body2" fontWeight={700} sx={{ mb: 1, color: 'text.primary' }}>
                       Theme Appearance
                     </Typography>
                     <Grid container spacing={2}>
@@ -996,19 +1089,24 @@ export default function SettingsPage() {
                               onClick={() => {
                                 if (mode !== t.key) toggleTheme();
                               }}
+                              className="glass-tertiary"
                               sx={{
                                 p: 2,
                                 borderRadius: 2.5,
-                                border: `2px solid ${isSelected ? '#0E6245' : theme.palette.divider}`,
-                                bgcolor: isSelected ? alpha('#0E6245', 0.08) : 'transparent',
+                                border: isSelected
+                                  ? '1px solid rgba(16, 185, 129, 0.45)'
+                                  : '1px solid rgba(255, 255, 255, 0.08)',
+                                bgcolor: isSelected ? 'rgba(16, 185, 129, 0.10)' : undefined,
                                 cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                                '&:hover': { bgcolor: alpha('#0E6245', 0.04) },
+                                transition: 'border-color 0.15s ease, background-color 0.15s ease',
+                                '&:hover': {
+                                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                                },
                               }}
                             >
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
                                 {t.icon}
-                                <Typography variant="body2" fontWeight={750}>
+                                <Typography variant="body2" fontWeight={750} sx={{ color: 'text.primary' }}>
                                   {t.label}
                                 </Typography>
                               </Box>
@@ -1022,14 +1120,14 @@ export default function SettingsPage() {
                     </Grid>
                   </Box>
 
-                  <Divider />
+                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
                   {/* Privacy Mode (Blur balances) */}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ pr: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <VisibilityOff fontSize="small" sx={{ color: '#0E6245' }} />
-                        <Typography variant="body2" fontWeight={700}>
+                        <VisibilityOff fontSize="small" sx={{ color: '#34D399' }} />
+                        <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
                           Privacy Screen Mode (Hide Balances)
                         </Typography>
                       </Box>
@@ -1044,14 +1142,14 @@ export default function SettingsPage() {
                     />
                   </Box>
 
-                  <Divider />
+                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
                   {/* Compact Table Density */}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ pr: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Speed fontSize="small" sx={{ color: '#0E6245' }} />
-                        <Typography variant="body2" fontWeight={700}>
+                        <Speed fontSize="small" sx={{ color: '#34D399' }} />
+                        <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
                           Compact Table Row Density
                         </Typography>
                       </Box>
@@ -1070,12 +1168,15 @@ export default function SettingsPage() {
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
-              <Card sx={{ borderRadius: 3.5, p: 3, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1 }}>
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{ borderRadius: 3.5, p: 3 }}
+              >
+                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
                   Design Aesthetics
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  FairShare features a custom typography and color palette inspired by premier modern FinTech products like Linear and Wise.
+                  FairShare features a custom Apple visionOS and macOS-inspired Liquid Glass design language with emerald ambient lighting and layered specular depth.
                 </Typography>
               </Card>
             </Grid>
@@ -1087,54 +1188,71 @@ export default function SettingsPage() {
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 8 }}>
               <Stack spacing={3}>
-                <Card sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 }, border: `1px solid ${theme.palette.divider}` }}>
-                  <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2 }}>
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                >
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                     Account Security & Authentication
                   </Typography>
 
                   <List disablePadding>
                     <ListItem sx={{ px: 0 }}>
                       <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: alpha('#0E6245', 0.1), color: '#0E6245' }}>
+                        <Avatar sx={{ bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(52, 211, 153, 0.3)' }}>
                           <PhoneIphone />
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary="Mobile Phone OTP Verification"
+                        primary={<Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>Mobile Phone OTP Verification</Typography>}
                         secondary={isPhoneVerified ? `Linked to ${form.phone}` : 'Unverified mobile number'}
                       />
                       <ListItemSecondaryAction>
                         <Chip
                           label={isPhoneVerified ? 'Active ✓' : 'Setup Required'}
                           size="small"
-                          color={isPhoneVerified ? 'success' : 'warning'}
-                          sx={{ fontWeight: 700, borderRadius: 1.5 }}
+                          className="glass-tertiary"
+                          sx={{
+                            fontWeight: 700,
+                            borderRadius: 2,
+                            color: isPhoneVerified ? '#34D399' : '#F59E0B',
+                            bgcolor: isPhoneVerified ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                            border: `1px solid ${isPhoneVerified ? 'rgba(52, 211, 153, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+                          }}
                         />
                       </ListItemSecondaryAction>
                     </ListItem>
 
-                    <Divider sx={{ my: 1.5 }} />
+                    <Divider sx={{ my: 1.5, borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
                     <ListItem sx={{ px: 0 }}>
                       <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}>
+                        <Avatar sx={{ bgcolor: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
                           <Devices />
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary="Active Web Session"
+                        primary={<Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>Active Web Session</Typography>}
                         secondary={`Google Chrome • Windows 11 (Session active since ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`}
                       />
                       <ListItemSecondaryAction>
-                        <Chip label="Current Device" size="small" sx={{ fontWeight: 700, borderRadius: 1.5 }} />
+                        <Chip
+                          label="Current Device"
+                          size="small"
+                          className="glass-tertiary"
+                          sx={{ fontWeight: 700, borderRadius: 2, color: 'text.secondary', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                        />
                       </ListItemSecondaryAction>
                     </ListItem>
                   </List>
                 </Card>
 
                 {/* Data Export Archive */}
-                <Card sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 }, border: `1px solid ${theme.palette.divider}` }}>
-                  <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1 }}>
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                >
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
                     Data Portability & Full Backup
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
@@ -1142,6 +1260,7 @@ export default function SettingsPage() {
                   </Typography>
                   <Button
                     variant="outlined"
+                    className="glass-tertiary"
                     onClick={handleExportFullArchive}
                     disabled={exporting}
                     startIcon={exporting ? <CircularProgress size={16} color="inherit" /> : <Download />}
@@ -1149,8 +1268,11 @@ export default function SettingsPage() {
                       borderRadius: 2.5,
                       textTransform: 'none',
                       fontWeight: 700,
-                      borderColor: '#0E6245',
-                      color: '#0E6245',
+                      color: '#34D399',
+                      border: '1px solid rgba(52, 211, 153, 0.3)',
+                      '&:hover': {
+                        bgcolor: 'rgba(16, 185, 129, 0.1)',
+                      },
                     }}
                   >
                     {exporting ? 'Generating Archive...' : 'Download Complete Data Backup (.json)'}
@@ -1162,8 +1284,9 @@ export default function SettingsPage() {
                   sx={{
                     borderRadius: 3.5,
                     p: { xs: 2.5, sm: 3.5 },
-                    border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
-                    bgcolor: alpha(theme.palette.error.main, 0.02),
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    bgcolor: 'rgba(239, 68, 68, 0.04)',
+                    backdropFilter: 'blur(20px)',
                   }}
                 >
                   <Typography variant="subtitle1" fontWeight={750} color="error" sx={{ mb: 1 }}>
@@ -1178,7 +1301,13 @@ export default function SettingsPage() {
                       color="error"
                       onClick={() => setResetDialogOpen(true)}
                       startIcon={<Cached />}
-                      sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600 }}
+                      sx={{
+                        borderRadius: 2.5,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.08)' },
+                      }}
                     >
                       Clear Local Drafts & Cache
                     </Button>
@@ -1187,7 +1316,13 @@ export default function SettingsPage() {
                       color="error"
                       onClick={handleLogout}
                       startIcon={<Logout />}
-                      sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600 }}
+                      sx={{
+                        borderRadius: 2.5,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        bgcolor: '#DC2626',
+                        '&:hover': { bgcolor: '#B91C1C' },
+                      }}
                     >
                       Sign Out
                     </Button>
@@ -1197,8 +1332,11 @@ export default function SettingsPage() {
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
-              <Card sx={{ borderRadius: 3.5, p: 3, border: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1 }}>
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{ borderRadius: 3.5, p: 3 }}
+              >
+                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
                   Security Guarantee
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
@@ -1217,17 +1355,20 @@ export default function SettingsPage() {
           open={otpDialogOpen}
           onClose={() => setOtpDialogOpen(false)}
           PaperProps={{
+            className: 'glass-deep glass-specular-top',
             sx: {
-              borderRadius: 3.5,
+              borderRadius: 4,
               maxWidth: 440,
               width: '100%',
               p: 1,
+              border: '1px solid rgba(255, 255, 255, 0.14)',
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
             },
           }}
         >
-          <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>
+          <DialogTitle sx={{ fontWeight: 800, pb: 1, color: 'text.primary' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Security sx={{ color: '#0E6245' }} />
+              <Security sx={{ color: '#34D399' }} />
               Verify Phone Number
             </Box>
           </DialogTitle>
@@ -1238,19 +1379,19 @@ export default function SettingsPage() {
 
             <Alert
               severity="info"
+              className="glass-tertiary"
               sx={{
                 mb: 2.5,
                 borderRadius: 2.5,
-                bgcolor: alpha('#0E6245', 0.08),
-                color: '#0E6245',
-                border: `1px solid ${alpha('#0E6245', 0.2)}`,
-                '& .MuiAlert-icon': { color: '#0E6245' },
+                color: '#34D399',
+                border: '1px solid rgba(52, 211, 153, 0.3)',
+                '& .MuiAlert-icon': { color: '#34D399' },
               }}
             >
               <Typography variant="caption" fontWeight={700} sx={{ display: 'block', mb: 0.5 }}>
                 FREE DEVELOPER SIMULATOR ACTIVE:
               </Typography>
-              <Typography variant="body2" sx={{ fontSize: '0.825rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.825rem', color: 'rgba(255, 255, 255, 0.8)' }}>
                 No paid SMS credits needed. Your simulated OTP code is:
               </Typography>
               <Box
@@ -1258,22 +1399,22 @@ export default function SettingsPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  bgcolor: 'background.paper',
+                  bgcolor: 'rgba(0, 0, 0, 0.3)',
                   p: 1,
                   px: 1.5,
                   borderRadius: 2,
                   mt: 1,
-                  border: `1px dashed #0E6245`,
+                  border: '1px dashed rgba(52, 211, 153, 0.4)',
                 }}
               >
-                <Typography variant="h5" fontWeight={850} sx={{ letterSpacing: '0.25em', color: '#0E6245' }}>
+                <Typography variant="h5" fontWeight={850} sx={{ letterSpacing: '0.25em', color: '#34D399' }}>
                   {generatedOtp}
                 </Typography>
                 <Button
                   size="small"
                   onClick={() => setEnteredOtp(generatedOtp)}
                   startIcon={<ContentCopy fontSize="small" />}
-                  sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', color: '#0E6245' }}
+                  sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', color: '#34D399' }}
                 >
                   Auto-fill
                 </Button>
@@ -1296,6 +1437,7 @@ export default function SettingsPage() {
                 setEnteredOtp(e.target.value);
                 setOtpError('');
               }}
+              className="glass-tertiary"
               slotProps={{
                 input: {
                   startAdornment: (
@@ -1315,7 +1457,7 @@ export default function SettingsPage() {
                 <Button
                   size="small"
                   onClick={handleOpenOtpModal}
-                  sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', color: '#0E6245' }}
+                  sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.75rem', color: '#34D399' }}
                 >
                   Generate New OTP
                 </Button>
@@ -1326,23 +1468,23 @@ export default function SettingsPage() {
           <DialogActions sx={{ px: 3, pb: 2.5 }}>
             <Button
               variant="outlined"
+              className="glass-tertiary"
               onClick={() => setOtpDialogOpen(false)}
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, color: 'text.secondary', border: '1px solid rgba(255, 255, 255, 0.1)' }}
             >
               Cancel
             </Button>
             <Button
               variant="contained"
+              className="glass-emerald-active"
               onClick={handleVerifyOtp}
               disabled={enteredOtp.trim().length !== 6 || saving}
               sx={{
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: 700,
-                bgcolor: '#0E6245',
                 color: '#FFFFFF',
                 px: 3,
-                '&:hover': { bgcolor: '#094A34' },
               }}
             >
               {saving ? 'Verifying...' : 'Verify & Link Phone'}
@@ -1355,16 +1497,19 @@ export default function SettingsPage() {
           open={qrModalOpen}
           onClose={() => setQrModalOpen(false)}
           PaperProps={{
+            className: 'glass-deep glass-specular-top',
             sx: {
-              borderRadius: 3.5,
+              borderRadius: 4,
               maxWidth: 400,
               width: '100%',
               p: 1.5,
               textAlign: 'center',
+              border: '1px solid rgba(255, 255, 255, 0.14)',
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
             },
           }}
         >
-          <DialogTitle sx={{ fontWeight: 800 }}>
+          <DialogTitle sx={{ fontWeight: 800, color: 'text.primary' }}>
             UPI QR Code Preview
           </DialogTitle>
           <DialogContent>
@@ -1373,11 +1518,11 @@ export default function SettingsPage() {
             </Typography>
 
             <Box
+              className="glass-tertiary"
               sx={{
                 p: 2,
-                bgcolor: isLight ? '#FAF9F5' : '#1A1C20',
                 borderRadius: 3,
-                border: `1px solid ${theme.palette.divider}`,
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 display: 'inline-block',
                 mb: 2,
               }}
@@ -1385,22 +1530,23 @@ export default function SettingsPage() {
               <img
                 src={qrCodeUrl}
                 alt="UPI QR Code"
-                style={{ width: 200, height: 200, display: 'block', borderRadius: 8 }}
+                style={{ width: 200, height: 200, display: 'block', borderRadius: 12 }}
               />
             </Box>
 
             <Box
+              className="glass-tertiary"
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 1,
-                bgcolor: alpha('#0E6245', 0.08),
                 p: 1.25,
                 borderRadius: 2,
+                border: '1px solid rgba(52, 211, 153, 0.3)',
               }}
             >
-              <Typography variant="body2" fontWeight={750} color="#0E6245">
+              <Typography variant="body2" fontWeight={750} sx={{ color: '#34D399', fontFamily: 'monospace' }}>
                 {preferences.upiId}
               </Typography>
               <Tooltip title="Copy VPA">
@@ -1410,8 +1556,9 @@ export default function SettingsPage() {
                     navigator.clipboard.writeText(preferences.upiId);
                     alert('UPI ID copied to clipboard!');
                   }}
+                  sx={{ color: '#34D399' }}
                 >
-                  <ContentCopy fontSize="small" sx={{ color: '#0E6245' }} />
+                  <ContentCopy fontSize="small" />
                 </IconButton>
               </Tooltip>
             </Box>
@@ -1419,8 +1566,9 @@ export default function SettingsPage() {
           <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
             <Button
               variant="contained"
+              className="glass-emerald-active"
               onClick={() => setQrModalOpen(false)}
-              sx={{ borderRadius: 2, bgcolor: '#0E6245', color: '#fff', px: 4, textTransform: 'none', fontWeight: 700 }}
+              sx={{ borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 700, color: '#fff' }}
             >
               Done
             </Button>
@@ -1431,9 +1579,17 @@ export default function SettingsPage() {
         <Dialog
           open={resetDialogOpen}
           onClose={() => setResetDialogOpen(false)}
-          PaperProps={{ sx: { borderRadius: 3, maxWidth: 420 } }}
+          PaperProps={{
+            className: 'glass-deep glass-specular-top',
+            sx: {
+              borderRadius: 3.5,
+              maxWidth: 420,
+              border: '1px solid rgba(255, 255, 255, 0.14)',
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+            },
+          }}
         >
-          <DialogTitle sx={{ fontWeight: 800 }}>
+          <DialogTitle sx={{ fontWeight: 800, color: 'text.primary' }}>
             Clear Local Cache & Drafts?
           </DialogTitle>
           <DialogContent>
@@ -1442,14 +1598,18 @@ export default function SettingsPage() {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2.5 }}>
-            <Button onClick={() => setResetDialogOpen(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            <Button
+              onClick={() => setResetDialogOpen(false)}
+              className="glass-tertiary"
+              sx={{ textTransform: 'none', fontWeight: 600, color: 'text.secondary', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 2 }}
+            >
               Cancel
             </Button>
             <Button
               variant="contained"
               color="error"
               onClick={handleClearCacheAndDrafts}
-              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
+              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, bgcolor: '#EF4444' }}
             >
               Confirm Clear
             </Button>

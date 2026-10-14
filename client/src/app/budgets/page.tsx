@@ -25,6 +25,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
 
 export default function BudgetsPage() {
   const theme = useTheme();
+  const isLight = theme.palette.mode === 'light';
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [budgets, setBudgets] = useState<any[]>([]);
@@ -95,41 +96,86 @@ export default function BudgetsPage() {
             <Typography variant="h4" fontWeight={800}>Budgets</Typography>
             <Typography variant="body1" color="text.secondary">Set and track spending limits</Typography>
           </Box>
-          <Button variant="contained" startIcon={<Add />} onClick={() => setDialogOpen(true)}
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setDialogOpen(true)}
             sx={{
-              borderRadius: 3, px: 3, fontWeight: 600,
-              bgcolor: '#059669', color: '#ffffff',
-              boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
-              '&:hover': { bgcolor: '#047857', boxShadow: '0 6px 20px rgba(5,150,105,0.35)' },
-            }}>
+              borderRadius: 2.5,
+              px: 3,
+              fontWeight: 600,
+              bgcolor: isLight ? '#0E6245' : '#059669',
+              color: '#ffffff',
+              boxShadow: isLight
+                ? '0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
+                : '0 1px 3px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.25)',
+              textTransform: 'none',
+              '&:hover': {
+                bgcolor: isLight ? '#0A4B35' : '#047857',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
+                transform: 'translateY(-1px)',
+              },
+            }}
+          >
             Set Budget
           </Button>
         </Box>
 
         {loading ? (
           <Grid container spacing={3}>
-            {[1, 2, 3].map(i => (<Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}><Card><CardContent><Skeleton height={120} /></CardContent></Card></Grid>))}
+            {[1, 2, 3].map(i => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
+                <Card className="glass-secondary"><CardContent><Skeleton height={120} /></CardContent></Card>
+              </Grid>
+            ))}
           </Grid>
         ) : budgets.length === 0 ? (
-          <Card><CardContent sx={{ textAlign: 'center', py: 8 }}>
-            <Savings sx={{ fontSize: 64, color: 'text.secondary', opacity: 0.3, mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">No budgets set</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Create budgets to track your spending limits</Typography>
-            <Button variant="contained" startIcon={<Add />} onClick={() => setDialogOpen(true)}>Set Budget</Button>
-          </CardContent></Card>
+          <Card
+            className="glass-secondary glass-specular-top"
+            sx={{ borderRadius: 3.5, boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)' }}
+          >
+            <CardContent sx={{ textAlign: 'center', py: 8 }}>
+              <Savings sx={{ fontSize: 64, color: 'text.secondary', opacity: 0.3, mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">No budgets set</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Create budgets to track your spending limits</Typography>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => setDialogOpen(true)}
+                className="glass-emerald-active"
+                sx={{ bgcolor: '#0E6245', color: '#ffffff', textTransform: 'none', borderRadius: 2.5, fontWeight: 700 }}
+              >
+                Set Budget
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <Grid container spacing={3}>
             {budgets.map((budget) => {
               const progressColor = getProgressColor(budget.percentage);
               return (
                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={budget.id}>
-                  <Card className="animate-slide-in-up" sx={{ position: 'relative', overflow: 'hidden', '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: progressColor } }}>
+                  <Card
+                    className="glass-secondary glass-specular-top"
+                    sx={{
+                      borderRadius: 3.5,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                      '&:hover': {
+                        borderColor: 'rgba(16, 185, 129, 0.5) !important',
+                        transform: 'translateY(-3px)',
+                      },
+                      '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: progressColor },
+                    }}
+                  >
                     <CardContent sx={{ p: 3 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Typography fontSize="1.5rem">{CATEGORY_EMOJI[budget.category] || '📋'}</Typography>
                           <Box>
-                            <Typography variant="body1" fontWeight={700} sx={{ textTransform: 'capitalize' }}>
+                            <Typography variant="body1" fontWeight={750} sx={{ textTransform: 'capitalize', color: 'text.primary' }}>
                               {budget.category.toLowerCase()}
                             </Typography>
                             <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
@@ -137,7 +183,7 @@ export default function BudgetsPage() {
                             </Typography>
                           </Box>
                         </Box>
-                        <IconButton size="small" onClick={() => handleDelete(budget.id)} sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}>
+                        <IconButton size="small" onClick={() => handleDelete(budget.id)} className="glass-tertiary" sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}>
                           <Delete fontSize="small" />
                         </IconButton>
                       </Box>
@@ -145,7 +191,7 @@ export default function BudgetsPage() {
                       <Box sx={{ mb: 2 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                           <Typography variant="body2" color="text.secondary">Spent</Typography>
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
                             {formatCurrency(budget.spent)} / {formatCurrency(Number(budget.amount))}
                           </Typography>
                         </Box>
@@ -153,9 +199,10 @@ export default function BudgetsPage() {
                           variant="determinate"
                           value={Math.min(budget.percentage, 100)}
                           sx={{
-                            height: 10, borderRadius: 5,
+                            height: 8,
+                            borderRadius: 4,
                             bgcolor: alpha(progressColor, 0.15),
-                            '& .MuiLinearProgress-bar': { borderRadius: 5, bgcolor: progressColor },
+                            '& .MuiLinearProgress-bar': { borderRadius: 4, bgcolor: progressColor },
                           }}
                         />
                       </Box>
@@ -165,11 +212,11 @@ export default function BudgetsPage() {
                           {formatCurrency(budget.remaining)} remaining
                         </Typography>
                         {budget.isOverBudget ? (
-                          <Chip label="Over budget!" size="small" color="error" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600 }} />
+                          <Chip label="Over budget!" size="small" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, bgcolor: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)' }} />
                         ) : budget.isAlerted ? (
-                          <Chip label={`${budget.percentage}% used`} size="small" color="warning" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600 }} />
+                          <Chip label={`${budget.percentage}% used`} size="small" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, bgcolor: 'rgba(245, 158, 11, 0.15)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.3)' }} />
                         ) : (
-                          <Chip label={`${budget.percentage}%`} size="small" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600, bgcolor: alpha(progressColor, 0.1), color: progressColor }} />
+                          <Chip label={`${budget.percentage}%`} size="small" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, bgcolor: alpha(progressColor, 0.15), color: progressColor, border: `1px solid ${alpha(progressColor, 0.3)}` }} />
                         )}
                       </Box>
                     </CardContent>
@@ -181,12 +228,23 @@ export default function BudgetsPage() {
         )}
 
         {/* Create Budget Dialog */}
-        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 4 } } }}>
-          <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', pb: 1 }}>
-            <Typography variant="h6" component="span" fontWeight={700}>Set Budget</Typography>
-            <IconButton onClick={() => setDialogOpen(false)} size="small"><Close /></IconButton>
+        <Dialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: { borderRadius: 4, boxShadow: '0 25px 60px rgba(0,0,0,0.5)' },
+            },
+          }}
+        >
+          <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', pb: 1, px: 3, pt: 2.5 }}>
+            <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>Set Budget</Typography>
+            <IconButton onClick={() => setDialogOpen(false)} size="small" className="glass-tertiary"><Close /></IconButton>
           </DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ px: 3 }}>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
               <TextField fullWidth select label="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 {CATEGORIES.map(cat => <MenuItem key={cat} value={cat}>{CATEGORY_EMOJI[cat]} {cat.charAt(0) + cat.slice(1).toLowerCase()}</MenuItem>)}
@@ -202,8 +260,22 @@ export default function BudgetsPage() {
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setDialogOpen(false)} sx={{ borderRadius: 3 }}>Cancel</Button>
-            <Button variant="contained" onClick={handleCreate} disabled={submitting || !form.amount} sx={{ borderRadius: 3, px: 4, fontWeight: 600, bgcolor: '#059669', color: '#ffffff', '&:hover': { bgcolor: '#047857' } }}>
+            <Button onClick={() => setDialogOpen(false)} sx={{ borderRadius: 2.5, textTransform: 'none' }}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={handleCreate}
+              disabled={submitting || !form.amount}
+              className="glass-emerald-active"
+              sx={{
+                borderRadius: 2.5,
+                px: 3.5,
+                fontWeight: 700,
+                textTransform: 'none',
+                bgcolor: '#0E6245',
+                color: '#ffffff',
+                '&:hover': { bgcolor: '#094A34' },
+              }}
+            >
               {submitting ? 'Creating...' : 'Set Budget'}
             </Button>
           </DialogActions>

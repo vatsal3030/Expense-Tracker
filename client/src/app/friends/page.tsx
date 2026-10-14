@@ -184,17 +184,18 @@ export default function FriendsPage() {
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary' }}>
               Friends & Connections
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Manage your personal contacts for 1-on-1 expenses and group splits
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, letterSpacing: '-0.01em' }}>
+              Manage your personal contacts for direct 1-on-1 expenses and group splits
             </Typography>
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Button
               variant="outlined"
+              className="glass-tertiary"
               startIcon={<QrCode2 />}
               onClick={() => setQrModalOpen(true)}
               sx={{
@@ -202,13 +203,12 @@ export default function FriendsPage() {
                 px: 2.5,
                 py: 1,
                 fontWeight: 600,
-                borderColor: theme.palette.divider,
                 color: 'text.primary',
-                bgcolor: 'background.paper',
                 textTransform: 'none',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
                 '&:hover': {
-                  borderColor: '#0E6245',
-                  bgcolor: alpha('#0E6245', 0.04),
+                  borderColor: 'rgba(16, 185, 129, 0.4)',
+                  bgcolor: 'rgba(16, 185, 129, 0.08)',
                 },
               }}
             >
@@ -216,18 +216,16 @@ export default function FriendsPage() {
             </Button>
             <Button
               variant="contained"
+              className="glass-emerald-active"
               startIcon={<PersonAdd />}
               onClick={() => setSearchOpen(true)}
               sx={{
                 borderRadius: 2.5,
                 px: 3,
                 py: 1,
-                fontWeight: 700,
-                bgcolor: '#0E6245',
+                fontWeight: 650,
                 color: '#FFFFFF',
-                boxShadow: '0 2px 8px rgba(14, 98, 69, 0.25)',
                 textTransform: 'none',
-                '&:hover': { bgcolor: '#094A34', boxShadow: '0 4px 14px rgba(14, 98, 69, 0.35)' },
               }}
             >
               Add Friend
@@ -235,71 +233,77 @@ export default function FriendsPage() {
           </Box>
         </Box>
 
-        {/* Personal Invite Banner (Savexa & Ocupite style) */}
+        {/* Personal Invite Banner (Liquid Glass Hero Capsule) */}
         <Card
+          className="glass-secondary glass-specular-top glass-emerald-ambient"
           sx={{
             mb: 3.5,
-            p: 2.5,
+            p: { xs: 2.5, sm: 3 },
             borderRadius: 3.5,
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.divider}`,
-            boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
-          <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+          <Grid container spacing={2.5} sx={{ alignItems: 'center' }}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box
+                  className="glass-tertiary"
                   sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2.5,
-                    bgcolor: alpha('#0E6245', 0.1),
-                    color: '#0E6245',
+                    width: 46,
+                    height: 46,
+                    borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
+                    color: '#10B981',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
                   }}
                 >
                   <Share fontSize="small" />
                 </Box>
                 <Box>
-                  <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary', letterSpacing: '-0.01em' }}>
                     Invite Friends to FairShare
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Share your unique referral link to connect instantly without searching
+                    Share your unique connection link to link balances instantly without manual searches
                   </Typography>
                 </Box>
               </Box>
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' }, flexWrap: 'wrap' }}>
                 <TextField
                   size="small"
                   value={personalInviteLink}
                   slotProps={{ input: { readOnly: true } }}
+                  className="glass-tertiary"
                   sx={{
-                    maxWidth: 300,
-                    bgcolor: alpha(theme.palette.action.hover, 0.04),
-                    borderRadius: 2,
-                    '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: '0.8rem' },
+                    minWidth: { xs: '100%', sm: 260 },
+                    maxWidth: 320,
+                    borderRadius: 2.5,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2.5,
+                      fontSize: '0.8rem',
+                      fontFamily: 'monospace',
+                    },
                   }}
                 />
                 <Button
                   variant="contained"
                   onClick={handleCopyInvite}
                   startIcon={copiedLink ? <Check fontSize="small" /> : <ContentCopy fontSize="small" />}
+                  className={copiedLink ? '' : 'glass-emerald-active'}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 2.5,
                     fontWeight: 700,
-                    bgcolor: copiedLink ? 'success.main' : '#0E6245',
+                    bgcolor: copiedLink ? '#10B981' : undefined,
                     color: '#FFFFFF',
                     textTransform: 'none',
-                    px: 2,
-                    '&:hover': { bgcolor: copiedLink ? 'success.dark' : '#094A34' },
+                    px: 2.5,
                   }}
                 >
                   {copiedLink ? 'Copied' : 'Copy'}
@@ -307,11 +311,12 @@ export default function FriendsPage() {
                 <IconButton
                   onClick={handleShareWhatsApp}
                   title="Share on WhatsApp"
+                  className="glass-tertiary"
                   sx={{
-                    bgcolor: alpha('#25D366', 0.1),
                     color: '#25D366',
-                    borderRadius: 2,
-                    '&:hover': { bgcolor: alpha('#25D366', 0.2) },
+                    borderRadius: 2.5,
+                    border: '1px solid rgba(37, 211, 102, 0.25)',
+                    '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.15)' },
                   }}
                 >
                   <WhatsApp fontSize="small" />
@@ -319,11 +324,12 @@ export default function FriendsPage() {
                 <IconButton
                   onClick={() => setQrModalOpen(true)}
                   title="Show QR Code"
+                  className="glass-tertiary"
                   sx={{
-                    bgcolor: alpha('#0E6245', 0.1),
-                    color: '#0E6245',
-                    borderRadius: 2,
-                    '&:hover': { bgcolor: alpha('#0E6245', 0.2) },
+                    color: '#34D399',
+                    borderRadius: 2.5,
+                    border: '1px solid rgba(52, 211, 153, 0.25)',
+                    '&:hover': { bgcolor: 'rgba(52, 211, 153, 0.15)' },
                   }}
                 >
                   <QrCode2 fontSize="small" />
@@ -333,33 +339,59 @@ export default function FriendsPage() {
           </Grid>
         </Card>
 
-        {/* Tabs: Friends vs Requests */}
-        <Box sx={{ borderBottom: `1px solid ${theme.palette.divider}`, mb: 3 }}>
-          <Tabs
-            value={tab}
-            onChange={(_, v) => setTab(v)}
+        {/* Segmented Liquid Glass Tabs */}
+        <Box sx={{ mb: 3 }}>
+          <Box
+            className="glass-tertiary"
             sx={{
-              '& .MuiTab-root': {
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: '0.9rem',
-                minWidth: 120,
-              },
+              display: 'inline-flex',
+              p: 0.5,
+              borderRadius: 3,
+              border: '1px solid rgba(255, 255, 255, 0.08)',
             }}
           >
-            <Tab label={`All Friends (${friends.length})`} />
-            <Tab
-              label={
-                <Badge
-                  badgeContent={pending.length}
-                  color="error"
-                  sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', height: 18, minWidth: 18 } }}
-                >
-                  <Box sx={{ pr: pending.length > 0 ? 1.5 : 0 }}>Pending Requests</Box>
-                </Badge>
-              }
-            />
-          </Tabs>
+            <Tabs
+              value={tab}
+              onChange={(_, v) => setTab(v)}
+              sx={{
+                minHeight: 40,
+                '& .MuiTabs-indicator': {
+                  height: '100%',
+                  borderRadius: 2.5,
+                  bgcolor: 'rgba(16, 185, 129, 0.2)',
+                  border: '1px solid rgba(52, 211, 153, 0.4)',
+                  zIndex: 0,
+                },
+                '& .MuiTab-root': {
+                  zIndex: 1,
+                  textTransform: 'none',
+                  fontWeight: 650,
+                  fontSize: '0.85rem',
+                  minHeight: 38,
+                  px: 2.5,
+                  borderRadius: 2.5,
+                  color: 'text.secondary',
+                  transition: 'all 0.2s ease',
+                  '&.Mui-selected': {
+                    color: '#34D399',
+                  },
+                },
+              }}
+            >
+              <Tab label={`All Friends (${friends.length})`} />
+              <Tab
+                label={
+                  <Badge
+                    badgeContent={pending.length}
+                    color="error"
+                    sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', height: 18, minWidth: 18 } }}
+                  >
+                    <Box sx={{ pr: pending.length > 0 ? 1.5 : 0 }}>Pending Requests</Box>
+                  </Badge>
+                }
+              />
+            </Tabs>
+          </Box>
         </Box>
 
         {/* TAB 0: ALL FRIENDS */}
@@ -373,6 +405,7 @@ export default function FriendsPage() {
                   placeholder="Filter friends by name or email..."
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
+                  className="glass-tertiary"
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -384,7 +417,6 @@ export default function FriendsPage() {
                   }}
                   sx={{
                     maxWidth: 360,
-                    bgcolor: 'background.paper',
                     borderRadius: 2.5,
                     '& .MuiOutlinedInput-root': { borderRadius: 2.5 },
                   }}
@@ -393,11 +425,10 @@ export default function FriendsPage() {
             )}
 
             <Card
+              className="glass-secondary glass-specular-top"
               sx={{
                 borderRadius: 3.5,
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
-                boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+                overflow: 'hidden',
               }}
             >
               <CardContent sx={{ p: 0 }}>
@@ -405,10 +436,10 @@ export default function FriendsPage() {
                   <Box sx={{ p: 3 }}>
                     {[1, 2, 3].map((i) => (
                       <Box key={i} sx={{ display: 'flex', gap: 2, py: 2 }}>
-                        <Skeleton variant="circular" width={44} height={44} />
+                        <Skeleton variant="circular" width={44} height={44} sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
                         <Box sx={{ flex: 1 }}>
-                          <Skeleton width="40%" height={24} />
-                          <Skeleton width="25%" height={18} sx={{ mt: 0.5 }} />
+                          <Skeleton width="40%" height={24} sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
+                          <Skeleton width="25%" height={18} sx={{ mt: 0.5, bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
                         </Box>
                       </Box>
                     ))}
@@ -426,15 +457,14 @@ export default function FriendsPage() {
                     </Typography>
                     <Button
                       variant="contained"
+                      className="glass-emerald-active"
                       startIcon={<PersonAdd />}
                       onClick={() => setSearchOpen(true)}
                       sx={{
-                        bgcolor: '#0E6245',
                         color: '#FFFFFF',
                         borderRadius: 2.5,
                         fontWeight: 600,
                         textTransform: 'none',
-                        '&:hover': { bgcolor: '#094A34' },
                       }}
                     >
                       Find Friends
@@ -450,8 +480,10 @@ export default function FriendsPage() {
                             py: 2,
                             display: 'flex',
                             alignItems: 'center',
-                            transition: 'all 0.15s ease',
-                            '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.04) },
+                            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                            '&:hover': {
+                              bgcolor: 'rgba(255, 255, 255, 0.04)',
+                            },
                           }}
                         >
                           <ListItemAvatar>
@@ -460,9 +492,11 @@ export default function FriendsPage() {
                               sx={{
                                 width: 44,
                                 height: 44,
-                                bgcolor: '#0E6245',
+                                bgcolor: 'rgba(16, 185, 129, 0.2)',
+                                border: '1px solid rgba(52, 211, 153, 0.3)',
                                 fontSize: '0.95rem',
                                 fontWeight: 700,
+                                color: '#34D399',
                               }}
                             >
                               {f.friend?.name?.charAt(0) || '?'}
@@ -481,6 +515,7 @@ export default function FriendsPage() {
                             <Button
                               size="small"
                               variant="outlined"
+                              className="glass-tertiary"
                               startIcon={<ReceiptLong fontSize="small" />}
                               onClick={() => router.push(`/expenses/new?friendId=${f.friend?.id}`)}
                               sx={{
@@ -488,9 +523,12 @@ export default function FriendsPage() {
                                 fontWeight: 600,
                                 fontSize: '0.775rem',
                                 textTransform: 'none',
-                                borderColor: theme.palette.divider,
                                 color: 'text.primary',
-                                '&:hover': { borderColor: '#0E6245', bgcolor: alpha('#0E6245', 0.04) },
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                '&:hover': {
+                                  borderColor: 'rgba(16, 185, 129, 0.4)',
+                                  bgcolor: 'rgba(16, 185, 129, 0.08)',
+                                },
                               }}
                             >
                               Split Bill
@@ -502,7 +540,12 @@ export default function FriendsPage() {
                                 onClick={() => handleRemove(f.friendshipId)}
                                 sx={{
                                   color: 'text.secondary',
-                                  '&:hover': { color: 'error.main', bgcolor: alpha(theme.palette.error.main, 0.08) },
+                                  transition: 'all 0.15s ease',
+                                  '&:hover': {
+                                    color: '#EF4444',
+                                    bgcolor: 'rgba(239, 68, 68, 0.1)',
+                                    transform: 'scale(1.08)',
+                                  },
                                 }}
                               >
                                 <Delete fontSize="small" />
@@ -511,7 +554,7 @@ export default function FriendsPage() {
                           </Box>
                         </ListItem>
                         {i < filteredFriends.length - 1 && (
-                          <Divider component="li" sx={{ borderColor: theme.palette.divider }} />
+                          <Divider component="li" sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
                         )}
                       </React.Fragment>
                     ))}
@@ -525,11 +568,10 @@ export default function FriendsPage() {
         {/* TAB 1: PENDING REQUESTS */}
         {tab === 1 && (
           <Card
+            className="glass-secondary glass-specular-top"
             sx={{
               borderRadius: 3.5,
-              bgcolor: 'background.paper',
-              border: `1px solid ${theme.palette.divider}`,
-              boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+              overflow: 'hidden',
             }}
           >
             <CardContent sx={{ p: 0 }}>
@@ -550,7 +592,15 @@ export default function FriendsPage() {
                         <ListItemAvatar>
                           <Avatar
                             src={req.user?.avatarUrl || undefined}
-                            sx={{ width: 44, height: 44, bgcolor: '#3B82F6', fontSize: '0.95rem', fontWeight: 700 }}
+                            sx={{
+                              width: 44,
+                              height: 44,
+                              bgcolor: 'rgba(59, 130, 246, 0.2)',
+                              border: '1px solid rgba(59, 130, 246, 0.4)',
+                              fontSize: '0.95rem',
+                              fontWeight: 700,
+                              color: '#60A5FA',
+                            }}
                           >
                             {req.user?.name?.charAt(0) || '?'}
                           </Avatar>
@@ -568,15 +618,14 @@ export default function FriendsPage() {
                             <Button
                               size="small"
                               variant="contained"
+                              className="glass-emerald-active"
                               startIcon={<Check fontSize="small" />}
                               onClick={() => handleAccept(req.id)}
                               sx={{
                                 borderRadius: 2,
                                 fontWeight: 700,
-                                bgcolor: '#0E6245',
                                 color: '#FFFFFF',
                                 textTransform: 'none',
-                                '&:hover': { bgcolor: '#094A34' },
                               }}
                             >
                               Accept
@@ -584,14 +633,19 @@ export default function FriendsPage() {
                             <Button
                               size="small"
                               variant="outlined"
+                              className="glass-tertiary"
                               onClick={() => handleRemove(req.id)}
                               sx={{
                                 borderRadius: 2,
                                 fontWeight: 600,
                                 color: 'text.secondary',
-                                borderColor: theme.palette.divider,
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
                                 textTransform: 'none',
-                                '&:hover': { color: 'error.main', borderColor: 'error.main' },
+                                '&:hover': {
+                                  color: '#EF4444',
+                                  borderColor: 'rgba(239, 68, 68, 0.4)',
+                                  bgcolor: 'rgba(239, 68, 68, 0.08)',
+                                },
                               }}
                             >
                               Decline
@@ -600,7 +654,7 @@ export default function FriendsPage() {
                         </ListItemSecondaryAction>
                       </ListItem>
                       {i < pending.length - 1 && (
-                        <Divider component="li" sx={{ borderColor: theme.palette.divider }} />
+                        <Divider component="li" sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
                       )}
                     </React.Fragment>
                   ))}
@@ -620,7 +674,16 @@ export default function FriendsPage() {
           }}
           maxWidth="sm"
           fullWidth
-          slotProps={{ paper: { sx: { borderRadius: 4, bgcolor: 'background.paper' } } }}
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: 4,
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+              },
+            },
+          }}
         >
           <DialogTitle component="div" sx={{ pb: 1, pt: 2.5, px: 3 }}>
             <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary', display: 'block' }}>
@@ -634,7 +697,7 @@ export default function FriendsPage() {
             <Stack spacing={2.5} sx={{ mt: 1 }}>
               {/* Direct Search / Invite Box */}
               <Box>
-                <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+                <Typography variant="body2" fontWeight={600} sx={{ mb: 1, color: 'text.secondary' }}>
                   Enter Name, Email, or Phone
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -644,6 +707,11 @@ export default function FriendsPage() {
                     placeholder="friend@gmail.com or +919876543210 or name"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="glass-tertiary"
+                    sx={{
+                      borderRadius: 2.5,
+                      '& .MuiOutlinedInput-root': { borderRadius: 2.5 },
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         if (searchQuery.includes('@') || /^\+?[0-9]{7,15}$/.test(searchQuery.replace(/[\s-]/g, ''))) {
@@ -658,14 +726,13 @@ export default function FriendsPage() {
                     variant="contained"
                     onClick={handleDirectInvite}
                     disabled={searching || searchQuery.length < 2}
+                    className="glass-emerald-active"
                     sx={{
                       borderRadius: 2.5,
                       px: 2.5,
-                      bgcolor: '#0E6245',
                       color: '#FFFFFF',
                       fontWeight: 700,
                       textTransform: 'none',
-                      '&:hover': { bgcolor: '#094A34' },
                     }}
                   >
                     {searchQuery.includes('@') || /^\+?[0-9]{7,15}$/.test(searchQuery.replace(/[\s-]/g, '')) ? 'Invite' : <Search />}
@@ -679,22 +746,38 @@ export default function FriendsPage() {
                   {searchResults.map((u) => (
                     <ListItem
                       key={u.id}
+                      className="glass-tertiary"
                       sx={{
-                        px: 1,
+                        px: 1.5,
                         py: 1.5,
-                        borderRadius: 2,
-                        '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.06) },
+                        mb: 1,
+                        borderRadius: 2.5,
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.04)' },
                       }}
                     >
                       <ListItemAvatar>
-                        <Avatar src={u.avatarUrl || undefined} sx={{ width: 40, height: 40, bgcolor: '#0E6245' }}>
+                        <Avatar
+                          src={u.avatarUrl || undefined}
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            bgcolor: 'rgba(16, 185, 129, 0.2)',
+                            color: '#34D399',
+                            border: '1px solid rgba(52, 211, 153, 0.3)',
+                          }}
+                        >
                           {u.name?.charAt(0)}
                         </Avatar>
                       </ListItemAvatar>
-                      <ListItemText primary={<Typography variant="body2" fontWeight={700}>{u.name}</Typography>} secondary={u.email} />
+                      <ListItemText
+                        primary={<Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>{u.name}</Typography>}
+                        secondary={<Typography variant="caption" sx={{ color: 'text.secondary' }}>{u.email}</Typography>}
+                      />
                       <Button
                         size="small"
                         variant="outlined"
+                        className="glass-tertiary"
                         startIcon={<PersonAdd />}
                         onClick={() => handleSendRequest(u.id)}
                         sx={{
@@ -702,6 +785,12 @@ export default function FriendsPage() {
                           fontWeight: 600,
                           fontSize: '0.75rem',
                           textTransform: 'none',
+                          color: 'text.primary',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          '&:hover': {
+                            borderColor: 'rgba(16, 185, 129, 0.4)',
+                            bgcolor: 'rgba(16, 185, 129, 0.08)',
+                          },
                         }}
                       >
                         Add
@@ -730,7 +819,13 @@ export default function FriendsPage() {
                 setSearchResults([]);
                 setSearchQuery('');
               }}
-              sx={{ borderRadius: 2, textTransform: 'none' }}
+              className="glass-tertiary"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                color: 'text.secondary',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
             >
               Close
             </Button>

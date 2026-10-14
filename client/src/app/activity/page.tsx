@@ -95,10 +95,10 @@ export default function ActivityPage() {
       <Box className="animate-fade-in" sx={{ pb: 6 }}>
         {/* Header */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary' }}>
             Activity Feed
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, letterSpacing: '-0.01em' }}>
             Real-time audit log of shared expenses, settlements, and member interactions
           </Typography>
         </Box>
@@ -122,21 +122,22 @@ export default function ActivityPage() {
                 label={cat === 'ALL' ? 'All Activity' : cat.charAt(0) + cat.slice(1).toLowerCase()}
                 size="small"
                 onClick={() => setSelectedCategory(cat)}
+                className={active ? 'glass-emerald-active' : 'glass-tertiary'}
                 sx={{
-                  px: 1,
-                  py: 1.75,
-                  fontSize: '0.775rem',
-                  fontWeight: active ? 700 : 500,
-                  bgcolor: active
-                    ? (isLight ? '#1A1D1F' : '#0E6245')
-                    : 'background.paper',
-                  color: active ? '#FFFFFF' : 'text.primary',
-                  border: `1px solid ${active ? 'transparent' : theme.palette.divider}`,
+                  px: 1.25,
+                  py: 1.8,
+                  fontSize: '0.785rem',
+                  fontWeight: active ? 700 : 550,
+                  color: active ? '#FFFFFF' : 'text.secondary',
+                  border: active
+                    ? '1px solid rgba(52, 211, 153, 0.4)'
+                    : '1px solid rgba(255, 255, 255, 0.08)',
                   cursor: 'pointer',
+                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   '&:hover': {
-                    bgcolor: active
-                      ? (isLight ? '#1A1D1F' : '#0E6245')
-                      : alpha(theme.palette.text.primary, 0.05),
+                    color: active ? '#FFFFFF' : '#34D399',
+                    borderColor: 'rgba(16, 185, 129, 0.3)',
+                    transform: 'translateY(-1px)',
                   },
                 }}
               />
@@ -146,11 +147,10 @@ export default function ActivityPage() {
 
         {/* Activity Timeline Card */}
         <Card
+          className="glass-secondary glass-specular-top"
           sx={{
             borderRadius: 3.5,
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.divider}`,
-            boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : 'none',
+            overflow: 'hidden',
           }}
         >
           <CardContent sx={{ p: 0 }}>
@@ -158,17 +158,17 @@ export default function ActivityPage() {
               <Box sx={{ p: 3 }}>
                 {[1, 2, 3, 4, 5].map((i) => (
                   <Box key={i} sx={{ display: 'flex', gap: 2, py: 2 }}>
-                    <Skeleton variant="circular" width={42} height={42} />
+                    <Skeleton variant="circular" width={42} height={42} sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
                     <Box sx={{ flex: 1 }}>
-                      <Skeleton width="55%" height={24} />
-                      <Skeleton width="30%" height={18} sx={{ mt: 0.5 }} />
+                      <Skeleton width="55%" height={24} sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
+                      <Skeleton width="30%" height={18} sx={{ mt: 0.5, bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
                     </Box>
                   </Box>
                 ))}
               </Box>
             ) : filteredActivities.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
-                <TimelineIcon sx={{ fontSize: 56, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
+                <TimelineIcon sx={{ fontSize: 56, color: 'text.secondary', opacity: 0.25, mb: 1.5 }} />
                 <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', mb: 0.5 }}>
                   No activity found
                 </Typography>
@@ -183,7 +183,7 @@ export default function ActivityPage() {
                 {filteredActivities.map((activity, i) => {
                   const cfg = ACTIVITY_TYPE_CONFIG[activity.type] || {
                     icon: <TimelineIcon fontSize="small" />,
-                    color: '#0E6245',
+                    color: '#10B981',
                     category: 'OTHER',
                   };
 
@@ -192,18 +192,21 @@ export default function ActivityPage() {
                       <ListItem
                         sx={{
                           px: 3,
-                          py: 2,
-                          transition: 'all 0.15s ease',
-                          '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.04) },
+                          py: 2.2,
+                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          '&:hover': {
+                            bgcolor: 'rgba(255, 255, 255, 0.04)',
+                          },
                         }}
                       >
                         <ListItemAvatar>
                           <Avatar
                             sx={{
-                              width: 42,
-                              height: 42,
-                              bgcolor: alpha(cfg.color, 0.1),
+                              width: 40,
+                              height: 40,
+                              bgcolor: alpha(cfg.color, 0.12),
                               color: cfg.color,
+                              border: `1px solid ${alpha(cfg.color, 0.25)}`,
                             }}
                           >
                             {cfg.icon}
@@ -211,26 +214,27 @@ export default function ActivityPage() {
                         </ListItemAvatar>
                         <ListItemText
                           primary={
-                            <Typography variant="body2" sx={{ color: 'text.primary' }}>
-                              <strong style={{ fontWeight: 700 }}>{activity.user?.name || 'Someone'}</strong>{' '}
-                              <span style={{ color: theme.palette.text.secondary }}>{activity.message}</span>
+                            <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.875rem' }}>
+                              <strong style={{ fontWeight: 650, color: '#FFFFFF' }}>{activity.user?.name || 'Someone'}</strong>{' '}
+                              <span style={{ color: 'rgba(240, 246, 252, 0.75)' }}>{activity.message}</span>
                             </Typography>
                           }
                           secondary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                                 {formatDate(activity.createdAt)}
                               </Typography>
                               {activity.group && (
                                 <Chip
                                   label={activity.group.name}
                                   size="small"
+                                  className="glass-tertiary"
                                   sx={{
                                     height: 20,
                                     fontSize: '0.675rem',
                                     fontWeight: 600,
-                                    bgcolor: alpha(theme.palette.action.hover, 0.06),
                                     color: 'text.secondary',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
                                   }}
                                 />
                               )}
@@ -239,13 +243,22 @@ export default function ActivityPage() {
                         />
 
                         {activity.expense && (
-                          <Typography variant="body2" fontWeight={800} sx={{ color: '#0E6245' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: '#10B981',
+                              fontWeight: 650,
+                              letterSpacing: '-0.02em',
+                              fontSize: '0.925rem',
+                              fontVariantNumeric: 'tabular-nums',
+                            }}
+                          >
                             ₹{Number(activity.expense.amount).toLocaleString('en-IN')}
                           </Typography>
                         )}
                       </ListItem>
                       {i < filteredActivities.length - 1 && (
-                        <Divider component="li" sx={{ borderColor: theme.palette.divider }} />
+                        <Divider component="li" sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
                       )}
                     </React.Fragment>
                   );
@@ -259,7 +272,7 @@ export default function ActivityPage() {
                   display: 'flex',
                   justifyContent: 'center',
                   py: 2.5,
-                  borderTop: `1px solid ${theme.palette.divider}`,
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
                 }}
               >
                 <Pagination
@@ -268,10 +281,19 @@ export default function ActivityPage() {
                   onChange={(_, p) => setPage(p)}
                   shape="rounded"
                   sx={{
+                    '& .MuiPaginationItem-root': {
+                      color: 'text.secondary',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      bgcolor: 'rgba(255, 255, 255, 0.02)',
+                      '&:hover': {
+                        bgcolor: 'rgba(255, 255, 255, 0.06)',
+                      },
+                    },
                     '& .Mui-selected': {
-                      bgcolor: '#0E6245 !important',
-                      color: '#FFFFFF !important',
-                      fontWeight: 700,
+                      bgcolor: 'rgba(16, 185, 129, 0.20) !important',
+                      color: '#10B981 !important',
+                      borderColor: 'rgba(16, 185, 129, 0.4) !important',
+                      fontWeight: 650,
                     },
                   }}
                 />

@@ -236,9 +236,8 @@ export default function JoinGroupPage() {
                   sx={{
                     py: 1.2,
                     borderRadius: 2.5,
-                    fontWeight: 700,
+                    fontWeight: 650,
                     fontSize: '0.925rem',
-                    boxShadow: '0 4px 14px rgba(5,150,105,0.3)',
                   }}
                 >
                   {joining ? (

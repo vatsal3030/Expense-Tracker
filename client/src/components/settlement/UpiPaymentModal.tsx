@@ -82,16 +82,10 @@ export default function UpiPaymentModal({
       fullWidth
       slotProps={{
         paper: {
-          className: 'macos-glass-card',
+          className: 'glass-deep glass-specular-top',
           sx: {
             borderRadius: 4,
-            bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(24, 25, 30, 0.88)',
-            backdropFilter: 'blur(28px) saturate(190%)',
-            WebkitBackdropFilter: 'blur(28px) saturate(190%)',
-            border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.75)' : 'rgba(255, 255, 255, 0.12)'}`,
-            boxShadow: isLight
-              ? '0 20px 48px -12px rgba(14, 98, 69, 0.18), inset 0 1px 1px 0 rgba(255, 255, 255, 0.85)'
-              : '0 24px 56px -12px rgba(0, 0, 0, 0.65), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.55)',
             color: 'text.primary',
             backgroundImage: 'none',
           },
@@ -138,21 +132,20 @@ export default function UpiPaymentModal({
         <Typography variant="body2" color="text.secondary">
           Paying <strong>{payeeName}</strong>
         </Typography>
-        <Typography variant="h3" fontWeight={800} sx={{ color: '#0E6245', my: 1, letterSpacing: '-0.02em' }}>
+        <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : '#0E6245', my: 1, letterSpacing: '-0.02em' }}>
           ₹{amount.toFixed(0)}
         </Typography>
 
         {/* QR Code Container */}
         <Box
+          className="glass-secondary glass-specular-top"
           sx={{
             display: 'inline-block',
             p: 2,
-            bgcolor: isLight ? '#FFFFFF' : '#121316',
             borderRadius: 3.5,
-            border: `1px solid ${theme.palette.divider}`,
             position: 'relative',
             my: 2,
-            boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -164,7 +157,7 @@ export default function UpiPaymentModal({
             style={{ borderRadius: 10, display: 'block' }}
           />
           <Chip
-            icon={<Shield sx={{ '&&': { color: '#0E6245', fontSize: 14 } }} />}
+            icon={<Shield sx={{ '&&': { color: '#10B981', fontSize: 14 } }} />}
             label="Verified UPI"
             size="small"
             sx={{
@@ -172,9 +165,9 @@ export default function UpiPaymentModal({
               bottom: -10,
               left: '50%',
               transform: 'translateX(-50%)',
-              bgcolor: 'background.paper',
-              border: `1px solid ${theme.palette.divider}`,
-              color: '#0E6245',
+              bgcolor: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
+              color: '#34D399',
               fontSize: '0.65rem',
               fontWeight: 700,
             }}
@@ -187,12 +180,11 @@ export default function UpiPaymentModal({
 
         {/* UPI ID Copy bar */}
         <Box
+          className="glass-tertiary"
           sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            bgcolor: isLight ? '#F4F5F7' : 'rgba(255, 255, 255, 0.04)',
-            border: `1px solid ${theme.palette.divider}`,
             borderRadius: 2.5,
             px: 2,
             py: 1,
@@ -218,7 +210,7 @@ export default function UpiPaymentModal({
             </Typography>
           </Box>
           <Tooltip title={copied ? 'Copied!' : 'Copy UPI ID'}>
-            <IconButton onClick={handleCopy} size="small" sx={{ color: copied ? '#0E6245' : 'text.secondary' }}>
+            <IconButton onClick={handleCopy} size="small" sx={{ color: copied ? '#10B981' : 'text.secondary' }}>
               {copied ? <CheckCircle fontSize="small" /> : <ContentCopy fontSize="small" />}
             </IconButton>
           </Tooltip>
@@ -231,16 +223,16 @@ export default function UpiPaymentModal({
           href={upiUri}
           startIcon={<Smartphone />}
           endIcon={<OpenInNew fontSize="small" />}
+          className="glass-tertiary"
           sx={{
             mt: 2,
             borderRadius: 2.5,
-            borderColor: theme.palette.divider,
             color: 'text.primary',
             fontWeight: 600,
             textTransform: 'none',
             '&:hover': {
-              borderColor: '#0E6245',
-              bgcolor: alpha('#0E6245', 0.04),
+              borderColor: '#10B981',
+              bgcolor: alpha('#10B981', 0.08),
             },
           }}
         >
@@ -254,6 +246,7 @@ export default function UpiPaymentModal({
           variant="contained"
           onClick={handleMarkPaid}
           disabled={confirmed}
+          className="glass-emerald-active"
           sx={{
             py: 1.25,
             borderRadius: 2.5,
@@ -261,7 +254,7 @@ export default function UpiPaymentModal({
             textTransform: 'none',
             bgcolor: '#0E6245',
             color: '#FFFFFF',
-            boxShadow: '0 2px 8px rgba(14, 98, 69, 0.25)',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)',
             '&:hover': {
               bgcolor: '#094A34',
             },
