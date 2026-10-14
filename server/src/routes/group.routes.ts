@@ -100,9 +100,10 @@ groupRouter.post(
 // GET /api/groups — Get all groups for current user
 groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
     const groups = await prisma.group.findMany({
       where: {
-        members: { some: { userId: req.user!.id } },
+        members: { some: { userId: { in: userIds } } },
         isActive: true,
       },
       include: {
@@ -180,11 +181,12 @@ groupRouter.get('/public/:id', async (req: AuthenticatedRequest, res: Response):
 groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
 
     const group = await prisma.group.findFirst({
       where: {
         id,
-        members: { some: { userId: req.user!.id } },
+        members: { some: { userId: { in: userIds } } },
       },
       include: {
         members: {
@@ -229,10 +231,11 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
 groupRouter.get('/:id/invite', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
     const group = await prisma.group.findFirst({
       where: {
         id,
-        members: { some: { userId: req.user!.id } },
+        members: { some: { userId: { in: userIds } } },
       },
     });
 
@@ -369,8 +372,9 @@ groupRouter.post(
       const { userId, email, phone } = req.body;
 
       // Verify requester is group member
-      const membership = await prisma.groupMember.findUnique({
-        where: { groupId_userId: { groupId: id, userId: req.user!.id } },
+      const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+      const membership = await prisma.groupMember.findFirst({
+        where: { groupId: id, userId: { in: userIds } },
       });
 
       if (!membership) {
@@ -494,8 +498,9 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
     const id = req.params.id as string;
 
     // Verify membership
-    const membership = await prisma.groupMember.findUnique({
-      where: { groupId_userId: { groupId: id, userId: req.user!.id } },
+    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: id, userId: { in: userIds } },
     });
 
     if (!membership) {
