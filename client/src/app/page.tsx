@@ -225,44 +225,56 @@ export default function LandingPage() {
     <div
       className={`min-h-screen transition-colors duration-300 relative overflow-x-hidden ${
         isLight
-          ? 'bg-[#F8FAF9] text-slate-900 selection:bg-emerald-500/20 selection:text-emerald-900'
-          : 'bg-[#07090E] text-slate-100 selection:bg-emerald-500/25 selection:text-emerald-300'
+          ? 'bg-[#F6F8F6] text-slate-900 selection:bg-emerald-500/20 selection:text-emerald-900'
+          : 'bg-[#06080D] text-slate-100 selection:bg-emerald-500/25 selection:text-emerald-300'
       }`}
     >
-      {/* Dynamic Ambient Background Glows */}
+      {/* Dynamic Ambient Background Glows that shine vividly through liquid glass */}
       <div
-        className={`fixed top-[-100px] left-1/2 -translate-x-1/2 w-[900px] h-[450px] blur-[140px] pointer-events-none rounded-full transition-all duration-500 ${
+        className={`fixed top-[-80px] left-1/4 w-[750px] h-[500px] blur-[130px] pointer-events-none rounded-full transition-all duration-700 ${
           isLight
-            ? 'bg-gradient-to-b from-emerald-500/8 via-teal-500/4 to-transparent'
-            : 'bg-gradient-to-b from-emerald-500/12 via-teal-500/5 to-transparent'
+            ? 'bg-gradient-to-tr from-emerald-400/22 via-teal-300/18 to-transparent opacity-85'
+            : 'bg-gradient-to-tr from-emerald-500/20 via-teal-400/14 to-transparent opacity-90'
         }`}
       />
       <div
-        className={`fixed top-[600px] right-[-150px] w-[500px] h-[500px] blur-[160px] pointer-events-none rounded-full transition-all duration-500 ${
-          isLight ? 'bg-emerald-600/5' : 'bg-emerald-600/8'
+        className={`fixed top-[150px] right-10 w-[600px] h-[550px] blur-[140px] pointer-events-none rounded-full transition-all duration-700 ${
+          isLight
+            ? 'bg-gradient-to-bl from-teal-400/18 via-cyan-300/14 to-transparent opacity-85'
+            : 'bg-gradient-to-bl from-teal-500/16 via-cyan-500/12 to-transparent opacity-90'
         }`}
       />
       <div
-        className={`fixed bottom-0 left-[-150px] w-[500px] h-[500px] blur-[160px] pointer-events-none rounded-full transition-all duration-500 ${
-          isLight ? 'bg-teal-600/4' : 'bg-teal-600/6'
+        className={`fixed top-[900px] left-[-80px] w-[650px] h-[650px] blur-[150px] pointer-events-none rounded-full transition-all duration-700 ${
+          isLight
+            ? 'bg-gradient-to-tr from-emerald-300/16 via-teal-400/14 to-transparent opacity-85'
+            : 'bg-gradient-to-tr from-emerald-600/15 via-teal-500/12 to-transparent opacity-90'
+        }`}
+      />
+      <div
+        className={`fixed top-[1800px] right-[-100px] w-[700px] h-[700px] blur-[160px] pointer-events-none rounded-full transition-all duration-700 ${
+          isLight
+            ? 'bg-gradient-to-bl from-cyan-400/16 via-emerald-300/14 to-transparent opacity-85'
+            : 'bg-gradient-to-bl from-cyan-500/14 via-emerald-600/12 to-transparent opacity-90'
+        }`}
+      />
+      <div
+        className={`fixed bottom-[-100px] left-1/3 w-[800px] h-[600px] blur-[160px] pointer-events-none rounded-full transition-all duration-700 ${
+          isLight
+            ? 'bg-gradient-to-t from-teal-400/16 via-emerald-300/12 to-transparent opacity-85'
+            : 'bg-gradient-to-t from-emerald-500/15 via-teal-600/10 to-transparent opacity-90'
         }`}
       />
 
       {/* Floating macOS Liquid Glass Header */}
       <div className="sticky top-4 z-50 px-4 max-w-7xl mx-auto">
-        <header
-          className={`rounded-full px-5 py-2.5 flex items-center justify-between shadow-xl transition-all duration-300 backdrop-blur-2xl border ${
-            isLight
-              ? 'bg-white/85 border-slate-200/90 text-slate-800 shadow-slate-200/50'
-              : 'bg-slate-900/70 border-white/10 text-slate-100 shadow-2xl'
-          }`}
-        >
+        <header className="macos-glass rounded-full px-5 py-2.5 flex items-center justify-between shadow-2xl transition-all duration-300">
           <BrandLogo size="md" textColor={isLight ? "text-slate-900" : "text-white"} />
 
           {/* Nav links */}
           <nav
             className={`hidden lg:flex items-center gap-7 text-xs font-semibold uppercase tracking-wider ${
-              isLight ? 'text-slate-600' : 'text-slate-300'
+              isLight ? 'text-slate-700' : 'text-slate-300'
             }`}
           >
             <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
@@ -288,20 +300,14 @@ export default function LandingPage() {
           {/* Action buttons + Theme Toggle */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Themed Segmented Switcher for Light & Dark */}
-            <div
-              className={`flex items-center p-0.5 sm:p-1 rounded-full border transition-all ${
-                isLight
-                  ? 'bg-slate-100/90 border-slate-200 shadow-inner'
-                  : 'bg-slate-800/80 border-slate-700 shadow-inner'
-              }`}
-            >
+            <div className="macos-liquid-surface flex items-center p-0.5 sm:p-1 rounded-full shadow-inner">
               <button
                 onClick={() => {
                   if (mode !== 'light') toggleTheme();
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                   isLight
-                    ? 'bg-white text-emerald-800 shadow-sm border border-slate-200/80'
+                    ? 'bg-white/90 text-emerald-800 shadow-sm border border-white/60'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
                 title="Switch to Light Theme"
@@ -316,7 +322,7 @@ export default function LandingPage() {
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                   !isLight
-                    ? 'bg-slate-700 text-white shadow-sm border border-white/10'
+                    ? 'bg-slate-700/80 text-white shadow-sm border border-white/10'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
                 title="Switch to Dark Theme"
@@ -331,7 +337,7 @@ export default function LandingPage() {
               href="/auth/login"
               className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
                 isLight
-                  ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'text-slate-700 hover:text-slate-900 hover:bg-white/40'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -352,15 +358,11 @@ export default function LandingPage() {
       {/* HERO SECTION */}
       <section className="relative pt-20 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
         {/* SaaS Trust Pill */}
-        <div
-          className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6 animate-fade-in shadow-inner border ${
-            isLight
-              ? 'bg-emerald-50/90 border-emerald-200 text-emerald-800'
-              : 'bg-emerald-950/40 border-emerald-500/30 text-emerald-400'
-          }`}
-        >
+        <div className="macos-glass-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold mb-6 animate-fade-in shadow-inner">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-          <span>100% Free • Unlimited Daily Splits • Zero Subscription Paywalls</span>
+          <span className={isLight ? 'text-emerald-900 font-bold' : 'text-emerald-300 font-bold'}>
+            100% Free • Unlimited Daily Splits • Zero Subscription Paywalls
+          </span>
         </div>
 
         {/* Main Title */}
@@ -400,14 +402,10 @@ export default function LandingPage() {
           </Link>
           <a
             href="#simulator"
-            className={`w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border ${
-              isLight
-                ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 shadow-sm hover:border-emerald-500/50'
-                : 'macos-glass-card hover:border-emerald-500/40 text-slate-200'
-            }`}
+            className="macos-glass-card w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
           >
             <Sparkles className="w-4 h-4 text-emerald-500" />
-            Try Live Interactive Simulator
+            <span className={isLight ? 'text-slate-800' : 'text-slate-200'}>Try Live Interactive Simulator</span>
           </a>
         </div>
 
@@ -421,18 +419,14 @@ export default function LandingPage() {
           ].map((m, i) => (
             <div
               key={i}
-              className={`p-3 rounded-2xl text-center border transition-all ${
-                isLight
-                  ? 'bg-white border-slate-200/80 shadow-sm'
-                  : 'macos-glass-card border-white/5'
-              }`}
+              className="macos-liquid-surface p-3.5 rounded-2xl text-center transition-all hover:scale-[1.02]"
             >
-              <span className={`text-[11px] font-medium block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-medium block ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                 {m.label}
               </span>
               <span
                 className={`text-base font-extrabold mt-0.5 block ${
-                  isLight ? 'text-emerald-700' : 'text-emerald-400'
+                  isLight ? 'text-emerald-750' : 'text-emerald-400'
                 }`}
               >
                 {m.val}
@@ -445,24 +439,18 @@ export default function LandingPage() {
         {/* INTERACTIVE BILL SPLIT SIMULATOR (Core Interactive Feature for Visitors) */}
         {/* ========================================================================= */}
         <div id="simulator" className="scroll-mt-28 text-left max-w-5xl mx-auto">
-          <div
-            className={`p-6 sm:p-8 rounded-3xl border shadow-2xl relative transition-all ${
-              isLight
-                ? 'bg-white/90 border-slate-200 shadow-slate-200/60'
-                : 'macos-glass-card border-white/10'
-            }`}
-          >
+          <div className="macos-glass-card p-6 sm:p-8 relative transition-all shadow-2xl">
             <div
               className={`flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b ${
-                isLight ? 'border-slate-200' : 'border-slate-800'
+                isLight ? 'border-slate-300/60' : 'border-slate-800/80'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
                     isLight
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                      ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-800'
+                      : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
                   }`}
                 >
                   <Sliders className="w-6 h-6" />
@@ -472,28 +460,18 @@ export default function LandingPage() {
                     <h3 className={`text-lg sm:text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
                       Live Interactive Split Simulator
                     </h3>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        isLight
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                      }`}
-                    >
+                    <span className="macos-glass-pill px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                       LIVE DEMO
                     </span>
                   </div>
-                  <p className={`text-xs sm:text-sm mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <p className={`text-xs sm:text-sm mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                     Adjust bill amount, member count, and split logic to see real-time penny-balanced settlement shares.
                   </p>
                 </div>
               </div>
 
               {/* Split Strategy Pill Switcher */}
-              <div
-                className={`flex items-center gap-1 p-1 rounded-xl border text-xs ${
-                  isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/80 border-slate-800'
-                }`}
-              >
+              <div className="macos-liquid-surface flex items-center gap-1 p-1 rounded-xl text-xs">
                 {(['EQUAL', 'PERCENTAGE', 'SHARES'] as const).map((mode) => (
                   <button
                     key={mode}
@@ -513,11 +491,7 @@ export default function LandingPage() {
             </div>
 
             {/* Bill Controls Grid */}
-            <div
-              className={`grid grid-cols-1 md:grid-cols-2 gap-6 my-6 p-4 rounded-2xl border ${
-                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/40 border-white/5'
-              }`}
-            >
+            <div className="macos-liquid-surface grid grid-cols-1 md:grid-cols-2 gap-6 my-6 p-4.5 rounded-2xl">
               {/* Left: Amount Input & Presets */}
               <div>
                 <label
@@ -530,7 +504,7 @@ export default function LandingPage() {
                 <div className="relative">
                   <span
                     className={`absolute left-4 top-1/2 -translate-y-1/2 font-extrabold text-lg ${
-                      isLight ? 'text-emerald-700' : 'text-emerald-400'
+                      isLight ? 'text-emerald-750' : 'text-emerald-400'
                     }`}
                   >
                     ₹
@@ -541,8 +515,8 @@ export default function LandingPage() {
                     onChange={(e) => setBillAmount(Math.max(10, Number(e.target.value) || 0))}
                     className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-lg font-bold border transition-colors focus:outline-none focus:border-emerald-500 ${
                       isLight
-                        ? 'bg-white border-slate-300 text-slate-900'
-                        : 'bg-slate-900 border-slate-700 text-white'
+                        ? 'bg-white/80 border-slate-300/80 text-slate-900 shadow-inner'
+                        : 'bg-slate-900/80 border-slate-700 text-white shadow-inner'
                     }`}
                   />
                 </div>
@@ -556,16 +530,16 @@ export default function LandingPage() {
                       className={`text-xs px-2.5 py-1 rounded-lg border font-medium flex items-center gap-1 transition-all ${
                         billAmount === b.amount
                           ? isLight
-                            ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold'
+                            ? 'border-emerald-600 bg-emerald-500/20 text-emerald-900 font-bold shadow-sm'
                             : 'border-emerald-500 bg-emerald-950/60 text-emerald-300 font-bold'
                           : isLight
-                          ? 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                          ? 'border-slate-300/60 bg-white/60 text-slate-700 hover:border-slate-400'
                           : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700'
                       }`}
                     >
                       <span>{b.icon}</span>
                       <span>{b.label}</span>
-                      <span className={`font-bold ${isLight ? 'text-slate-800' : 'text-slate-300'}`}>
+                      <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-slate-300'}`}>
                         ₹{b.amount.toLocaleString('en-IN')}
                       </span>
                     </button>
@@ -586,7 +560,7 @@ export default function LandingPage() {
                   <span
                     className={`text-xs font-bold px-2 py-0.5 rounded ${
                       isLight
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        ? 'bg-emerald-500/20 text-emerald-900 border border-emerald-400/30'
                         : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                     }`}
                   >
@@ -600,16 +574,16 @@ export default function LandingPage() {
                   value={memberCount}
                   onChange={(e) => setMemberCount(Number(e.target.value))}
                   className={`w-full h-2 rounded-lg appearance-none cursor-pointer accent-emerald-600 my-3 ${
-                    isLight ? 'bg-slate-200' : 'bg-slate-800'
+                    isLight ? 'bg-slate-300/80' : 'bg-slate-800'
                   }`}
                 />
-                <div className={`flex justify-between text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                <div className={`flex justify-between text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                   <span>2 Friends</span>
                   <span>4 Roommates</span>
                   <span>6 Travelers</span>
                 </div>
 
-                <div className={`mt-3 text-xs flex items-center gap-1.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                <div className={`mt-3 text-xs flex items-center gap-1.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                   <Gamepad2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>Interactive avatars feature custom gaming and cartoon characters!</span>
                 </div>
@@ -620,7 +594,7 @@ export default function LandingPage() {
             <div className="space-y-3">
               <div
                 className={`flex items-center justify-between text-xs font-bold uppercase tracking-wider px-2 ${
-                  isLight ? 'text-slate-500' : 'text-slate-400'
+                  isLight ? 'text-slate-600' : 'text-slate-400'
                 }`}
               >
                 <span>Participant & Avatar</span>
@@ -632,18 +606,14 @@ export default function LandingPage() {
                 {calculatedMembers.map((m) => (
                   <div
                     key={m.id}
-                    className={`p-3.5 rounded-2xl flex items-center justify-between gap-4 border transition-all ${
-                      isLight
-                        ? 'bg-white border-slate-200/90 hover:border-emerald-500/40 shadow-sm'
-                        : 'macos-glass border-white/5 hover:border-emerald-500/30'
-                    }`}
+                    className="macos-liquid-surface p-3.5 rounded-2xl flex items-center justify-between gap-4 transition-all hover:scale-[1.008]"
                   >
                     {/* User Profile */}
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-11 h-11 rounded-2xl overflow-hidden border p-0.5 shrink-0 shadow-sm ${
                           isLight
-                            ? 'border-emerald-300 bg-emerald-50'
+                            ? 'border-emerald-400/40 bg-emerald-50'
                             : 'border-emerald-500/30 bg-slate-800/80'
                         }`}
                       >
@@ -658,7 +628,7 @@ export default function LandingPage() {
                             <span
                               className={`px-1.5 py-0.2 rounded text-[10px] font-extrabold border ${
                                 isLight
-                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                  ? 'bg-emerald-500/20 text-emerald-900 border-emerald-400/30'
                                   : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                               }`}
                             >
@@ -666,7 +636,7 @@ export default function LandingPage() {
                             </span>
                           )}
                         </div>
-                        <span className={`text-xs block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <span className={`text-xs block ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                           {m.note}
                         </span>
                       </div>
@@ -700,7 +670,7 @@ export default function LandingPage() {
                         <span
                           className={`text-xs font-bold px-3 py-1.5 rounded-xl border flex items-center gap-1 ${
                             isLight
-                              ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
+                              ? 'text-emerald-900 bg-emerald-500/15 border-emerald-400/40'
                               : 'text-emerald-400 bg-emerald-950/40 border-emerald-500/20'
                           }`}
                         >
@@ -712,8 +682,8 @@ export default function LandingPage() {
                           onClick={() => handleOpenSimulatedUpiQr(m, m.share)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm border ${
                             isLight
-                              ? 'bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-800 border-emerald-300'
-                              : 'bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border-emerald-500/40'
+                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500'
+                              : 'bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white border-emerald-500/40'
                           }`}
                         >
                           <QrCode className="w-3.5 h-3.5" />
@@ -729,7 +699,7 @@ export default function LandingPage() {
             {/* Bottom summary bar */}
             <div
               className={`mt-6 pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs ${
-                isLight ? 'border-slate-200 text-slate-500' : 'border-slate-800 text-slate-400'
+                isLight ? 'border-slate-300/60 text-slate-600' : 'border-slate-800/80 text-slate-400'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -760,19 +730,15 @@ export default function LandingPage() {
       <section
         id="debt-minimizer"
         className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
-          isLight ? 'border-slate-200' : 'border-slate-800/80'
+          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border mb-3 ${
-              isLight
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-            }`}
-          >
-            <Scale className="w-3.5 h-3.5" />
-            <span>Mathematical Debt Graph Optimization</span>
+          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold mb-3">
+            <Scale className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span className={isLight ? 'text-emerald-900' : 'text-emerald-300'}>
+              Mathematical Debt Graph Optimization
+            </span>
           </div>
           <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Cut redundant payments by up to 70%.
@@ -782,17 +748,13 @@ export default function LandingPage() {
           </p>
 
           {/* Toggle Interactive Controller */}
-          <div
-            className={`inline-flex p-1 rounded-2xl border mt-6 shadow-inner ${
-              isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900 border-slate-800'
-            }`}
-          >
+          <div className="macos-liquid-surface inline-flex p-1 rounded-2xl mt-6 shadow-inner">
             <button
               onClick={() => setSimplificationActive(false)}
               className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
                 !simplificationActive
                   ? isLight
-                    ? 'bg-rose-100 text-rose-800 border border-rose-300 shadow-sm'
+                    ? 'bg-rose-500/20 text-rose-900 border border-rose-400/40 shadow-sm'
                     : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow'
                   : isLight
                   ? 'text-slate-600 hover:text-slate-900'
@@ -820,19 +782,15 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Card 1: Before Reduction */}
           <div
-            className={`p-6 rounded-3xl border transition-all ${
+            className={`macos-glass-card p-6 rounded-3xl relative transition-all ${
               !simplificationActive
-                ? isLight
-                  ? 'border-rose-400 bg-rose-50/70 ring-2 ring-rose-400/20'
-                  : 'border-rose-500/50 bg-rose-950/10 ring-2 ring-rose-500/20'
-                : isLight
-                ? 'border-slate-200 bg-white/70 opacity-60'
-                : 'border-slate-800 bg-slate-900/60 opacity-60'
+                ? 'ring-2 ring-rose-500/40'
+                : 'opacity-70'
             }`}
           >
             <div
               className={`flex items-center justify-between pb-4 border-b mb-4 ${
-                isLight ? 'border-rose-200' : 'border-slate-800'
+                isLight ? 'border-slate-300/60' : 'border-slate-800'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -841,11 +799,7 @@ export default function LandingPage() {
                   Without Simplification
                 </h4>
               </div>
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                  isLight ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-rose-500/20 text-rose-300'
-                }`}
-              >
+              <span className="macos-glass-pill px-2.5 py-0.5 text-xs font-bold text-rose-700 dark:text-rose-300">
                 5 Separate Transfers
               </span>
             </div>
@@ -860,9 +814,7 @@ export default function LandingPage() {
               ].map((t, idx) => (
                 <div
                   key={idx}
-                  className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
-                    isLight ? 'bg-white border-slate-200' : 'bg-slate-900/60 border-slate-800'
-                  }`}
+                  className="macos-liquid-surface p-3 rounded-xl flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-2">
                     <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{t.from}</span>
@@ -876,7 +828,7 @@ export default function LandingPage() {
 
             <div
               className={`mt-4 pt-3 border-t text-[11px] ${
-                isLight ? 'border-rose-200 text-slate-600' : 'border-slate-800/80 text-slate-400'
+                isLight ? 'border-slate-300/60 text-slate-600' : 'border-slate-800/80 text-slate-400'
               }`}
             >
               Total Cash Circulated:{' '}
@@ -888,19 +840,15 @@ export default function LandingPage() {
 
           {/* Card 2: After FairShare Greedy Simplification */}
           <div
-            className={`p-6 rounded-3xl border transition-all ${
+            className={`macos-glass-card p-6 rounded-3xl relative transition-all ${
               simplificationActive
-                ? isLight
-                  ? 'border-emerald-400 bg-emerald-50/70 ring-2 ring-emerald-400/20'
-                  : 'border-emerald-500/60 bg-emerald-950/20 ring-2 ring-emerald-500/20'
-                : isLight
-                ? 'border-slate-200 bg-white/70 opacity-60'
-                : 'border-slate-800 bg-slate-900/60 opacity-60'
+                ? 'ring-2 ring-emerald-500/40'
+                : 'opacity-70'
             }`}
           >
             <div
               className={`flex items-center justify-between pb-4 border-b mb-4 ${
-                isLight ? 'border-emerald-200' : 'border-slate-800'
+                isLight ? 'border-slate-300/60' : 'border-slate-800'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -909,13 +857,7 @@ export default function LandingPage() {
                   FairShare Optimized
                 </h4>
               </div>
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                  isLight
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                    : 'bg-emerald-500/20 text-emerald-300'
-                }`}
-              >
+              <span className="macos-glass-pill px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
                 Only 2 Direct Payments (60% Savings)
               </span>
             </div>
@@ -927,11 +869,7 @@ export default function LandingPage() {
               ].map((t, idx) => (
                 <div
                   key={idx}
-                  className={`p-4 rounded-xl border flex items-center justify-between text-sm ${
-                    isLight
-                      ? 'bg-white border-emerald-200 shadow-sm'
-                      : 'bg-emerald-950/30 border-emerald-500/30'
-                  }`}
+                  className="macos-liquid-surface p-4 rounded-xl flex items-center justify-between text-sm"
                 >
                   <div className="flex items-center gap-2.5">
                     <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{t.from}</span>
@@ -941,23 +879,19 @@ export default function LandingPage() {
                   <div className="text-right">
                     <span
                       className={`font-extrabold text-base block ${
-                        isLight ? 'text-emerald-700' : 'text-emerald-400'
+                        isLight ? 'text-emerald-750' : 'text-emerald-400'
                       }`}
                     >
                       ₹{t.amt}
                     </span>
-                    <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-emerald-300/80'}`}>
+                    <span className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-emerald-300/80'}`}>
                       {t.note}
                     </span>
                   </div>
                 </div>
               ))}
 
-              <div
-                className={`p-4 rounded-xl border text-xs ${
-                  isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-slate-900/60 border-slate-800 text-slate-300'
-                }`}
-              >
+              <div className="macos-liquid-surface p-4 rounded-xl text-xs">
                 <div
                   className={`flex items-center gap-2 font-bold mb-1 ${
                     isLight ? 'text-emerald-750' : 'text-emerald-300'
@@ -966,7 +900,7 @@ export default function LandingPage() {
                   <CheckCircle2 className="w-4 h-4" />
                   Mathematically Proven Balanced
                 </div>
-                <span>
+                <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>
                   Everyone ends with the exact same net balance (+₹900 received, -₹900 paid), eliminating 3 redundant money transfers and UPI steps entirely.
                 </span>
               </div>
@@ -974,7 +908,7 @@ export default function LandingPage() {
 
             <div
               className={`mt-4 pt-3 border-t text-[11px] font-semibold ${
-                isLight ? 'border-emerald-200 text-emerald-800' : 'border-slate-800/80 text-emerald-400'
+                isLight ? 'border-slate-300/60 text-emerald-800' : 'border-slate-800/80 text-emerald-400'
               }`}
             >
               Included free in all FairShare groups (No premium paywalls).
@@ -989,19 +923,15 @@ export default function LandingPage() {
       <section
         id="qr-ecosystem"
         className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
-          isLight ? 'border-slate-200' : 'border-slate-800/80'
+          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border mb-3 ${
-              isLight
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-            }`}
-          >
-            <QrCode className="w-3.5 h-3.5" />
-            <span>Universal QR Code Infrastructure</span>
+          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold mb-3">
+            <QrCode className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span className={isLight ? 'text-emerald-900' : 'text-emerald-300'}>
+              Universal QR Code Infrastructure
+            </span>
           </div>
           <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Point, scan, and settle. Zero typing needed.
@@ -1011,11 +941,7 @@ export default function LandingPage() {
           </p>
 
           {/* QR Feature Tabs */}
-          <div
-            className={`inline-flex p-1 rounded-2xl border mt-6 shadow-inner ${
-              isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900 border-slate-800'
-            }`}
-          >
+          <div className="macos-liquid-surface inline-flex p-1 rounded-2xl mt-6 shadow-inner">
             {[
               { id: 'UPI', label: '1. Instant UPI QR' },
               { id: 'GROUP', label: '2. Group Join QR' },
@@ -1039,25 +965,13 @@ export default function LandingPage() {
         </div>
 
         {/* QR Showcase Card */}
-        <div
-          className={`max-w-4xl mx-auto p-6 sm:p-10 rounded-3xl border shadow-2xl transition-all ${
-            isLight
-              ? 'bg-white border-slate-200 shadow-slate-200/50'
-              : 'macos-glass-card border-white/10'
-          }`}
-        >
+        <div className="macos-glass-card max-w-4xl mx-auto p-6 sm:p-10 rounded-3xl shadow-2xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             {/* Left: Explanation */}
             <div>
               {qrTab === 'UPI' && (
                 <div>
-                  <span
-                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${
-                      isLight
-                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                    }`}
-                  >
+                  <span className="macos-glass-pill px-2.5 py-1 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
                     BANK-TO-BANK SETTLEMENT
                   </span>
                   <h3 className={`text-2xl font-bold mt-3 mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -1085,13 +999,7 @@ export default function LandingPage() {
 
               {qrTab === 'GROUP' && (
                 <div>
-                  <span
-                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${
-                      isLight
-                        ? 'bg-teal-100 text-teal-800 border-teal-300'
-                        : 'bg-teal-500/20 text-teal-300 border-teal-500/30'
-                    }`}
-                  >
+                  <span className="macos-glass-pill px-2.5 py-1 text-[10px] font-bold text-teal-800 dark:text-teal-300">
                     FRICTIONLESS ONBOARDING
                   </span>
                   <h3 className={`text-2xl font-bold mt-3 mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -1119,13 +1027,7 @@ export default function LandingPage() {
 
               {qrTab === 'CONNECT' && (
                 <div>
-                  <span
-                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${
-                      isLight
-                        ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
-                        : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
-                    }`}
-                  >
+                  <span className="macos-glass-pill px-2.5 py-1 text-[10px] font-bold text-indigo-800 dark:text-indigo-300">
                     IDENTITY & PEER NETWORKING
                   </span>
                   <h3 className={`text-2xl font-bold mt-3 mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -1153,11 +1055,7 @@ export default function LandingPage() {
             </div>
 
             {/* Right: Live Interactive Rendered QR Card */}
-            <div
-              className={`flex flex-col items-center justify-center p-6 rounded-2xl border shadow-inner ${
-                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-white/10'
-              }`}
-            >
+            <div className="macos-liquid-surface flex flex-col items-center justify-center p-6 rounded-2xl">
               <div className="p-3 bg-white rounded-2xl shadow-xl border border-slate-200">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
@@ -1179,7 +1077,7 @@ export default function LandingPage() {
                   ? 'Join Group: Goa Beach Villa'
                   : 'Connect with: Shadow Ninja'}
               </span>
-              <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                 Scan with your smartphone camera
               </span>
             </div>
@@ -1193,17 +1091,11 @@ export default function LandingPage() {
       <section
         id="features"
         className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
-          isLight ? 'border-slate-200' : 'border-slate-800/80'
+          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span
-            className={`text-xs font-bold px-3 py-1 rounded-full border ${
-              isLight
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-            }`}
-          >
+          <span className="macos-glass-pill text-xs font-bold px-3.5 py-1 text-emerald-800 dark:text-emerald-400">
             ENGINEERED FOR FINTECH EXCELLENCE
           </span>
           <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight mt-3 ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -1249,16 +1141,12 @@ export default function LandingPage() {
           ].map((f, i) => (
             <div
               key={i}
-              className={`p-6 rounded-3xl border transition-all group ${
-                isLight
-                  ? 'bg-white border-slate-200/90 hover:border-emerald-500/50 shadow-sm hover:shadow-md'
-                  : 'macos-glass-card border-white/5 hover:border-emerald-500/40'
-              }`}
+              className="macos-glass-card p-6 rounded-3xl transition-all group hover:-translate-y-1 hover:shadow-xl"
             >
               <div
                 className={`w-11 h-11 rounded-2xl border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform ${
                   isLight
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-800'
                     : 'bg-emerald-950/60 border-emerald-500/30 text-emerald-400'
                 }`}
               >
@@ -1279,17 +1167,11 @@ export default function LandingPage() {
       <section
         id="comparison"
         className={`py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t ${
-          isLight ? 'border-slate-200' : 'border-slate-800/80'
+          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <span
-            className={`text-xs font-bold px-3 py-1 rounded-full border ${
-              isLight
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-            }`}
-          >
+          <span className="macos-glass-pill text-xs font-bold px-3.5 py-1 text-emerald-800 dark:text-emerald-400">
             TRANSPARENT VALUE
           </span>
           <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight mt-3 ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -1300,18 +1182,12 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div
-          className={`rounded-3xl overflow-hidden border shadow-2xl transition-all ${
-            isLight
-              ? 'bg-white border-slate-200 shadow-slate-200/50'
-              : 'macos-glass-card border-white/10'
-          }`}
-        >
+        <div className="macos-glass-card rounded-3xl overflow-hidden shadow-2xl">
           <div
             className={`grid grid-cols-3 p-4 sm:p-5 font-bold text-xs uppercase tracking-wider border-b ${
               isLight
-                ? 'bg-slate-100 text-slate-700 border-slate-200'
-                : 'bg-slate-900/90 text-slate-300 border-slate-800'
+                ? 'bg-white/40 text-slate-800 border-slate-300/60'
+                : 'bg-slate-900/60 text-slate-300 border-slate-800'
             }`}
           >
             <div>Feature</div>
@@ -1321,7 +1197,7 @@ export default function LandingPage() {
 
           <div
             className={`divide-y text-xs sm:text-sm ${
-              isLight ? 'divide-slate-200' : 'divide-slate-800/70'
+              isLight ? 'divide-slate-300/50' : 'divide-slate-800/70'
             }`}
           >
             {[
@@ -1337,7 +1213,7 @@ export default function LandingPage() {
               <div
                 key={i}
                 className={`grid grid-cols-3 p-4 items-center transition-colors ${
-                  isLight ? 'hover:bg-slate-50' : 'hover:bg-slate-900/40'
+                  isLight ? 'hover:bg-white/40' : 'hover:bg-slate-800/40'
                 }`}
               >
                 <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{row.feat}</span>
@@ -1362,7 +1238,7 @@ export default function LandingPage() {
       <section
         id="faqs"
         className={`py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto border-t ${
-          isLight ? 'border-slate-200' : 'border-slate-800/80'
+          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
         <div className="text-center max-w-2xl mx-auto mb-14">
@@ -1401,11 +1277,7 @@ export default function LandingPage() {
             return (
               <div
                 key={index}
-                className={`rounded-2xl border overflow-hidden transition-all ${
-                  isLight
-                    ? 'bg-white border-slate-200 shadow-sm'
-                    : 'macos-glass-card border-white/5'
-                }`}
+                className="macos-glass-card rounded-2xl overflow-hidden transition-all"
               >
                 <button
                   onClick={() => setOpenFaq(isOpen ? null : index)}
@@ -1426,7 +1298,7 @@ export default function LandingPage() {
                   <div
                     className={`px-5 pb-5 text-xs sm:text-sm leading-relaxed border-t pt-3 ${
                       isLight
-                        ? 'border-slate-200 text-slate-600'
+                        ? 'border-slate-300/60 text-slate-700'
                         : 'border-slate-800/80 text-slate-300/90'
                     }`}
                   >
@@ -1444,19 +1316,13 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       <section
         className={`py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center border-t ${
-          isLight ? 'border-slate-200' : 'border-slate-800/80'
+          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
-        <div
-          className={`p-8 sm:p-14 rounded-3xl border relative overflow-hidden shadow-2xl transition-all ${
-            isLight
-              ? 'bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white border-emerald-300 shadow-emerald-100/50'
-              : 'macos-glass-card border-emerald-500/30'
-          }`}
-        >
+        <div className="macos-glass-card p-8 sm:p-14 rounded-3xl relative overflow-hidden shadow-2xl">
           <div
             className={`absolute top-0 right-0 w-64 h-64 blur-[90px] rounded-full pointer-events-none ${
-              isLight ? 'bg-emerald-300/30' : 'bg-emerald-500/10'
+              isLight ? 'bg-emerald-400/25' : 'bg-emerald-500/15'
             }`}
           />
 
@@ -1478,13 +1344,9 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/auth/login"
-              className={`w-full sm:w-auto px-7 py-3.5 rounded-2xl font-semibold text-sm transition-all border ${
-                isLight
-                  ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-800 shadow-sm'
-                  : 'macos-glass-card hover:border-emerald-500/40 text-slate-200'
-              }`}
+              className="macos-liquid-surface w-full sm:w-auto px-7 py-3.5 rounded-2xl font-semibold text-sm transition-all"
             >
-              Sign In to Existing Account
+              <span className={isLight ? 'text-slate-800' : 'text-slate-200'}>Sign In to Existing Account</span>
             </Link>
           </div>
         </div>
@@ -1494,7 +1356,7 @@ export default function LandingPage() {
       <footer
         className={`border-t py-10 px-4 text-xs transition-colors ${
           isLight
-            ? 'bg-slate-100/80 border-slate-200 text-slate-600'
+            ? 'bg-slate-200/40 border-slate-300/60 text-slate-600'
             : 'bg-[#05070A] border-slate-800/80 text-slate-400'
         }`}
       >
