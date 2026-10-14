@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import { ThemeProvider as MUIThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider as MUIThemeProvider } from '@mui/material';
 import { lightTheme, darkTheme } from '@/theme/theme';
 
 type ThemeMode = 'light' | 'dark';
@@ -44,7 +44,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <ThemeContext.Provider value={{ mode, toggleTheme, setMode: handleSetMode }}>
       <MUIThemeProvider theme={theme}>
-        <CssBaseline />
         {children}
       </MUIThemeProvider>
     </ThemeContext.Provider>

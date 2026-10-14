@@ -70,8 +70,8 @@ export default function LandingPage() {
             100% Free • No Subscription Paywalls • Open Source
           </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-100 leading-[1.08] mb-6">
-            Split expenses fairly, <br />
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-100 leading-[1.15] mb-6">
+            Split expenses fairly, <br className="hidden sm:inline" />
             <span className="text-emerald-400">keep friendships intact.</span>
           </h1>
 
