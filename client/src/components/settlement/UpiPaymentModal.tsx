@@ -82,13 +82,18 @@ export default function UpiPaymentModal({
       fullWidth
       slotProps={{
         paper: {
+          className: 'macos-glass-card',
           sx: {
             borderRadius: 4,
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.divider}`,
+            bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(24, 25, 30, 0.88)',
+            backdropFilter: 'blur(28px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+            border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.75)' : 'rgba(255, 255, 255, 0.12)'}`,
+            boxShadow: isLight
+              ? '0 20px 48px -12px rgba(14, 98, 69, 0.18), inset 0 1px 1px 0 rgba(255, 255, 255, 0.85)'
+              : '0 24px 56px -12px rgba(0, 0, 0, 0.65), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)',
             color: 'text.primary',
             backgroundImage: 'none',
-            boxShadow: isLight ? '0 8px 30px rgba(0,0,0,0.08)' : '0 8px 30px rgba(0,0,0,0.5)',
           },
         },
       }}

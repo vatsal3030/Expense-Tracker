@@ -19,6 +19,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { groupApi, settlementApi } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
+import QrCodeModal from '@/components/common/QrCodeModal';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   FOOD: '🍔', TRANSPORT: '🚗', ENTERTAINMENT: '🎬', SHOPPING: '🛍️',
@@ -41,6 +42,7 @@ function GroupDetailContent() {
   const [inviteContact, setInviteContact] = useState('');
   const [copied, setCopied] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   // UPI Payment Modal State
   const [upiModal, setUpiModal] = useState<{
@@ -239,6 +241,27 @@ function GroupDetailContent() {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Button
+              variant="outlined"
+              startIcon={<QrCode2 fontSize="small" />}
+              onClick={() => setQrModalOpen(true)}
+              sx={{
+                borderRadius: 2.5,
+                borderColor: theme.palette.divider,
+                color: 'text.primary',
+                bgcolor: 'background.paper',
+                fontWeight: 600,
+                textTransform: 'none',
+                px: 2,
+                py: 0.75,
+                '&:hover': {
+                  borderColor: '#0E6245',
+                  bgcolor: alpha('#0E6245', 0.04),
+                },
+              }}
+            >
+              Group QR
+            </Button>
             <Button
               variant="outlined"
               startIcon={<Share fontSize="small" />}
@@ -947,6 +970,17 @@ function GroupDetailContent() {
             setToastMessage(`Payment of ${formatCurrency(upiModal.amount)} to ${upiModal.payeeName} initiated!`);
             fetchGroup();
           }}
+        />
+
+        {/* Group Join QR Code Modal */}
+        <QrCodeModal
+          open={qrModalOpen}
+          onClose={() => setQrModalOpen(false)}
+          title={`Join ${group?.name || 'Group'}`}
+          subtitle="Scan this QR code with any smartphone camera or FairShare app to join this group instantly."
+          value={inviteLink}
+          badgeText="Instant Group Join"
+          downloadFileName={`fairshare-group-${group?.name?.toLowerCase().replace(/\s+/g, '-') || 'invite'}-qr`}
         />
 
         {/* Feedback Snackbar */}

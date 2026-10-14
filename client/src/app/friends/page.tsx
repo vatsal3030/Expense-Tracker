@@ -10,18 +10,19 @@ import {
 } from '@mui/material';
 import {
   PersonAdd, Check, Close, People, Search, Delete,
-  ContentCopy, WhatsApp, ReceiptLong, Share, ArrowForward,
+  ContentCopy, WhatsApp, ReceiptLong, Share, ArrowForward, QrCode2,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { friendApi, userApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import QrCodeModal from '@/components/common/QrCodeModal';
 
 export default function FriendsPage() {
   const theme = useTheme();
   const router = useRouter();
   const isLight = theme.palette.mode === 'light';
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
   const [friends, setFriends] = useState<any[]>([]);
   const [pending, setPending] = useState<any[]>([]);
@@ -38,6 +39,7 @@ export default function FriendsPage() {
   // Toast message
   const [toastMessage, setToastMessage] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   const hasLoadedFriendsRef = useRef(false);
 
@@ -190,24 +192,47 @@ export default function FriendsPage() {
             </Typography>
           </Box>
 
-          <Button
-            variant="contained"
-            startIcon={<PersonAdd />}
-            onClick={() => setSearchOpen(true)}
-            sx={{
-              borderRadius: 2.5,
-              px: 3,
-              py: 1,
-              fontWeight: 700,
-              bgcolor: '#0E6245',
-              color: '#FFFFFF',
-              boxShadow: '0 2px 8px rgba(14, 98, 69, 0.25)',
-              textTransform: 'none',
-              '&:hover': { bgcolor: '#094A34', boxShadow: '0 4px 14px rgba(14, 98, 69, 0.35)' },
-            }}
-          >
-            Add Friend
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Button
+              variant="outlined"
+              startIcon={<QrCode2 />}
+              onClick={() => setQrModalOpen(true)}
+              sx={{
+                borderRadius: 2.5,
+                px: 2.5,
+                py: 1,
+                fontWeight: 600,
+                borderColor: theme.palette.divider,
+                color: 'text.primary',
+                bgcolor: 'background.paper',
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: '#0E6245',
+                  bgcolor: alpha('#0E6245', 0.04),
+                },
+              }}
+            >
+              My QR Code
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<PersonAdd />}
+              onClick={() => setSearchOpen(true)}
+              sx={{
+                borderRadius: 2.5,
+                px: 3,
+                py: 1,
+                fontWeight: 700,
+                bgcolor: '#0E6245',
+                color: '#FFFFFF',
+                boxShadow: '0 2px 8px rgba(14, 98, 69, 0.25)',
+                textTransform: 'none',
+                '&:hover': { bgcolor: '#094A34', boxShadow: '0 4px 14px rgba(14, 98, 69, 0.35)' },
+              }}
+            >
+              Add Friend
+            </Button>
+          </Box>
         </Box>
 
         {/* Personal Invite Banner (Savexa & Ocupite style) */}
@@ -281,6 +306,7 @@ export default function FriendsPage() {
                 </Button>
                 <IconButton
                   onClick={handleShareWhatsApp}
+                  title="Share on WhatsApp"
                   sx={{
                     bgcolor: alpha('#25D366', 0.1),
                     color: '#25D366',
@@ -289,6 +315,18 @@ export default function FriendsPage() {
                   }}
                 >
                   <WhatsApp fontSize="small" />
+                </IconButton>
+                <IconButton
+                  onClick={() => setQrModalOpen(true)}
+                  title="Show QR Code"
+                  sx={{
+                    bgcolor: alpha('#0E6245', 0.1),
+                    color: '#0E6245',
+                    borderRadius: 2,
+                    '&:hover': { bgcolor: alpha('#0E6245', 0.2) },
+                  }}
+                >
+                  <QrCode2 fontSize="small" />
                 </IconButton>
               </Box>
             </Grid>
@@ -418,7 +456,7 @@ export default function FriendsPage() {
                         >
                           <ListItemAvatar>
                             <Avatar
-                              src={f.friend?.avatarUrl || undefined}
+                              src={f.friend?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(f.friend?.name || f.friend?.email || 'friend')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
                               sx={{
                                 width: 44,
                                 height: 44,
@@ -698,6 +736,17 @@ export default function FriendsPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Friend Connect QR Modal */}
+        <QrCodeModal
+          open={qrModalOpen}
+          onClose={() => setQrModalOpen(false)}
+          title="Connect with Me"
+          subtitle={`Scan with your camera or FairShare app to add ${profile?.name || user?.user_metadata?.name || 'me'} as a friend instantly.`}
+          value={personalInviteLink}
+          badgeText="Personal Connect"
+          downloadFileName={`fairshare-connect-${(profile?.name || user?.user_metadata?.name || 'user').toLowerCase().replace(/\s+/g, '-')}-qr`}
+        />
 
         {/* Global Feedback Snackbar */}
         <Snackbar

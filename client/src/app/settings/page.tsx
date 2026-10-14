@@ -24,12 +24,18 @@ import { userApi, expenseApi, groupApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+  { name: 'Shadow Ninja', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=ShadowNinja&backgroundColor=b6e3f4' },
+  { name: 'Pixel Mage', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=PixelMage&backgroundColor=ffd5dc' },
+  { name: 'Robo Mecha', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=MechaZero&backgroundColor=c0aede' },
+  { name: 'Astro Pilot', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=AstroPilot&backgroundColor=ffdfbf' },
+  { name: 'Battle Knight', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=PaladinKnight&backgroundColor=d1d4f9' },
+  { name: 'Cyber Fox', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=CyberFox&backgroundColor=b6e3f4' },
+  { name: 'Forest Elf', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=ForestElf&backgroundColor=c0aede' },
+  { name: 'Neon Samurai', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=NeonSamurai&backgroundColor=ffd5dc' },
+  { name: 'Gamer Bot', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=GamerBot99&backgroundColor=ffdfbf' },
+  { name: 'Star Voyager', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=StarVoyager&backgroundColor=d1d4f9' },
+  { name: 'Dragon Tamer', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=DragonTamer&backgroundColor=b6e3f4' },
+  { name: 'Arcade Champ', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=ArcadeChamp&backgroundColor=c0aede' },
 ];
 
 const PREFERENCES_STORAGE_KEY = 'owino_user_preferences';
@@ -609,23 +615,44 @@ export default function SettingsPage() {
                   Pick from curated presets or provide a custom image URL
                 </Typography>
 
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
-                  {PRESET_AVATARS.map((url, idx) => {
-                    const isSelected = form.avatarUrl === url;
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 3 }}>
+                  {PRESET_AVATARS.map((item, idx) => {
+                    const isSelected = form.avatarUrl === item.url;
                     return (
-                      <Avatar
-                        key={idx}
-                        src={url}
-                        onClick={() => setForm({ ...form, avatarUrl: url })}
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          cursor: 'pointer',
-                          border: isSelected ? '3px solid #0E6245' : `2px solid transparent`,
-                          transition: 'all 0.2s ease',
-                          '&:hover': { transform: 'scale(1.08)' },
-                        }}
-                      />
+                      <Tooltip key={idx} title={item.name} arrow>
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Avatar
+                            src={item.url}
+                            onClick={() => setForm({ ...form, avatarUrl: item.url })}
+                            sx={{
+                              width: 52,
+                              height: 52,
+                              mx: 'auto',
+                              cursor: 'pointer',
+                              border: isSelected ? '3px solid #0E6245' : `2px solid ${alpha(theme.palette.divider, 0.6)}`,
+                              bgcolor: alpha('#0E6245', 0.06),
+                              boxShadow: isSelected ? '0 4px 14px rgba(14,98,69,0.35)' : 'none',
+                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                              '&:hover': { transform: 'scale(1.12)', borderColor: '#0E6245' },
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontSize: '0.65rem',
+                              fontWeight: isSelected ? 750 : 500,
+                              color: isSelected ? '#0E6245' : 'text.secondary',
+                              display: 'block',
+                              mt: 0.5,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {item.name}
+                          </Typography>
+                        </Box>
+                      </Tooltip>
                     );
                   })}
                 </Box>

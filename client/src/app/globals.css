@@ -155,3 +155,79 @@ html {
   }
 }
 
+/* macOS-Inspired Liquid Glassmorphism Utilities */
+.macos-glass {
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+    0 8px 32px -4px rgba(0, 0, 0, 0.06),
+    0 2px 6px -1px rgba(14, 98, 69, 0.04);
+}
+
+.dark .macos-glass {
+  background: rgba(18, 22, 28, 0.72);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 40px -4px rgba(0, 0, 0, 0.4),
+    0 2px 8px -1px rgba(16, 185, 129, 0.08);
+}
+
+.macos-glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 20px;
+  box-shadow: 
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7),
+    0 10px 30px -5px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .macos-glass-card {
+  background: rgba(20, 24, 33, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.12),
+    0 14px 40px -5px rgba(0, 0, 0, 0.45);
+}
+
+.macos-glass-pill {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 9999px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.dark .macos-glass-pill {
+  background: rgba(28, 33, 44, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.macos-specular-glow {
+  position: relative;
+  overflow: hidden;
+}
+.macos-specular-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+}
+
