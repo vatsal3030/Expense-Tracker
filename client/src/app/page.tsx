@@ -1,317 +1,326 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React from 'react';
+import Link from 'next/link';
 import {
-  Box,
-  Button,
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  useTheme,
-  alpha,
-  Stack,
-  Chip,
-} from '@mui/material';
-import {
-  GroupWork as GroupIcon,
-  TrendingUp as TrendingIcon,
-  Receipt as ReceiptIcon,
-  Savings as SavingsIcon,
-  Speed as SpeedIcon,
-  Security as SecurityIcon,
-  CurrencyExchange as CurrencyIcon,
-  Notifications as NotifIcon,
-} from '@mui/icons-material';
-import { useAuth } from '@/providers/AuthProvider';
-
-const features = [
-  {
-    icon: <GroupIcon sx={{ fontSize: 32 }} />,
-    title: 'Group Splitting',
-    desc: 'Split bills with friends, roommates, or travel buddies. Equal, percentage, or custom splits.',
-    gradient: 'linear-gradient(135deg, #6366f1, #818cf8)',
-  },
-  {
-    icon: <TrendingIcon sx={{ fontSize: 32 }} />,
-    title: 'Smart Analytics',
-    desc: 'Visual dashboards with spending trends, category breakdowns, and monthly insights.',
-    gradient: 'linear-gradient(135deg, #10b981, #34d399)',
-  },
-  {
-    icon: <ReceiptIcon sx={{ fontSize: 32 }} />,
-    title: 'Receipt OCR',
-    desc: 'Scan receipts and auto-fill expense details. No more manual entry.',
-    gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
-  },
-  {
-    icon: <SavingsIcon sx={{ fontSize: 32 }} />,
-    title: 'Budget Planning',
-    desc: 'Set budgets by category with smart alerts before you overspend.',
-    gradient: 'linear-gradient(135deg, #ec4899, #f472b6)',
-  },
-  {
-    icon: <CurrencyIcon sx={{ fontSize: 32 }} />,
-    title: 'Multi-Currency',
-    desc: 'Real-time currency conversion. Track expenses in any currency worldwide.',
-    gradient: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
-  },
-  {
-    icon: <SpeedIcon sx={{ fontSize: 32 }} />,
-    title: 'Debt Simplification',
-    desc: 'Smart algorithm minimizes the number of transactions needed to settle up.',
-    gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)',
-  },
-  {
-    icon: <NotifIcon sx={{ fontSize: 32 }} />,
-    title: 'Smart Notifications',
-    desc: 'Get notified about settlements, budget alerts, and recurring expenses.',
-    gradient: 'linear-gradient(135deg, #ef4444, #f87171)',
-  },
-  {
-    icon: <SecurityIcon sx={{ fontSize: 32 }} />,
-    title: 'Bank-Level Security',
-    desc: 'End-to-end encryption, JWT auth, and industry-standard security practices.',
-    gradient: 'linear-gradient(135deg, #14b8a6, #5eead4)',
-  },
-];
+  ArrowRight,
+  CheckCircle2,
+  Users,
+  PieChart,
+  ShieldCheck,
+  Zap,
+  TrendingUp,
+  Receipt,
+  Scale,
+  Sparkles,
+  Lock,
+} from 'lucide-react';
+import BrandLogo from '@/components/brand/BrandLogo';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function LandingPage() {
-  const theme = useTheme();
-  const router = useRouter();
-  const { user, loading } = useAuth();
-
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* Hero Section */}
-      <Box
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          pt: { xs: 10, md: 16 },
-          pb: { xs: 10, md: 14 },
-        }}
-      >
-        {/* Gradient blobs */}
-        <Box
-          sx={{
-            position: 'absolute',
-            width: 600,
-            height: 600,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
-            top: -200,
-            right: -200,
-            filter: 'blur(40px)',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            width: 400,
-            height: 400,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(236,72,153,0.12) 0%, transparent 70%)',
-            bottom: -100,
-            left: -100,
-            filter: 'blur(40px)',
-          }}
-        />
+    <div className="min-h-screen bg-[#090d16] text-slate-100 selection:bg-emerald-500/25 selection:text-emerald-300">
+      {/* Top Navigation */}
+      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-[#090d16]/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <BrandLogo size="md" />
 
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          {/* Nav */}
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: { xs: 8, md: 12 },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box
-                sx={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 3,
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 20px rgba(99,102,241,0.4)',
-                }}
-              >
-                <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '1.2rem' }}>F</Typography>
-              </Box>
-              <Typography variant="h5" fontWeight={800}>
-                FairShare
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1.5}>
-              <Button
-                variant="outlined"
-                onClick={() => router.push('/auth/login')}
-                sx={{ borderRadius: 3 }}
-              >
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+            <a href="#features" className="hover:text-emerald-400 transition-colors">
+              Features
+            </a>
+            <a href="#how-it-works" className="hover:text-emerald-400 transition-colors">
+              How it Works
+            </a>
+            <a href="#comparison" className="hover:text-emerald-400 transition-colors">
+              FairShare vs Others
+            </a>
+            <a href="#security" className="hover:text-emerald-400 transition-colors">
+              Security
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <Link href="/auth/login">
+              <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">
                 Sign In
               </Button>
-              <Button
-                variant="contained"
-                onClick={() => router.push('/auth/signup')}
-                sx={{ borderRadius: 3 }}
-              >
-                Get Started — Free
+            </Link>
+            <Link href="/auth/signup">
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
+                Get Started
+                <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
-            </Stack>
-          </Box>
+            </Link>
+          </div>
+        </div>
+      </header>
 
-          {/* Hero Content */}
-          <Box sx={{ textAlign: 'center', maxWidth: 800, mx: 'auto' }}>
-            <Chip
-              label="✨ 100% Free — No Premium Needed"
-              sx={{
-                mb: 3,
-                fontWeight: 600,
-                background: alpha(theme.palette.primary.main, 0.1),
-                color: theme.palette.primary.main,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                fontSize: '0.85rem',
-                height: 36,
-              }}
-            />
-            <Typography
-              variant="h1"
-              sx={{
-                fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' },
-                fontWeight: 900,
-                lineHeight: 1.1,
-                mb: 3,
-                letterSpacing: '-0.03em',
-              }}
-            >
-              Split expenses,{' '}
-              <Box
-                component="span"
-                className="gradient-text"
-              >
-                not friendships.
-              </Box>
-            </Typography>
-            <Typography
-              variant="h6"
-              color="text.secondary"
-              sx={{ maxWidth: 600, mx: 'auto', mb: 5, fontWeight: 400, lineHeight: 1.7 }}
-            >
-              Track shared expenses, settle debts with one tap, and get AI-powered spending insights.
-              All the features others charge for — completely free.
-            </Typography>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
-              <Button
-                variant="contained"
-                size="large"
-                onClick={() => router.push('/auth/signup')}
-                sx={{
-                  px: 5,
-                  py: 1.5,
-                  fontSize: '1.05rem',
-                  borderRadius: 4,
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                  boxShadow: '0 8px 32px rgba(99,102,241,0.35)',
-                  '&:hover': {
-                    boxShadow: '0 12px 40px rgba(99,102,241,0.45)',
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-28 overflow-hidden bg-grid-pattern">
+        {/* Subtle radial emerald vignette (not AI purple!) */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none" />
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/40 text-emerald-400 text-xs font-semibold mb-8 animate-fade-in">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            100% Free • No Subscription Paywalls • Open Source
+          </div>
+
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-100 leading-[1.08] mb-6">
+            Split expenses fairly, <br />
+            <span className="text-emerald-400">keep friendships intact.</span>
+          </h1>
+
+          <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-400 leading-relaxed mb-10">
+            The modern, privacy-focused expense ledger. Split shared bills, simplify group debts with mathematical precision, and track category budgets — without ads or premium paywalls.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <Link href="/auth/signup" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-8 shadow-lg shadow-emerald-950/40">
                 Start Splitting for Free
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-              <Button
-                variant="outlined"
-                size="large"
-                sx={{ px: 5, py: 1.5, fontSize: '1.05rem', borderRadius: 4, borderWidth: 2 }}
-              >
-                See How It Works
+            </Link>
+            <Link href="/dashboard" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200">
+                Live App Preview
               </Button>
-            </Stack>
-          </Box>
-        </Container>
-      </Box>
+            </Link>
+          </div>
 
-      {/* Features */}
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
-          <Typography variant="h3" fontWeight={800} sx={{ mb: 2 }}>
-            Everything you need.{' '}
-            <Box component="span" className="gradient-text">Nothing you don&apos;t.</Box>
-          </Typography>
-          <Typography variant="h6" color="text.secondary" fontWeight={400}>
-            Premium features that competitors charge for — all included for free.
-          </Typography>
-        </Box>
+          {/* FinTech Interactive App Preview Card */}
+          <div className="mt-6 rounded-2xl border border-slate-800 bg-[#0f172a]/95 p-4 sm:p-6 shadow-2xl text-left max-w-4xl mx-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-950 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-lg">
+                  🏖️
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-100 text-sm sm:text-base">Goa Weekend Trip</h3>
+                  <p className="text-xs text-slate-400">4 Members • Last activity 2 hours ago</p>
+                </div>
+              </div>
+              <Badge variant="success">All Settled</Badge>
+            </div>
 
-        <Grid container spacing={3}>
-          {features.map((f, i) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-              <Card
-                className="animate-fade-in stagger-item"
-                sx={{
-                  height: '100%',
-                  cursor: 'default',
-                  position: 'relative',
-                  overflow: 'visible',
-                }}
-              >
-                <CardContent sx={{ p: 3, textAlign: 'center' }}>
-                  <Box
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 3,
-                      background: f.gradient,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 2.5,
-                      color: '#fff',
-                      boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.2)}`,
-                    }}
-                  >
-                    {f.icon}
-                  </Box>
-                  <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
-                    {f.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" lineHeight={1.7}>
-                    {f.desc}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div className="p-3.5 rounded-xl border border-slate-800/80 bg-slate-900/60">
+                <span className="text-xs text-slate-400 block font-medium">Total Trip Spend</span>
+                <span className="text-xl font-bold text-slate-100 mt-1 block">₹28,299</span>
+                <span className="text-[11px] text-emerald-400 font-medium mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> 4 Shared Expenses
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-slate-800/80 bg-slate-900/60">
+                <span className="text-xs text-slate-400 block font-medium">You Are Owed</span>
+                <span className="text-xl font-bold text-emerald-400 mt-1 block">+₹4,200</span>
+                <span className="text-[11px] text-slate-400 mt-1 block">From Sam Wilson</span>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-slate-800/80 bg-slate-900/60">
+                <span className="text-xs text-slate-400 block font-medium">Debt Minimization</span>
+                <span className="text-xl font-bold text-slate-100 mt-1 block">2 Transfers</span>
+                <span className="text-[11px] text-emerald-400 font-medium mt-1 block">Reduced from 6 transfers</span>
+              </div>
+            </div>
+
+            {/* Simulated Live Expense Row */}
+            <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-300">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="font-medium text-slate-200">Beach Villa 3 Nights</span>
+                <span className="text-slate-400">• Paid by Alex</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="font-semibold text-slate-200">₹16,000</span>
+                <span className="text-slate-400">₹4,000 / person</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Grid */}
+      <section id="features" className="py-24 border-t border-slate-800/80 bg-[#090d16]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <Badge variant="default" className="mb-3">
+              Core Capabilities
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-100 tracking-tight">
+              Built for people who want precision, not paywalls.
+            </h2>
+            <p className="mt-4 text-slate-400 text-base">
+              Everything Splitwise locks behind a monthly subscription fee is completely free and unrestricted in FairShare.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="hover:border-slate-700 transition-colors">
+              <CardHeader>
+                <div className="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+                  <Scale className="w-5 h-5" />
+                </div>
+                <CardTitle>Greedy Debt Simplification</CardTitle>
+                <CardDescription>
+                  Mathematical debt graph optimization that reduces 20 circular IOUs to just 3 clean, direct payments.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="hover:border-slate-700 transition-colors">
+              <CardHeader>
+                <div className="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+                  <PieChart className="w-5 h-5" />
+                </div>
+                <CardTitle>Flexible Splitting Modes</CardTitle>
+                <CardDescription>
+                  Split equally, by exact custom amount, percentage share, or weighted units for complex group scenarios.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="hover:border-slate-700 transition-colors">
+              <CardHeader>
+                <div className="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <CardTitle>Category Budgets & Alerts</CardTitle>
+                <CardDescription>
+                  Set spending caps by category (Food, Travel, Utilities) and receive proactive alerts at 80% threshold.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="hover:border-slate-700 transition-colors">
+              <CardHeader>
+                <div className="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+                  <Users className="w-5 h-5" />
+                </div>
+                <CardTitle>Unlimited Groups & Friends</CardTitle>
+                <CardDescription>
+                  Create trips, apartment ledgers, office lunches, and family expenses without artificial limits or friend caps.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="hover:border-slate-700 transition-colors">
+              <CardHeader>
+                <div className="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <CardTitle>Settlement Audit Trail</CardTitle>
+                <CardDescription>
+                  Two-party settlement verification ensures transactions are only settled when both the payer and payee confirm.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="hover:border-slate-700 transition-colors">
+              <CardHeader>
+                <div className="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <CardTitle>Bank-Grade Security</CardTitle>
+                <CardDescription>
+                  Row-level security, rate-limiting, encrypted auth sessions, and strict Zod validation protect all transaction data.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Comparison Section */}
+      <section id="comparison" className="py-24 border-t border-slate-800/80 bg-[#0f172a]/40">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-slate-100 tracking-tight">
+              FairShare vs Other Apps
+            </h2>
+            <p className="mt-3 text-slate-400 text-sm">
+              Why settle for limited free tiers and ad clutter when you can have a pure, high-performance tool?
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/90">
+            <div className="grid grid-cols-3 p-4 bg-slate-800/60 font-semibold text-xs uppercase tracking-wider text-slate-300">
+              <div>Feature</div>
+              <div className="text-center text-emerald-400 font-bold">FairShare</div>
+              <div className="text-center text-slate-400">Other Split Apps</div>
+            </div>
+
+            <div className="divide-y divide-slate-800/80 text-sm">
+              <div className="grid grid-cols-3 p-4 items-center">
+                <span className="font-medium text-slate-200">Daily Expense Limit</span>
+                <span className="text-center text-emerald-400 font-semibold">Unlimited</span>
+                <span className="text-center text-slate-400">Limited (e.g. 3/day)</span>
+              </div>
+              <div className="grid grid-cols-3 p-4 items-center">
+                <span className="font-medium text-slate-200">Debt Simplification</span>
+                <span className="text-center text-emerald-400 font-semibold">Free & Built-in</span>
+                <span className="text-center text-slate-400">Locked behind Pro</span>
+              </div>
+              <div className="grid grid-cols-3 p-4 items-center">
+                <span className="font-medium text-slate-200">Receipt Attachments</span>
+                <span className="text-center text-emerald-400 font-semibold">Free</span>
+                <span className="text-center text-slate-400">Paid feature</span>
+              </div>
+              <div className="grid grid-cols-3 p-4 items-center">
+                <span className="font-medium text-slate-200">Category Budgets</span>
+                <span className="text-center text-emerald-400 font-semibold">Included</span>
+                <span className="text-center text-slate-400">Not supported</span>
+              </div>
+              <div className="grid grid-cols-3 p-4 items-center">
+                <span className="font-medium text-slate-200">Advertisements</span>
+                <span className="text-center text-emerald-400 font-semibold">Zero Ads</span>
+                <span className="text-center text-slate-400">Heavy banners</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 border-t border-slate-800/80 bg-[#090d16] text-center">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <BrandLogo size="lg" className="justify-center mb-6" asLink={false} />
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-100 tracking-tight mb-4">
+            Start managing shared expenses the right way.
+          </h2>
+          <p className="text-slate-400 text-base mb-8">
+            Join thousands of roommates, travel groups, and couples who keep their expenses clear and stress-free.
+          </p>
+          <Link href="/auth/signup">
+            <Button size="lg" className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-8 shadow-lg shadow-emerald-950/40">
+              Create Your Free Account
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          </Link>
+        </div>
+      </section>
 
       {/* Footer */}
-      <Box
-        sx={{
-          py: 4,
-          borderTop: `1px solid ${theme.palette.divider}`,
-          textAlign: 'center',
-        }}
-      >
-        <Typography variant="body2" color="text.secondary">
-          © 2026 FairShare. Built with ❤️ by Vatsal. Open Source & Free Forever.
-        </Typography>
-      </Box>
-    </Box>
+      <footer className="border-t border-slate-800/80 py-8 bg-[#090d16] text-center text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <BrandLogo size="sm" />
+          <p>© 2026 FairShare. Built for transparent, stress-free financial sharing.</p>
+          <div className="flex gap-4">
+            <Link href="/auth/login" className="hover:text-emerald-400 transition-colors">
+              Login
+            </Link>
+            <Link href="/auth/signup" className="hover:text-emerald-400 transition-colors">
+              Sign Up
+            </Link>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

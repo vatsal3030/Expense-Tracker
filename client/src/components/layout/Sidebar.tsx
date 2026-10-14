@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
+import BrandLogo from '@/components/brand/BrandLogo';
 
 const DRAWER_WIDTH = 280;
 const DRAWER_COLLAPSED_WIDTH = 80;
@@ -98,52 +99,11 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
           minHeight: 72,
         }}
       >
-        {(!collapsed || isMobile) && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2.5,
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
-              }}
-            >
-              <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '1.1rem' }}>
-                F
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1.2 }}>
-                FairShare
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                Split expenses fairly
-              </Typography>
-            </Box>
-          </Box>
-        )}
-        {collapsed && !isMobile && (
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 2.5,
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
-            }}
-          >
-            <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '1.1rem' }}>
-              F
-            </Typography>
-          </Box>
-        )}
+        <BrandLogo
+          size={collapsed && !isMobile ? 'sm' : 'md'}
+          showText={!collapsed || isMobile}
+          asLink={false}
+        />
         {!isMobile && (
           <IconButton
             onClick={onToggleCollapse}
@@ -151,8 +111,9 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
             sx={{
               ml: collapsed ? 0 : 'auto',
               mt: collapsed ? 1 : 0,
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
-              '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.16) },
+              color: 'text.secondary',
+              bgcolor: 'action.hover',
+              '&:hover': { bgcolor: 'action.selected', color: 'primary.main' },
             }}
           >
             {collapsed ? <ExpandIcon fontSize="small" /> : <CollapseIcon fontSize="small" />}

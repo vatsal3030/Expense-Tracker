@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
+import BrandLogo from '@/components/brand/BrandLogo';
 
 export default function SignupPage() {
   const theme = useTheme();
@@ -79,35 +80,24 @@ export default function SignupPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'background.default',
+        bgcolor: '#090d16',
         position: 'relative',
         overflow: 'hidden',
         py: 4,
       }}
     >
-      {/* Decorations */}
+      {/* Decorations: Subtle Emerald Vignette */}
       <Box
         sx={{
           position: 'absolute',
           width: 500,
           height: 500,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)',
           top: -200,
           right: -100,
-          filter: 'blur(40px)',
-        }}
-      />
-      <Box
-        sx={{
-          position: 'absolute',
-          width: 400,
-          height: 400,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)',
-          bottom: -150,
-          left: -150,
-          filter: 'blur(40px)',
+          filter: 'blur(50px)',
+          pointerEvents: 'none',
         }}
       />
 
@@ -116,34 +106,18 @@ export default function SignupPage() {
           elevation={0}
           sx={{
             p: { xs: 3, sm: 5 },
-            borderRadius: 5,
-            border: `1px solid ${theme.palette.divider}`,
-            bgcolor: alpha(theme.palette.background.paper, 0.9),
-            backdropFilter: 'blur(20px)',
+            borderRadius: 4,
+            border: '1px solid #1e293b',
+            bgcolor: '#0f172a',
           }}
         >
           {/* Logo */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: 3.5,
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-                boxShadow: '0 8px 32px rgba(99,102,241,0.3)',
-              }}
-            >
-              <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '1.5rem' }}>F</Typography>
-            </Box>
-            <Typography variant="h4" fontWeight={800} sx={{ mb: 0.5 }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <BrandLogo size="lg" className="justify-center mb-4" />
+            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, color: '#f8fafc' }}>
               Create your account
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body2" sx={{ color: '#94a3b8' }}>
               Start splitting expenses for free
             </Typography>
           </Box>

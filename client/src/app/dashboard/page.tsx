@@ -41,25 +41,25 @@ import { dashboardApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 const CATEGORY_COLORS: Record<string, string> = {
-  FOOD: '#ef4444',
-  TRANSPORT: '#3b82f6',
-  ENTERTAINMENT: '#8b5cf6',
-  SHOPPING: '#ec4899',
-  UTILITIES: '#f59e0b',
-  RENT: '#14b8a6',
-  HEALTH: '#10b981',
-  EDUCATION: '#6366f1',
-  TRAVEL: '#f97316',
-  GROCERIES: '#22c55e',
-  SUBSCRIPTIONS: '#a855f7',
-  GENERAL: '#64748b',
-  OTHER: '#94a3b8',
-  INSURANCE: '#0ea5e9',
-  GIFTS: '#d946ef',
-  DONATIONS: '#84cc16',
-  INVESTMENTS: '#06b6d4',
+  FOOD: '#f59e0b',
+  TRANSPORT: '#64748b',
+  ENTERTAINMENT: '#475569',
+  SHOPPING: '#334155',
+  UTILITIES: '#059669',
+  RENT: '#047857',
+  HEALTH: '#ef4444',
+  EDUCATION: '#0d9488',
+  TRAVEL: '#10b981',
+  GROCERIES: '#34d399',
+  SUBSCRIPTIONS: '#64748b',
+  GENERAL: '#94a3b8',
+  OTHER: '#cbd5e1',
+  INSURANCE: '#d97706',
+  GIFTS: '#10b981',
+  DONATIONS: '#059669',
+  INVESTMENTS: '#047857',
   SALARY: '#10b981',
-  FREELANCE: '#f472b6',
+  FREELANCE: '#34d399',
 };
 
 interface DashboardData {
@@ -250,8 +250,8 @@ export default function DashboardPage() {
                     <AreaChart data={trendData}>
                       <defs>
                         <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.5)} />
@@ -279,8 +279,8 @@ export default function DashboardPage() {
                       <Area
                         type="monotone"
                         dataKey="amount"
-                        stroke="#6366f1"
-                        strokeWidth={3}
+                        stroke="#10b981"
+                        strokeWidth={2.5}
                         fillOpacity={1}
                         fill="url(#colorAmount)"
                       />

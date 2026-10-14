@@ -32,6 +32,7 @@ import {
 import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
 import { useRouter } from 'next/navigation';
+import BrandLogo from '@/components/brand/BrandLogo';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -79,10 +80,15 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
         <IconButton
           edge="start"
           onClick={onMenuToggle}
-          sx={{ display: { md: 'none' }, mr: 1 }}
+          sx={{ display: { md: 'none' }, mr: 1, color: 'text.secondary' }}
         >
           <MenuIcon />
         </IconButton>
+
+        {/* Mobile Brand Logo */}
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: 2 }}>
+          <BrandLogo size="sm" />
+        </Box>
 
         {/* Search Bar */}
         <Box
