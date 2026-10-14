@@ -29,9 +29,12 @@ import {
   CreditCard,
   Layers,
   Sparkle,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import QrCodeModal from '@/components/common/QrCodeModal';
+import { useThemeMode } from '@/providers/ThemeProvider';
 
 // Cartoon & Gaming Avatar Profiles for Live Interactive Simulation
 const SIMULATED_HERO_USERS = [
@@ -93,6 +96,9 @@ const PRESET_BILLS = [
 ];
 
 export default function LandingPage() {
+  const { mode, toggleTheme } = useThemeMode();
+  const isLight = mode === 'light';
+
   // --- Live Bill Simulator State ---
   const [billAmount, setBillAmount] = useState<number>(4800);
   const [memberCount, setMemberCount] = useState<number>(4);
@@ -216,50 +222,127 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-slate-100 selection:bg-emerald-500/25 selection:text-emerald-300 relative overflow-x-hidden">
+    <div
+      className={`min-h-screen transition-colors duration-300 relative overflow-x-hidden ${
+        isLight
+          ? 'bg-[#F8FAF9] text-slate-900 selection:bg-emerald-500/20 selection:text-emerald-900'
+          : 'bg-[#07090E] text-slate-100 selection:bg-emerald-500/25 selection:text-emerald-300'
+      }`}
+    >
       {/* Dynamic Ambient Background Glows */}
-      <div className="fixed top-[-100px] left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-emerald-500/12 via-teal-500/5 to-transparent blur-[140px] pointer-events-none rounded-full" />
-      <div className="fixed top-[600px] right-[-150px] w-[500px] h-[500px] bg-emerald-600/8 blur-[160px] pointer-events-none rounded-full" />
-      <div className="fixed bottom-0 left-[-150px] w-[500px] h-[500px] bg-teal-600/6 blur-[160px] pointer-events-none rounded-full" />
+      <div
+        className={`fixed top-[-100px] left-1/2 -translate-x-1/2 w-[900px] h-[450px] blur-[140px] pointer-events-none rounded-full transition-all duration-500 ${
+          isLight
+            ? 'bg-gradient-to-b from-emerald-500/8 via-teal-500/4 to-transparent'
+            : 'bg-gradient-to-b from-emerald-500/12 via-teal-500/5 to-transparent'
+        }`}
+      />
+      <div
+        className={`fixed top-[600px] right-[-150px] w-[500px] h-[500px] blur-[160px] pointer-events-none rounded-full transition-all duration-500 ${
+          isLight ? 'bg-emerald-600/5' : 'bg-emerald-600/8'
+        }`}
+      />
+      <div
+        className={`fixed bottom-0 left-[-150px] w-[500px] h-[500px] blur-[160px] pointer-events-none rounded-full transition-all duration-500 ${
+          isLight ? 'bg-teal-600/4' : 'bg-teal-600/6'
+        }`}
+      />
 
       {/* Floating macOS Liquid Glass Header */}
       <div className="sticky top-4 z-50 px-4 max-w-7xl mx-auto">
-        <header className="macos-glass rounded-full px-5 py-2.5 flex items-center justify-between shadow-2xl transition-all duration-300 border border-white/10 dark:border-white/10 bg-slate-900/60 backdrop-blur-2xl">
-          <BrandLogo size="md" />
+        <header
+          className={`rounded-full px-5 py-2.5 flex items-center justify-between shadow-xl transition-all duration-300 backdrop-blur-2xl border ${
+            isLight
+              ? 'bg-white/85 border-slate-200/90 text-slate-800 shadow-slate-200/50'
+              : 'bg-slate-900/70 border-white/10 text-slate-100 shadow-2xl'
+          }`}
+        >
+          <BrandLogo size="md" textColor={isLight ? "text-slate-900" : "text-white"} />
 
-          <nav className="hidden lg:flex items-center gap-7 text-xs font-semibold uppercase tracking-wider text-slate-300">
-            <a href="#simulator" className="hover:text-emerald-400 transition-colors">
+          {/* Nav links */}
+          <nav
+            className={`hidden lg:flex items-center gap-7 text-xs font-semibold uppercase tracking-wider ${
+              isLight ? 'text-slate-600' : 'text-slate-300'
+            }`}
+          >
+            <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               Live Simulator
             </a>
-            <a href="#debt-minimizer" className="hover:text-emerald-400 transition-colors">
+            <a href="#debt-minimizer" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               Debt Graph
             </a>
-            <a href="#qr-ecosystem" className="hover:text-emerald-400 transition-colors">
+            <a href="#qr-ecosystem" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               QR Ecosystem
             </a>
-            <a href="#features" className="hover:text-emerald-400 transition-colors">
+            <a href="#features" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               Features
             </a>
-            <a href="#comparison" className="hover:text-emerald-400 transition-colors">
+            <a href="#comparison" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               Vs Splitwise
             </a>
-            <a href="#faqs" className="hover:text-emerald-400 transition-colors">
+            <a href="#faqs" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               FAQ
             </a>
           </nav>
 
-          <div className="flex items-center gap-2.5">
+          {/* Action buttons + Theme Toggle */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Themed Segmented Switcher for Light & Dark */}
+            <div
+              className={`flex items-center p-0.5 sm:p-1 rounded-full border transition-all ${
+                isLight
+                  ? 'bg-slate-100/90 border-slate-200 shadow-inner'
+                  : 'bg-slate-800/80 border-slate-700 shadow-inner'
+              }`}
+            >
+              <button
+                onClick={() => {
+                  if (mode !== 'light') toggleTheme();
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                  isLight
+                    ? 'bg-white text-emerald-800 shadow-sm border border-slate-200/80'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Switch to Light Theme"
+                aria-label="Light Theme"
+              >
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <span className="hidden sm:inline">Light</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (mode !== 'dark') toggleTheme();
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                  !isLight
+                    ? 'bg-slate-700 text-white shadow-sm border border-white/10'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Switch to Dark Theme"
+                aria-label="Dark Theme"
+              >
+                <Moon className="w-3.5 h-3.5 text-indigo-300" />
+                <span className="hidden sm:inline">Dark</span>
+              </button>
+            </div>
+
             <Link
               href="/auth/login"
-              className="text-xs font-semibold px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+              className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
+                isLight
+                  ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+              }`}
             >
               Sign In
             </Link>
             <Link
               href="/auth/signup"
-              className="macos-glass-pill text-xs font-bold px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-lg shadow-emerald-950/40 transition-all active:scale-95"
+              className="text-xs font-bold px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95"
             >
-              Get Started Free
+              <span className="hidden sm:inline">Get Started Free</span>
+              <span className="sm:hidden">Start</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -267,22 +350,42 @@ export default function LandingPage() {
       </div>
 
       {/* HERO SECTION */}
-      <section className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+      <section className="relative pt-20 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
         {/* SaaS Trust Pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/40 text-emerald-400 text-xs font-semibold mb-6 animate-fade-in shadow-inner">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+        <div
+          className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6 animate-fade-in shadow-inner border ${
+            isLight
+              ? 'bg-emerald-50/90 border-emerald-200 text-emerald-800'
+              : 'bg-emerald-950/40 border-emerald-500/30 text-emerald-400'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
           <span>100% Free • Unlimited Daily Splits • Zero Subscription Paywalls</span>
         </div>
 
         {/* Main Title */}
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.12] mb-6">
+        <h1
+          className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.12] mb-6 ${
+            isLight ? 'text-slate-900' : 'text-white'
+          }`}
+        >
           Split expenses fairly. <br />
-          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-200 bg-clip-text text-transparent">
+          <span
+            className={`bg-clip-text text-transparent bg-gradient-to-r ${
+              isLight
+                ? 'from-emerald-700 via-teal-600 to-emerald-800'
+                : 'from-emerald-400 via-teal-300 to-emerald-200'
+            }`}
+          >
             Settle instantly via UPI.
           </span>
         </h1>
 
-        <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-300/90 leading-relaxed mb-9">
+        <p
+          className={`max-w-2xl mx-auto text-base sm:text-lg leading-relaxed mb-9 ${
+            isLight ? 'text-slate-600' : 'text-slate-300/90'
+          }`}
+        >
           The modern, privacy-first FinTech expense ledger. Calculate 5 split strategies with penny accuracy, minimize group debts mathematically, and pay direct bank-to-bank via dynamic QR codes.
         </p>
 
@@ -290,16 +393,20 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-14">
           <Link
             href="/auth/signup"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/50 hover:shadow-emerald-900/60 transition-all active:scale-95"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/30 hover:shadow-emerald-900/50 transition-all active:scale-95"
           >
             Start Splitting for Free
             <ArrowRight className="w-4 h-4" />
           </Link>
           <a
             href="#simulator"
-            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl macos-glass-card hover:border-emerald-500/40 text-slate-200 font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+            className={`w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border ${
+              isLight
+                ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 shadow-sm hover:border-emerald-500/50'
+                : 'macos-glass-card hover:border-emerald-500/40 text-slate-200'
+            }`}
           >
-            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <Sparkles className="w-4 h-4 text-emerald-500" />
             Try Live Interactive Simulator
           </a>
         </div>
@@ -312,9 +419,24 @@ export default function LandingPage() {
             { label: 'Debt Reductions', val: 'Up to 70%' },
             { label: 'UPI Settlement', val: 'Instant QR' },
           ].map((m, i) => (
-            <div key={i} className="macos-glass-card p-3 rounded-2xl text-center">
-              <span className="text-[11px] font-medium text-slate-400 block">{m.label}</span>
-              <span className="text-base font-extrabold text-emerald-400 mt-0.5 block">{m.val}</span>
+            <div
+              key={i}
+              className={`p-3 rounded-2xl text-center border transition-all ${
+                isLight
+                  ? 'bg-white border-slate-200/80 shadow-sm'
+                  : 'macos-glass-card border-white/5'
+              }`}
+            >
+              <span className={`text-[11px] font-medium block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                {m.label}
+              </span>
+              <span
+                className={`text-base font-extrabold mt-0.5 block ${
+                  isLight ? 'text-emerald-700' : 'text-emerald-400'
+                }`}
+              >
+                {m.val}
+              </span>
             </div>
           ))}
         </div>
@@ -323,27 +445,55 @@ export default function LandingPage() {
         {/* INTERACTIVE BILL SPLIT SIMULATOR (Core Interactive Feature for Visitors) */}
         {/* ========================================================================= */}
         <div id="simulator" className="scroll-mt-28 text-left max-w-5xl mx-auto">
-          <div className="macos-glass-card p-6 sm:p-8 rounded-3xl border border-white/10 shadow-2xl relative">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+          <div
+            className={`p-6 sm:p-8 rounded-3xl border shadow-2xl relative transition-all ${
+              isLight
+                ? 'bg-white/90 border-slate-200 shadow-slate-200/60'
+                : 'macos-glass-card border-white/10'
+            }`}
+          >
+            <div
+              className={`flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b ${
+                isLight ? 'border-slate-200' : 'border-slate-800'
+              }`}
+            >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <div
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
+                    isLight
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  }`}
+                >
                   <Sliders className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg sm:text-xl font-bold text-white">Live Interactive Split Simulator</h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <h3 className={`text-lg sm:text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                      Live Interactive Split Simulator
+                    </h3>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        isLight
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                      }`}
+                    >
                       LIVE DEMO
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+                  <p className={`text-xs sm:text-sm mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                     Adjust bill amount, member count, and split logic to see real-time penny-balanced settlement shares.
                   </p>
                 </div>
               </div>
 
               {/* Split Strategy Pill Switcher */}
-              <div className="flex items-center gap-1 p-1 bg-slate-900/80 rounded-xl border border-slate-800 text-xs">
+              <div
+                className={`flex items-center gap-1 p-1 rounded-xl border text-xs ${
+                  isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/80 border-slate-800'
+                }`}
+              >
                 {(['EQUAL', 'PERCENTAGE', 'SHARES'] as const).map((mode) => (
                   <button
                     key={mode}
@@ -351,6 +501,8 @@ export default function LandingPage() {
                     className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
                       splitMode === mode
                         ? 'bg-emerald-600 text-white shadow-md'
+                        : isLight
+                        ? 'text-slate-600 hover:text-slate-900'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -361,21 +513,37 @@ export default function LandingPage() {
             </div>
 
             {/* Bill Controls Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6 p-4 rounded-2xl bg-slate-950/40 border border-white/5">
+            <div
+              className={`grid grid-cols-1 md:grid-cols-2 gap-6 my-6 p-4 rounded-2xl border ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/40 border-white/5'
+              }`}
+            >
               {/* Left: Amount Input & Presets */}
               <div>
-                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-2">
+                <label
+                  className={`text-xs font-bold uppercase tracking-wider block mb-2 ${
+                    isLight ? 'text-slate-700' : 'text-slate-300'
+                  }`}
+                >
                   Total Bill Amount (₹)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 font-extrabold text-lg">
+                  <span
+                    className={`absolute left-4 top-1/2 -translate-y-1/2 font-extrabold text-lg ${
+                      isLight ? 'text-emerald-700' : 'text-emerald-400'
+                    }`}
+                  >
                     ₹
                   </span>
                   <input
                     type="number"
                     value={billAmount}
                     onChange={(e) => setBillAmount(Math.max(10, Number(e.target.value) || 0))}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-lg font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                    className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-lg font-bold border transition-colors focus:outline-none focus:border-emerald-500 ${
+                      isLight
+                        ? 'bg-white border-slate-300 text-slate-900'
+                        : 'bg-slate-900 border-slate-700 text-white'
+                    }`}
                   />
                 </div>
 
@@ -387,13 +555,19 @@ export default function LandingPage() {
                       onClick={() => setBillAmount(b.amount)}
                       className={`text-xs px-2.5 py-1 rounded-lg border font-medium flex items-center gap-1 transition-all ${
                         billAmount === b.amount
-                          ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300'
+                          ? isLight
+                            ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold'
+                            : 'border-emerald-500 bg-emerald-950/60 text-emerald-300 font-bold'
+                          : isLight
+                          ? 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                           : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700'
                       }`}
                     >
                       <span>{b.icon}</span>
                       <span>{b.label}</span>
-                      <span className="font-bold text-slate-300">₹{b.amount.toLocaleString('en-IN')}</span>
+                      <span className={`font-bold ${isLight ? 'text-slate-800' : 'text-slate-300'}`}>
+                        ₹{b.amount.toLocaleString('en-IN')}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -402,10 +576,20 @@ export default function LandingPage() {
               {/* Right: Member Count Slider */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  <label
+                    className={`text-xs font-bold uppercase tracking-wider ${
+                      isLight ? 'text-slate-700' : 'text-slate-300'
+                    }`}
+                  >
                     Number of Friends Splitting
                   </label>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                  <span
+                    className={`text-xs font-bold px-2 py-0.5 rounded ${
+                      isLight
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    }`}
+                  >
                     {memberCount} Friends
                   </span>
                 </div>
@@ -415,16 +599,18 @@ export default function LandingPage() {
                   max={6}
                   value={memberCount}
                   onChange={(e) => setMemberCount(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 my-3"
+                  className={`w-full h-2 rounded-lg appearance-none cursor-pointer accent-emerald-600 my-3 ${
+                    isLight ? 'bg-slate-200' : 'bg-slate-800'
+                  }`}
                 />
-                <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                <div className={`flex justify-between text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                   <span>2 Friends</span>
                   <span>4 Roommates</span>
                   <span>6 Travelers</span>
                 </div>
 
-                <div className="mt-3 text-xs text-slate-400 flex items-center gap-1.5">
-                  <Gamepad2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div className={`mt-3 text-xs flex items-center gap-1.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <Gamepad2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>Interactive avatars feature custom gaming and cartoon characters!</span>
                 </div>
               </div>
@@ -432,7 +618,11 @@ export default function LandingPage() {
 
             {/* Simulated Live Member Cards (Gaming/Cartoon Avatars) */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider px-2">
+              <div
+                className={`flex items-center justify-between text-xs font-bold uppercase tracking-wider px-2 ${
+                  isLight ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
                 <span>Participant & Avatar</span>
                 <span>Calculated Share</span>
                 <span className="text-right">Instant UPI Settlement</span>
@@ -442,51 +632,89 @@ export default function LandingPage() {
                 {calculatedMembers.map((m) => (
                   <div
                     key={m.id}
-                    className="p-3.5 rounded-2xl macos-glass flex items-center justify-between gap-4 border border-white/5 hover:border-emerald-500/30 transition-all"
+                    className={`p-3.5 rounded-2xl flex items-center justify-between gap-4 border transition-all ${
+                      isLight
+                        ? 'bg-white border-slate-200/90 hover:border-emerald-500/40 shadow-sm'
+                        : 'macos-glass border-white/5 hover:border-emerald-500/30'
+                    }`}
                   >
                     {/* User Profile */}
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl overflow-hidden border border-emerald-500/30 bg-slate-800/80 p-0.5 shrink-0 shadow-md">
+                      <div
+                        className={`w-11 h-11 rounded-2xl overflow-hidden border p-0.5 shrink-0 shadow-sm ${
+                          isLight
+                            ? 'border-emerald-300 bg-emerald-50'
+                            : 'border-emerald-500/30 bg-slate-800/80'
+                        }`}
+                      >
                         <img src={m.avatar} alt={m.name} className="w-full h-full object-cover rounded-xl" />
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-bold text-white">{m.name}</span>
+                          <span className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                            {m.name}
+                          </span>
                           {m.isPayer && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[10px] font-extrabold border ${
+                                isLight
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                              }`}
+                            >
                               Paid Full
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-slate-400 block">{m.note}</span>
+                        <span className={`text-xs block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {m.note}
+                        </span>
                       </div>
                     </div>
 
                     {/* Amount & Status */}
                     <div className="text-right">
-                      <span className="text-base font-extrabold text-white block">
+                      <span className={`text-base font-extrabold block ${isLight ? 'text-slate-900' : 'text-white'}`}>
                         ₹{m.share.toLocaleString('en-IN')}
                       </span>
                       <span
                         className={`text-[11px] font-semibold ${
-                          m.isPayer ? 'text-emerald-400' : 'text-amber-400'
+                          m.isPayer
+                            ? isLight
+                              ? 'text-emerald-750'
+                              : 'text-emerald-400'
+                            : isLight
+                            ? 'text-amber-700'
+                            : 'text-amber-400'
                         }`}
                       >
-                        {m.isPayer ? `Gets back ₹${m.netOwed.toLocaleString('en-IN')}` : `Owes ₹${m.share.toLocaleString('en-IN')}`}
+                        {m.isPayer
+                          ? `Gets back ₹${m.netOwed.toLocaleString('en-IN')}`
+                          : `Owes ₹${m.share.toLocaleString('en-IN')}`}
                       </span>
                     </div>
 
                     {/* Action Button: QR Settlement */}
                     <div className="shrink-0">
                       {m.isPayer ? (
-                        <span className="text-xs font-bold text-emerald-400 px-3 py-1.5 rounded-xl bg-emerald-950/40 border border-emerald-500/20 flex items-center gap-1">
+                        <span
+                          className={`text-xs font-bold px-3 py-1.5 rounded-xl border flex items-center gap-1 ${
+                            isLight
+                              ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
+                              : 'text-emerald-400 bg-emerald-950/40 border-emerald-500/20'
+                          }`}
+                        >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           Received
                         </span>
                       ) : (
                         <button
                           onClick={() => handleOpenSimulatedUpiQr(m, m.share)}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm border ${
+                            isLight
+                              ? 'bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-800 border-emerald-300'
+                              : 'bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border-emerald-500/40'
+                          }`}
                         >
                           <QrCode className="w-3.5 h-3.5" />
                           Scan UPI QR
@@ -499,17 +727,24 @@ export default function LandingPage() {
             </div>
 
             {/* Bottom summary bar */}
-            <div className="mt-6 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+            <div
+              className={`mt-6 pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs ${
+                isLight ? 'border-slate-200 text-slate-500' : 'border-slate-800 text-slate-400'
+              }`}
+            >
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400" />
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>
                   Penny-Balanced: Total shares sum precisely to{' '}
-                  <strong className="text-white">₹{billAmount.toLocaleString('en-IN')}</strong> with zero rounding discrepancies.
+                  <strong className={isLight ? 'text-slate-900' : 'text-white'}>
+                    ₹{billAmount.toLocaleString('en-IN')}
+                  </strong>{' '}
+                  with zero rounding discrepancies.
                 </span>
               </div>
               <Link
                 href="/auth/signup"
-                className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1"
+                className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold flex items-center gap-1"
               >
                 Split real expenses in your account
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -522,26 +757,45 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       {/* GREEDY DEBT GRAPH MINIMIZATION SHOWCASE */}
       {/* ========================================================================= */}
-      <section id="debt-minimizer" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-800/80">
+      <section
+        id="debt-minimizer"
+        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
+          isLight ? 'border-slate-200' : 'border-slate-800/80'
+        }`}
+      >
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3">
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border mb-3 ${
+              isLight
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            }`}
+          >
             <Scale className="w-3.5 h-3.5" />
             <span>Mathematical Debt Graph Optimization</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Cut redundant payments by up to 70%.
           </h2>
-          <p className="mt-4 text-slate-400 text-sm sm:text-base">
+          <p className={`mt-4 text-sm sm:text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             In any group trip, circular IOUs create confusion. FairShare runs a greedy minimum-cash-flow graph reduction algorithm so you settle in the fewest possible direct transfers.
           </p>
 
           {/* Toggle Interactive Controller */}
-          <div className="inline-flex p-1 bg-slate-900 rounded-2xl border border-slate-800 mt-6 shadow-inner">
+          <div
+            className={`inline-flex p-1 rounded-2xl border mt-6 shadow-inner ${
+              isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900 border-slate-800'
+            }`}
+          >
             <button
               onClick={() => setSimplificationActive(false)}
               className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
                 !simplificationActive
-                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow'
+                  ? isLight
+                    ? 'bg-rose-100 text-rose-800 border border-rose-300 shadow-sm'
+                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow'
+                  : isLight
+                  ? 'text-slate-600 hover:text-slate-900'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -551,7 +805,9 @@ export default function LandingPage() {
               onClick={() => setSimplificationActive(true)}
               className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
                 simplificationActive
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/40'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/30'
+                  : isLight
+                  ? 'text-slate-600 hover:text-slate-900'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -564,18 +820,32 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Card 1: Before Reduction */}
           <div
-            className={`macos-glass-card p-6 rounded-3xl border transition-all ${
+            className={`p-6 rounded-3xl border transition-all ${
               !simplificationActive
-                ? 'border-rose-500/50 bg-rose-950/10 ring-2 ring-rose-500/20'
-                : 'border-slate-800 opacity-60'
+                ? isLight
+                  ? 'border-rose-400 bg-rose-50/70 ring-2 ring-rose-400/20'
+                  : 'border-rose-500/50 bg-rose-950/10 ring-2 ring-rose-500/20'
+                : isLight
+                ? 'border-slate-200 bg-white/70 opacity-60'
+                : 'border-slate-800 bg-slate-900/60 opacity-60'
             }`}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+            <div
+              className={`flex items-center justify-between pb-4 border-b mb-4 ${
+                isLight ? 'border-rose-200' : 'border-slate-800'
+              }`}
+            >
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-rose-500" />
-                <h4 className="font-bold text-white text-base">Without Simplification</h4>
+                <h4 className={`font-bold text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  Without Simplification
+                </h4>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300">
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  isLight ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-rose-500/20 text-rose-300'
+                }`}
+              >
                 5 Separate Transfers
               </span>
             </div>
@@ -590,37 +860,62 @@ export default function LandingPage() {
               ].map((t, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs"
+                  className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
+                    isLight ? 'bg-white border-slate-200' : 'bg-slate-900/60 border-slate-800'
+                  }`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-200">{t.from}</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="font-semibold text-slate-200">{t.to}</span>
+                    <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{t.from}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                    <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{t.to}</span>
                   </div>
-                  <span className="font-extrabold text-rose-300">₹{t.amt}</span>
+                  <span className="font-extrabold text-rose-600 dark:text-rose-300">₹{t.amt}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400">
-              Total Cash Circulated: <strong className="text-slate-200">₹2,100 across 5 banking apps</strong>
+            <div
+              className={`mt-4 pt-3 border-t text-[11px] ${
+                isLight ? 'border-rose-200 text-slate-600' : 'border-slate-800/80 text-slate-400'
+              }`}
+            >
+              Total Cash Circulated:{' '}
+              <strong className={isLight ? 'text-slate-900' : 'text-slate-200'}>
+                ₹2,100 across 5 banking apps
+              </strong>
             </div>
           </div>
 
           {/* Card 2: After FairShare Greedy Simplification */}
           <div
-            className={`macos-glass-card p-6 rounded-3xl border transition-all ${
+            className={`p-6 rounded-3xl border transition-all ${
               simplificationActive
-                ? 'border-emerald-500/60 bg-emerald-950/20 ring-2 ring-emerald-500/20'
-                : 'border-slate-800 opacity-60'
+                ? isLight
+                  ? 'border-emerald-400 bg-emerald-50/70 ring-2 ring-emerald-400/20'
+                  : 'border-emerald-500/60 bg-emerald-950/20 ring-2 ring-emerald-500/20'
+                : isLight
+                ? 'border-slate-200 bg-white/70 opacity-60'
+                : 'border-slate-800 bg-slate-900/60 opacity-60'
             }`}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+            <div
+              className={`flex items-center justify-between pb-4 border-b mb-4 ${
+                isLight ? 'border-emerald-200' : 'border-slate-800'
+              }`}
+            >
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
-                <h4 className="font-bold text-white text-base">FairShare Optimized</h4>
+                <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                <h4 className={`font-bold text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  FairShare Optimized
+                </h4>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300">
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  isLight
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-emerald-500/20 text-emerald-300'
+                }`}
+              >
                 Only 2 Direct Payments (60% Savings)
               </span>
             </div>
@@ -632,22 +927,42 @@ export default function LandingPage() {
               ].map((t, idx) => (
                 <div
                   key={idx}
-                  className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between text-sm"
+                  className={`p-4 rounded-xl border flex items-center justify-between text-sm ${
+                    isLight
+                      ? 'bg-white border-emerald-200 shadow-sm'
+                      : 'bg-emerald-950/30 border-emerald-500/30'
+                  }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="font-bold text-white">{t.from}</span>
-                    <ArrowRight className="w-4 h-4 text-emerald-400" />
-                    <span className="font-bold text-white">{t.to}</span>
+                    <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{t.from}</span>
+                    <ArrowRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{t.to}</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-extrabold text-emerald-400 text-base block">₹{t.amt}</span>
-                    <span className="text-[10px] text-emerald-300/80">{t.note}</span>
+                    <span
+                      className={`font-extrabold text-base block ${
+                        isLight ? 'text-emerald-700' : 'text-emerald-400'
+                      }`}
+                    >
+                      ₹{t.amt}
+                    </span>
+                    <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-emerald-300/80'}`}>
+                      {t.note}
+                    </span>
                   </div>
                 </div>
               ))}
 
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
-                <div className="flex items-center gap-2 font-bold text-emerald-300 mb-1">
+              <div
+                className={`p-4 rounded-xl border text-xs ${
+                  isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-slate-900/60 border-slate-800 text-slate-300'
+                }`}
+              >
+                <div
+                  className={`flex items-center gap-2 font-bold mb-1 ${
+                    isLight ? 'text-emerald-750' : 'text-emerald-300'
+                  }`}
+                >
                   <CheckCircle2 className="w-4 h-4" />
                   Mathematically Proven Balanced
                 </div>
@@ -657,7 +972,11 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-emerald-400 font-semibold">
+            <div
+              className={`mt-4 pt-3 border-t text-[11px] font-semibold ${
+                isLight ? 'border-emerald-200 text-emerald-800' : 'border-slate-800/80 text-emerald-400'
+              }`}
+            >
               Included free in all FairShare groups (No premium paywalls).
             </div>
           </div>
@@ -667,21 +986,36 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       {/* UNIVERSAL QR CODE ECOSYSTEM */}
       {/* ========================================================================= */}
-      <section id="qr-ecosystem" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-800/80">
+      <section
+        id="qr-ecosystem"
+        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
+          isLight ? 'border-slate-200' : 'border-slate-800/80'
+        }`}
+      >
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3">
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border mb-3 ${
+              isLight
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            }`}
+          >
             <QrCode className="w-3.5 h-3.5" />
             <span>Universal QR Code Infrastructure</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Point, scan, and settle. Zero typing needed.
           </h2>
-          <p className="mt-4 text-slate-400 text-sm sm:text-base">
+          <p className={`mt-4 text-sm sm:text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             Every group ledger, user profile, and settlement transaction automatically generates a high-contrast dynamic QR code readable by any smartphone camera or UPI app.
           </p>
 
           {/* QR Feature Tabs */}
-          <div className="inline-flex p-1 bg-slate-900 rounded-2xl border border-slate-800 mt-6 shadow-inner">
+          <div
+            className={`inline-flex p-1 rounded-2xl border mt-6 shadow-inner ${
+              isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900 border-slate-800'
+            }`}
+          >
             {[
               { id: 'UPI', label: '1. Instant UPI QR' },
               { id: 'GROUP', label: '2. Group Join QR' },
@@ -693,6 +1027,8 @@ export default function LandingPage() {
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                   qrTab === t.id
                     ? 'bg-emerald-600 text-white shadow-md'
+                    : isLight
+                    ? 'text-slate-600 hover:text-slate-900'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -703,32 +1039,44 @@ export default function LandingPage() {
         </div>
 
         {/* QR Showcase Card */}
-        <div className="max-w-4xl mx-auto macos-glass-card p-6 sm:p-10 rounded-3xl border border-white/10 shadow-2xl">
+        <div
+          className={`max-w-4xl mx-auto p-6 sm:p-10 rounded-3xl border shadow-2xl transition-all ${
+            isLight
+              ? 'bg-white border-slate-200 shadow-slate-200/50'
+              : 'macos-glass-card border-white/10'
+          }`}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             {/* Left: Explanation */}
             <div>
               {qrTab === 'UPI' && (
                 <div>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${
+                      isLight
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                    }`}
+                  >
                     BANK-TO-BANK SETTLEMENT
                   </span>
-                  <h3 className="text-2xl font-bold text-white mt-3 mb-2">
+                  <h3 className={`text-2xl font-bold mt-3 mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     Instant UPI Deep-Link QR Codes
                   </h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                  <p className={`text-sm leading-relaxed mb-4 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                     Eliminate copy-pasting UPI IDs. When settling a shared expense or simplified debt, FairShare encodes the exact rupee amount, payee VPA, and reference note into an interactive QR code.
                   </p>
-                  <ul className="space-y-2 text-xs text-slate-300">
+                  <ul className={`space-y-2 text-xs ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
+                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       Compatible with Google Pay, PhonePe, Paytm, and BHIM
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
+                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       Zero intermediary fees — direct bank transfer
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400" />
+                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       Two-party verification marks it cleared on both sides
                     </li>
                   </ul>
@@ -737,26 +1085,32 @@ export default function LandingPage() {
 
               {qrTab === 'GROUP' && (
                 <div>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                  <span
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${
+                      isLight
+                        ? 'bg-teal-100 text-teal-800 border-teal-300'
+                        : 'bg-teal-500/20 text-teal-300 border-teal-500/30'
+                    }`}
+                  >
                     FRICTIONLESS ONBOARDING
                   </span>
-                  <h3 className="text-2xl font-bold text-white mt-3 mb-2">
+                  <h3 className={`text-2xl font-bold mt-3 mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     Instant Group Join via Camera Scan
                   </h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                  <p className={`text-sm leading-relaxed mb-4 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                     Sitting together at a restaurant? Open your FairShare group, tap &quot;Group QR&quot;, and have everyone scan the screen with their phone camera. They&apos;re instantly added to the ledger without searching names or sharing invite links.
                   </p>
-                  <ul className="space-y-2 text-xs text-slate-300">
+                  <ul className={`space-y-2 text-xs ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-teal-400" />
+                      <Check className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                       No app download required to view shared bills
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-teal-400" />
+                      <Check className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                       Optional passcode protection for private trips
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-teal-400" />
+                      <Check className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                       One-tap WhatsApp & Telegram sharing options
                     </li>
                   </ul>
@@ -765,26 +1119,32 @@ export default function LandingPage() {
 
               {qrTab === 'CONNECT' && (
                 <div>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  <span
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${
+                      isLight
+                        ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
+                        : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                    }`}
+                  >
                     IDENTITY & PEER NETWORKING
                   </span>
-                  <h3 className="text-2xl font-bold text-white mt-3 mb-2">
+                  <h3 className={`text-2xl font-bold mt-3 mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     Personal Friend Connect QR Code
                   </h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                  <p className={`text-sm leading-relaxed mb-4 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                     Connect with friends, roommates, and colleagues in person. Your profile has a unique QR code linked to your account, gaming avatar, and preferred UPI ID.
                   </p>
-                  <ul className="space-y-2 text-xs text-slate-300">
+                  <ul className={`space-y-2 text-xs ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-indigo-400" />
+                      <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                       1-click friend addition without typing emails
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-indigo-400" />
+                      <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                       Shows your equipped cartoon or gaming avatar
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-indigo-400" />
+                      <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                       High resolution PNG & SVG downloadable QR cards
                     </li>
                   </ul>
@@ -793,7 +1153,11 @@ export default function LandingPage() {
             </div>
 
             {/* Right: Live Interactive Rendered QR Card */}
-            <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-950/80 border border-white/10 shadow-inner">
+            <div
+              className={`flex flex-col items-center justify-center p-6 rounded-2xl border shadow-inner ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-white/10'
+              }`}
+            >
               <div className="p-3 bg-white rounded-2xl shadow-xl border border-slate-200">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
@@ -808,14 +1172,16 @@ export default function LandingPage() {
                 />
               </div>
 
-              <span className="text-xs font-bold text-white mt-3">
+              <span className={`text-xs font-bold mt-3 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {qrTab === 'UPI'
                   ? 'UPI Pay: Shadow Ninja (₹1,200)'
                   : qrTab === 'GROUP'
                   ? 'Join Group: Goa Beach Villa'
                   : 'Connect with: Shadow Ninja'}
               </span>
-              <span className="text-[11px] text-slate-400">Scan with your smartphone camera</span>
+              <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                Scan with your smartphone camera
+              </span>
             </div>
           </div>
         </div>
@@ -824,15 +1190,26 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       {/* FEATURE DEEP-DIVE GRID */}
       {/* ========================================================================= */}
-      <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-800/80">
+      <section
+        id="features"
+        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
+          isLight ? 'border-slate-200' : 'border-slate-800/80'
+        }`}
+      >
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span
+            className={`text-xs font-bold px-3 py-1 rounded-full border ${
+              isLight
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            }`}
+          >
             ENGINEERED FOR FINTECH EXCELLENCE
           </span>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-3">
+          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight mt-3 ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Every feature you need. Zero gimmicks.
           </h2>
-          <p className="mt-4 text-slate-400 text-base">
+          <p className={`mt-4 text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             Engineered from scratch to replace cluttered, ad-supported apps with high-speed mathematical clarity.
           </p>
         </div>
@@ -872,13 +1249,25 @@ export default function LandingPage() {
           ].map((f, i) => (
             <div
               key={i}
-              className="macos-glass-card p-6 rounded-3xl border border-white/5 hover:border-emerald-500/40 transition-all group"
+              className={`p-6 rounded-3xl border transition-all group ${
+                isLight
+                  ? 'bg-white border-slate-200/90 hover:border-emerald-500/50 shadow-sm hover:shadow-md'
+                  : 'macos-glass-card border-white/5 hover:border-emerald-500/40'
+              }`}
             >
-              <div className="w-11 h-11 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4 group-hover:scale-110 transition-transform">
+              <div
+                className={`w-11 h-11 rounded-2xl border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform ${
+                  isLight
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    : 'bg-emerald-950/60 border-emerald-500/30 text-emerald-400'
+                }`}
+              >
                 {f.icon}
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">{f.title}</h3>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+              <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>{f.title}</h3>
+              <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                {f.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -887,27 +1276,54 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       {/* COMPARISON TABLE: FAIRSHARE VS SPLITWISE */}
       {/* ========================================================================= */}
-      <section id="comparison" className="py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-slate-800/80">
+      <section
+        id="comparison"
+        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t ${
+          isLight ? 'border-slate-200' : 'border-slate-800/80'
+        }`}
+      >
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span
+            className={`text-xs font-bold px-3 py-1 rounded-full border ${
+              isLight
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            }`}
+          >
             TRANSPARENT VALUE
           </span>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-3">
+          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight mt-3 ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Why people are switching to FairShare.
           </h2>
-          <p className="mt-4 text-slate-400 text-sm sm:text-base">
+          <p className={`mt-4 text-sm sm:text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             See how FairShare eliminates artificial limitations imposed by incumbent tools.
           </p>
         </div>
 
-        <div className="macos-glass-card rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-          <div className="grid grid-cols-3 p-4 sm:p-5 bg-slate-900/90 font-bold text-xs uppercase tracking-wider text-slate-300 border-b border-slate-800">
+        <div
+          className={`rounded-3xl overflow-hidden border shadow-2xl transition-all ${
+            isLight
+              ? 'bg-white border-slate-200 shadow-slate-200/50'
+              : 'macos-glass-card border-white/10'
+          }`}
+        >
+          <div
+            className={`grid grid-cols-3 p-4 sm:p-5 font-bold text-xs uppercase tracking-wider border-b ${
+              isLight
+                ? 'bg-slate-100 text-slate-700 border-slate-200'
+                : 'bg-slate-900/90 text-slate-300 border-slate-800'
+            }`}
+          >
             <div>Feature</div>
-            <div className="text-center text-emerald-400 font-extrabold">FairShare</div>
+            <div className="text-center text-emerald-600 dark:text-emerald-400 font-extrabold">FairShare</div>
             <div className="text-center text-slate-400">Other Split Apps</div>
           </div>
 
-          <div className="divide-y divide-slate-800/70 text-xs sm:text-sm">
+          <div
+            className={`divide-y text-xs sm:text-sm ${
+              isLight ? 'divide-slate-200' : 'divide-slate-800/70'
+            }`}
+          >
             {[
               { feat: 'Daily Expense Entries', fair: 'Unlimited Always', other: 'Capped at 3/day' },
               { feat: 'Debt Simplification Graph', fair: 'Free & Built-in', other: 'Locked behind Pro tier' },
@@ -918,13 +1334,22 @@ export default function LandingPage() {
               { feat: 'Group Join QR Codes', fair: '1-Second Camera Scan', other: 'Manual email invites' },
               { feat: 'Receipt Attachments', fair: 'Free Storage', other: 'Pro plan only' },
             ].map((row, i) => (
-              <div key={i} className="grid grid-cols-3 p-4 items-center hover:bg-slate-900/40 transition-colors">
-                <span className="font-semibold text-slate-200">{row.feat}</span>
-                <span className="text-center font-bold text-emerald-400 flex items-center justify-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div
+                key={i}
+                className={`grid grid-cols-3 p-4 items-center transition-colors ${
+                  isLight ? 'hover:bg-slate-50' : 'hover:bg-slate-900/40'
+                }`}
+              >
+                <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{row.feat}</span>
+                <span
+                  className={`text-center font-bold flex items-center justify-center gap-1.5 ${
+                    isLight ? 'text-emerald-700' : 'text-emerald-400'
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   {row.fair}
                 </span>
-                <span className="text-center text-slate-400">{row.other}</span>
+                <span className={`text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{row.other}</span>
               </div>
             ))}
           </div>
@@ -934,12 +1359,17 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       {/* FAQ ACCORDION */}
       {/* ========================================================================= */}
-      <section id="faqs" className="py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto border-t border-slate-800/80">
+      <section
+        id="faqs"
+        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto border-t ${
+          isLight ? 'border-slate-200' : 'border-slate-800/80'
+        }`}
+      >
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h2 className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Frequently Asked Questions
           </h2>
-          <p className="mt-3 text-slate-400 text-sm">
+          <p className={`mt-3 text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             Everything you need to know about FairShare, privacy, and settlements.
           </p>
         </div>
@@ -971,21 +1401,35 @@ export default function LandingPage() {
             return (
               <div
                 key={index}
-                className="macos-glass-card rounded-2xl border border-white/5 overflow-hidden transition-all"
+                className={`rounded-2xl border overflow-hidden transition-all ${
+                  isLight
+                    ? 'bg-white border-slate-200 shadow-sm'
+                    : 'macos-glass-card border-white/5'
+                }`}
               >
                 <button
                   onClick={() => setOpenFaq(isOpen ? null : index)}
-                  className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-white hover:text-emerald-400 transition-colors"
+                  className={`w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base transition-colors ${
+                    isLight
+                      ? 'text-slate-900 hover:text-emerald-700'
+                      : 'text-white hover:text-emerald-400'
+                  }`}
                 >
                   <span>{faq.q}</span>
                   {isOpen ? (
-                    <ChevronUp className="w-5 h-5 text-emerald-400 shrink-0" />
+                    <ChevronUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : (
                     <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />
                   )}
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-300/90 leading-relaxed border-t border-slate-800/80 pt-3">
+                  <div
+                    className={`px-5 pb-5 text-xs sm:text-sm leading-relaxed border-t pt-3 ${
+                      isLight
+                        ? 'border-slate-200 text-slate-600'
+                        : 'border-slate-800/80 text-slate-300/90'
+                    }`}
+                  >
                     {faq.a}
                   </div>
                 )}
@@ -998,29 +1442,47 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       {/* FINAL HIGH-CONVERTING CTA BANNER */}
       {/* ========================================================================= */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center border-t border-slate-800/80">
-        <div className="macos-glass-card p-8 sm:p-14 rounded-3xl border border-emerald-500/30 relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[90px] rounded-full pointer-events-none" />
+      <section
+        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center border-t ${
+          isLight ? 'border-slate-200' : 'border-slate-800/80'
+        }`}
+      >
+        <div
+          className={`p-8 sm:p-14 rounded-3xl border relative overflow-hidden shadow-2xl transition-all ${
+            isLight
+              ? 'bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white border-emerald-300 shadow-emerald-100/50'
+              : 'macos-glass-card border-emerald-500/30'
+          }`}
+        >
+          <div
+            className={`absolute top-0 right-0 w-64 h-64 blur-[90px] rounded-full pointer-events-none ${
+              isLight ? 'bg-emerald-300/30' : 'bg-emerald-500/10'
+            }`}
+          />
 
-          <BrandLogo size="lg" className="justify-center mb-6" asLink={false} />
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
+          <BrandLogo size="lg" className="justify-center mb-6" asLink={false} textColor={isLight ? "text-slate-900" : "text-white"} />
+          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight mb-4 ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Start splitting bills stress-free today.
           </h2>
-          <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto mb-8">
+          <p className={`text-sm sm:text-base max-w-2xl mx-auto mb-8 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
             Join roommates, travel squads, and couples who keep their expenses clear, transparent, and settled on time.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/auth/signup"
-              className="w-full sm:w-auto px-9 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/60 transition-all active:scale-95"
+              className="w-full sm:w-auto px-9 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/30 transition-all active:scale-95"
             >
               Create Free Account
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/auth/login"
-              className="w-full sm:w-auto px-7 py-3.5 rounded-2xl macos-glass-card hover:border-emerald-500/40 text-slate-200 font-semibold text-sm transition-all"
+              className={`w-full sm:w-auto px-7 py-3.5 rounded-2xl font-semibold text-sm transition-all border ${
+                isLight
+                  ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-800 shadow-sm'
+                  : 'macos-glass-card hover:border-emerald-500/40 text-slate-200'
+              }`}
             >
               Sign In to Existing Account
             </Link>
@@ -1029,20 +1491,26 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-slate-800/80 py-10 px-4 text-xs text-slate-400 bg-[#05070A]">
+      <footer
+        className={`border-t py-10 px-4 text-xs transition-colors ${
+          isLight
+            ? 'bg-slate-100/80 border-slate-200 text-slate-600'
+            : 'bg-[#05070A] border-slate-800/80 text-slate-400'
+        }`}
+      >
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-          <BrandLogo size="sm" />
+          <BrandLogo size="sm" textColor={isLight ? "text-slate-900" : "text-white"} />
           <p className="text-center sm:text-left">
             © 2026 FairShare. Privacy-first, open architecture expense ledger. Built for modern financial transparency.
           </p>
           <div className="flex items-center gap-6 font-semibold">
-            <Link href="/auth/login" className="hover:text-emerald-400 transition-colors">
+            <Link href="/auth/login" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               Sign In
             </Link>
-            <Link href="/auth/signup" className="hover:text-emerald-400 transition-colors">
+            <Link href="/auth/signup" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               Sign Up
             </Link>
-            <a href="#simulator" className="hover:text-emerald-400 transition-colors">
+            <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               Interactive Demo
             </a>
           </div>
