@@ -190,8 +190,18 @@ function NewExpenseContent() {
         }
       }
 
-      // If no draft restored, setup defaults from URL query params
+      // If no draft restored, setup defaults from URL query params and user settings
       if (!restoredFromDraft) {
+        try {
+          const prefsRaw = localStorage.getItem('owino_user_preferences');
+          if (prefsRaw) {
+            const prefs = JSON.parse(prefsRaw);
+            if (prefs.defaultSplitType) {
+              setSplitType(prefs.defaultSplitType);
+            }
+          }
+        } catch {}
+
         const targetGid = preselectedGroupId || (groupList.length > 0 ? groupList[0].id : '');
         setGroupId(targetGid);
         if (targetGid) {
