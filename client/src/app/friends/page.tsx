@@ -184,21 +184,22 @@ export default function FriendsPage() {
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary' }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
               Friends & Connections
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, letterSpacing: '-0.01em' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, letterSpacing: '-0.01em', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
               Manage your personal contacts for direct 1-on-1 expenses and group splits
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="outlined"
               className="glass-tertiary"
               startIcon={<QrCode2 />}
               onClick={() => setQrModalOpen(true)}
               sx={{
+                flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
                 px: 2.5,
                 py: 1,
@@ -220,6 +221,7 @@ export default function FriendsPage() {
               startIcon={<PersonAdd />}
               onClick={() => setSearchOpen(true)}
               sx={{
+                flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
                 px: 3,
                 py: 1,

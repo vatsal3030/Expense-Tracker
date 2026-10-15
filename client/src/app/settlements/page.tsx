@@ -150,10 +150,10 @@ export default function SettlementsPage() {
       <Box className="animate-fade-in" sx={{ pb: 6 }}>
         {/* Page Header */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
             Settlements & Debt Simplification
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
             Verify completed UPI payments and eliminate redundant group transfers
           </Typography>
         </Box>

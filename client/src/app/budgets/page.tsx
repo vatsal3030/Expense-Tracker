@@ -93,14 +93,15 @@ export default function BudgetsPage() {
       <Box className="animate-fade-in">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
           <Box>
-            <Typography variant="h4" fontWeight={800}>Budgets</Typography>
-            <Typography variant="body1" color="text.secondary">Set and track spending limits</Typography>
+            <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>Budgets</Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}>Set and track spending limits</Typography>
           </Box>
           <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => setDialogOpen(true)}
             sx={{
+              width: { xs: '100%', sm: 'auto' },
               borderRadius: 2.5,
               px: 3,
               fontWeight: 600,
@@ -122,7 +123,7 @@ export default function BudgetsPage() {
         </Box>
 
         {loading ? (
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 1.5, sm: 2.5, md: 3 }}>
             {[1, 2, 3].map(i => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
                 <Card className="glass-secondary"><CardContent><Skeleton height={120} /></CardContent></Card>
@@ -150,7 +151,7 @@ export default function BudgetsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 1.5, sm: 2.5, md: 3 }}>
             {budgets.map((budget) => {
               const progressColor = getProgressColor(budget.percentage);
               return (

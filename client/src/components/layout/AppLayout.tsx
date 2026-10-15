@@ -87,8 +87,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
           mt: { xs: '76px', sm: '86px' },
-          p: { xs: 2, sm: 3 },
-          pb: { xs: '120px', sm: '100px', md: 4 },
+          p: { xs: 1.5, sm: 3 },
+          pb: { xs: '135px', sm: '100px', md: 4 },
           transition: theme.transitions.create(['width', 'margin'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,

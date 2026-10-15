@@ -457,7 +457,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
           variant="temporary"
           open={open}
           onClose={onClose}
-          ModalProps={{ keepMounted: true }}
+          ModalProps={{ keepMounted: true, disableRestoreFocus: true, autoFocus: false }}
           sx={{
             display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': {

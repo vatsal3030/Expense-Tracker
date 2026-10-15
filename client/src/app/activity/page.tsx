@@ -95,10 +95,10 @@ export default function ActivityPage() {
       <Box className="animate-fade-in" sx={{ pb: 6 }}>
         {/* Header */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary' }}>
+          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
             Activity Feed
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, letterSpacing: '-0.01em' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, letterSpacing: '-0.01em', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
             Real-time audit log of shared expenses, settlements, and member interactions
           </Typography>
         </Box>

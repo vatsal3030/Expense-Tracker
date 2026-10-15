@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <defs>
+    <linearGradient id="emeraldArc" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#34d399" />
+      <stop offset="1" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="slateArc" x1="44" y1="4" x2="4" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#94a3b8" />
+      <stop offset="1" stop-color="#334155" />
+    </linearGradient>
+    <linearGradient id="coinFill" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#16181D" />
+      <stop offset="1" stop-color="#0B0C0E" />
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="42" height="42" rx="12" fill="url(#coinFill)" stroke="#1D1F24" stroke-width="1.5" />
+  <path d="M14 24C14 18.4772 18.4772 14 24 14C29.5228 14 34 18.4772 34 24" stroke="url(#emeraldArc)" stroke-width="2.6" stroke-linecap="round" />
+  <path d="M34 24C34 29.5228 29.5228 34 24 34C18.4772 34 14 29.5228 14 24" stroke="url(#slateArc)" stroke-width="2.6" stroke-linecap="round" />
+  <line x1="18" y1="24" x2="30" y2="24" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" />
+  <circle cx="20" cy="19" r="2.2" fill="#34d399" />
+  <circle cx="28" cy="29" r="2.2" fill="#94a3b8" />
+</svg>

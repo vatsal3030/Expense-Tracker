@@ -271,7 +271,7 @@ export default function LandingPage() {
 
       {/* Floating macOS Liquid Glass Header — Expanded Full Width */}
       <div className="sticky top-4 z-50 px-2 sm:px-6 w-full max-w-[98%] xl:max-w-[96%] 2xl:max-w-[1560px] mx-auto">
-        <header className="macos-glass rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4 shadow-2xl transition-all duration-300">
+        <header className="macos-glass rounded-full px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4 shadow-2xl transition-all duration-300">
           <div className="shrink-0 flex items-center">
             <BrandLogo size="md" textColor={isLight ? "text-slate-900" : "text-white"} />
           </div>

@@ -93,7 +93,7 @@ export default function MobileBottomNav() {
               alignItems: 'center',
               justifyContent: 'center',
               py: 0.8,
-              px: 1.5,
+              px: { xs: 0.5, sm: 1.5 },
               borderRadius: 2,
               textDecoration: 'none',
               color: active ? 'primary.main' : 'text.secondary',

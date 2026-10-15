@@ -169,10 +169,10 @@ export default function GroupsPage() {
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
               Expense Groups
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
               Split living costs, trips, and shared events with verified friends
             </Typography>
           </Box>
@@ -182,6 +182,7 @@ export default function GroupsPage() {
             startIcon={<Add />}
             onClick={() => setDialogOpen(true)}
             sx={{
+              width: { xs: '100%', sm: 'auto' },
               borderRadius: 2.5,
               px: 3,
               py: 1,
@@ -204,7 +205,7 @@ export default function GroupsPage() {
         </Box>
 
         {/* Top Summary Metrics Bar (Savexa FinTech style) */}
-        <Grid container spacing={2} sx={{ mb: 3.5 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: 3.5 }}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"

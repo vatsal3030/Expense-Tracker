@@ -114,17 +114,17 @@ export default function FairScorePage() {
             >
               <EmojiEvents />
             </Box>
-            <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em' }}>
+            <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
               FairScore & Financial Karma
             </Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, ml: 5.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, ml: { xs: 0, sm: 5.5 }, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
             Earn reliability reputation, build streak momentum, and unlock FinTech achievements with your group
           </Typography>
         </Box>
 
         {/* Hero Score Gauge & Streak Row */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2.5, md: 3 }} sx={{ mb: 4 }}>
           {/* Main FairScore Gauge */}
           <Grid size={{ xs: 12, md: 7 }}>
             <Card
@@ -132,7 +132,7 @@ export default function FairScorePage() {
               sx={{
                 borderRadius: 3.5,
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
-                p: 4,
+                p: { xs: 2.5, sm: 3.5, md: 4 },
                 position: 'relative',
                 overflow: 'hidden',
               }}

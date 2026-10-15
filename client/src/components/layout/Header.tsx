@@ -232,17 +232,21 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
       <Toolbar sx={{ gap: 1, minHeight: { xs: 56, sm: 62 }, px: { xs: 1.5, sm: 2.25 } }}>
         {/* Mobile menu button */}
         <IconButton
-          edge="start"
           onClick={onMenuToggle}
           sx={{
             display: { md: 'none' },
-            mr: 1,
+            width: 36,
+            height: 36,
+            mr: { xs: 0.5, sm: 1 },
             color: 'text.secondary',
             bgcolor: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
             border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
+            borderRadius: '10px',
+            p: 0.75,
           }}
+          aria-label="Open mobile navigation menu"
         >
-          <MenuIcon />
+          <MenuIcon sx={{ fontSize: 20 }} />
         </IconButton>
 
         {/* Mobile Brand Logo — Only circular icon without long text */}

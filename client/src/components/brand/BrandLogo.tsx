@@ -113,7 +113,7 @@ export default function BrandLogo({
               FairShare
             </span>
           </div>
-          <span className="font-heading text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 mt-0.5">
+          <span className="hidden sm:block font-heading text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 mt-0.5">
             Smart Expense Splitting
           </span>
         </div>
