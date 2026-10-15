@@ -187,11 +187,11 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
       elevation={0}
       className="glass-nav-island"
       sx={{
-        top: { xs: 8, md: 12 },
-        left: { xs: 8, md: `${drawerWidth + 16}px` },
-        right: { xs: 8, md: 16 },
+        top: { xs: 6, sm: 8, md: 12 },
+        left: { xs: 6, sm: 8, md: `${drawerWidth + 16}px` },
+        right: { xs: 6, sm: 8, md: 16 },
         width: 'auto',
-        borderRadius: { xs: '16px', sm: '20px' },
+        borderRadius: { xs: '14px', sm: '20px' },
         border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.14)'}`,
         borderTopColor: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.35)',
         borderLeftColor: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.22)',
@@ -229,24 +229,38 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
         }}
       />
 
-      <Toolbar sx={{ gap: 1, minHeight: { xs: 56, sm: 62 }, px: { xs: 1.5, sm: 2.25 } }}>
+      <Toolbar sx={{ gap: { xs: 0.5, sm: 1 }, minHeight: { xs: 52, sm: 62 }, px: { xs: 1, sm: 2 } }}>
         {/* Mobile menu button */}
         <IconButton
-          edge="start"
-          onClick={onMenuToggle}
+          onClick={(e) => {
+            (e.currentTarget as HTMLElement).blur();
+            onMenuToggle();
+          }}
+          aria-label="Toggle navigation menu"
           sx={{
             display: { md: 'none' },
-            mr: 1,
+            width: 36,
+            height: 36,
+            p: 0,
+            borderRadius: '10px',
             color: 'text.secondary',
-            bgcolor: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
-            border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'}`,
+            bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+            border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.10)'}`,
+            transition: 'all 0.18s ease',
+            '&:hover': {
+              bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.14)',
+              color: isLight ? '#0E6245' : '#34D399',
+            },
+            '&:active': {
+              transform: 'scale(0.94)',
+            },
           }}
         >
-          <MenuIcon />
+          <MenuIcon sx={{ fontSize: 20 }} />
         </IconButton>
 
         {/* Mobile Brand Logo — Only circular icon without long text */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: { xs: 0.5, sm: 1.5 }, flexShrink: 0 }}>
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: { xs: 0.25, sm: 1 }, flexShrink: 0 }}>
           <BrandLogo size="sm" showText={false} />
         </Box>
 
@@ -310,7 +324,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
         <Box sx={{ flex: 1 }} />
 
         {/* Actions */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
           {/* Mobile Search Button */}
           <Tooltip title="Search">
             <IconButton
@@ -319,10 +333,10 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 display: { xs: 'flex', sm: 'none' },
                 bgcolor: isLight ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.05)',
                 border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)'}`,
-                p: 1,
+                p: { xs: 0.75, sm: 1 },
               }}
             >
-              <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+              <SearchIcon sx={{ fontSize: 19, color: 'text.secondary' }} />
             </IconButton>
           </Tooltip>
           {/* FairScore & Streak Badge (Tertiary Glass Pill) */}
@@ -367,6 +381,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 bgcolor: isLight ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.05)',
                 border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)'}`,
                 backdropFilter: 'blur(12px)',
+                p: { xs: 0.75, sm: 1 },
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
                   bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(255, 255, 255, 0.10)',
@@ -376,9 +391,9 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               }}
             >
               {mode === 'dark' ? (
-                <LightModeIcon sx={{ color: '#fbbf24', fontSize: 20 }} />
+                <LightModeIcon sx={{ color: '#fbbf24', fontSize: 19 }} />
               ) : (
-                <DarkModeIcon sx={{ color: '#64748b', fontSize: 20 }} />
+                <DarkModeIcon sx={{ color: '#64748b', fontSize: 19 }} />
               )}
             </IconButton>
           </Tooltip>
@@ -391,6 +406,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 bgcolor: isLight ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.05)',
                 border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)'}`,
                 backdropFilter: 'blur(12px)',
+                p: { xs: 0.75, sm: 1 },
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
                   bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(255, 255, 255, 0.10)',
@@ -411,7 +427,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                   },
                 }}
               >
-                <NotificationsIcon sx={{ fontSize: 20 }} />
+                <NotificationsIcon sx={{ fontSize: 19 }} />
               </Badge>
             </IconButton>
           </Tooltip>
@@ -421,7 +437,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             <IconButton
               onClick={handleProfileMenuOpen}
               sx={{
-                ml: 0.5,
+                ml: { xs: 0.25, sm: 0.5 },
                 p: 0.4,
                 borderRadius: 9999,
                 border: `1.5px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'}`,

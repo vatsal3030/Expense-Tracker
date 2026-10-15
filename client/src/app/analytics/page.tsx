@@ -120,16 +120,16 @@ export default function AnalyticsPage() {
             gap: 2,
           }}
         >
-          <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+          <Box sx={{ width: '100%' }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.4rem', sm: '1.85rem', md: '2.1rem' } }}>
               Financial Telemetry
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
               Deep telemetry on your group expenses, cashflows, and spending habits
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'space-between', sm: 'flex-start' } }}>
             <Box
               className="glass-control-surface"
               sx={{
@@ -148,7 +148,7 @@ export default function AnalyticsPage() {
                     onClick={() => setTimeframe(tf)}
                     className={active ? "glass-emerald-active" : undefined}
                     sx={{
-                      px: 1.75,
+                      px: { xs: 1.25, sm: 1.75 },
                       py: 0.5,
                       fontSize: '0.75rem',
                       fontWeight: active ? 750 : 600,
@@ -180,7 +180,7 @@ export default function AnalyticsPage() {
                 fontWeight: 600,
                 textTransform: 'none',
                 py: 0.75,
-                px: 2,
+                px: { xs: 1.5, sm: 2 },
                 '&:hover': {
                   borderColor: '#10B981',
                   bgcolor: alpha('#10B981', 0.08),
@@ -193,13 +193,13 @@ export default function AnalyticsPage() {
         </Box>
 
         {/* 4 Telemetry Metrics */}
-        <Grid container spacing={2.5} sx={{ mb: 4 }}>
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2, md: 2.5 }} sx={{ mb: 4, width: '100%', m: 0 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ pl: { xs: 0, sm: 'inherit' } }}>
             <Card
               className="glass-secondary glass-specular-top glass-accent-emerald"
               sx={{
                 borderRadius: 3.5,
-                p: 2.5,
+                p: { xs: 2, sm: 2.5 },
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -233,12 +233,12 @@ export default function AnalyticsPage() {
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ pl: { xs: 0, sm: 'inherit' } }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
                 borderRadius: 3.5,
-                p: 2.5,
+                p: { xs: 2, sm: 2.5 },
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -260,12 +260,12 @@ export default function AnalyticsPage() {
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ pl: { xs: 0, sm: 'inherit' } }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
                 borderRadius: 3.5,
-                p: 2.5,
+                p: { xs: 2, sm: 2.5 },
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -287,12 +287,12 @@ export default function AnalyticsPage() {
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }} sx={{ pl: { xs: 0, sm: 'inherit' } }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
                 borderRadius: 3.5,
-                p: 2.5,
+                p: { xs: 2, sm: 2.5 },
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

@@ -270,8 +270,8 @@ export default function LandingPage() {
       />
 
       {/* Floating macOS Liquid Glass Header — Expanded Full Width */}
-      <div className="sticky top-4 z-50 px-2 sm:px-6 w-full max-w-[98%] xl:max-w-[96%] 2xl:max-w-[1560px] mx-auto">
-        <header className="macos-glass rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4 shadow-2xl transition-all duration-300">
+      <div className="sticky top-2 sm:top-4 z-50 px-1.5 sm:px-6 w-full max-w-[99%] xl:max-w-[96%] 2xl:max-w-[1560px] mx-auto">
+        <header className="macos-glass rounded-full px-2.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-4 shadow-2xl transition-all duration-300">
           <div className="shrink-0 flex items-center">
             <BrandLogo size="md" textColor={isLight ? "text-slate-900" : "text-white"} />
           </div>
@@ -303,7 +303,7 @@ export default function LandingPage() {
           </nav>
 
           {/* Action buttons + Theme Toggle */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Themed Segmented Switcher for Light & Dark (Desktop) */}
             <div className="hidden sm:flex macos-liquid-surface items-center p-0.5 sm:p-1 rounded-full shadow-inner">
               <button
@@ -341,23 +341,22 @@ export default function LandingPage() {
             {/* Compact Mobile Theme Switcher */}
             <button
               onClick={toggleTheme}
-              className="sm:hidden w-8 h-8 rounded-full macos-liquid-surface flex items-center justify-center border border-white/10 text-slate-300 active:scale-95 transition-all"
+              className="sm:hidden w-7 h-7 rounded-full macos-liquid-surface flex items-center justify-center border border-white/10 text-slate-300 active:scale-95 transition-all shrink-0"
               aria-label="Toggle Theme"
               title="Toggle Theme"
             >
-              {isLight ? <Moon className="w-4 h-4 text-indigo-600" /> : <Sun className="w-4 h-4 text-amber-400" />}
+              {isLight ? <Moon className="w-3.5 h-3.5 text-indigo-600" /> : <Sun className="w-3.5 h-3.5 text-amber-400" />}
             </button>
 
             {/* Authenticated Dashboard Button vs Guest Auth Buttons */}
             {user ? (
-              <div className="flex items-center gap-2 shrink-0">
-                {/* Direct Dashboard Link (Account name removed for clean spacious layout) */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <Link
                   href="/dashboard"
-                  className="text-xs font-bold px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95 shrink-0 whitespace-nowrap"
+                  className="text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95 shrink-0 whitespace-nowrap"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
-                  <span>Dashboard</span>
+                  <span className="hidden xs:inline">Dashboard</span>
                   <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                 </Link>
               </div>
@@ -365,7 +364,7 @@ export default function LandingPage() {
               <>
                 <Link
                   href="/auth/login"
-                  className={`text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-full transition-all ${
+                  className={`text-xs font-semibold px-2 sm:px-3 py-1.5 rounded-full transition-all shrink-0 ${
                     isLight
                       ? 'text-slate-700 hover:text-slate-900 hover:bg-white/40'
                       : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -375,11 +374,11 @@ export default function LandingPage() {
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95"
+                  className="text-xs font-bold px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95 shrink-0"
                 >
                   <span className="hidden sm:inline">Get Started Free</span>
                   <span className="sm:hidden">Start</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </Link>
               </>
             )}
