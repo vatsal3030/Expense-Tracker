@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
 import {
   Box,
   Typography,
@@ -42,6 +42,7 @@ import {
   TableBody,
   Menu,
   ListItemIcon,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
@@ -84,7 +85,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   DONATIONS: '❤️', INVESTMENTS: '📈', SALARY: '💰', FREELANCE: '💻',
 };
 
-export default function ExpensesPage() {
+function ExpensesContent() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const router = useRouter();
@@ -1223,5 +1224,19 @@ export default function ExpensesPage() {
         />
       </Box>
     </AppLayout>
+  );
+}
+
+export default function ExpensesPage() {
+  return (
+    <Suspense
+      fallback={
+        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Box>
+      }
+    >
+      <ExpensesContent />
+    </Suspense>
   );
 }
