@@ -103,17 +103,17 @@ export default function BrandLogo({
   );
 
   const content = (
-    <div className={cn("inline-flex items-center gap-1.5 sm:gap-2.5 group select-none shrink-0", className)}>
+    <div className={cn("inline-flex items-center gap-2.5 group select-none", className)}>
       {logoMark}
       {showText && (
         <div className="flex flex-col justify-center leading-none">
-          <div className={cn("font-heading font-extrabold tracking-tight flex items-center gap-1 sm:gap-1.5", textStyles, textColor || "text-slate-900 dark:text-slate-100")}>
+          <div className={cn("font-heading font-extrabold tracking-tight flex items-center gap-1.5", textStyles, textColor || "text-slate-900 dark:text-slate-100")}>
             <span>Owino</span>
-            <span className="text-emerald-500 font-semibold text-[10px] sm:text-[11px] px-1 sm:px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 shrink-0">
+            <span className="text-emerald-500 font-semibold text-[11px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25">
               FairShare
             </span>
           </div>
-          <span className="hidden sm:block font-heading text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 mt-0.5">
+          <span className="font-heading text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 mt-0.5">
             Smart Expense Splitting
           </span>
         </div>

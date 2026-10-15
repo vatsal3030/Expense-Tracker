@@ -166,17 +166,17 @@ export default function DashboardPage() {
             gap: 2,
           }}
         >
-          <Box sx={{ width: '100%' }}>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.4rem', sm: '1.85rem', md: '2.1rem' } }}>
+          <Box>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
               Financial Overview
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               Track personal equity, shared group expenses, and settlements
             </Typography>
           </Box>
 
           {/* Quick Action CTAs */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, width: { xs: '100%', sm: 'auto' } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               size="small"
@@ -186,13 +186,12 @@ export default function DashboardPage() {
               startIcon={<CheckCircleOutlined fontSize="small" />}
               className="glass-tertiary"
               sx={{
-                flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
                 borderColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)',
                 color: 'text.primary',
                 fontWeight: 600,
                 textTransform: 'none',
-                px: { xs: 1.5, sm: 2 },
+                px: 2,
                 py: 0.8,
                 '&:hover': {
                   borderColor: isLight ? '#0E6245' : '#10b981',
@@ -211,13 +210,12 @@ export default function DashboardPage() {
               prefetch={true}
               startIcon={<AddIcon fontSize="small" />}
               sx={{
-                flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
                 bgcolor: isLight ? '#0E6245' : '#059669',
                 color: '#FFFFFF',
                 fontWeight: 600,
                 textTransform: 'none',
-                px: { xs: 1.5, sm: 2.5 },
+                px: 2.5,
                 py: 0.8,
                 boxShadow: isLight
                   ? '0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
@@ -242,15 +240,10 @@ export default function DashboardPage() {
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
-            p: 0.5,
-            mb: { xs: 2.5, sm: 3.5 },
+            p: 0.6,
+            mb: 3.5,
             borderRadius: 9999,
             gap: 0.5,
-            maxWidth: '100%',
-            overflowX: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            '&::-webkit-scrollbar': { display: 'none' },
-            scrollbarWidth: 'none',
           }}
         >
           {(['overview', 'breakdown', 'balances', 'activity'] as const).map((tab) => {
@@ -262,12 +255,11 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab(tab)}
                 sx={{
                   borderRadius: 9999,
-                  px: { xs: 1.75, sm: 2.5 },
-                  py: 0.55,
-                  fontSize: { xs: '0.78rem', sm: '0.825rem' },
+                  px: 2.5,
+                  py: 0.6,
+                  fontSize: '0.825rem',
                   fontWeight: active ? 600 : 500,
                   textTransform: 'capitalize',
-                  whiteSpace: 'nowrap',
                   color: active
                     ? (isLight ? '#0F172A' : '#FFFFFF')
                     : 'text.secondary',
@@ -299,13 +291,13 @@ export default function DashboardPage() {
 
         {/* Financial Metrics Cards (Apple visionOS Liquid Glass Panels) */}
         {(activeTab === 'overview' || activeTab === 'balances') && (
-        <Grid container spacing={{ xs: 1.5, sm: 2, md: 2.5 }} sx={{ mb: 4, width: '100%', m: 0 }}>
+        <Grid container spacing={2.5} sx={{ mb: 4 }}>
           {/* Card 1: Net Balance (Primary Hero Metric with Ambient Emerald Reflection) */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ pl: { xs: 0, sm: 'inherit' } }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 2, sm: 2.5, md: 2.75 },
+                p: 2.75,
                 height: '100%',
                 borderRadius: 4,
                 display: 'flex',
@@ -378,7 +370,7 @@ export default function DashboardPage() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 2, sm: 2.5, md: 2.75 },
+                p: 2.75,
                 height: '100%',
                 borderRadius: 4,
                 display: 'flex',
@@ -447,7 +439,7 @@ export default function DashboardPage() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 2, sm: 2.5, md: 2.75 },
+                p: 2.75,
                 height: '100%',
                 borderRadius: 4,
                 display: 'flex',
@@ -516,7 +508,7 @@ export default function DashboardPage() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 2, sm: 2.5, md: 2.75 },
+                p: 2.75,
                 height: '100%',
                 borderRadius: 4,
                 display: 'flex',
@@ -663,12 +655,12 @@ export default function DashboardPage() {
 
         {/* Karma & Telemetry Spotlight */}
         {activeTab === 'overview' && (
-        <Grid container spacing={{ xs: 1.5, sm: 2, md: 2.5 }} sx={{ mb: 4, width: '100%', m: 0 }}>
-          <Grid size={{ xs: 12, md: 8 }} sx={{ pl: { xs: 0, sm: 'inherit' } }}>
+        <Grid container spacing={2.5} sx={{ mb: 4 }}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 2, sm: 2.5, md: 2.75 },
+                p: 2.75,
                 borderRadius: 4,
                 display: 'flex',
                 alignItems: 'center',
@@ -807,9 +799,9 @@ export default function DashboardPage() {
 
         {/* Charts & Analytics Row (Liquid Glass Chart Containers) */}
         {(activeTab === 'overview' || activeTab === 'breakdown') && (
-        <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} sx={{ mb: 4, width: '100%', m: 0 }}>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
           {/* Spending Trend Chart */}
-          <Grid size={{ xs: 12, md: 7 }} sx={{ pl: { xs: 0, sm: 'inherit' } }}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
@@ -818,7 +810,7 @@ export default function DashboardPage() {
                 border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.10)'}`,
               }}
             >
-              <CardContent sx={{ p: { xs: 1.75, sm: 2.5, md: 3 } }}>
+              <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Box>
                     <Typography variant="h6" fontWeight={700} sx={{ letterSpacing: '-0.01em' }}>
@@ -989,10 +981,10 @@ export default function DashboardPage() {
 
         {/* Quick Stats & Recent Activity */}
         {(activeTab === 'overview' || activeTab === 'activity') && (
-        <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} sx={{ width: '100%', m: 0 }}>
+        <Grid container spacing={3}>
           {/* Quick Metrics */}
           {activeTab === 'overview' && (
-          <Grid size={{ xs: 12, md: 4 }} sx={{ pl: { xs: 0, sm: 'inherit' } }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
@@ -1001,7 +993,7 @@ export default function DashboardPage() {
                 height: '100%',
               }}
             >
-              <CardContent sx={{ p: { xs: 1.75, sm: 2.5, md: 3 } }}>
+              <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" fontWeight={700} sx={{ mb: 2, letterSpacing: '-0.01em' }}>
                   Quick Summary
                 </Typography>
@@ -1051,7 +1043,7 @@ export default function DashboardPage() {
           )}
 
           {/* Recent Activity */}
-          <Grid size={{ xs: 12, md: activeTab === 'activity' ? 12 : 8 }} sx={{ pl: { xs: 0, sm: 'inherit' } }}>
+          <Grid size={{ xs: 12, md: activeTab === 'activity' ? 12 : 8 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
@@ -1059,7 +1051,7 @@ export default function DashboardPage() {
                 border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.10)'}`,
               }}
             >
-              <CardContent sx={{ p: { xs: 1.75, sm: 2.5, md: 3 } }}>
+              <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" fontWeight={700} sx={{ letterSpacing: '-0.01em' }}>
                     Recent Activity

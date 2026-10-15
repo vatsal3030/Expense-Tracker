@@ -149,7 +149,7 @@ friendRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<
     res.json({ success: true, data: friends });
   } catch (error: any) {
     console.error('Get friends error:', error);
-    res.json({ success: true, data: [] });
+    res.status(500).json({ success: false, error: 'Failed to fetch friends.' });
   }
 });
 
@@ -167,7 +167,7 @@ friendRouter.get('/pending', async (req: AuthenticatedRequest, res: Response): P
     res.json({ success: true, data: requests });
   } catch (error: any) {
     console.error('Get pending requests error:', error);
-    res.json({ success: true, data: [] });
+    res.status(500).json({ success: false, error: 'Failed to fetch pending requests.' });
   }
 });
 

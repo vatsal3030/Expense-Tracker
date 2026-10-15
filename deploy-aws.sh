@@ -59,9 +59,9 @@ if [ ! -f .env ]; then
     echo "⚠️  No .env file found in $(pwd)!"
     echo "Creating .env template..."
     cat << 'EOF' > .env
-# Database Credentials (use port 6543 with ?pgbouncer=true for Supabase connection pooler)
-DATABASE_URL="postgresql://postgres.<your-project-ref>:<your-password>@<your-pooler-host>:6543/postgres?pgbouncer=true&connection_limit=5&sslmode=require"
-DIRECT_URL="postgresql://postgres.<your-project-ref>:<your-password>@<your-pooler-host>:5432/postgres"
+# Database Credentials (from your Supabase Dashboard -> Project Settings -> Database)
+DATABASE_URL=postgresql://postgres:<your-db-password>@<your-db-host>:5432/postgres?sslmode=require&connection_limit=10
+DIRECT_URL=postgresql://postgres:<your-db-password>@<your-db-host>:5432/postgres
 
 # Supabase Auth Keys (from Supabase Dashboard -> Project Settings -> API)
 SUPABASE_URL=https://<your-project-id>.supabase.co
