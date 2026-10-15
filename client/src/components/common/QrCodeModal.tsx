@@ -86,10 +86,11 @@ export default function QrCodeModal({
         slotProps={{
           paper: {
             sx: {
-              borderRadius: 4,
-              maxWidth: 420,
-              width: '100%',
-              p: 1.5,
+              borderRadius: { xs: 3, sm: 4 },
+              maxWidth: { xs: 'calc(100% - 24px)', sm: 420 },
+              width: { xs: 'calc(100% - 24px)', sm: '100%' },
+              m: { xs: 1.5, sm: 3 },
+              p: { xs: 1, sm: 1.5 },
               textAlign: 'center',
               bgcolor: isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(20, 24, 33, 0.88)',
               backdropFilter: 'blur(24px) saturate(190%)',

@@ -94,8 +94,9 @@ export default function SignupPage() {
         justifyContent: 'center',
         bgcolor: 'background.default',
         position: 'relative',
-        overflow: 'hidden',
-        p: { xs: 1.5, sm: 2 },
+        overflowY: 'auto',
+        px: { xs: 2, sm: 2 },
+        py: { xs: 4, sm: 2 },
       }}
     >
       {/* Decorations: Subtle Emerald Vignette */}

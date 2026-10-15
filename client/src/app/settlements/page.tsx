@@ -147,7 +147,7 @@ export default function SettlementsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: 6 }}>
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Page Header */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
@@ -164,10 +164,10 @@ export default function SettlementsPage() {
           sx={{
             mb: 4,
             borderRadius: 3.5,
-            p: 3,
+            p: { xs: 2, sm: 3 },
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
               <Box
                 className="glass-tertiary"
@@ -181,15 +181,16 @@ export default function SettlementsPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
                 <AutoAwesome fontSize="small" />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
+                <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1rem' } }}>
                   Splitwise Min-Cash-Flow Simplification
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                   If A owes B ₹100 and B owes C ₹100, Owino routes A → C directly.
                 </Typography>
               </Box>
@@ -217,8 +218,10 @@ export default function SettlementsPage() {
                         borderColor: isUserPaying ? 'rgba(239, 68, 68, 0.35) !important' : isUserReceiving ? 'rgba(16, 185, 129, 0.35) !important' : undefined,
                         bgcolor: isUserPaying ? 'rgba(239, 68, 68, 0.06)' : isUserReceiving ? 'rgba(16, 185, 129, 0.06)' : undefined,
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: { xs: 'flex-start', sm: 'center' },
                         justifyContent: 'space-between',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: { xs: 1.5, sm: 0 },
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -235,7 +238,7 @@ export default function SettlementsPage() {
                         </Box>
                       </Box>
 
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'space-between', sm: 'flex-end' }, width: { xs: '100%', sm: 'auto' }, gap: 1.5 }}>
                         <Typography variant="subtitle1" fontWeight={800} sx={{ color: isUserPaying ? '#EF4444' : '#10B981' }}>
                           {formatCurrency(debt.amount)}
                         </Typography>
@@ -287,8 +290,9 @@ export default function SettlementsPage() {
             mb: 3,
             borderRadius: 3,
             p: 0.5,
-            display: 'inline-flex',
+            display: 'flex',
             maxWidth: '100%',
+            overflowX: 'auto',
           }}
         >
           <Tabs
@@ -297,8 +301,12 @@ export default function SettlementsPage() {
               setTab(v);
               setPage(1);
             }}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
               minHeight: 40,
+              maxWidth: '100%',
               '& .MuiTabs-indicator': {
                 height: '100%',
                 borderRadius: 2.5,
@@ -309,8 +317,9 @@ export default function SettlementsPage() {
               '& .MuiTab-root': {
                 textTransform: 'none',
                 fontWeight: 700,
-                fontSize: '0.875rem',
-                minWidth: 120,
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                minWidth: { xs: 'auto', sm: 120 },
+                px: { xs: 1.75, sm: 2.5 },
                 minHeight: 40,
                 zIndex: 1,
                 borderRadius: 2.5,
@@ -372,77 +381,82 @@ export default function SettlementsPage() {
                     <React.Fragment key={s.id}>
                       <ListItem
                         sx={{
-                          px: 3,
+                          px: { xs: 2, sm: 3 },
                           py: 2,
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          alignItems: { xs: 'flex-start', sm: 'center' },
+                          gap: { xs: 1.5, sm: 0 },
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                           '&:hover': {
                             bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
                           },
                         }}
                       >
-                        <ListItemAvatar>
-                          <Avatar
-                            className="glass-tertiary"
-                            sx={{
-                              width: 44,
-                              height: 44,
-                              bgcolor: 'rgba(16, 185, 129, 0.15)',
-                              border: '1px solid rgba(16, 185, 129, 0.3)',
-                              color: '#10B981',
-                            }}
-                          >
-                            <Handshake />
-                          </Avatar>
-                        </ListItemAvatar>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: { xs: '100%', sm: 'auto' }, flex: 1 }}>
+                          <ListItemAvatar sx={{ minWidth: { xs: 44, sm: 56 } }}>
+                            <Avatar
+                              className="glass-tertiary"
+                              sx={{
+                                width: 44,
+                                height: 44,
+                                bgcolor: 'rgba(16, 185, 129, 0.15)',
+                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                color: '#10B981',
+                              }}
+                            >
+                              <Handshake />
+                            </Avatar>
+                          </ListItemAvatar>
 
-                        <ListItemText
-                          disableTypography
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                              <Typography variant="body1" fontWeight={600}>
-                                {s.payer?.name} {isPayer && '(You)'}
+                          <ListItemText
+                            disableTypography
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                <Typography variant="body1" fontWeight={600}>
+                                  {s.payer?.name} {isPayer && '(You)'}
+                                </Typography>
+                                <ArrowForward sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                <Typography variant="body1" fontWeight={600}>
+                                  {s.payee?.name} {isPayee && '(You)'}
+                                </Typography>
+                                <Chip
+                                  label={cfg.label}
+                                  size="small"
+                                  sx={{
+                                    height: 20,
+                                    fontSize: '0.675rem',
+                                    fontWeight: 700,
+                                    bgcolor:
+                                      s.status === 'CONFIRMED'
+                                        ? alpha('#0E6245', 0.1)
+                                        : s.status === 'PENDING'
+                                        ? alpha('#F59E0B', 0.1)
+                                        : alpha('#EF4444', 0.1),
+                                    color:
+                                      s.status === 'CONFIRMED'
+                                        ? '#0E6245'
+                                        : s.status === 'PENDING'
+                                        ? '#D97706'
+                                        : '#EF4444',
+                                  }}
+                                />
+                              </Box>
+                            }
+                            secondary={
+                              <Typography variant="caption" color="text.secondary">
+                                {s.group?.name ? `${s.group.name} • ` : ''}
+                                {new Date(s.createdAt).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                                {s.notes ? ` • ${s.notes}` : ''}
                               </Typography>
-                              <ArrowForward sx={{ fontSize: 16, color: 'text.secondary' }} />
-                              <Typography variant="body1" fontWeight={600}>
-                                {s.payee?.name} {isPayee && '(You)'}
-                              </Typography>
-                              <Chip
-                                label={cfg.label}
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: '0.675rem',
-                                  fontWeight: 700,
-                                  bgcolor:
-                                    s.status === 'CONFIRMED'
-                                      ? alpha('#0E6245', 0.1)
-                                      : s.status === 'PENDING'
-                                      ? alpha('#F59E0B', 0.1)
-                                      : alpha('#EF4444', 0.1),
-                                  color:
-                                    s.status === 'CONFIRMED'
-                                      ? '#0E6245'
-                                      : s.status === 'PENDING'
-                                      ? '#D97706'
-                                      : '#EF4444',
-                                }}
-                              />
-                            </Box>
-                          }
-                          secondary={
-                            <Typography variant="caption" color="text.secondary">
-                              {s.group?.name ? `${s.group.name} • ` : ''}
-                              {new Date(s.createdAt).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
-                              {s.notes ? ` • ${s.notes}` : ''}
-                            </Typography>
-                          }
-                        />
+                            }
+                          />
+                        </Box>
 
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'space-between', sm: 'flex-end' }, width: { xs: '100%', sm: 'auto' }, gap: 1.5, pl: { xs: 7, sm: 0 } }}>
                           <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
                             {formatCurrency(Number(s.amount))}
                           </Typography>

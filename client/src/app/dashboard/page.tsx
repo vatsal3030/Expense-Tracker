@@ -154,7 +154,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: 6 }}>
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Top Header Row (Savexa & Ocupite style) */}
         <Box
           sx={{

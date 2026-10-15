@@ -322,6 +322,8 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
             boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.55)',
             overflow: 'hidden',
             m: { xs: 1.5, sm: 3 },
+            width: { xs: 'calc(100% - 24px)', sm: '100%' },
+            maxWidth: { xs: 'calc(100% - 24px)', sm: '600px' },
           },
         },
       }}
@@ -332,22 +334,22 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
           sx={{
             display: 'flex',
             alignItems: 'center',
-            px: 2.5,
-            py: 1.75,
+            px: { xs: 1.5, sm: 2.5 },
+            py: { xs: 1.25, sm: 1.75 },
             borderBottom: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'}`,
             gap: 1.5,
           }}
         >
-          <SearchIcon sx={{ color: isLight ? '#0E6245' : '#10B981', fontSize: 24 }} />
+          <SearchIcon sx={{ color: isLight ? '#0E6245' : '#10B981', fontSize: { xs: 22, sm: 24 } }} />
           <InputBase
             inputRef={inputRef}
             fullWidth
-            placeholder="Search expenses, groups, friends, actions... (or type /)"
+            placeholder="Search expenses, groups, friends..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             sx={{
-              fontSize: '1rem',
+              fontSize: { xs: '0.9rem', sm: '1rem' },
               fontWeight: 500,
               color: 'text.primary',
             }}
@@ -362,6 +364,7 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
             <Chip
               label="ESC"
               size="small"
+              onClick={onClose}
               sx={{
                 height: 22,
                 fontSize: '0.65rem',
@@ -369,6 +372,7 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
                 bgcolor: isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)',
                 color: 'text.secondary',
                 border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'}`,
+                cursor: 'pointer',
               }}
             />
           )}
@@ -380,11 +384,15 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            px: 2.5,
+            px: { xs: 1.5, sm: 2.5 },
             py: 1.25,
             bgcolor: isLight ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.02)',
             borderBottom: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)'}`,
             overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            '&::-webkit-scrollbar': { display: 'none' },
+            scrollbarWidth: 'none',
+            whiteSpace: 'nowrap',
           }}
         >
           {[
@@ -406,6 +414,7 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
                   setSelectedIndex(0);
                 }}
                 sx={{
+                  flexShrink: 0,
                   fontWeight: active ? 700 : 500,
                   fontSize: '0.75rem',
                   bgcolor: active
@@ -538,13 +547,13 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            px: 2.5,
+            px: { xs: 1.5, sm: 2.5 },
             py: 1.25,
             bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
             borderTop: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)'}`,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 2 }}>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
               <strong style={{ color: 'inherit' }}>↑↓</strong> to navigate
             </Typography>
@@ -555,6 +564,16 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
               <strong style={{ color: 'inherit' }}>ESC</strong> to close
             </Typography>
           </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              display: { xs: 'block', sm: 'none' },
+              color: 'text.secondary',
+              fontSize: '0.72rem',
+            }}
+          >
+            Tap result to open
+          </Typography>
           <Typography
             variant="caption"
             sx={{

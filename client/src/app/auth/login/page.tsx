@@ -75,14 +75,13 @@ function LoginForm() {
     <Box
       sx={{
         minHeight: '100vh',
-        height: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         px: 2,
-        py: 1,
+        py: { xs: 3, sm: 2 },
         bgcolor: 'background.default',
-        overflow: 'hidden',
+        overflowY: 'auto',
       }}
     >
       <Container maxWidth="xs" disableGutters sx={{ maxHeight: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

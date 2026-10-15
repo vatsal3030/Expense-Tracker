@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ pb: 6 }}>
+      <Box sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Header */}
         <Box
           sx={{
@@ -129,7 +129,7 @@ export default function AnalyticsPage() {
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
             <Box
               className="glass-control-surface"
               sx={{

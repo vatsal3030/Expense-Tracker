@@ -105,6 +105,13 @@ const baseTheme = {
       styleOverrides: {
         paper: {
           borderRadius: 22,
+          '@media (max-width: 600px)': {
+            margin: '12px !important',
+            width: 'calc(100% - 24px) !important',
+            maxWidth: 'calc(100% - 24px) !important',
+            maxHeight: 'calc(100% - 32px) !important',
+            borderRadius: '18px !important',
+          },
         },
       },
     },

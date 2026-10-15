@@ -12,7 +12,7 @@ import {
   ArrowBack, Add, Share, ContentCopy,
   WhatsApp, PersonAdd, Check, Lock, Security,
   AccountBalanceWallet, ArrowForward, QrCode2,
-  TrendingUp, TrendingDown, ReceiptLong, People,
+  TrendingUp, TrendingDown, ReceiptLong, People, Close,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -176,7 +176,7 @@ function GroupDetailContent() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: 6 }}>
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Top Header Row */}
         <Box
           sx={{
@@ -188,21 +188,22 @@ function GroupDetailContent() {
             gap: 2,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
             <IconButton
               onClick={() => router.push('/groups')}
               sx={{
                 bgcolor: 'background.paper',
                 border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 2.5,
+                mt: 0.25,
                 '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
               }}
             >
               <ArrowBack fontSize="small" />
             </IconButton>
             <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.75rem', md: '2.125rem' } }}>
                   {group?.name}
                 </Typography>
                 <Chip
@@ -233,14 +234,14 @@ function GroupDetailContent() {
                 )}
               </Box>
               {group?.description && (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                   {group.description}
                 </Typography>
               )}
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               startIcon={<QrCode2 fontSize="small" />}
@@ -411,15 +412,20 @@ function GroupDetailContent() {
             borderRadius: 3,
             p: 0.5,
             mb: 3,
-            display: 'inline-flex',
+            display: 'flex',
             maxWidth: '100%',
+            overflowX: 'auto',
           }}
         >
           <Tabs
             value={activeTab}
             onChange={(_, val) => setActiveTab(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
               minHeight: 40,
+              maxWidth: '100%',
               '& .MuiTabs-indicator': {
                 height: '100%',
                 borderRadius: 2.5,
@@ -430,8 +436,9 @@ function GroupDetailContent() {
               '& .MuiTab-root': {
                 textTransform: 'none',
                 fontWeight: 700,
-                fontSize: '0.875rem',
-                minWidth: 120,
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                minWidth: { xs: 'auto', sm: 120 },
+                px: { xs: 1.75, sm: 2.5 },
                 minHeight: 40,
                 zIndex: 1,
                 borderRadius: 2.5,
@@ -912,31 +919,52 @@ function GroupDetailContent() {
           slotProps={{
             paper: {
               className: 'glass-deep glass-specular-top',
-              sx: { borderRadius: 4, boxShadow: '0 25px 60px rgba(0,0,0,0.5)' },
+              sx: {
+                borderRadius: { xs: 3, sm: 4 },
+                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                m: { xs: 1.5, sm: 3 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: '550px' },
+              },
             },
           }}
         >
-          <DialogTitle component="div" sx={{ pb: 1, pt: 2.5, px: 3 }}>
-            <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>
-              Invite to {group?.name}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-              Add friends via link, WhatsApp, email, or phone
-            </Typography>
+          <DialogTitle
+            component="div"
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              pb: 1,
+              pt: { xs: 2, sm: 2.5 },
+              px: { xs: 2, sm: 3 },
+            }}
+          >
+            <Box>
+              <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>
+                Invite to {group?.name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                Add friends via link, WhatsApp, email, or phone
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setInviteOpen(false)} size="small" className="glass-tertiary">
+              <Close />
+            </IconButton>
           </DialogTitle>
-          <DialogContent sx={{ px: 3 }}>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
               <Box>
                 <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
                   Shareable Link
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
                   <TextField fullWidth size="small" value={inviteLink} slotProps={{ input: { readOnly: true } }} />
                   <Button
                     variant="contained"
                     onClick={handleCopyLink}
                     startIcon={copied ? <Check /> : <ContentCopy />}
-                    sx={{ px: 2.5, fontWeight: 700, bgcolor: copied ? 'success.main' : '#0E6245', color: '#FFFFFF', textTransform: 'none' }}
+                    sx={{ px: 2.5, py: { xs: 1, sm: 'auto' }, fontWeight: 700, bgcolor: copied ? 'success.main' : '#0E6245', color: '#FFFFFF', textTransform: 'none', flexShrink: 0 }}
                   >
                     {copied ? 'Copied' : 'Copy'}
                   </Button>
@@ -968,7 +996,7 @@ function GroupDetailContent() {
                 <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
                   Add by Email or Phone Number
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -982,7 +1010,7 @@ function GroupDetailContent() {
                     onClick={handleDirectInvite}
                     disabled={!inviteContact.trim()}
                     startIcon={<PersonAdd />}
-                    sx={{ px: 2.5, fontWeight: 700, bgcolor: '#0E6245', color: '#FFFFFF', textTransform: 'none' }}
+                    sx={{ px: 2.5, py: { xs: 1, sm: 'auto' }, fontWeight: 700, bgcolor: '#0E6245', color: '#FFFFFF', textTransform: 'none', flexShrink: 0 }}
                   >
                     Add
                   </Button>
@@ -990,7 +1018,7 @@ function GroupDetailContent() {
               </Box>
             </Stack>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2.5 } }}>
             <Button onClick={() => setInviteOpen(false)} sx={{ borderRadius: 2, textTransform: 'none' }}>
               Close
             </Button>

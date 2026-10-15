@@ -84,10 +84,14 @@ export default function UpiPaymentModal({
         paper: {
           className: 'glass-deep glass-specular-top',
           sx: {
-            borderRadius: 4,
+            borderRadius: { xs: 3, sm: 4 },
             boxShadow: '0 25px 60px rgba(0, 0, 0, 0.55)',
             color: 'text.primary',
             backgroundImage: 'none',
+            m: { xs: 1.5, sm: 3 },
+            width: { xs: 'calc(100% - 24px)', sm: '100%' },
+            maxWidth: { xs: 'calc(100% - 24px)', sm: '440px' },
+            maxHeight: { xs: 'calc(100% - 32px)', sm: 'calc(100% - 64px)' },
           },
         },
       }}

@@ -99,9 +99,9 @@ export default function FairScorePage() {
 
   return (
     <AppLayout>
-      <Box sx={{ pb: 6 }}>
+      <Box sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 2.5, sm: 4 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
@@ -110,15 +110,16 @@ export default function FairScorePage() {
                 bgcolor: alpha('#0E6245', 0.1),
                 color: '#0E6245',
                 display: 'flex',
+                flexShrink: 0,
               }}
             >
               <EmojiEvents />
             </Box>
-            <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em', fontSize: { xs: '1.25rem', sm: '1.85rem', md: '2.125rem' } }}>
               FairScore & Financial Karma
             </Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, ml: { xs: 0, sm: 5.5 }, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, ml: { xs: 0, sm: 5.5 }, fontSize: { xs: '0.78rem', sm: '0.875rem' } }}>
             Earn reliability reputation, build streak momentum, and unlock FinTech achievements with your group
           </Typography>
         </Box>

@@ -610,4 +610,21 @@ html {
     0 2px 8px rgba(0, 0, 0, 0.20) !important;
 }
 
+/* Mobile-specific Responsive Safeguards (Strictly max-width: 600px, preserves 100% desktop presentation) */
+@media (max-width: 600px) {
+  body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  img, svg, video, canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  input, select, textarea, button {
+    touch-action: manipulation;
+  }
+}
+
 

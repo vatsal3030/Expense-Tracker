@@ -92,7 +92,7 @@ export default function ActivityPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: 6 }}>
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Header */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
@@ -109,6 +109,8 @@ export default function ActivityPage() {
             display: 'flex',
             gap: 1,
             overflowX: 'auto',
+            maxWidth: '100%',
+            WebkitOverflowScrolling: 'touch',
             mb: 3,
             py: 0.5,
             '&::-webkit-scrollbar': { display: 'none' },
@@ -124,6 +126,7 @@ export default function ActivityPage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={active ? 'glass-emerald-active' : 'glass-tertiary'}
                 sx={{
+                  flexShrink: 0,
                   px: 1.25,
                   py: 1.8,
                   fontSize: '0.785rem',
@@ -191,7 +194,7 @@ export default function ActivityPage() {
                     <React.Fragment key={activity.id || i}>
                       <ListItem
                         sx={{
-                          px: 3,
+                          px: { xs: 2, sm: 3 },
                           py: 2.2,
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                           '&:hover': {

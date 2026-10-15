@@ -562,10 +562,10 @@ function NewExpenseContent() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ maxWidth: 760, mx: 'auto', pb: 8 }}>
+      <Box className="animate-fade-in" sx={{ maxWidth: 760, mx: 'auto', pb: { xs: 8, sm: 8 } }}>
         {/* Top Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <IconButton
               type="button"
               onClick={() => (groupId ? router.push(`/groups/${groupId}`) : router.push('/expenses'))}
@@ -579,10 +579,10 @@ function NewExpenseContent() {
               <ArrowBack fontSize="small" />
             </IconButton>
             <Box>
-              <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+              <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.75rem', md: '2.125rem' } }}>
                 Add New Expense
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                 Exact mathematical splits with zero calculation errors
               </Typography>
             </Box>
@@ -823,17 +823,23 @@ function NewExpenseContent() {
                     }}
                     size="small"
                     sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 0.5,
+                      '& .MuiToggleButtonGroup-grouped': {
+                        border: `1px solid ${theme.palette.divider} !important`,
+                        borderRadius: '8px !important',
+                      },
                       '& .MuiToggleButton-root': {
                         textTransform: 'none',
-                        px: 1.5,
+                        px: { xs: 1.25, sm: 1.5 },
                         py: 0.5,
-                        fontSize: '0.8rem',
+                        fontSize: { xs: '0.75rem', sm: '0.8rem' },
                         fontWeight: 600,
-                        borderColor: theme.palette.divider,
                         '&.Mui-selected': {
                           bgcolor: alpha('#0E6245', 0.12),
                           color: '#0E6245',
-                          borderColor: '#0E6245',
+                          borderColor: '#0E6245 !important',
                           fontWeight: 750,
                           '&:hover': { bgcolor: alpha('#0E6245', 0.18) },
                         },
@@ -1029,12 +1035,13 @@ function NewExpenseContent() {
                           bgcolor: alpha(theme.palette.action.hover, 0.03),
                           border: `1px solid ${theme.palette.divider}`,
                           display: 'flex',
-                          alignItems: 'center',
+                          alignItems: { xs: 'flex-start', sm: 'center' },
                           justifyContent: 'space-between',
-                          gap: 2,
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          gap: 1.5,
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 160 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: { xs: 'auto', sm: 160 } }}>
                           <Avatar
                             src={m.user?.avatarUrl}
                             sx={{ width: 32, height: 32, fontSize: '0.8rem', bgcolor: '#0E6245' }}
@@ -1054,7 +1061,7 @@ function NewExpenseContent() {
                         </Box>
 
                         {/* Interactive input depending on Split Type */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'space-between', sm: 'flex-end' }, width: { xs: '100%', sm: 'auto' }, gap: 2 }}>
                           {splitType === 'EQUAL' && (
                             <Typography variant="body2" fontWeight={750} color="#0E6245">
                               {displayShare}
@@ -1193,19 +1200,19 @@ function NewExpenseContent() {
               />
 
               {/* Action Buttons */}
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', alignItems: 'center', pt: 1 }}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, pt: 1, flexDirection: { xs: 'column-reverse', sm: 'row' } }}>
                 <Button
                   type="button"
                   variant="text"
                   color="error"
                   onClick={clearDraft}
                   startIcon={<DeleteSweep fontSize="small" />}
-                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                  sx={{ textTransform: 'none', fontWeight: 600, alignSelf: { xs: 'center', sm: 'auto' } }}
                 >
                   Clear Form
                 </Button>
 
-                <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column-reverse', sm: 'row' } }}>
                   <Button
                     type="button"
                     variant="outlined"

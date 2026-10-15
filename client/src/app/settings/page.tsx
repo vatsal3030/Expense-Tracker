@@ -299,8 +299,8 @@ export default function SettingsPage() {
           }}
         >
           <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-              <Typography variant="h4" fontWeight={850} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5, flexWrap: 'wrap' }}>
+              <Typography variant="h4" fontWeight={850} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.75rem', md: '2.125rem' } }}>
                 Account & SaaS Preferences
               </Typography>
               <Chip
@@ -316,19 +316,21 @@ export default function SettingsPage() {
                 }}
               />
             </Box>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
               Configure personal identity, payments, split defaults, privacy, and system security
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="contained"
               color="primary"
+              fullWidth
               startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Save />}
               onClick={handleSaveAll}
               disabled={saving}
               sx={{
+                width: { xs: '100%', sm: 'auto' },
                 borderRadius: 2.5,
                 px: 3.5,
                 py: 1,
@@ -444,7 +446,7 @@ export default function SettingsPage() {
           <Box
             className="glass-tertiary"
             sx={{
-              display: 'inline-flex',
+              display: 'flex',
               p: 0.5,
               borderRadius: 3,
               border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -457,8 +459,10 @@ export default function SettingsPage() {
               onChange={(_, val) => setActiveTab(val)}
               variant="scrollable"
               scrollButtons="auto"
+              allowScrollButtonsMobile
               sx={{
                 minHeight: 40,
+                maxWidth: '100%',
                 '& .MuiTabs-indicator': {
                   height: '100%',
                   borderRadius: 2.5,
@@ -1354,27 +1358,29 @@ export default function SettingsPage() {
         <Dialog
           open={otpDialogOpen}
           onClose={() => setOtpDialogOpen(false)}
+          fullWidth
           slotProps={{
             paper: {
               className: 'glass-deep glass-specular-top',
               sx: {
-                borderRadius: 4,
-                maxWidth: 440,
-                width: '100%',
-                p: 1,
+                borderRadius: { xs: 3, sm: 4 },
+                m: { xs: 1.5, sm: 3 },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: 440 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
+                p: { xs: 0.5, sm: 1 },
                 border: '1px solid rgba(255, 255, 255, 0.14)',
                 boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
               },
             },
           }}
         >
-          <DialogTitle component="div" sx={{ fontWeight: 800, pb: 1, color: 'text.primary' }}>
+          <DialogTitle component="div" sx={{ fontWeight: 800, pb: 1, px: { xs: 2, sm: 3 }, color: 'text.primary' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Security sx={{ color: '#34D399' }} />
               Verify Phone Number
             </Box>
           </DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Verifying <strong>{form.phone}</strong> for instant notifications & settlements.
             </Typography>
@@ -1467,7 +1473,7 @@ export default function SettingsPage() {
             </Box>
           </DialogContent>
 
-          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: 2.5 }}>
             <Button
               variant="outlined"
               className="glass-tertiary"
@@ -1498,13 +1504,15 @@ export default function SettingsPage() {
         <Dialog
           open={qrModalOpen}
           onClose={() => setQrModalOpen(false)}
+          fullWidth
           slotProps={{
             paper: {
               className: 'glass-deep glass-specular-top',
               sx: {
-                borderRadius: 4,
-                maxWidth: 400,
-                width: '100%',
+                borderRadius: { xs: 3, sm: 4 },
+                m: { xs: 1.5, sm: 3 },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: 400 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
                 p: 1.5,
                 textAlign: 'center',
                 border: '1px solid rgba(255, 255, 255, 0.14)',
@@ -1513,10 +1521,10 @@ export default function SettingsPage() {
             },
           }}
         >
-          <DialogTitle component="div" sx={{ fontWeight: 800, color: 'text.primary' }}>
+          <DialogTitle component="div" sx={{ fontWeight: 800, color: 'text.primary', px: { xs: 2, sm: 3 } }}>
             UPI QR Code Preview
           </DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Scan with any UPI app (GPay, PhonePe, Paytm, BHIM) to settle debts directly.
             </Typography>
@@ -1583,27 +1591,30 @@ export default function SettingsPage() {
         <Dialog
           open={resetDialogOpen}
           onClose={() => setResetDialogOpen(false)}
+          fullWidth
           slotProps={{
             paper: {
               className: 'glass-deep glass-specular-top',
               sx: {
-                borderRadius: 3.5,
-                maxWidth: 420,
+                borderRadius: { xs: 3, sm: 3.5 },
+                m: { xs: 1.5, sm: 3 },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: 420 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
                 border: '1px solid rgba(255, 255, 255, 0.14)',
                 boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
               },
             },
           }}
         >
-          <DialogTitle component="div" sx={{ fontWeight: 800, color: 'text.primary' }}>
+          <DialogTitle component="div" sx={{ fontWeight: 800, color: 'text.primary', px: { xs: 2, sm: 3 } }}>
             Clear Local Cache & Drafts?
           </DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
             <Typography variant="body2" color="text.secondary">
               This will remove all locally cached form drafts and reset preferences to default. Your online transaction and account records in Postgres will NOT be deleted.
             </Typography>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: 2.5 }}>
             <Button
               onClick={() => setResetDialogOpen(false)}
               className="glass-tertiary"

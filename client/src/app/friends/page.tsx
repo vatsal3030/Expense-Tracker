@@ -171,7 +171,7 @@ export default function FriendsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: 6 }}>
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Header Row */}
         <Box
           sx={{
@@ -277,7 +277,7 @@ export default function FriendsPage() {
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'center', flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
                 <TextField
                   size="small"
                   value={personalInviteLink}
@@ -285,7 +285,7 @@ export default function FriendsPage() {
                     input: {
                       readOnly: true,
                       sx: {
-                        fontSize: '0.8rem',
+                        fontSize: { xs: '0.75rem', sm: '0.8rem' },
                         fontFamily: 'monospace',
                         borderRadius: 2.5,
                       },
@@ -298,49 +298,52 @@ export default function FriendsPage() {
                     maxWidth: { sm: 440 },
                   }}
                 />
-                <Button
-                  variant="contained"
-                  onClick={handleCopyInvite}
-                  startIcon={copiedLink ? <Check fontSize="small" /> : <ContentCopy fontSize="small" />}
-                  className={copiedLink ? '' : 'glass-emerald-active'}
-                  sx={{
-                    borderRadius: 2.5,
-                    fontWeight: 700,
-                    bgcolor: copiedLink ? '#10B981' : undefined,
-                    color: '#FFFFFF',
-                    textTransform: 'none',
-                    px: 2.5,
-                    flexShrink: 0,
-                  }}
-                >
-                  {copiedLink ? 'Copied' : 'Copy'}
-                </Button>
-                <IconButton
-                  onClick={handleShareWhatsApp}
-                  title="Share on WhatsApp"
-                  className="glass-tertiary"
-                  sx={{
-                    color: '#25D366',
-                    borderRadius: 2.5,
-                    border: '1px solid rgba(37, 211, 102, 0.25)',
-                    '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.15)' },
-                  }}
-                >
-                  <WhatsApp fontSize="small" />
-                </IconButton>
-                <IconButton
-                  onClick={() => setQrModalOpen(true)}
-                  title="Show QR Code"
-                  className="glass-tertiary"
-                  sx={{
-                    color: '#34D399',
-                    borderRadius: 2.5,
-                    border: '1px solid rgba(52, 211, 153, 0.25)',
-                    '&:hover': { bgcolor: 'rgba(52, 211, 153, 0.15)' },
-                  }}
-                >
-                  <QrCode2 fontSize="small" />
-                </IconButton>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
+                  <Button
+                    variant="contained"
+                    onClick={handleCopyInvite}
+                    startIcon={copiedLink ? <Check fontSize="small" /> : <ContentCopy fontSize="small" />}
+                    className={copiedLink ? '' : 'glass-emerald-active'}
+                    sx={{
+                      flex: { xs: 1, sm: 'none' },
+                      borderRadius: 2.5,
+                      fontWeight: 700,
+                      bgcolor: copiedLink ? '#10B981' : undefined,
+                      color: '#FFFFFF',
+                      textTransform: 'none',
+                      px: 2.5,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {copiedLink ? 'Copied' : 'Copy'}
+                  </Button>
+                  <IconButton
+                    onClick={handleShareWhatsApp}
+                    title="Share on WhatsApp"
+                    className="glass-tertiary"
+                    sx={{
+                      color: '#25D366',
+                      borderRadius: 2.5,
+                      border: '1px solid rgba(37, 211, 102, 0.25)',
+                      '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.15)' },
+                    }}
+                  >
+                    <WhatsApp fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => setQrModalOpen(true)}
+                    title="Show QR Code"
+                    className="glass-tertiary"
+                    sx={{
+                      color: '#34D399',
+                      borderRadius: 2.5,
+                      border: '1px solid rgba(52, 211, 153, 0.25)',
+                      '&:hover': { bgcolor: 'rgba(52, 211, 153, 0.15)' },
+                    }}
+                  >
+                    <QrCode2 fontSize="small" />
+                  </IconButton>
+                </Box>
               </Box>
             </Grid>
           </Grid>
@@ -687,22 +690,26 @@ export default function FriendsPage() {
             paper: {
               className: 'glass-deep glass-specular-top',
               sx: {
-                borderRadius: 4,
+                borderRadius: { xs: 3, sm: 4 },
                 border: '1px solid rgba(255, 255, 255, 0.14)',
                 boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+                m: { xs: 1.5, sm: 3 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: '600px' },
+                maxHeight: { xs: 'calc(100% - 32px)', sm: 'calc(100% - 64px)' },
               },
             },
           }}
         >
-          <DialogTitle component="div" sx={{ pb: 1, pt: 2.5, px: 3 }}>
-            <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary', display: 'block' }}>
+          <DialogTitle component="div" sx={{ pb: 1, pt: { xs: 2, sm: 2.5 }, px: { xs: 2, sm: 3 } }}>
+            <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary', display: 'block', fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>
               Add Friends
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' } }}>
               Search by name, email, or phone number
             </Typography>
           </DialogTitle>
-          <DialogContent sx={{ px: 3 }}>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
               {/* Direct Search / Invite Box */}
               <Box>
@@ -821,7 +828,7 @@ export default function FriendsPage() {
               )}
             </Stack>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2.5 } }}>
             <Button
               onClick={() => {
                 setSearchOpen(false);

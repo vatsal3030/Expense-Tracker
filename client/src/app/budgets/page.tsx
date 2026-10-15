@@ -90,7 +90,7 @@ export default function BudgetsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in">
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
           <Box>
             <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>Budgets</Typography>
@@ -237,15 +237,35 @@ export default function BudgetsPage() {
           slotProps={{
             paper: {
               className: 'glass-deep glass-specular-top',
-              sx: { borderRadius: 4, boxShadow: '0 25px 60px rgba(0,0,0,0.5)' },
+              sx: {
+                borderRadius: { xs: 3, sm: 4 },
+                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                m: { xs: 1.5, sm: 3 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: '500px' },
+              },
             },
           }}
         >
-          <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', pb: 1, px: 3, pt: 2.5 }}>
-            <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>Set Budget</Typography>
-            <IconButton onClick={() => setDialogOpen(false)} size="small" className="glass-tertiary"><Close /></IconButton>
+          <DialogTitle
+            component="div"
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              pb: 1,
+              px: { xs: 2, sm: 3 },
+              pt: { xs: 2, sm: 2.5 },
+            }}
+          >
+            <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>
+              Set Budget
+            </Typography>
+            <IconButton onClick={() => setDialogOpen(false)} size="small" className="glass-tertiary">
+              <Close />
+            </IconButton>
           </DialogTitle>
-          <DialogContent sx={{ px: 3 }}>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
               <TextField fullWidth select label="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 {CATEGORIES.map(cat => <MenuItem key={cat} value={cat}>{CATEGORY_EMOJI[cat]} {cat.charAt(0) + cat.slice(1).toLowerCase()}</MenuItem>)}
@@ -260,7 +280,7 @@ export default function BudgetsPage() {
               <TextField fullWidth label="Alert at (%)" type="number" value={form.alertAt} onChange={(e) => setForm({ ...form, alertAt: parseInt(e.target.value) || 80 })} helperText="Get notified when spending reaches this percentage" />
             </Stack>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3 }}>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
             <Button onClick={() => setDialogOpen(false)} sx={{ borderRadius: 2.5, textTransform: 'none' }}>Cancel</Button>
             <Button
               variant="contained"

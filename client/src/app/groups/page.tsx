@@ -364,7 +364,10 @@ export default function GroupsPage() {
               gap: 1,
               overflowX: 'auto',
               py: 0.5,
+              maxWidth: '100%',
+              WebkitOverflowScrolling: 'touch',
               '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
             }}
           >
             {['ALL', 'FRIENDS', 'TRIP', 'HOME', 'OFFICE', 'COUPLE'].map((typeKey) => {
@@ -377,6 +380,7 @@ export default function GroupsPage() {
                   onClick={() => setSelectedType(typeKey)}
                   className={active ? 'glass-emerald-active' : 'glass-tertiary'}
                   sx={{
+                    flexShrink: 0,
                     px: 1,
                     py: 1.75,
                     fontSize: '0.775rem',
@@ -634,8 +638,12 @@ export default function GroupsPage() {
             paper: {
               className: 'glass-deep glass-specular-top',
               sx: {
-                borderRadius: 4,
+                borderRadius: { xs: 3, sm: 4 },
                 boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                m: { xs: 1.5, sm: 3 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: '600px' },
+                maxHeight: { xs: 'calc(100% - 32px)', sm: 'calc(100% - 64px)' },
               },
             },
           }}
@@ -647,15 +655,15 @@ export default function GroupsPage() {
               justifyContent: 'space-between',
               alignItems: 'center',
               pb: 1,
-              pt: 2.5,
-              px: 3,
+              pt: { xs: 2, sm: 2.5 },
+              px: { xs: 2, sm: 3 },
             }}
           >
             <Box>
-              <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>
+              <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary', fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>
                 Create Expense Group
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25, fontSize: { xs: '0.75rem', sm: '0.8rem' } }}>
                 Setup shared expenses, privacy, and member permissions
               </Typography>
             </Box>
@@ -664,7 +672,7 @@ export default function GroupsPage() {
             </IconButton>
           </DialogTitle>
 
-          <DialogContent sx={{ px: 3, py: 1.5 }}>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}>
             <Stack spacing={2.25} sx={{ mt: 1 }}>
               <TextField
                 fullWidth
@@ -688,7 +696,7 @@ export default function GroupsPage() {
               />
 
               <Grid container spacing={2}>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     select
@@ -707,7 +715,7 @@ export default function GroupsPage() {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     select
@@ -808,7 +816,7 @@ export default function GroupsPage() {
             </Stack>
           </DialogContent>
 
-          <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2.5, sm: 3 }, pt: 1, gap: 1 }}>
             <Button onClick={() => setDialogOpen(false)} sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600 }}>
               Cancel
             </Button>

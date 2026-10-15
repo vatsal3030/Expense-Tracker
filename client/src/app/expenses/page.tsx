@@ -408,7 +408,7 @@ function ExpensesContent() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: 6 }}>
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Page Header */}
         <Box
           sx={{
@@ -1092,16 +1092,27 @@ function ExpensesContent() {
             paper: {
               className: 'glass-deep glass-specular-top',
               sx: {
-                borderRadius: 4,
+                borderRadius: { xs: 3, sm: 4 },
                 overflow: 'hidden',
                 boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                m: { xs: 1.5, sm: 3 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: '600px' },
               },
             },
           }}
         >
           <DialogTitle
             component="div"
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1, fontWeight: 700 }}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              px: { xs: 2, sm: 3 },
+              pt: { xs: 2, sm: 2.5 },
+              pb: 1,
+              fontWeight: 700,
+            }}
           >
             <Typography variant="h6" component="span" fontWeight={700}>
               Add Expense
@@ -1111,7 +1122,7 @@ function ExpensesContent() {
             </IconButton>
           </DialogTitle>
 
-          <DialogContent>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
               <TextField
                 fullWidth
@@ -1135,7 +1146,7 @@ function ExpensesContent() {
                 required
               />
               <Grid container spacing={2}>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     select
@@ -1150,7 +1161,7 @@ function ExpensesContent() {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     type="date"
@@ -1189,7 +1200,7 @@ function ExpensesContent() {
             </Stack>
           </DialogContent>
 
-          <DialogActions sx={{ p: 2.5 }}>
+          <DialogActions sx={{ p: { xs: 2, sm: 2.5 } }}>
             <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: 'none' }}>
               Cancel
             </Button>

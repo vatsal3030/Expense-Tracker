@@ -229,7 +229,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
         }}
       />
 
-      <Toolbar sx={{ gap: 1, minHeight: { xs: 56, sm: 62 }, px: { xs: 1.5, sm: 2.25 } }}>
+      <Toolbar sx={{ gap: { xs: 0.5, sm: 1 }, minHeight: { xs: 54, sm: 62 }, px: { xs: 1, sm: 2.25 } }}>
         {/* Mobile menu button */}
         <IconButton
           onClick={onMenuToggle}
@@ -314,7 +314,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
         <Box sx={{ flex: 1 }} />
 
         {/* Actions */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
           {/* Mobile Search Button */}
           <Tooltip title="Search">
             <IconButton
