@@ -99,7 +99,7 @@ export default function FairScorePage() {
 
   return (
     <AppLayout>
-      <Box sx={{ pb: { xs: 8, sm: 6 } }}>
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header */}
         <Box sx={{ mb: { xs: 2.5, sm: 4 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

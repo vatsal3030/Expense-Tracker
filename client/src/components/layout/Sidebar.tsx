@@ -99,7 +99,12 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
   const isLight = theme.palette.mode === 'light';
   const drawerWidth = collapsed && !isMobile ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH;
 
-  const isActive = (path: string) => pathname === path || (path !== '/dashboard' && pathname?.startsWith(path));
+  const isActive = (path: string) => {
+    if (!pathname) return false;
+    if (pathname === path) return true;
+    if (path === '/dashboard') return false;
+    return pathname.startsWith(path + '/');
+  };
 
   const drawerContent = (
     <Box
@@ -213,39 +218,58 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                         px: collapsed && !isMobile ? 1.5 : 1.75,
                         my: 0.25,
                         borderRadius: 2.5,
+                        position: 'relative',
                         justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                         bgcolor: active
                           ? isLight
-                            ? 'rgba(0, 0, 0, 0.05)'
-                            : 'rgba(255, 255, 255, 0.08)'
+                            ? 'rgba(14, 98, 69, 0.08)'
+                            : 'rgba(16, 185, 129, 0.14)'
                           : 'transparent',
                         color: active
                           ? isLight
                             ? '#0E6245'
-                            : '#F8FAFC'
+                            : '#34D399'
                           : 'text.secondary',
                         border: active
-                          ? `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'}`
+                          ? `1px solid ${isLight ? 'rgba(14, 98, 69, 0.22)' : 'rgba(16, 185, 129, 0.32)'}`
                           : '1px solid transparent',
                         boxShadow: active
                           ? isLight
-                            ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 3px rgba(0, 0, 0, 0.04)'
-                            : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 6px rgba(0, 0, 0, 0.25)'
+                            ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(14, 98, 69, 0.06)'
+                            : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 10px rgba(16, 185, 129, 0.18)'
                           : 'none',
                         backdropFilter: active ? 'blur(14px)' : 'none',
+                        '&::before': active ? {
+                          content: '""',
+                          position: 'absolute',
+                          left: 6,
+                          width: 3.5,
+                          height: 18,
+                          borderRadius: 2,
+                          bgcolor: isLight ? '#0E6245' : '#34D399',
+                          boxShadow: isLight ? 'none' : '0 0 8px #10B981',
+                        } : undefined,
                         '&:hover': {
                           bgcolor: active
                             ? isLight
-                              ? 'rgba(0, 0, 0, 0.07)'
-                              : 'rgba(255, 255, 255, 0.12)'
+                              ? 'rgba(14, 98, 69, 0.12)'
+                              : 'rgba(16, 185, 129, 0.20)'
                             : isLight
                             ? 'rgba(0, 0, 0, 0.03)'
                             : 'rgba(255, 255, 255, 0.04)',
                           color: active
                             ? isLight
                               ? '#0E6245'
-                              : '#F8FAFC'
-                            : 'text.primary',
+                              : '#34D399'
+                            : isLight
+                            ? '#1E293B'
+                            : '#E2E8F0',
+                        },
+                        '&.Mui-focusVisible, &:focus-visible': {
+                          outline: 'none',
+                          bgcolor: active
+                            ? (isLight ? 'rgba(14, 98, 69, 0.12)' : 'rgba(16, 185, 129, 0.20)')
+                            : 'transparent',
                         },
                         transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
@@ -254,7 +278,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                         sx={{
                           minWidth: collapsed && !isMobile ? 0 : 36,
                           justifyContent: 'center',
-                          color: 'inherit',
+                          color: active ? (isLight ? '#0E6245' : '#34D399') : 'inherit',
                         }}
                       >
                         {item.icon}
@@ -320,34 +344,51 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   minHeight: 40,
                   px: collapsed && !isMobile ? 1.5 : 1.75,
                   borderRadius: 2.5,
+                  position: 'relative',
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                   color: active
                     ? isLight
                       ? '#0E6245'
-                      : '#F8FAFC'
+                      : '#34D399'
                     : 'text.secondary',
                   bgcolor: active
                     ? isLight
-                      ? 'rgba(0, 0, 0, 0.05)'
-                      : 'rgba(255, 255, 255, 0.08)'
+                      ? 'rgba(14, 98, 69, 0.08)'
+                      : 'rgba(16, 185, 129, 0.14)'
                     : 'transparent',
                   border: active
-                    ? `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'}`
+                    ? `1px solid ${isLight ? 'rgba(14, 98, 69, 0.22)' : 'rgba(16, 185, 129, 0.32)'}`
                     : '1px solid transparent',
                   boxShadow: active
                     ? isLight
-                      ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 3px rgba(0, 0, 0, 0.04)'
-                      : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 6px rgba(0, 0, 0, 0.25)'
+                      ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(14, 98, 69, 0.06)'
+                      : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 10px rgba(16, 185, 129, 0.18)'
                     : 'none',
+                  '&::before': active ? {
+                    content: '""',
+                    position: 'absolute',
+                    left: 6,
+                    width: 3.5,
+                    height: 18,
+                    borderRadius: 2,
+                    bgcolor: isLight ? '#0E6245' : '#34D399',
+                    boxShadow: isLight ? 'none' : '0 0 8px #10B981',
+                  } : undefined,
                   '&:hover': {
                     bgcolor: active
                       ? isLight
-                        ? 'rgba(0, 0, 0, 0.07)'
-                        : 'rgba(255, 255, 255, 0.12)'
+                        ? 'rgba(14, 98, 69, 0.12)'
+                        : 'rgba(16, 185, 129, 0.20)'
                       : isLight
                       ? 'rgba(0, 0, 0, 0.03)'
                       : 'rgba(255, 255, 255, 0.04)',
-                    color: active ? (isLight ? '#0E6245' : '#F8FAFC') : 'text.primary',
+                    color: active ? (isLight ? '#0E6245' : '#34D399') : (isLight ? '#1E293B' : '#E2E8F0'),
+                  },
+                  '&.Mui-focusVisible, &:focus-visible': {
+                    outline: 'none',
+                    bgcolor: active
+                      ? (isLight ? 'rgba(14, 98, 69, 0.12)' : 'rgba(16, 185, 129, 0.20)')
+                      : 'transparent',
                   },
                   transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
@@ -356,7 +397,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   sx={{
                     minWidth: collapsed && !isMobile ? 0 : 36,
                     justifyContent: 'center',
-                    color: 'inherit',
+                    color: active ? (isLight ? '#0E6245' : '#34D399') : 'inherit',
                   }}
                 >
                   {item.icon}
@@ -440,7 +481,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   display: 'block',
                 }}
               >
-                Free SaaS Tier
+                Personal Account
               </Typography>
             </Box>
           </Box>
@@ -457,7 +498,15 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
           variant="temporary"
           open={open}
           onClose={onClose}
-          ModalProps={{ keepMounted: true, disableRestoreFocus: true, autoFocus: false }}
+          autoFocus={false}
+          disableAutoFocus={true}
+          disableEnforceFocus={true}
+          ModalProps={{
+            keepMounted: true,
+            disableRestoreFocus: true,
+            disableAutoFocus: true,
+            disableEnforceFocus: true,
+          }}
           sx={{
             display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': {

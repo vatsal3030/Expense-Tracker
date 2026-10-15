@@ -154,7 +154,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Top Header Row (Savexa & Ocupite style) */}
         <Box
           sx={{
@@ -164,9 +164,11 @@ export default function DashboardPage() {
             alignItems: { xs: 'flex-start', md: 'center' },
             mb: 3,
             gap: 2,
+            width: '100%',
+            maxWidth: '100%',
           }}
         >
-          <Box>
+          <Box sx={{ maxWidth: '100%' }}>
             <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
               Financial Overview
             </Typography>
@@ -240,13 +242,15 @@ export default function DashboardPage() {
         <Box
           className="glass-control-surface"
           sx={{
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
             p: 0.6,
             mb: 3.5,
             borderRadius: 9999,
             gap: 0.5,
+            width: '100%',
             maxWidth: '100%',
+            minWidth: 0,
             overflowX: 'auto',
             WebkitOverflowScrolling: 'touch',
             '&::-webkit-scrollbar': { display: 'none' },
@@ -268,6 +272,7 @@ export default function DashboardPage() {
                   fontWeight: active ? 600 : 500,
                   textTransform: 'capitalize',
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                   color: active
                     ? (isLight ? '#0F172A' : '#FFFFFF')
                     : 'text.secondary',

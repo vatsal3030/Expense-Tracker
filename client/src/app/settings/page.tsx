@@ -58,7 +58,7 @@ export default function SettingsPage() {
     avatarUrl: profile?.avatarUrl || '',
   });
 
-  // Extended SaaS Preferences
+  // Extended User Preferences
   const [preferences, setPreferences] = useState({
     defaultSplitType: 'EQUAL',
     upiId: 'user@okhdfcbank',
@@ -102,7 +102,7 @@ export default function SettingsPage() {
   }, [user?.id, authLoading, router]);
 
   useEffect(() => {
-    // Load local extended SaaS preferences
+    // Load local extended user preferences
     try {
       const saved = localStorage.getItem(PREFERENCES_STORAGE_KEY);
       if (saved) {
@@ -208,7 +208,7 @@ export default function SettingsPage() {
         avatarUrl: form.avatarUrl || null,
       });
 
-      // 2. Save extended SaaS preferences in localStorage
+      // 2. Save extended preferences in localStorage
       localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
 
       await refreshProfile();
@@ -286,8 +286,8 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: 8, maxWidth: 1040, mx: 'auto' }}>
-        {/* Top SaaS Header Banner */}
+      <Box className="animate-fade-in" sx={{ pb: 8, maxWidth: { xs: '100%', md: 1040 }, mx: 'auto', width: '100%', minWidth: 0, overflowX: 'hidden' }}>
+        {/* Top Header Banner */}
         <Box
           sx={{
             display: 'flex',
@@ -296,15 +296,17 @@ export default function SettingsPage() {
             flexDirection: { xs: 'column', sm: 'row' },
             gap: 2,
             mb: 3.5,
+            width: '100%',
+            maxWidth: '100%',
           }}
         >
-          <Box>
+          <Box sx={{ maxWidth: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5, flexWrap: 'wrap' }}>
               <Typography variant="h4" fontWeight={850} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.75rem', md: '2.125rem' } }}>
-                Account & SaaS Preferences
+                Account Preferences
               </Typography>
               <Chip
-                label="Pro Tier (Free)"
+                label="Personal Account"
                 size="small"
                 sx={{
                   bgcolor: alpha('#0E6245', 0.12),
@@ -350,38 +352,44 @@ export default function SettingsPage() {
           sx={{
             mb: 3.5,
             borderRadius: 3.5,
-            p: 3,
+            p: { xs: 2, sm: 3 },
             position: 'relative',
             overflow: 'hidden',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}
         >
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: { xs: 'flex-start', sm: 'center' },
               justifyContent: 'space-between',
+              flexDirection: { xs: 'column', sm: 'row' },
               flexWrap: 'wrap',
               gap: 2.5,
+              width: '100%',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, maxWidth: '100%' }}>
               <Avatar
                 src={form.avatarUrl || profile?.avatarUrl || undefined}
                 sx={{
-                  width: 68,
-                  height: 68,
+                  width: { xs: 54, sm: 68 },
+                  height: { xs: 54, sm: 68 },
                   bgcolor: 'rgba(16, 185, 129, 0.15)',
                   color: '#10B981',
                   border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: '1.75rem',
+                  fontSize: { xs: '1.4rem', sm: '1.75rem' },
                   fontWeight: 700,
+                  flexShrink: 0,
                 }}
               >
                 {form.name?.charAt(0)?.toUpperCase() || 'U'}
               </Avatar>
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                  <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em', color: 'text.primary' }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+                  <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em', color: 'text.primary', fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>
                     {form.name || 'User'}
                   </Typography>
                   {isPhoneVerified && (
@@ -390,7 +398,7 @@ export default function SettingsPage() {
                     </Tooltip>
                   )}
                 </Box>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.8rem', sm: '0.875rem' }, wordBreak: 'break-all' }}>
                   {user?.email}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
@@ -400,7 +408,7 @@ export default function SettingsPage() {
             </Box>
 
             {/* Quick Actions */}
-            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
               <Tooltip title="Click to copy unique UUID">
                 <Button
                   size="small"
@@ -442,7 +450,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* Segmented Liquid Glass Tabs */}
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3, width: '100%', maxWidth: '100%', minWidth: 0 }}>
           <Box
             className="glass-tertiary"
             sx={{
@@ -450,8 +458,10 @@ export default function SettingsPage() {
               p: 0.5,
               borderRadius: 3,
               border: '1px solid rgba(255, 255, 255, 0.08)',
+              width: '100%',
               maxWidth: '100%',
-              overflowX: 'auto',
+              minWidth: 0,
+              overflow: 'hidden',
             }}
           >
             <Tabs
@@ -462,7 +472,12 @@ export default function SettingsPage() {
               allowScrollButtonsMobile
               sx={{
                 minHeight: 40,
+                width: '100%',
                 maxWidth: '100%',
+                minWidth: 0,
+                '& .MuiTabs-scroller': {
+                  overflowX: 'auto !important',
+                },
                 '& .MuiTabs-indicator': {
                   height: '100%',
                   borderRadius: 2.5,
@@ -497,7 +512,7 @@ export default function SettingsPage() {
 
         {/* TAB 0: Profile & Identity */}
         {activeTab === 0 && (
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid size={{ xs: 12, md: 8 }}>
               <Card
                 className="glass-secondary glass-specular-top"
@@ -724,7 +739,7 @@ export default function SettingsPage() {
 
         {/* TAB 1: Payments & Splits */}
         {activeTab === 1 && (
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid size={{ xs: 12, md: 8 }}>
               <Card
                 className="glass-secondary glass-specular-top"
@@ -934,7 +949,7 @@ export default function SettingsPage() {
 
         {/* TAB 2: Alerts & Rules */}
         {activeTab === 2 && (
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid size={{ xs: 12, md: 8 }}>
               <Card
                 className="glass-secondary glass-specular-top"
@@ -1066,7 +1081,7 @@ export default function SettingsPage() {
 
         {/* TAB 3: Appearance & UI Customizations */}
         {activeTab === 3 && (
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid size={{ xs: 12, md: 8 }}>
               <Card
                 className="glass-secondary glass-specular-top"
@@ -1189,7 +1204,7 @@ export default function SettingsPage() {
 
         {/* TAB 4: Security & Data Privacy */}
         {activeTab === 4 && (
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid size={{ xs: 12, md: 8 }}>
               <Stack spacing={3}>
                 <Card
@@ -1638,7 +1653,7 @@ export default function SettingsPage() {
           open={savedToast}
           autoHideDuration={3000}
           onClose={() => setSavedToast(false)}
-          message="All account settings and SaaS preferences saved successfully! ✓"
+          message="All account settings and preferences saved successfully! ✓"
         />
 
         <Snackbar

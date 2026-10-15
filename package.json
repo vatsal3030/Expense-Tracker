@@ -1,7 +1,7 @@
 {
   "name": "fairshare",
   "version": "1.0.0",
-  "description": "FairShare — Production-ready expense splitting & tracking SaaS platform",
+  "description": "FairShare — Production-ready expense splitting & tracking platform",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",

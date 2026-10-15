@@ -389,7 +389,7 @@ export default function LandingPage() {
 
       {/* HERO SECTION */}
       <section className="relative pt-20 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
-        {/* SaaS Trust Pill or Logged In Welcome Pill */}
+      {/* Trust Pill or Logged In Welcome Pill */}
         {user ? (
           <div className="macos-glass-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold mb-6 animate-fade-in shadow-inner">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

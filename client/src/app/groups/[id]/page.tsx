@@ -413,8 +413,10 @@ function GroupDetailContent() {
             p: 0.5,
             mb: 3,
             display: 'flex',
+            width: '100%',
             maxWidth: '100%',
-            overflowX: 'auto',
+            minWidth: 0,
+            overflow: 'hidden',
           }}
         >
           <Tabs
@@ -425,7 +427,12 @@ function GroupDetailContent() {
             allowScrollButtonsMobile
             sx={{
               minHeight: 40,
+              width: '100%',
               maxWidth: '100%',
+              minWidth: 0,
+              '& .MuiTabs-scroller': {
+                overflowX: 'auto !important',
+              },
               '& .MuiTabs-indicator': {
                 height: '100%',
                 borderRadius: 2.5,
