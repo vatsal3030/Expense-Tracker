@@ -144,7 +144,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
         <BrandLogo
           size={collapsed && !isMobile ? 'sm' : 'md'}
           showText={!collapsed || isMobile}
-          asLink={false}
+          asLink={true}
         />
         {!isMobile && (
           <IconButton

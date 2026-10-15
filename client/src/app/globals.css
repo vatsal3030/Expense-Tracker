@@ -56,17 +56,34 @@
   --color-card: #121316;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
 html, body {
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: #0B0C0E;
-  color: #F3F4F6;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'tnum';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-overflow-scrolling: touch;
   letter-spacing: -0.011em;
   line-height: 1.6;
+}
+
+html.light,
+html.light body,
+:root:not(.dark) body {
+  background-color: #F4F6F8;
+  color: #0F172A;
+}
+
+html.dark,
+html.dark body {
+  background-color: #080A0D;
+  color: #F8FAFC;
 }
 
 h1, h2, h3, h4, h5, h6, .font-heading {
@@ -128,7 +145,7 @@ html {
   border-color: #334155;
 }
 
-/* Ocean Wave Theme Transition (Top-Right to Bottom-Left) */
+/* Ocean Wave Theme Transition (Top-Right to Bottom-Left) - Calm, Slow & Luxurious */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -137,20 +154,26 @@ html {
 
 ::view-transition-old(root) {
   z-index: 1;
+  animation: oceanFadeOut 0.95s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 ::view-transition-new(root) {
   z-index: 9999;
-  animation: oceanWaveSweep 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: oceanWaveSweep 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes oceanFadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0.85; }
 }
 
 @keyframes oceanWaveSweep {
   0% {
     clip-path: circle(0% at calc(100% - 60px) 30px);
-    filter: drop-shadow(-10px 10px 30px rgba(14, 98, 69, 0.45));
+    filter: drop-shadow(-8px 8px 24px rgba(14, 98, 69, 0.25));
   }
-  50% {
-    filter: drop-shadow(-20px 20px 50px rgba(14, 98, 69, 0.35));
+  45% {
+    filter: drop-shadow(-14px 14px 35px rgba(14, 98, 69, 0.18));
   }
   100% {
     clip-path: circle(180% at calc(100% - 60px) 30px);

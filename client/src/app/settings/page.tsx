@@ -1354,19 +1354,21 @@ export default function SettingsPage() {
         <Dialog
           open={otpDialogOpen}
           onClose={() => setOtpDialogOpen(false)}
-          PaperProps={{
-            className: 'glass-deep glass-specular-top',
-            sx: {
-              borderRadius: 4,
-              maxWidth: 440,
-              width: '100%',
-              p: 1,
-              border: '1px solid rgba(255, 255, 255, 0.14)',
-              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: 4,
+                maxWidth: 440,
+                width: '100%',
+                p: 1,
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+              },
             },
           }}
         >
-          <DialogTitle sx={{ fontWeight: 800, pb: 1, color: 'text.primary' }}>
+          <DialogTitle component="div" sx={{ fontWeight: 800, pb: 1, color: 'text.primary' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Security sx={{ color: '#34D399' }} />
               Verify Phone Number
@@ -1496,20 +1498,22 @@ export default function SettingsPage() {
         <Dialog
           open={qrModalOpen}
           onClose={() => setQrModalOpen(false)}
-          PaperProps={{
-            className: 'glass-deep glass-specular-top',
-            sx: {
-              borderRadius: 4,
-              maxWidth: 400,
-              width: '100%',
-              p: 1.5,
-              textAlign: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.14)',
-              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: 4,
+                maxWidth: 400,
+                width: '100%',
+                p: 1.5,
+                textAlign: 'center',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+              },
             },
           }}
         >
-          <DialogTitle sx={{ fontWeight: 800, color: 'text.primary' }}>
+          <DialogTitle component="div" sx={{ fontWeight: 800, color: 'text.primary' }}>
             UPI QR Code Preview
           </DialogTitle>
           <DialogContent>
@@ -1579,17 +1583,19 @@ export default function SettingsPage() {
         <Dialog
           open={resetDialogOpen}
           onClose={() => setResetDialogOpen(false)}
-          PaperProps={{
-            className: 'glass-deep glass-specular-top',
-            sx: {
-              borderRadius: 3.5,
-              maxWidth: 420,
-              border: '1px solid rgba(255, 255, 255, 0.14)',
-              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: 3.5,
+                maxWidth: 420,
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+              },
             },
           }}
         >
-          <DialogTitle sx={{ fontWeight: 800, color: 'text.primary' }}>
+          <DialogTitle component="div" sx={{ fontWeight: 800, color: 'text.primary' }}>
             Clear Local Cache & Drafts?
           </DialogTitle>
           <DialogContent>

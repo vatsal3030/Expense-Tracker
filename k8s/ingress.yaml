@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fairshare-ingress
+  namespace: fairshare
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+    - host: fairshare.local
+      http:
+        paths:
+          # Route /api traffic to Express backend service
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-server-svc
+                port:
+                  number: 5000
+          # Route all other traffic to Next.js frontend
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-client-svc
+                port:
+                  number: 3000

@@ -14,45 +14,97 @@ import {
   AccountBalanceWallet,
 } from '@mui/icons-material';
 
-const pulseGlow = keyframes`
-  0% { transform: scale(0.98); opacity: 0.4; }
-  50% { transform: scale(1.03); opacity: 0.75; }
-  100% { transform: scale(0.98); opacity: 0.4; }
+// Smooth continuous orbital rotation for the outer halo ring
+const orbitSpin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 `;
 
-const iconPop = keyframes`
-  0% { opacity: 0; transform: scale(0.85); }
-  100% { opacity: 1; transform: scale(1); }
+// Gentle ambient pulse glow
+const ambientBreathe = keyframes`
+  0% { transform: scale(0.92); opacity: 0.25; }
+  50% { transform: scale(1.08); opacity: 0.55; }
+  100% { transform: scale(0.92); opacity: 0.25; }
 `;
 
-const shimmer = keyframes`
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+// Blinkit-style category item entrance: glide up from below with soft spring settle
+const blinkitSlideUp = keyframes`
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.88);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+`;
+
+// Smooth wave shimmer for progress indicator
+const waveShimmer = keyframes`
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 `;
 
 interface CategoryItem {
   name: string;
   icon: React.ReactElement;
   color: string;
+  tagline: string;
 }
 
 const CATEGORIES: CategoryItem[] = [
-  { name: 'Splits & Cash', icon: <AttachMoney sx={{ fontSize: 32 }} />, color: '#10B981' },
-  { name: 'Dining & Cafes', icon: <Restaurant sx={{ fontSize: 32 }} />, color: '#F59E0B' },
-  { name: 'Trips & Travel', icon: <Flight sx={{ fontSize: 32 }} />, color: '#0EA5E9' },
-  { name: 'Rent & Living', icon: <Home sx={{ fontSize: 32 }} />, color: '#8B5CF6' },
-  { name: 'Groceries', icon: <ShoppingCart sx={{ fontSize: 32 }} />, color: '#10B981' },
-  { name: 'Entertainment', icon: <Movie sx={{ fontSize: 32 }} />, color: '#EC4899' },
-  { name: 'Bills & Utilities', icon: <Bolt sx={{ fontSize: 32 }} />, color: '#EAB308' },
-  { name: 'Cards & Settle', icon: <CreditCard sx={{ fontSize: 32 }} />, color: '#06B6D4' },
-];
-
-const MESSAGES = [
-  'Balancing group ledgers...',
-  'Minimizing transaction paths...',
-  'Calculating fair splits...',
-  'Syncing debt simplifications...',
-  'Ensuring zero-sum balance...',
+  {
+    name: 'Splits & Cash',
+    icon: <AttachMoney sx={{ fontSize: 34 }} />,
+    color: '#10B981',
+    tagline: 'Balancing equal & exact splits...',
+  },
+  {
+    name: 'Dining & Cafes',
+    icon: <Restaurant sx={{ fontSize: 34 }} />,
+    color: '#F59E0B',
+    tagline: 'Dividing meal tabs & tip bills...',
+  },
+  {
+    name: 'Trips & Travel',
+    icon: <Flight sx={{ fontSize: 34 }} />,
+    color: '#0EA5E9',
+    tagline: 'Minimizing flight & stay costs...',
+  },
+  {
+    name: 'Rent & Living',
+    icon: <Home sx={{ fontSize: 34 }} />,
+    color: '#8B5CF6',
+    tagline: 'Tracking shared apartment ledger...',
+  },
+  {
+    name: 'Groceries & Mart',
+    icon: <ShoppingCart sx={{ fontSize: 34 }} />,
+    color: '#10B981',
+    tagline: 'Zeroing cart & pantry splits...',
+  },
+  {
+    name: 'Entertainment',
+    icon: <Movie sx={{ fontSize: 34 }} />,
+    color: '#EC4899',
+    tagline: 'Settling movies & event passes...',
+  },
+  {
+    name: 'Bills & Utilities',
+    icon: <Bolt sx={{ fontSize: 34 }} />,
+    color: '#EAB308',
+    tagline: 'Syncing electricity & WiFi shares...',
+  },
+  {
+    name: 'Cards & Settle',
+    icon: <CreditCard sx={{ fontSize: 34 }} />,
+    color: '#06B6D4',
+    tagline: 'Generating zero-fee UPI links...',
+  },
 ];
 
 interface CategoryCycleLoaderProps {
@@ -67,33 +119,22 @@ export default function CategoryCycleLoader({
   size = 'md',
 }: CategoryCycleLoaderProps) {
   const theme = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const isLight = theme.palette.mode === 'light';
   const [index, setIndex] = useState(0);
-  const [msgIndex, setMsgIndex] = useState(0);
 
+  // Calm, relaxed cadence (~2.6s per item) for smooth Blinkit-style flow
   useEffect(() => {
-    setMounted(true);
-    const iconInterval = setInterval(() => {
+    const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % CATEGORIES.length);
-    }, 450);
+    }, 2600);
 
-    const msgInterval = setInterval(() => {
-      setMsgIndex((prev) => (prev + 1) % MESSAGES.length);
-    }, 1800);
-
-    return () => {
-      clearInterval(iconInterval);
-      clearInterval(msgInterval);
-    };
+    return () => clearInterval(timer);
   }, []);
 
-  if (!mounted) return null;
-
   const current = CATEGORIES[index];
-  const currentMsg = message || MESSAGES[msgIndex];
+  const displayMessage = message || current.tagline;
 
-  const circleSize = size === 'sm' ? 48 : size === 'lg' ? 84 : 64;
-  const iconScale = size === 'sm' ? 0.75 : size === 'lg' ? 1.25 : 1;
+  const circleSize = size === 'sm' ? 56 : size === 'lg' ? 92 : 72;
 
   const content = (
     <Box
@@ -102,11 +143,16 @@ export default function CategoryCycleLoader({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 3,
+        px: 3,
+        py: { xs: 4, sm: 6 },
         textAlign: 'center',
+        width: '100%',
+        maxWidth: 420,
+        margin: '0 auto',
+        overflow: 'visible',
       }}
     >
-      {/* Outer Cycling Ring */}
+      {/* Outer Cycling Orb Container */}
       <Box
         sx={{
           position: 'relative',
@@ -115,103 +161,142 @@ export default function CategoryCycleLoader({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          mb: 2,
+          mb: 2.5,
+          overflow: 'visible',
         }}
       >
-        {/* Glow backdrop */}
+        {/* Ambient colored background pulse */}
         <Box
+          key={`glow-${index}`}
           sx={{
             position: 'absolute',
-            inset: -4,
+            inset: -14,
             borderRadius: '50%',
-            bgcolor: alpha(current.color, 0.15),
-            animation: `${pulseGlow} 1.6s ease-in-out infinite`,
+            bgcolor: alpha(current.color, isLight ? 0.20 : 0.28),
+            filter: 'blur(16px)',
+            animation: `${ambientBreathe} 2.6s ease-in-out infinite`,
+            pointerEvents: 'none',
+            transition: 'background-color 0.8s ease',
           }}
         />
 
-        {/* Main Icon Orb */}
+        {/* Orbiting dashed border ring */}
         <Box
-          key={index}
+          sx={{
+            position: 'absolute',
+            inset: -6,
+            borderRadius: '50%',
+            border: `2px dashed ${alpha(current.color, isLight ? 0.45 : 0.65)}`,
+            animation: `${orbitSpin} 10s linear infinite`,
+            pointerEvents: 'none',
+            transition: 'border-color 0.6s ease',
+          }}
+        />
+
+        {/* Main Central Icon Orb with smooth Blinkit glide transition */}
+        <Box
+          key={`orb-${index}`}
           sx={{
             width: circleSize,
             height: circleSize,
             borderRadius: '50%',
-            bgcolor: theme.palette.mode === 'dark' ? '#14171F' : '#ffffff',
-            border: `1px solid ${alpha(current.color, 0.35)}`,
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.40)',
+            bgcolor: isLight ? '#FFFFFF' : '#121620',
+            border: `2px solid ${alpha(current.color, isLight ? 0.5 : 0.7)}`,
+            boxShadow: isLight
+              ? `0 10px 28px -4px ${alpha(current.color, 0.35)}, inset 0 1px 0 rgba(255,255,255,1)`
+              : `0 12px 32px -4px ${alpha(current.color, 0.45)}, inset 0 1px 0 rgba(255,255,255,0.25)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: current.color,
-            animation: `${iconPop} 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
-            transform: `scale(${iconScale})`,
+            animation: `${blinkitSlideUp} 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
             zIndex: 1,
+            transition: 'color 0.4s ease',
           }}
         >
           {current.icon}
         </Box>
 
-        {/* Floating Mini Category Badge */}
+        {/* Floating Mini Category Badge (Completely visible with solid border) */}
         <Box
+          key={`badge-${index}`}
           sx={{
             position: 'absolute',
-            bottom: -6,
-            right: -6,
-            width: 22,
-            height: 22,
+            bottom: -4,
+            right: -4,
+            width: 24,
+            height: 24,
             borderRadius: '50%',
             bgcolor: current.color,
-            color: '#ffffff',
+            color: '#FFFFFF',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-            zIndex: 2,
-            border: `2px solid ${theme.palette.background.paper}`,
+            boxShadow: '0 3px 8px rgba(0,0,0,0.35)',
+            zIndex: 3,
+            border: `2px solid ${isLight ? '#FFFFFF' : '#0B0E14'}`,
+            transition: 'background-color 0.5s ease',
+            animation: `${blinkitSlideUp} 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
           }}
         >
-          <AccountBalanceWallet sx={{ fontSize: 12 }} />
+          <AccountBalanceWallet sx={{ fontSize: 13 }} />
         </Box>
       </Box>
 
-      {/* Dynamic Animated Status Text */}
+      {/* Primary Animated Status Message */}
       <Typography
-        variant="subtitle2"
+        key={`msg-${index}`}
+        variant="subtitle1"
         sx={{
           fontWeight: 700,
           color: theme.palette.text.primary,
-          fontSize: size === 'sm' ? '0.8rem' : '0.925rem',
+          fontSize: { xs: '0.925rem', sm: '1.025rem' },
           letterSpacing: '-0.01em',
-          transition: 'all 0.2s ease',
+          lineHeight: 1.3,
+          minHeight: '1.5em',
+          animation: `${blinkitSlideUp} 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
         }}
       >
-        {currentMsg}
+        {displayMessage}
       </Typography>
 
-      {/* Active Category Subtitle */}
-      <Typography
-        variant="caption"
+      {/* Active Category Chip / Pill */}
+      <Box
+        key={`chip-${index}`}
         sx={{
-          mt: 0.5,
-          color: current.color,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-          fontSize: '0.7rem',
-          transition: 'color 0.3s ease',
+          mt: 1,
+          px: 1.75,
+          py: 0.4,
+          borderRadius: 9999,
+          bgcolor: alpha(current.color, isLight ? 0.12 : 0.16),
+          border: `1px solid ${alpha(current.color, isLight ? 0.28 : 0.35)}`,
+          display: 'inline-flex',
+          alignItems: 'center',
+          animation: `${blinkitSlideUp} 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
         }}
       >
-        {current.name}
-      </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: current.color,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            fontSize: '0.7rem',
+          }}
+        >
+          {current.name}
+        </Typography>
+      </Box>
 
-      {/* Subtle Progress Bar Shimmer */}
+      {/* Dual-Color Wave Progress Bar (Full visibility with safe height & bottom clearance) */}
       <Box
         sx={{
-          mt: 2,
-          width: 120,
-          height: 3,
-          borderRadius: 2,
-          bgcolor: alpha(theme.palette.divider, 0.6),
+          mt: 2.5,
+          width: 140,
+          height: 4,
+          borderRadius: 9999,
+          bgcolor: isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.10)',
           overflow: 'hidden',
           position: 'relative',
         }}
@@ -220,9 +305,11 @@ export default function CategoryCycleLoader({
           sx={{
             position: 'absolute',
             inset: 0,
-            background: `linear-gradient(90deg, transparent, ${current.color}, transparent)`,
-            backgroundSize: '200% 100%',
-            animation: `${shimmer} 1.2s infinite linear`,
+            width: '100%',
+            height: '100%',
+            background: `linear-gradient(90deg, transparent 0%, ${current.color} 50%, transparent 100%)`,
+            animation: `${waveShimmer} 1.8s ease-in-out infinite`,
+            transition: 'background 0.5s ease',
           }}
         />
       </Box>
@@ -233,11 +320,16 @@ export default function CategoryCycleLoader({
     return (
       <Box
         sx={{
-          minHeight: '100vh',
+          minHeight: '100dvh',
+          width: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           bgcolor: 'background.default',
+          position: 'relative',
+          overflow: 'visible',
+          zIndex: 9999,
+          p: 2,
         }}
       >
         {content}

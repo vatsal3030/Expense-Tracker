@@ -6,7 +6,16 @@ export const dashboardRouter = Router();
 dashboardRouter.use(authenticate);
 
 // Fast in-memory cache for dashboard endpoints (15s TTL)
+const DASHBOARD_CACHE_MAX = 1000;
 const dashboardCache = new Map<string, { data: any; expiresAt: number }>();
+
+// Periodic cleanup: evict expired entries every 2 minutes to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of dashboardCache) {
+    if (value.expiresAt <= now) dashboardCache.delete(key);
+  }
+}, 2 * 60 * 1000).unref();
 
 // GET /api/dashboard/summary — Get dashboard summary data
 dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -137,6 +146,7 @@ dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response)
       recentActivities,
     };
 
+    if (dashboardCache.size >= DASHBOARD_CACHE_MAX) dashboardCache.clear();
     dashboardCache.set(cacheKey, { data: resultData, expiresAt: Date.now() + 30000 });
     res.json({ success: true, data: resultData });
   } catch (error: any) {
@@ -201,6 +211,7 @@ dashboardRouter.get('/spending-trend', async (req: AuthenticatedRequest, res: Re
       };
     });
 
+    if (dashboardCache.size >= DASHBOARD_CACHE_MAX) dashboardCache.clear();
     dashboardCache.set(cacheKey, { data: months, expiresAt: Date.now() + 15000 });
     res.json({ success: true, data: months });
   } catch (error: any) {

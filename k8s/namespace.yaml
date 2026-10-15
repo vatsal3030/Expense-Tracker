@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fairshare
+  labels:
+    app.kubernetes.io/name: fairshare
+    app.kubernetes.io/part-of: owino-platform

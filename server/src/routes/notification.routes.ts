@@ -11,16 +11,15 @@ notificationRouter.get('/', async (req: AuthenticatedRequest, res: Response): Pr
     const userId = req.user!.id;
     const limit = parseInt(req.query.limit as string) || 20;
 
-    const [notifications, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-      }),
-      prisma.notification.count({
-        where: { userId, isRead: false },
-      }),
-    ]);
+    const notifications = await prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    const unreadCount = await prisma.notification.count({
+      where: { userId, isRead: false },
+    });
 
     res.json({
       success: true,

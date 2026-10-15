@@ -491,6 +491,7 @@ function GroupDetailContent() {
                           </Avatar>
                         </ListItemAvatar>
                         <ListItemText
+                          disableTypography
                           primary={
                             <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary' }}>
                               {exp.description}
@@ -595,6 +596,7 @@ function GroupDetailContent() {
                             </Avatar>
                           </ListItemAvatar>
                           <ListItemText
+                            disableTypography
                             primary={<Typography variant="body2" fontWeight={600}>{b.user.name}</Typography>}
                             secondary={
                               <Typography variant="caption" color="text.secondary">
@@ -791,6 +793,7 @@ function GroupDetailContent() {
                           </Avatar>
                         </ListItemAvatar>
                         <ListItemText
+                          disableTypography
                           primary={<Typography variant="body2" fontWeight={700}>{m.user?.name}</Typography>}
                           secondary={m.user?.email || m.user?.phone || 'Member'}
                         />

@@ -83,23 +83,25 @@ export default function QrCodeModal({
       <Dialog
         open={open}
         onClose={onClose}
-        PaperProps={{
-          sx: {
-            borderRadius: 4,
-            maxWidth: 420,
-            width: '100%',
-            p: 1.5,
-            textAlign: 'center',
-            bgcolor: isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(20, 24, 33, 0.88)',
-            backdropFilter: 'blur(24px) saturate(190%)',
-            border: isLight ? '1px solid rgba(255, 255, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: isLight
-              ? 'inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7), 0 20px 40px -10px rgba(0, 0, 0, 0.08)'
-              : 'inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.12), 0 24px 50px -10px rgba(0, 0, 0, 0.5)',
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 4,
+              maxWidth: 420,
+              width: '100%',
+              p: 1.5,
+              textAlign: 'center',
+              bgcolor: isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(20, 24, 33, 0.88)',
+              backdropFilter: 'blur(24px) saturate(190%)',
+              border: isLight ? '1px solid rgba(255, 255, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: isLight
+                ? 'inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7), 0 20px 40px -10px rgba(0, 0, 0, 0.08)'
+                : 'inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.12), 0 24px 50px -10px rgba(0, 0, 0, 0.5)',
+            },
           },
         }}
       >
-        <DialogTitle sx={{ pt: 2, pb: 1, px: 2 }}>
+        <DialogTitle component="div" sx={{ pt: 2, pb: 1, px: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
             <Chip
               icon={<QrCode2 fontSize="small" sx={{ color: '#0E6245 !important' }} />}
@@ -113,7 +115,7 @@ export default function QrCodeModal({
                 borderRadius: 2,
               }}
             />
-            <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
+            <IconButton autoFocus size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
               <Close fontSize="small" />
             </IconButton>
           </Box>

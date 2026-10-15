@@ -57,7 +57,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (wave && win.document?.body) {
           wave.className = 'ocean-wave-active';
           win.document.body.appendChild(wave);
-          setTimeout(() => wave.remove(), 750);
+          setTimeout(() => wave.remove(), 1100);
         }
         applyToggle();
       }

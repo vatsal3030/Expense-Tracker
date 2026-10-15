@@ -275,21 +275,25 @@ export default function FriendsPage() {
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' }, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'center', flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
                 <TextField
                   size="small"
                   value={personalInviteLink}
-                  slotProps={{ input: { readOnly: true } }}
+                  slotProps={{
+                    input: {
+                      readOnly: true,
+                      sx: {
+                        fontSize: '0.8rem',
+                        fontFamily: 'monospace',
+                        borderRadius: 2.5,
+                      },
+                    },
+                  }}
                   className="glass-tertiary"
                   sx={{
-                    minWidth: { xs: '100%', sm: 260 },
-                    maxWidth: 320,
-                    borderRadius: 2.5,
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2.5,
-                      fontSize: '0.8rem',
-                      fontFamily: 'monospace',
-                    },
+                    width: { xs: '100%', sm: 380 },
+                    flexGrow: 1,
+                    maxWidth: { sm: 440 },
                   }}
                 />
                 <Button
@@ -304,6 +308,7 @@ export default function FriendsPage() {
                     color: '#FFFFFF',
                     textTransform: 'none',
                     px: 2.5,
+                    flexShrink: 0,
                   }}
                 >
                   {copiedLink ? 'Copied' : 'Copy'}
@@ -503,6 +508,7 @@ export default function FriendsPage() {
                             </Avatar>
                           </ListItemAvatar>
                           <ListItemText
+                            disableTypography
                             primary={
                               <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary' }}>
                                 {f.friend?.name}
@@ -606,6 +612,7 @@ export default function FriendsPage() {
                           </Avatar>
                         </ListItemAvatar>
                         <ListItemText
+                          disableTypography
                           primary={
                             <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary' }}>
                               {req.user?.name}

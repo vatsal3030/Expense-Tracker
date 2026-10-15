@@ -184,11 +184,17 @@ expenseRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise
     const limitNum = Math.min(parseInt(limit as string, 10) || 20, 50);
     const skip = (pageNum - 1) * limitNum;
 
+    // Authorization: user can only see expenses they paid or have a share in
+    // Uses AND to ensure search filters NEVER bypass this auth check
     const where: any = {
       isDeleted: false,
-      OR: [
-        { paidById: req.user!.id },
-        { shares: { some: { userId: req.user!.id } } },
+      AND: [
+        {
+          OR: [
+            { paidById: req.user!.id },
+            { shares: { some: { userId: req.user!.id } } },
+          ],
+        },
       ],
     };
 
@@ -202,10 +208,12 @@ expenseRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise
       where.splitType = splitType;
     }
     if (search && typeof search === 'string' && search.trim() !== '') {
-      where.OR = [
-        { description: { contains: search.trim(), mode: 'insensitive' } },
-        { notes: { contains: search.trim(), mode: 'insensitive' } },
-      ];
+      where.AND.push({
+        OR: [
+          { description: { contains: search.trim(), mode: 'insensitive' } },
+          { notes: { contains: search.trim(), mode: 'insensitive' } },
+        ],
+      });
     }
     if (minAmount || maxAmount) {
       where.amount = {};
@@ -242,20 +250,19 @@ expenseRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise
         break;
     }
 
-    const [expenses, total] = await Promise.all([
-      prisma.expense.findMany({
-        where,
-        include: {
-          paidBy: { select: { id: true, name: true, avatarUrl: true, email: true } },
-          shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, email: true } } } },
-          group: { select: { id: true, name: true } },
-        },
-        orderBy,
-        skip,
-        take: limitNum,
-      }),
-      prisma.expense.count({ where }),
-    ]);
+    const expenses = await prisma.expense.findMany({
+      where,
+      include: {
+        paidBy: { select: { id: true, name: true, avatarUrl: true, email: true } },
+        shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, email: true } } } },
+        group: { select: { id: true, name: true } },
+      },
+      orderBy,
+      skip,
+      take: limitNum,
+    });
+
+    const total = await prisma.expense.count({ where });
 
     res.json({
       success: true,

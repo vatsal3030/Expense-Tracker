@@ -31,10 +31,12 @@ import {
   Sparkle,
   Sun,
   Moon,
+  LayoutDashboard,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import QrCodeModal from '@/components/common/QrCodeModal';
 import { useThemeMode } from '@/providers/ThemeProvider';
+import { useAuth } from '@/providers/AuthProvider';
 
 // Cartoon & Gaming Avatar Profiles for Live Interactive Simulation
 const SIMULATED_HERO_USERS = [
@@ -97,6 +99,7 @@ const PRESET_BILLS = [
 
 export default function LandingPage() {
   const { mode, toggleTheme } = useThemeMode();
+  const { user, profile } = useAuth();
   const isLight = mode === 'light';
 
   // --- Live Bill Simulator State ---
@@ -266,41 +269,43 @@ export default function LandingPage() {
         }`}
       />
 
-      {/* Floating macOS Liquid Glass Header */}
-      <div className="sticky top-4 z-50 px-4 max-w-7xl mx-auto">
-        <header className="macos-glass rounded-full px-5 py-2.5 flex items-center justify-between shadow-2xl transition-all duration-300">
-          <BrandLogo size="md" textColor={isLight ? "text-slate-900" : "text-white"} />
+      {/* Floating macOS Liquid Glass Header — Expanded Full Width */}
+      <div className="sticky top-4 z-50 px-2 sm:px-6 w-full max-w-[98%] xl:max-w-[96%] 2xl:max-w-[1560px] mx-auto">
+        <header className="macos-glass rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4 shadow-2xl transition-all duration-300">
+          <div className="shrink-0 flex items-center">
+            <BrandLogo size="md" textColor={isLight ? "text-slate-900" : "text-white"} />
+          </div>
 
           {/* Nav links */}
           <nav
-            className={`hidden lg:flex items-center gap-7 text-xs font-semibold uppercase tracking-wider ${
+            className={`hidden lg:flex items-center gap-4 xl:gap-6 2xl:gap-8 text-xs font-semibold uppercase tracking-wider shrink-0 whitespace-nowrap ${
               isLight ? 'text-slate-700' : 'text-slate-300'
             }`}
           >
-            <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
               Live Simulator
             </a>
-            <a href="#debt-minimizer" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <a href="#debt-minimizer" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
               Debt Graph
             </a>
-            <a href="#qr-ecosystem" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-              QR Ecosystem
-            </a>
-            <a href="#features" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <a href="#features" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
               Features
             </a>
-            <a href="#comparison" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <a href="#comparison" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
               Vs Splitwise
             </a>
-            <a href="#faqs" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <a href="#qr-ecosystem" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
+              QR Ecosystem
+            </a>
+            <a href="#faqs" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
               FAQ
             </a>
           </nav>
 
           {/* Action buttons + Theme Toggle */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Themed Segmented Switcher for Light & Dark */}
-            <div className="macos-liquid-surface flex items-center p-0.5 sm:p-1 rounded-full shadow-inner">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Themed Segmented Switcher for Light & Dark (Desktop) */}
+            <div className="hidden sm:flex macos-liquid-surface items-center p-0.5 sm:p-1 rounded-full shadow-inner">
               <button
                 onClick={() => {
                   if (mode !== 'light') toggleTheme();
@@ -314,7 +319,7 @@ export default function LandingPage() {
                 aria-label="Light Theme"
               >
                 <Sun className="w-3.5 h-3.5 text-amber-500" />
-                <span className="hidden sm:inline">Light</span>
+                <span>Light</span>
               </button>
               <button
                 onClick={() => {
@@ -329,41 +334,81 @@ export default function LandingPage() {
                 aria-label="Dark Theme"
               >
                 <Moon className="w-3.5 h-3.5 text-indigo-300" />
-                <span className="hidden sm:inline">Dark</span>
+                <span>Dark</span>
               </button>
             </div>
 
-            <Link
-              href="/auth/login"
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
-                isLight
-                  ? 'text-slate-700 hover:text-slate-900 hover:bg-white/40'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
-              }`}
+            {/* Compact Mobile Theme Switcher */}
+            <button
+              onClick={toggleTheme}
+              className="sm:hidden w-8 h-8 rounded-full macos-liquid-surface flex items-center justify-center border border-white/10 text-slate-300 active:scale-95 transition-all"
+              aria-label="Toggle Theme"
+              title="Toggle Theme"
             >
-              Sign In
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="text-xs font-bold px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95"
-            >
-              <span className="hidden sm:inline">Get Started Free</span>
-              <span className="sm:hidden">Start</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+              {isLight ? <Moon className="w-4 h-4 text-indigo-600" /> : <Sun className="w-4 h-4 text-amber-400" />}
+            </button>
+
+            {/* Authenticated Dashboard Button vs Guest Auth Buttons */}
+            {user ? (
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Direct Dashboard Link (Account name removed for clean spacious layout) */}
+                <Link
+                  href="/dashboard"
+                  className="text-xs font-bold px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95 shrink-0 whitespace-nowrap"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
+                  <span>Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                </Link>
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className={`text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-full transition-all ${
+                    isLight
+                      ? 'text-slate-700 hover:text-slate-900 hover:bg-white/40'
+                      : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95"
+                >
+                  <span className="hidden sm:inline">Get Started Free</span>
+                  <span className="sm:hidden">Start</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </>
+            )}
           </div>
         </header>
       </div>
 
       {/* HERO SECTION */}
       <section className="relative pt-20 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
-        {/* SaaS Trust Pill */}
-        <div className="macos-glass-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold mb-6 animate-fade-in shadow-inner">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-          <span className={isLight ? 'text-emerald-900 font-bold' : 'text-emerald-300 font-bold'}>
-            100% Free • Unlimited Daily Splits • Zero Subscription Paywalls
-          </span>
-        </div>
+        {/* SaaS Trust Pill or Logged In Welcome Pill */}
+        {user ? (
+          <div className="macos-glass-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold mb-6 animate-fade-in shadow-inner">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className={isLight ? 'text-emerald-900 font-bold' : 'text-emerald-300 font-bold'}>
+              Logged in as {profile?.name || user.email?.split('@')[0]}
+            </span>
+            <span className="text-slate-400">•</span>
+            <Link href="/dashboard" className="underline hover:text-emerald-600 dark:hover:text-emerald-200 font-bold">
+              Go to Financial Dashboard &rarr;
+            </Link>
+          </div>
+        ) : (
+          <div className="macos-glass-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold mb-6 animate-fade-in shadow-inner">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span className={isLight ? 'text-emerald-900 font-bold' : 'text-emerald-300 font-bold'}>
+              100% Free • Unlimited Daily Splits • Zero Subscription Paywalls
+            </span>
+          </div>
+        )}
 
         {/* Main Title */}
         <h1
@@ -393,13 +438,24 @@ export default function LandingPage() {
 
         {/* Hero Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-14">
-          <Link
-            href="/auth/signup"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/30 hover:shadow-emerald-900/50 transition-all active:scale-95"
-          >
-            Start Splitting for Free
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/30 hover:shadow-emerald-900/50 transition-all active:scale-95"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Go to Your Dashboard
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <Link
+              href="/auth/signup"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/30 hover:shadow-emerald-900/50 transition-all active:scale-95"
+            >
+              Start Splitting for Free
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          )}
           <a
             href="#simulator"
             className="macos-glass-card w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
@@ -471,7 +527,7 @@ export default function LandingPage() {
               </div>
 
               {/* Split Strategy Pill Switcher */}
-              <div className="macos-liquid-surface flex items-center gap-1 p-1 rounded-xl text-xs">
+              <div className="macos-liquid-surface flex items-center gap-1 p-1 rounded-xl text-xs overflow-x-auto max-w-full">
                 {(['EQUAL', 'PERCENTAGE', 'SHARES'] as const).map((mode) => (
                   <button
                     key={mode}
@@ -679,7 +735,10 @@ export default function LandingPage() {
                         </span>
                       ) : (
                         <button
-                          onClick={() => handleOpenSimulatedUpiQr(m, m.share)}
+                          onClick={(e) => {
+                            (e.currentTarget as HTMLElement)?.blur();
+                            handleOpenSimulatedUpiQr(m, m.share);
+                          }}
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm border ${
                             isLight
                               ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500'

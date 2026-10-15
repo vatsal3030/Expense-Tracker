@@ -37,9 +37,9 @@ AWS App Runner automatically builds and runs containerized applications with zer
    - `NODE_ENV`: `production`
    - `PORT`: `5000`
    - `CLIENT_URL`: `https://your-frontend-domain.vercel.app` (or your AWS domain)
-   - `DATABASE_URL`: `postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require&connection_limit=20`
-   - `DIRECT_URL`: `postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres`
-   - `SUPABASE_URL`: `https://eqtmygiizyehikodaxpe.supabase.co`
+   - `DATABASE_URL`: `postgresql://postgres:<your-db-password>@<your-db-host>:5432/postgres?sslmode=require&connection_limit=20`
+   - `DIRECT_URL`: `postgresql://postgres:<your-db-password>@<your-db-host>:5432/postgres`
+   - `SUPABASE_URL`: `https://<your-project-id>.supabase.co`
    - `SUPABASE_ANON_KEY`: `your_anon_key`
    - `SUPABASE_SERVICE_ROLE_KEY`: `your_service_role_key`
    - `JWT_SECRET`: `your_secure_jwt_secret`

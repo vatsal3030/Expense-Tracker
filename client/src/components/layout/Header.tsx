@@ -39,6 +39,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '@/components/brand/BrandLogo';
+import GlobalSearchModal from '@/components/search/GlobalSearchModal';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -52,45 +53,21 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
   const { mode, toggleTheme } = useThemeMode();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [notifAnchorEl, setNotifAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [searchOpen, setSearchOpen] = React.useState(false);
 
-  const [notifications, setNotifications] = React.useState<any[]>([
-    {
-      id: '1',
-      title: 'Settlement Confirmed',
-      message: 'Sam Wilson confirmed receiving ₹4,200 via UPI.',
-      time: '5m ago',
-      isRead: false,
-      type: 'SETTLEMENT',
-      actionUrl: '/settlements',
-    },
-    {
-      id: '2',
-      title: 'New Expense Added',
-      message: 'Alex added "Beach Villa 3 Nights" (₹16,000) to Goa Weekend Trip.',
-      time: '1h ago',
-      isRead: false,
-      type: 'EXPENSE',
-      actionUrl: '/expenses',
-    },
-    {
-      id: '3',
-      title: 'Group Join Request',
-      message: 'Rahul Sharma requested to join "Flat 402".',
-      time: '3h ago',
-      isRead: false,
-      type: 'GROUP',
-      actionUrl: '/groups',
-    },
-    {
-      id: '4',
-      title: 'Budget Alert',
-      message: 'You have reached 82% of your monthly Dining budget limit.',
-      time: '1d ago',
-      isRead: true,
-      type: 'BUDGET',
-      actionUrl: '/budgets',
-    },
-  ]);
+  // Global Cmd+K / Ctrl+K keyboard shortcut
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const [notifications, setNotifications] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     if (profile) {
@@ -268,13 +245,22 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           <MenuIcon />
         </IconButton>
 
-        {/* Mobile Brand Logo */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: 2 }}>
-          <BrandLogo size="sm" />
+        {/* Mobile Brand Logo — Only circular icon without long text */}
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: { xs: 0.5, sm: 1.5 }, flexShrink: 0 }}>
+          <BrandLogo size="sm" showText={false} />
         </Box>
 
-        {/* Search Bar (Tertiary Glass Pill) */}
+        {/* Search Bar (Tertiary Glass Pill) — Click to open Elastic Search Modal */}
         <Box
+          onClick={() => setSearchOpen(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setSearchOpen(true);
+            }
+          }}
           sx={{
             display: { xs: 'none', sm: 'flex' },
             alignItems: 'center',
@@ -282,26 +268,28 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             backdropFilter: 'blur(14px)',
             borderRadius: 9999,
             px: 2,
-            py: 0.6,
+            py: 0.7,
             flex: 1,
             maxWidth: 480,
+            cursor: 'pointer',
+            userSelect: 'none',
             border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.10)'}`,
             boxShadow: isLight
               ? 'inset 0 1px 1.5px rgba(255,255,255,0.9), 0 2px 6px rgba(0,0,0,0.02)'
               : 'inset 0 1px 1.5px rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.25)',
             transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-            '&:focus-within': {
+            '&:hover': {
               bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(32, 42, 60, 0.65)',
               borderColor: isLight ? '#0E6245' : '#10B981',
               boxShadow: `0 0 0 2px ${isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(16, 185, 129, 0.20)'}`,
+              transform: 'translateY(-0.5px)',
             },
           }}
         >
           <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
-          <InputBase
-            placeholder="Search expenses, groups, friends..."
-            sx={{ flex: 1, fontSize: '0.875rem' }}
-          />
+          <Typography sx={{ flex: 1, fontSize: '0.85rem', color: 'text.secondary', fontWeight: 500 }}>
+            Search expenses, groups, friends...
+          </Typography>
           <Typography
             variant="caption"
             sx={{
@@ -323,6 +311,20 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
 
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/* Mobile Search Button */}
+          <Tooltip title="Search">
+            <IconButton
+              onClick={() => setSearchOpen(true)}
+              sx={{
+                display: { xs: 'flex', sm: 'none' },
+                bgcolor: isLight ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.05)',
+                border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)'}`,
+                p: 1,
+              }}
+            >
+              <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+            </IconButton>
+          </Tooltip>
           {/* FairScore & Streak Badge (Tertiary Glass Pill) */}
           <Tooltip title="FairScore: 880 (Diamond Tier) • 14-day streak">
             <Box
@@ -660,6 +662,9 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           </Box>
         </Menu>
       </Toolbar>
+
+      {/* Elastic Command Palette / Global Search Modal */}
+      <GlobalSearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </AppBar>
   );
 }

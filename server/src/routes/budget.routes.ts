@@ -74,39 +74,38 @@ budgetRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<
       orderBy: { category: 'asc' },
     });
 
-    // Calculate spending for each budget
-    const budgetsWithSpending = await Promise.all(
-      budgets.map(async (budget) => {
-        const { start, end } = getPeriodDateRange(budget.period);
+    // Calculate spending for each budget safely without exhausting connections
+    const budgetsWithSpending = [];
+    for (const budget of budgets) {
+      const { start, end } = getPeriodDateRange(budget.period);
 
-        const spending = await prisma.expense.aggregate({
-          where: {
-            isDeleted: false,
-            category: budget.category,
-            date: { gte: start, lte: end },
-            OR: [
-              { paidById: req.user!.id },
-              { shares: { some: { userId: req.user!.id } } },
-            ],
-          },
-          _sum: { amount: true },
-        });
+      const spending = await prisma.expense.aggregate({
+        where: {
+          isDeleted: false,
+          category: budget.category,
+          date: { gte: start, lte: end },
+          OR: [
+            { paidById: req.user!.id },
+            { shares: { some: { userId: req.user!.id } } },
+          ],
+        },
+        _sum: { amount: true },
+      });
 
-        const spent = Number(spending._sum.amount || 0);
-        const budgetAmount = Number(budget.amount);
-        const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
+      const spent = Number(spending._sum.amount || 0);
+      const budgetAmount = Number(budget.amount);
+      const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
 
-        return {
-          ...budget,
-          spent,
-          remaining: Math.max(budgetAmount - spent, 0),
-          percentage,
-          isOverBudget: spent > budgetAmount,
-          isAlerted: percentage >= budget.alertAt,
-          periodRange: { start, end },
-        };
-      })
-    );
+      budgetsWithSpending.push({
+        ...budget,
+        spent,
+        remaining: Math.max(budgetAmount - spent, 0),
+        percentage,
+        isOverBudget: spent > budgetAmount,
+        isAlerted: percentage >= budget.alertAt,
+        periodRange: { start, end },
+      });
+    }
 
     res.json({ success: true, data: budgetsWithSpending });
   } catch (error: any) {

@@ -23,7 +23,16 @@ interface CachedUserSession {
   };
   expiresAt: number;
 }
+const TOKEN_CACHE_MAX = 5000;
 const tokenCache = new Map<string, CachedUserSession>();
+
+// Periodic cleanup: evict expired entries every 5 minutes to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of tokenCache) {
+    if (value.expiresAt <= now) tokenCache.delete(key);
+  }
+}, 5 * 60 * 1000).unref(); // .unref() so this timer doesn't prevent graceful shutdown
 
 export const authenticate = async (
   req: AuthenticatedRequest,
@@ -100,7 +109,11 @@ export const authenticate = async (
 
     req.user = userPayload;
 
-    // Cache valid session for 3 minutes
+    // Cache valid session for 3 minutes (with size cap to prevent memory leaks)
+    if (tokenCache.size >= TOKEN_CACHE_MAX) {
+      const entries = [...tokenCache.entries()].sort((a, b) => a[1].expiresAt - b[1].expiresAt);
+      for (let i = 0; i < Math.floor(entries.length / 2); i++) tokenCache.delete(entries[i][0]);
+    }
     tokenCache.set(token, {
       user: userPayload,
       expiresAt: Date.now() + 1000 * 60 * 3,

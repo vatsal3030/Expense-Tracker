@@ -21,6 +21,17 @@ import { healthRouter } from './routes/health.routes';
 
 dotenv.config();
 
+// =============================================================================
+// REQUIRED ENV VALIDATION — fail fast if critical secrets are missing
+// =============================================================================
+const REQUIRED_ENV = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) {
+    console.error(`❌ FATAL: Missing required environment variable: ${key}`);
+    process.exit(1);
+  }
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -99,5 +110,19 @@ app.listen(PORT, () => {
   ╚═══════════════════════════════════════════════╝
   `);
 });
+
+// =============================================================================
+// GRACEFUL SHUTDOWN — drain Prisma connections on Docker/K8s stop signals
+// =============================================================================
+import prisma from './lib/prisma';
+
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n🛑 Received ${signal}. Shutting down gracefully...`);
+  await prisma.$disconnect();
+  process.exit(0);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 export default app;

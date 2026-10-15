@@ -42,8 +42,8 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch {
-        // Refresh failed — redirect to login
-        if (typeof window !== 'undefined') {
+        // Refresh failed — redirect to login (avoid infinite loop if already on auth page)
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
           window.location.href = '/auth/login';
         }
       }

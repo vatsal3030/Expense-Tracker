@@ -93,6 +93,7 @@ export default function UpiPaymentModal({
       }}
     >
       <DialogTitle
+        component="div"
         sx={{
           display: 'flex',
           justifyContent: 'space-between',

@@ -1102,6 +1102,7 @@ export default function DashboardPage() {
                             </Avatar>
                           </ListItemAvatar>
                           <ListItemText
+                            disableTypography
                             primary={
                               <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                 <strong>{activity.user?.name}</strong> {activity.message}

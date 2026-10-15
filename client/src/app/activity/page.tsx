@@ -213,6 +213,7 @@ export default function ActivityPage() {
                           </Avatar>
                         </ListItemAvatar>
                         <ListItemText
+                          disableTypography
                           primary={
                             <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.875rem' }}>
                               <strong style={{ fontWeight: 650, color: '#FFFFFF' }}>{activity.user?.name || 'Someone'}</strong>{' '}

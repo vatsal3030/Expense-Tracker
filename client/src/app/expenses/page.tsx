@@ -67,7 +67,7 @@ import {
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { expenseApi, groupApi } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 
 const CATEGORIES = [
@@ -135,6 +135,13 @@ export default function ExpensesPage() {
   }, []);
 
   const hasLoadedExpensesRef = React.useRef(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setDialogOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
@@ -779,6 +786,7 @@ export default function ExpensesPage() {
                       </ListItemAvatar>
 
                       <ListItemText
+                        disableTypography
                         primary={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Typography variant="body1" fontWeight={600} sx={{ color: 'text.primary' }}>
@@ -862,18 +870,19 @@ export default function ExpensesPage() {
           </CardContent>
         </Card>
 
-        {/* Mobile FAB */}
+        {/* Mobile FAB positioned safely above bottom navigation */}
         <Fab
           color="primary"
           onClick={() => setDialogOpen(true)}
           sx={{
             display: { xs: 'flex', sm: 'none' },
             position: 'fixed',
-            bottom: 24,
-            right: 24,
+            bottom: { xs: 84, sm: 24 },
+            right: 20,
             bgcolor: '#0E6245',
             color: '#ffffff',
-            boxShadow: '0 4px 14px rgba(14,98,69,0.35)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
+            zIndex: 1100,
             '&:hover': { bgcolor: '#094A34' },
           }}
         >

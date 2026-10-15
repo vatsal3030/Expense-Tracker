@@ -125,6 +125,7 @@ model ExpenseShare {
 
   @@unique([expenseId, userId])
   @@index([userId])
+  @@index([userId, isPaid])
   @@map("expense_shares")
 }
 

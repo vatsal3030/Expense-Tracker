@@ -3,14 +3,16 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import bcrypt from 'bcryptjs';
 
 export const groupRouter = Router();
 groupRouter.use(authenticate);
 
 // Security metadata helpers for password protection and admin approval
-function encodeGroupMeta(description?: string | null, password?: string | null, requireAdminApproval?: boolean | null): string | undefined {
+async function encodeGroupMeta(description?: string | null, password?: string | null, requireAdminApproval?: boolean | null): Promise<string | undefined> {
   if (!password && !requireAdminApproval) return description || undefined;
-  const meta = { pwd: password || null, approval: Boolean(requireAdminApproval) };
+  const hashedPwd = password ? await bcrypt.hash(password, 10) : null;
+  const meta = { pwd: hashedPwd, approval: Boolean(requireAdminApproval) };
   const clean = (description || '').replace(/\s*<!--fs_meta:.*?-->\s*/g, '').trim();
   return `${clean}\n<!--fs_meta:${JSON.stringify(meta)}-->`;
 }
@@ -50,7 +52,7 @@ groupRouter.post(
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { name, description, type, currency, memberIds, password, requireAdminApproval } = req.body;
-      const finalDescription = encodeGroupMeta(description, password, requireAdminApproval);
+      const finalDescription = await encodeGroupMeta(description, password, requireAdminApproval);
 
       const group = await prisma.group.create({
         data: {
@@ -290,9 +292,9 @@ groupRouter.post('/:id/join', async (req: AuthenticatedRequest, res: Response): 
 
     const meta = parseGroupMeta(group.description);
 
-    // Verify passcode if protected
+    // Verify passcode if protected (bcrypt comparison)
     if (meta.isPasswordProtected && meta.password) {
-      if (!passcode || passcode.trim() !== meta.password.trim()) {
+      if (!passcode || !(await bcrypt.compare(passcode.trim(), meta.password))) {
         res.status(403).json({ success: false, error: 'Invalid group password. Please enter the correct passcode.' });
         return;
       }
