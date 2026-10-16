@@ -22,7 +22,7 @@ export default function AdminPage() {
   const theme = useTheme();
   const router = useRouter();
   const isLight = theme.palette.mode === 'light';
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
   const [overview, setOverview] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
@@ -134,6 +134,30 @@ export default function AdminPage() {
   };
 
   if (authLoading) return null;
+
+  if (profile && !(profile as any).isAdmin) {
+    return (
+      <AppLayout>
+        <Box sx={{ maxWidth: 480, mx: 'auto', mt: { xs: 4, md: 8 }, textAlign: 'center', p: 4, borderRadius: 3.5 }} className="glass-secondary">
+          <Security sx={{ fontSize: 64, color: '#EF4444', mb: 2 }} />
+          <Typography variant="h5" fontWeight={800} sx={{ color: 'text.primary', mb: 1 }}>
+            Access Restricted
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            This portal is strictly restricted to platform administrators. Your account does not have administrative permissions.
+          </Typography>
+          <Button
+            variant="contained"
+            className="glass-emerald-active"
+            onClick={() => router.push('/dashboard')}
+            sx={{ borderRadius: 2.5, fontWeight: 700, color: '#FFFFFF', textTransform: 'none', px: 3 }}
+          >
+            Return to Dashboard
+          </Button>
+        </Box>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

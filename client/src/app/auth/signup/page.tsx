@@ -23,13 +23,15 @@ import {
   Google as GoogleIcon,
   GitHub as GitHubIcon,
 } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import BrandLogo from '@/components/brand/BrandLogo';
 
 export default function SignupPage() {
   const theme = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refCode = searchParams?.get('ref');
   const { signUp, signInWithGoogle, signInWithGithub, user, loading: authLoading } = useAuth();
 
   const [name, setName] = useState('');
@@ -42,10 +44,22 @@ export default function SignupPage() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/dashboard');
+    if (refCode) {
+      try {
+        localStorage.setItem('fairshare_pending_invite', refCode);
+      } catch {}
     }
-  }, [user?.id, authLoading, router]);
+  }, [refCode]);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (refCode && refCode !== user.id) {
+        router.push(`/friends?invite=${refCode}`);
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [user?.id, authLoading, router, refCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

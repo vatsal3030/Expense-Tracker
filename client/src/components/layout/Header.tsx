@@ -498,13 +498,15 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             <ListItemIcon><SettingsIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
             <ListItemText primary="Settings" />
           </MenuItem>
-          <MenuItem
-            onClick={() => { handleMenuClose(); router.push('/admin'); }}
-            sx={{ borderRadius: 2, my: 0.25, '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' } }}
-          >
-            <ListItemIcon><AdminIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
-            <ListItemText primary="Admin Portal" />
-          </MenuItem>
+          {(profile as any)?.isAdmin && (
+            <MenuItem
+              onClick={() => { handleMenuClose(); router.push('/admin'); }}
+              sx={{ borderRadius: 2, my: 0.25, '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' } }}
+            >
+              <ListItemIcon><AdminIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
+              <ListItemText primary="Admin Portal" />
+            </MenuItem>
+          )}
           <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
           <MenuItem
             onClick={handleLogout}
@@ -667,8 +669,26 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               ))
             )}
           </Box>
-          <Box sx={{ p: 1, textAlign: 'center', borderTop: `1px solid ${theme.palette.divider}` }}>
-            <Button size="small" fullWidth onClick={handleClearNotifs} sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+          <Box sx={{ p: 1.25, borderTop: `1px solid ${theme.palette.divider}`, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+            <Button
+              size="small"
+              fullWidth
+              variant="contained"
+              className="glass-emerald-active"
+              onClick={() => {
+                handleNotifClose();
+                router.push('/notifications');
+              }}
+              sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#FFFFFF', textTransform: 'none', py: 0.6 }}
+            >
+              View All Notifications
+            </Button>
+            <Button
+              size="small"
+              fullWidth
+              onClick={handleClearNotifs}
+              sx={{ fontSize: '0.725rem', color: 'text.secondary', textTransform: 'none', py: 0.4 }}
+            >
               Clear all notifications
             </Button>
           </Box>

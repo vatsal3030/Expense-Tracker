@@ -4,6 +4,7 @@ import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { Prisma } from '@prisma/client';
+import appCache from '../lib/cache';
 
 export const expenseRouter = Router();
 expenseRouter.use(authenticate);
@@ -153,6 +154,16 @@ expenseRouter.post(
             };
           }),
         }).catch((err) => console.error('Notification creation error:', err));
+      }
+
+      // Invalidate dashboard and group caches for all involved users
+      appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+      appCache.invalidatePrefix(`dashboard:${resolvedPaidById}`);
+      for (const s of calculatedShares) {
+        appCache.invalidatePrefix(`dashboard:${s.userId}`);
+      }
+      if (groupId) {
+        appCache.invalidatePrefix('groups:list:');
       }
 
       res.status(201).json({ success: true, data: expense });
@@ -443,6 +454,11 @@ expenseRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): P
         message: `deleted "${existing.description}"`,
       },
     });
+
+    appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+    if (existing.groupId) {
+      appCache.invalidatePrefix('groups:list:');
+    }
 
     res.json({ success: true, message: 'Expense deleted successfully.' });
   } catch (error: any) {

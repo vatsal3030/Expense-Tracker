@@ -7,6 +7,20 @@ export const adminRouter = Router();
 // Protect all admin routes with authentication
 adminRouter.use(authenticate);
 
+// Restricted to authorized platform administrators only
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'rajkotgamer74@gmail.com,vatsalvadgama30@gmail.com,admin@fairshare.com')
+  .split(',')
+  .map((e) => e.trim().toLowerCase());
+
+adminRouter.use((req: AuthenticatedRequest, res: Response, next) => {
+  const userEmail = req.user?.email?.toLowerCase();
+  if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
+    res.status(403).json({ success: false, error: 'Access denied: Platform Administrator privileges required.' });
+    return;
+  }
+  next();
+});
+
 // GET /api/admin/overview — Platform-wide telemetry and KPI metrics
 adminRouter.get('/overview', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

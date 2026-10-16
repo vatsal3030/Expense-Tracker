@@ -1,31 +1,20 @@
 import { Router, Response } from 'express';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
+import appCache from '../lib/cache';
 
 export const dashboardRouter = Router();
 dashboardRouter.use(authenticate);
 
-// Fast in-memory cache for dashboard endpoints (15s TTL)
-const DASHBOARD_CACHE_MAX = 1000;
-const dashboardCache = new Map<string, { data: any; expiresAt: number }>();
-
-// Periodic cleanup: evict expired entries every 2 minutes to prevent memory leaks
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of dashboardCache) {
-    if (value.expiresAt <= now) dashboardCache.delete(key);
-  }
-}, 2 * 60 * 1000).unref();
-
 // GET /api/dashboard/summary — Get dashboard summary data
 dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.id;
-  const cacheKey = `summary:${userId}`;
-  const cached = dashboardCache.get(cacheKey);
+  const cacheKey = `dashboard:summary:${userId}`;
+  const cached = appCache.get(cacheKey);
 
   try {
-    if (cached && cached.expiresAt > Date.now()) {
-      res.json({ success: true, data: cached.data });
+    if (cached) {
+      res.json({ success: true, data: cached });
       return;
     }
 
@@ -146,13 +135,12 @@ dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response)
       recentActivities,
     };
 
-    if (dashboardCache.size >= DASHBOARD_CACHE_MAX) dashboardCache.clear();
-    dashboardCache.set(cacheKey, { data: resultData, expiresAt: Date.now() + 30000 });
+    appCache.set(cacheKey, resultData, 30000);
     res.json({ success: true, data: resultData });
   } catch (error: any) {
     console.error('Dashboard summary error:', error);
     if (cached) {
-      res.json({ success: true, data: cached.data });
+      res.json({ success: true, data: cached });
       return;
     }
     res.status(500).json({ success: false, error: 'Failed to fetch dashboard data.' });
@@ -163,10 +151,10 @@ dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response)
 dashboardRouter.get('/spending-trend', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
-    const cacheKey = `trend:${userId}`;
-    const cached = dashboardCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-      res.json({ success: true, data: cached.data });
+    const cacheKey = `dashboard:trend:${userId}`;
+    const cached = appCache.get(cacheKey);
+    if (cached) {
+      res.json({ success: true, data: cached });
       return;
     }
 
@@ -211,8 +199,7 @@ dashboardRouter.get('/spending-trend', async (req: AuthenticatedRequest, res: Re
       };
     });
 
-    if (dashboardCache.size >= DASHBOARD_CACHE_MAX) dashboardCache.clear();
-    dashboardCache.set(cacheKey, { data: months, expiresAt: Date.now() + 15000 });
+    appCache.set(cacheKey, months, 30000);
     res.json({ success: true, data: months });
   } catch (error: any) {
     console.error('Spending trend error:', error);

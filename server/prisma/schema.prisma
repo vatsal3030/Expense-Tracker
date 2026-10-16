@@ -34,6 +34,8 @@ model User {
   settlementsRecv  Settlement[]       @relation("SettlementPayee")
   settlements      Settlement[]       @relation("SettlementPayer")
 
+  @@index([phone])
+  @@index([name])
   @@map("users")
 }
 
@@ -48,6 +50,8 @@ model Friendship {
   user      User             @relation("FriendshipInitiator", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, friendId])
+  @@index([userId, status])
+  @@index([friendId, status])
   @@map("friendships")
 }
 
@@ -79,6 +83,7 @@ model GroupMember {
   user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId])
+  @@index([userId])
   @@map("group_members")
 }
 

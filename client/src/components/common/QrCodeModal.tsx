@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -15,16 +15,18 @@ import {
   alpha,
   Chip,
   Snackbar,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   Close,
   ContentCopy,
   Download,
-  OpenInNew,
-  QrCode2,
   CheckCircle,
   Share,
+  WhatsApp,
 } from '@mui/icons-material';
+import QRCode from 'qrcode';
 
 interface QrCodeModalProps {
   open: boolean;
@@ -40,7 +42,7 @@ export default function QrCodeModal({
   open,
   onClose,
   title,
-  subtitle = 'Scan using any smartphone camera or UPI scanner to connect instantly',
+  subtitle = 'Scan using any camera or FairShare app to connect instantly',
   value,
   badgeText = 'Instant QR Code',
   downloadFileName = 'fairshare_qr.png',
@@ -49,32 +51,86 @@ export default function QrCodeModal({
   const isLight = theme.palette.mode === 'light';
   const [copied, setCopied] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [generating, setGenerating] = useState(true);
 
-  // Crisp high-res QR Code endpoint
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
-    value
-  )}&bgcolor=${isLight ? 'ffffff' : '141821'}&color=${isLight ? '0e6245' : '34d399'}&margin=12`;
+  // Generate high-resolution, client-side QR Code with zero network latency
+  useEffect(() => {
+    if (!open || !value) return;
+
+    let isMounted = true;
+    setGenerating(true);
+
+    QRCode.toDataURL(value, {
+      width: 480,
+      margin: 2,
+      color: {
+        dark: isLight ? '#0F172A' : '#34D399',
+        light: isLight ? '#FFFFFF' : '#141821',
+      },
+      errorCorrectionLevel: 'H',
+    })
+      .then((url) => {
+        if (isMounted) {
+          setQrDataUrl(url);
+          setGenerating(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to generate local QR code:', err);
+        if (isMounted) setGenerating(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open, value, isLight]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setToastMessage('Link copied to clipboard! ✓');
-    setTimeout(() => setCopied(false), 2500);
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(value);
+      setCopied(true);
+      setToastMessage('Link copied to clipboard! ✓');
+      setTimeout(() => setCopied(false), 2500);
+    }
   };
 
-  const handleDownload = async () => {
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Connect on FairShare',
+          text: `Connect with me on FairShare: ${value}`,
+          url: value,
+        });
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          handleCopy();
+        }
+      }
+    } else {
+      handleCopy();
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    const text = `Hey! Connect with me on FairShare so we can easily split bills and track shared expenses: ${value}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const handleDownload = () => {
+    if (!qrDataUrl) return;
     try {
-      const response = await fetch(qrCodeUrl);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = downloadFileName;
+      a.href = qrDataUrl;
+      a.download = downloadFileName.endsWith('.png') ? downloadFileName : `${downloadFileName}.png`;
+      document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
       setToastMessage('QR Code downloaded successfully!');
-    } catch {
-      window.open(qrCodeUrl, '_blank');
+    } catch (err) {
+      console.error('Download failed:', err);
+      setToastMessage('Failed to download QR image.');
     }
   };
 
@@ -92,35 +148,48 @@ export default function QrCodeModal({
               m: { xs: 1.5, sm: 3 },
               p: { xs: 1, sm: 1.5 },
               textAlign: 'center',
-              bgcolor: isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(20, 24, 33, 0.88)',
+              bgcolor: isLight ? 'rgba(255, 255, 255, 0.92)' : 'rgba(20, 24, 33, 0.94)',
               backdropFilter: 'blur(24px) saturate(190%)',
-              border: isLight ? '1px solid rgba(255, 255, 255, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
+              border: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.12)',
               boxShadow: isLight
-                ? 'inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7), 0 20px 40px -10px rgba(0, 0, 0, 0.08)'
-                : 'inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.12), 0 24px 50px -10px rgba(0, 0, 0, 0.5)',
+                ? '0 20px 40px -10px rgba(0, 0, 0, 0.08)'
+                : '0 24px 50px -10px rgba(0, 0, 0, 0.6)',
             },
           },
         }}
       >
-        <DialogTitle component="div" sx={{ pt: 2, pb: 1, px: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-            <Chip
-              icon={<QrCode2 fontSize="small" sx={{ color: '#0E6245 !important' }} />}
-              label={badgeText}
-              size="small"
-              sx={{
-                bgcolor: alpha('#0E6245', 0.1),
-                color: '#0E6245',
-                fontWeight: 750,
-                fontSize: '0.72rem',
-                borderRadius: 2,
-              }}
-            />
-            <IconButton autoFocus size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
-              <Close fontSize="small" />
-            </IconButton>
-          </Box>
-          <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
+        <Box sx={{ position: 'relative', pt: 1.5, px: 2, pb: 0 }}>
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{
+              position: 'absolute',
+              right: 12,
+              top: 12,
+              color: 'text.secondary',
+              '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.06) },
+            }}
+          >
+            <Close fontSize="small" />
+          </IconButton>
+
+          <Chip
+            label={badgeText}
+            size="small"
+            sx={{
+              fontWeight: 700,
+              fontSize: '0.7rem',
+              letterSpacing: '0.02em',
+              mb: 1.5,
+              bgcolor: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(52, 211, 153, 0.15)',
+              color: isLight ? '#065F46' : '#34D399',
+              border: `1px solid ${isLight ? 'rgba(16, 185, 129, 0.25)' : 'rgba(52, 211, 153, 0.3)'}`,
+            }}
+          />
+        </Box>
+
+        <DialogTitle sx={{ p: 0, px: 2.5, pb: 1 }}>
+          <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.15rem', sm: '1.3rem' } }}>
             {title}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem', mt: 0.5 }}>
@@ -129,31 +198,42 @@ export default function QrCodeModal({
         </DialogTitle>
 
         <DialogContent sx={{ px: 2, py: 2 }}>
-          {/* macOS Glass Frame for QR Code */}
+          {/* macOS Glass Frame for Client-Side QR Code */}
           <Box
             sx={{
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               p: 2,
               borderRadius: 3.5,
               bgcolor: isLight ? '#FFFFFF' : '#141821',
-              border: `1px solid ${theme.palette.divider}`,
+              border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)'}`,
               boxShadow: isLight
                 ? '0 8px 24px rgba(0, 0, 0, 0.06)'
                 : '0 8px 30px rgba(0, 0, 0, 0.4)',
-              transition: 'transform 0.2s ease',
-              '&:hover': { transform: 'scale(1.02)' },
+              minWidth: 220,
+              minHeight: 220,
             }}
           >
-            <img
-              src={qrCodeUrl}
-              alt="QR Code"
-              style={{
-                width: 210,
-                height: 210,
-                display: 'block',
-                borderRadius: 12,
-              }}
-            />
+            {generating ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, py: 4 }}>
+                <CircularProgress size={32} sx={{ color: '#34D399' }} />
+                <Typography variant="caption" color="text.secondary">Generating QR Code...</Typography>
+              </Box>
+            ) : qrDataUrl ? (
+              <img
+                src={qrDataUrl}
+                alt="FairShare QR Code"
+                style={{
+                  width: 210,
+                  height: 210,
+                  display: 'block',
+                  borderRadius: 12,
+                }}
+              />
+            ) : (
+              <Typography variant="caption" color="error">Failed to generate QR code.</Typography>
+            )}
           </Box>
 
           {/* Copyable Link Preview Bar */}
@@ -163,7 +243,7 @@ export default function QrCodeModal({
               p: 1.25,
               px: 1.75,
               borderRadius: 2.5,
-              bgcolor: alpha(theme.palette.action.hover, 0.04),
+              bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
               border: `1px solid ${theme.palette.divider}`,
               display: 'flex',
               alignItems: 'center',
@@ -188,48 +268,81 @@ export default function QrCodeModal({
               {value}
             </Typography>
             <Tooltip title={copied ? 'Copied!' : 'Copy to clipboard'}>
-              <IconButton size="small" onClick={handleCopy} sx={{ color: '#0E6245' }}>
+              <IconButton
+                size="small"
+                onClick={handleCopy}
+                sx={{
+                  color: copied ? '#10B981' : 'text.secondary',
+                  bgcolor: copied ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
+                }}
+              >
                 {copied ? <CheckCircle fontSize="small" /> : <ContentCopy fontSize="small" />}
               </IconButton>
             </Tooltip>
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ px: 2, pb: 2, pt: 0, justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+        <DialogActions
+          sx={{
+            px: 2.5,
+            pb: 2,
+            pt: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.25,
+          }}
+        >
+          <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+            <Button
+              fullWidth
+              variant="contained"
+              className="glass-emerald-active"
+              startIcon={<Share />}
+              onClick={handleNativeShare}
+              sx={{
+                borderRadius: 2.5,
+                fontWeight: 700,
+                color: '#FFFFFF',
+                py: 1,
+                fontSize: '0.85rem',
+                textTransform: 'none',
+              }}
+            >
+              Share Link
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={handleWhatsAppShare}
+              sx={{
+                borderRadius: 2.5,
+                color: '#25D366',
+                borderColor: 'rgba(37, 211, 102, 0.3)',
+                '&:hover': { bgcolor: 'rgba(37, 211, 102, 0.1)', borderColor: '#25D366' },
+                px: 2,
+              }}
+            >
+              <WhatsApp fontSize="small" />
+            </Button>
+          </Box>
+
           <Button
-            size="small"
+            fullWidth
             variant="outlined"
+            className="glass-tertiary"
+            startIcon={<Download />}
             onClick={handleDownload}
-            startIcon={<Download fontSize="small" />}
+            disabled={!qrDataUrl}
             sx={{
               borderRadius: 2.5,
-              textTransform: 'none',
               fontWeight: 650,
-              fontSize: '0.8rem',
-              borderColor: theme.palette.divider,
-              color: 'text.primary',
-              px: 2,
-            }}
-          >
-            Download QR
-          </Button>
-          <Button
-            size="small"
-            variant="contained"
-            onClick={handleCopy}
-            startIcon={<Share fontSize="small" />}
-            sx={{
-              borderRadius: 2.5,
+              py: 0.85,
+              fontSize: '0.825rem',
               textTransform: 'none',
-              fontWeight: 700,
-              fontSize: '0.8rem',
-              bgcolor: '#0E6245',
-              color: '#FFFFFF',
-              px: 2.5,
-              '&:hover': { bgcolor: '#094A34' },
+              color: 'text.primary',
+              border: `1px solid ${theme.palette.divider}`,
             }}
           >
-            {copied ? 'Link Copied!' : 'Share Link'}
+            Download QR Code Image
           </Button>
         </DialogActions>
       </Dialog>
@@ -238,8 +351,12 @@ export default function QrCodeModal({
         open={Boolean(toastMessage)}
         autoHideDuration={3000}
         onClose={() => setToastMessage('')}
-        message={toastMessage}
-      />
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="success" sx={{ borderRadius: 3, fontWeight: 600 }}>
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

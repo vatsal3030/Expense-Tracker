@@ -84,3 +84,20 @@ notificationRouter.delete('/', async (req: AuthenticatedRequest, res: Response):
     res.status(500).json({ success: false, error: 'Failed to clear notifications.' });
   }
 });
+
+// DELETE /api/notifications/:id — Delete single notification
+notificationRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const userId = req.user!.id;
+
+    await prisma.notification.deleteMany({
+      where: { id, userId },
+    });
+
+    res.json({ success: true, message: 'Notification deleted.' });
+  } catch (error: any) {
+    console.error('Delete notification error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete notification.' });
+  }
+});

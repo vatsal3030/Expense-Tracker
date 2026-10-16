@@ -41,9 +41,18 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getEffectiveRedirect = () => {
+    if (redirectTarget && redirectTarget !== '/dashboard') return redirectTarget;
+    try {
+      const pendingInvite = typeof window !== 'undefined' ? localStorage.getItem('fairshare_pending_invite') : null;
+      if (pendingInvite) return `/friends?invite=${pendingInvite}`;
+    } catch {}
+    return redirectTarget || '/dashboard';
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
-      router.push(redirectTarget);
+      router.push(getEffectiveRedirect());
     }
   }, [user?.id, authLoading, router, redirectTarget]);
 
@@ -56,7 +65,7 @@ function LoginForm() {
     if (result.error) {
       setError(result.error);
     } else {
-      router.push(redirectTarget);
+      router.push(getEffectiveRedirect());
     }
     setLoading(false);
   };

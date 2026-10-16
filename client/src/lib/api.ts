@@ -148,6 +148,7 @@ export const notificationApi = {
   markRead: (id: string) => api.patch(`/notifications/${id}/read`),
   markAllRead: () => api.post('/notifications/mark-all-read'),
   clear: () => api.delete('/notifications'),
+  delete: (id: string) => api.delete(`/notifications/${id}`),
 };
 
 // Admin Operations

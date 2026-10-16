@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -14,6 +14,7 @@ import {
   Tooltip,
   useTheme,
   alpha,
+  CircularProgress,
 } from '@mui/material';
 import {
   Close,
@@ -24,6 +25,7 @@ import {
   Smartphone,
   Shield,
 } from '@mui/icons-material';
+import QRCode from 'qrcode';
 
 interface UpiPaymentModalProps {
   open: boolean;
@@ -48,16 +50,43 @@ export default function UpiPaymentModal({
   const isLight = theme.palette.mode === 'light';
   const [copied, setCopied] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [generating, setGenerating] = useState(true);
 
   // Standard UPI URI format: upi://pay?pa=VPA&pn=NAME&am=AMOUNT&cu=INR&tn=FairShare
   const upiUri = `upi://pay?pa=${encodeURIComponent(payeeUpiId)}&pn=${encodeURIComponent(
     payeeName
   )}&am=${amount.toFixed(2)}&cu=${currency}&tn=${encodeURIComponent('FairShare Settlement')}`;
 
-  // Encoded URL for instant SVG QR code via lightweight SVG service
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-    upiUri
-  )}&bgcolor=${isLight ? 'ffffff' : '121316'}&color=${isLight ? '0e6245' : '10b981'}&margin=10`;
+  useEffect(() => {
+    if (!open || !upiUri) return;
+    let isMounted = true;
+    setGenerating(true);
+
+    QRCode.toDataURL(upiUri, {
+      width: 360,
+      margin: 2,
+      color: {
+        dark: isLight ? '#0F172A' : '#34D399',
+        light: isLight ? '#FFFFFF' : '#141821',
+      },
+      errorCorrectionLevel: 'M',
+    })
+      .then((url) => {
+        if (isMounted) {
+          setQrCodeUrl(url);
+          setGenerating(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to generate UPI QR:', err);
+        if (isMounted) setGenerating(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open, upiUri, isLight]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(payeeUpiId);
@@ -153,14 +182,30 @@ export default function UpiPaymentModal({
             boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={qrCodeUrl}
-            alt="UPI QR Code"
-            width={180}
-            height={180}
-            style={{ borderRadius: 10, display: 'block' }}
-          />
+          {generating || !qrCodeUrl ? (
+            <Box
+              sx={{
+                width: 180,
+                height: 180,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 2.5,
+                bgcolor: isLight ? '#f1f5f9' : '#141821',
+              }}
+            >
+              <CircularProgress size={32} sx={{ color: '#10B981' }} />
+            </Box>
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={qrCodeUrl}
+              alt="UPI QR Code"
+              width={180}
+              height={180}
+              style={{ borderRadius: 10, display: 'block' }}
+            />
+          )}
           <Chip
             icon={<Shield sx={{ '&&': { color: '#10B981', fontSize: 14 } }} />}
             label="Verified UPI"

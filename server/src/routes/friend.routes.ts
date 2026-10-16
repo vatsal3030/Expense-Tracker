@@ -3,6 +3,7 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import appCache from '../lib/cache';
 
 export const friendRouter = Router();
 friendRouter.use(authenticate);
@@ -113,6 +114,9 @@ friendRouter.post(
         },
       });
 
+      appCache.invalidatePrefix(`friends:${userId}`);
+      appCache.invalidatePrefix(`friends:${targetFriendId}`);
+
       res.status(201).json({ success: true, data: friendship });
     } catch (error: any) {
       console.error('Friend request error:', error);
@@ -125,6 +129,12 @@ friendRouter.post(
 friendRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
+    const cacheKey = `friends:list:${userId}`;
+    const cached = appCache.get(cacheKey);
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
 
     const friendships = await prisma.friendship.findMany({
       where: {
@@ -146,6 +156,7 @@ friendRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<
       since: f.updatedAt,
     }));
 
+    appCache.set(cacheKey, friends, 20000);
     res.json({ success: true, data: friends });
   } catch (error: any) {
     console.error('Get friends error:', error);
@@ -211,6 +222,11 @@ friendRouter.patch('/:id/accept', async (req: AuthenticatedRequest, res: Respons
       },
     });
 
+    appCache.invalidatePrefix(`friends:${req.user!.id}`);
+    appCache.invalidatePrefix(`friends:${friendship.userId}`);
+    appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+    appCache.invalidatePrefix(`dashboard:${friendship.userId}`);
+
     res.json({ success: true, data: updated });
   } catch (error: any) {
     console.error('Accept friend error:', error);
@@ -238,6 +254,14 @@ friendRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): Pr
     }
 
     await prisma.friendship.delete({ where: { id } });
+
+    appCache.invalidatePrefix(`friends:${req.user!.id}`);
+    appCache.invalidatePrefix(`friends:${friendship.userId}`);
+    appCache.invalidatePrefix(`friends:${friendship.friendId}`);
+    appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+    appCache.invalidatePrefix(`dashboard:${friendship.userId}`);
+    appCache.invalidatePrefix(`dashboard:${friendship.friendId}`);
+
     res.json({ success: true, message: 'Friend removed.' });
   } catch (error: any) {
     console.error('Remove friend error:', error);

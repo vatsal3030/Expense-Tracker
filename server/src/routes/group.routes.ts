@@ -4,6 +4,7 @@ import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import bcrypt from 'bcryptjs';
+import appCache from '../lib/cache';
 
 export const groupRouter = Router();
 groupRouter.use(authenticate);
@@ -82,6 +83,14 @@ groupRouter.post(
         },
       });
 
+      // Invalidate relevant user caches
+      appCache.invalidatePrefix(`groups:list:${req.user!.id}`);
+      appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+      for (const mId of memberIds || []) {
+        appCache.invalidatePrefix(`groups:list:${mId}`);
+        appCache.invalidatePrefix(`dashboard:${mId}`);
+      }
+
       const meta = parseGroupMeta(group.description);
       res.status(201).json({
         success: true,
@@ -102,6 +111,13 @@ groupRouter.post(
 // GET /api/groups — Get all groups for current user
 groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    const cacheKey = `groups:list:${req.user!.id}`;
+    const cached = appCache.get(cacheKey);
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
+
     const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
     const groups = await prisma.group.findMany({
       where: {
@@ -129,6 +145,7 @@ groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<v
       };
     });
 
+    appCache.set(cacheKey, mapped, 20000);
     res.json({ success: true, data: mapped });
   } catch (error: any) {
     console.error('Get groups error:', error);
@@ -342,6 +359,9 @@ groupRouter.post('/:id/join', async (req: AuthenticatedRequest, res: Response): 
       },
     });
 
+    appCache.invalidatePrefix(`groups:list:${userId}`);
+    appCache.invalidatePrefix(`dashboard:${userId}`);
+
     res.json({
       success: true,
       data: {
@@ -486,6 +506,9 @@ groupRouter.delete('/:id/members/:userId', async (req: AuthenticatedRequest, res
     await prisma.groupMember.delete({
       where: { groupId_userId: { groupId: id, userId } },
     });
+
+    appCache.invalidatePrefix(`groups:list:${userId}`);
+    appCache.invalidatePrefix(`dashboard:${userId}`);
 
     res.json({ success: true, message: 'Member removed successfully.' });
   } catch (error: any) {

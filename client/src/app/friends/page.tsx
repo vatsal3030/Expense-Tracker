@@ -55,12 +55,30 @@ export default function FriendsPage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
 
+  // Invite connection prompt from QR code or shared link
+  const [inviteTargetUser, setInviteTargetUser] = useState<any>(null);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const hasCheckedInviteRef = useRef(false);
+
   const hasLoadedFriendsRef = useRef(false);
   const isFetchingFriendsRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) router.push('/auth/login');
+    if (!authLoading && !user) {
+      if (typeof window !== 'undefined') {
+        const p = new URLSearchParams(window.location.search);
+        const inv = p.get('invite') || p.get('ref');
+        if (inv) {
+          try {
+            localStorage.setItem('fairshare_pending_invite', inv);
+          } catch {}
+          router.push(`/auth/signup?ref=${inv}`);
+          return;
+        }
+      }
+      router.push('/auth/login');
+    }
   }, [user?.id, authLoading, router]);
 
   useEffect(() => {
@@ -68,6 +86,46 @@ export default function FriendsPage() {
       fetchData();
     }
   }, [user?.id]);
+
+  // Handle incoming invite from QR scan or share link (?invite=... or localStorage)
+  useEffect(() => {
+    if (authLoading || !user?.id || hasCheckedInviteRef.current) return;
+
+    let targetId: string | null = null;
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      targetId = params.get('invite') || params.get('ref');
+      if (!targetId) {
+        try {
+          targetId = localStorage.getItem('fairshare_pending_invite');
+        } catch {}
+      }
+    }
+
+    if (targetId) {
+      hasCheckedInviteRef.current = true;
+      try {
+        localStorage.removeItem('fairshare_pending_invite');
+      } catch {}
+
+      if (targetId === user.id) {
+        setToastSeverity('info');
+        setToastMessage('This is your personal invite QR & link! Share this with your friends to connect.');
+        return;
+      }
+
+      userApi.getPublicProfile(targetId)
+        .then((res) => {
+          if (res.data?.data) {
+            setInviteTargetUser(res.data.data);
+            setInviteModalOpen(true);
+          }
+        })
+        .catch((err) => {
+          console.warn('Unable to load friend invite details:', err);
+        });
+    }
+  }, [user?.id, authLoading]);
 
   const fetchData = async () => {
     if (isFetchingFriendsRef.current) return;
@@ -111,7 +169,8 @@ export default function FriendsPage() {
     searchTimeoutRef.current = setTimeout(async () => {
       try {
         const res = await userApi.search(query);
-        setSearchResults(res.data?.data || []);
+        const list = (res.data?.data || []).filter((u: any) => u.id !== user?.id);
+        setSearchResults(list);
         setHasSearched(true);
       } catch (error) {
         console.error('Search error:', error);
@@ -125,7 +184,7 @@ export default function FriendsPage() {
     return () => {
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     };
-  }, [searchQuery, searchOpen]);
+  }, [searchQuery, searchOpen, user?.id]);
 
   const handleManualSearch = async () => {
     const query = searchQuery.trim();
@@ -133,7 +192,8 @@ export default function FriendsPage() {
     setSearching(true);
     try {
       const res = await userApi.search(query);
-      setSearchResults(res.data?.data || []);
+      const list = (res.data?.data || []).filter((u: any) => u.id !== user?.id);
+      setSearchResults(list);
       setHasSearched(true);
     } catch (error) {
       console.error('Manual search error:', error);
@@ -145,6 +205,11 @@ export default function FriendsPage() {
   };
 
   const handleSendRequest = async (friendId: string) => {
+    if (friendId === user?.id) {
+      setToastSeverity('warning');
+      setToastMessage('You cannot add yourself as a friend.');
+      return;
+    }
     try {
       await friendApi.request(friendId);
       setSearchResults((prev) =>
@@ -161,6 +226,19 @@ export default function FriendsPage() {
 
   const handleDirectInvite = async () => {
     const query = searchQuery.trim();
+    const userEmail = (user?.email || '').toLowerCase().trim();
+    const userPhone = (profile?.phone || '').replace(/\D/g, '');
+    const cleanQueryPhone = query.replace(/\D/g, '');
+
+    if (
+      (userEmail && query.toLowerCase() === userEmail) ||
+      (userPhone && cleanQueryPhone && userPhone === cleanQueryPhone)
+    ) {
+      setToastSeverity('warning');
+      setToastMessage('You cannot send a friend invitation to yourself!');
+      return;
+    }
+
     if (query.includes('@')) {
       try {
         await friendApi.request({ email: query });
@@ -248,8 +326,8 @@ export default function FriendsPage() {
   };
 
   const personalInviteLink = typeof window !== 'undefined'
-    ? `${window.location.origin}/auth/signup?ref=${user?.id || ''}`
-    : 'https://fairshare.app/auth/signup';
+    ? `${window.location.origin}/friends?invite=${user?.id || ''}`
+    : 'https://fairshare.app/friends';
 
   const handleCopyInvite = () => {
     if (navigator?.clipboard) {
@@ -1541,6 +1619,88 @@ export default function FriendsPage() {
             >
               Confirm Remove
             </Button>
+          </Box>
+        </Dialog>
+
+        {/* Friend Invite Confirmation Dialog (from QR code or Share Link) */}
+        <Dialog
+          open={inviteModalOpen && Boolean(inviteTargetUser)}
+          onClose={() => setInviteModalOpen(false)}
+          maxWidth="xs"
+          fullWidth
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: { xs: 3, sm: 4 },
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+                p: { xs: 2.5, sm: 3 },
+                m: 2,
+              },
+            },
+          }}
+        >
+          <Box sx={{ textAlign: 'center' }}>
+            <Avatar
+              src={inviteTargetUser?.avatarUrl || undefined}
+              sx={{
+                width: 72,
+                height: 72,
+                mx: 'auto',
+                mb: 2,
+                bgcolor: 'rgba(16, 185, 129, 0.2)',
+                color: '#34D399',
+                fontSize: '1.75rem',
+                fontWeight: 700,
+                border: '2px solid rgba(52, 211, 153, 0.4)',
+              }}
+            >
+              {inviteTargetUser?.name?.charAt(0) || 'F'}
+            </Avatar>
+            <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', mb: 0.5 }}>
+              Connect with {inviteTargetUser?.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              You were invited to connect on FairShare. Add them as a friend to easily split bills and track shared expenses together.
+            </Typography>
+
+            <Stack spacing={1.5}>
+              <Button
+                variant="contained"
+                fullWidth
+                className="glass-emerald-active"
+                startIcon={<PersonAdd />}
+                onClick={async () => {
+                  if (inviteTargetUser?.id) {
+                    await handleSendRequest(inviteTargetUser.id);
+                    setInviteModalOpen(false);
+                  }
+                }}
+                sx={{
+                  borderRadius: 2.5,
+                  py: 1.25,
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  textTransform: 'none',
+                }}
+              >
+                Send Friend Request
+              </Button>
+              <Button
+                variant="text"
+                fullWidth
+                onClick={() => setInviteModalOpen(false)}
+                sx={{
+                  borderRadius: 2.5,
+                  color: 'text.secondary',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
+              >
+                Maybe Later
+              </Button>
+            </Stack>
           </Box>
         </Dialog>
 

@@ -331,7 +331,9 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
       {/* Settings & Bottom Items */}
       <Box sx={{ p: collapsed && !isMobile ? 1 : 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
         <List disablePadding>
-          {bottomNavItems.map((item) => {
+          {bottomNavItems
+            .filter((item) => item.path !== '/admin' || (profile as any)?.isAdmin)
+            .map((item) => {
             const active = isActive(item.path);
             return (
               <ListItemButton

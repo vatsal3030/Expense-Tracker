@@ -4,6 +4,7 @@ import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { Prisma } from '@prisma/client';
+import appCache from '../lib/cache';
 
 export const settlementRouter = Router();
 settlementRouter.use(authenticate);
@@ -65,6 +66,9 @@ settlementRouter.post(
           message: `recorded a payment of ₹${amount.toFixed(2)} to ${settlement.payee.name}`,
         },
       });
+
+      appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+      appCache.invalidatePrefix(`dashboard:${payeeId}`);
 
       res.status(201).json({ success: true, data: settlement });
     } catch (error: any) {
@@ -283,6 +287,9 @@ settlementRouter.patch('/:id/confirm', async (req: AuthenticatedRequest, res: Re
         message: `confirmed settlement of ₹${Number(settlement.amount).toFixed(2)} from ${updated.payer.name}`,
       },
     });
+
+    appCache.invalidatePrefix(`dashboard:${settlement.payerId}`);
+    appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
 
     res.json({ success: true, data: updated });
   } catch (error: any) {

@@ -31,10 +31,17 @@ userRouter.get('/profile', async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
+    const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'rajkotgamer74@gmail.com,vatsalvadgama30@gmail.com,admin@fairshare.com')
+      .split(',')
+      .map((e) => e.trim().toLowerCase());
+
+    const isAdmin = Boolean(user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
+
     res.json({
       success: true,
       data: {
         ...user,
+        isAdmin,
         totalFriends: user._count.friendsInitiated + user._count.friendsReceived,
         totalGroups: user._count.groupMembers,
         totalExpenses: user._count.expensesPaid,

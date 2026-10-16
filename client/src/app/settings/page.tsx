@@ -22,6 +22,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
 import { userApi, expenseApi, groupApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import QRCode from 'qrcode';
 
 const PRESET_AVATARS = [
   { name: 'Shadow Ninja', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=ShadowNinja&backgroundColor=b6e3f4' },
@@ -88,6 +89,8 @@ export default function SettingsPage() {
 
   // UPI Preview Modal
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [generatingQr, setGeneratingQr] = useState<boolean>(true);
 
   // Export Data State
   const [exporting, setExporting] = useState(false);
@@ -274,15 +277,42 @@ export default function SettingsPage() {
 
   if (authLoading) return null;
 
-  // Encoded URL for instant SVG QR code via lightweight SVG service
+  // Standard UPI URI format
   const sampleUpiUri = `upi://pay?pa=${encodeURIComponent(
     preferences.upiId || 'fairshare@okhdfcbank'
   )}&pn=${encodeURIComponent(form.name || 'User')}&cu=${form.defaultCurrency}&tn=${encodeURIComponent(
     'FairShare Settlement'
   )}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-    sampleUpiUri
-  )}&bgcolor=${isLight ? 'ffffff' : '121316'}&color=${isLight ? '0e6245' : '10b981'}&margin=10`;
+
+  useEffect(() => {
+    if (!sampleUpiUri) return;
+    let isMounted = true;
+    setGeneratingQr(true);
+
+    QRCode.toDataURL(sampleUpiUri, {
+      width: 440,
+      margin: 2,
+      color: {
+        dark: isLight ? '#0F172A' : '#34D399',
+        light: isLight ? '#FFFFFF' : '#141821',
+      },
+      errorCorrectionLevel: 'M',
+    })
+      .then((url) => {
+        if (isMounted) {
+          setQrCodeUrl(url);
+          setGeneratingQr(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to generate local QR:', err);
+        if (isMounted) setGeneratingQr(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sampleUpiUri, isLight]);
 
   return (
     <AppLayout>
@@ -1554,11 +1584,27 @@ export default function SettingsPage() {
                 mb: 2,
               }}
             >
-              <img
-                src={qrCodeUrl}
-                alt="UPI QR Code"
-                style={{ width: 200, height: 200, display: 'block', borderRadius: 12 }}
-              />
+              {generatingQr || !qrCodeUrl ? (
+                <Box
+                  sx={{
+                    width: 200,
+                    height: 200,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 3,
+                    bgcolor: isLight ? '#f1f5f9' : '#141821',
+                  }}
+                >
+                  <CircularProgress size={36} sx={{ color: '#10B981' }} />
+                </Box>
+              ) : (
+                <img
+                  src={qrCodeUrl}
+                  alt="UPI QR Code"
+                  style={{ width: 200, height: 200, display: 'block', borderRadius: 12 }}
+                />
+              )}
             </Box>
 
             <Box
