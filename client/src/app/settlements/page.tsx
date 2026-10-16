@@ -290,7 +290,8 @@ export default function SettlementsPage() {
             mb: 3,
             borderRadius: 3,
             p: 0.5,
-            display: 'flex',
+            display: { xs: 'flex', sm: 'inline-flex' },
+            width: { xs: '100%', sm: 'auto' },
             maxWidth: '100%',
             overflowX: 'auto',
           }}

@@ -3,14 +3,16 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, Avatar, List, ListItem,
-  ListItemAvatar, ListItemText, ListItemSecondaryAction, Divider,
-  Skeleton, useTheme, alpha, IconButton, Chip, TextField, Dialog,
-  DialogTitle, DialogContent, DialogActions, Stack, Tabs, Tab, Badge,
-  InputAdornment, Tooltip, Snackbar, Alert, Grid,
+  ListItemAvatar, ListItemText, Divider, Skeleton, useTheme, alpha,
+  IconButton, Chip, TextField, Dialog, DialogTitle, DialogContent,
+  DialogActions, Stack, Tabs, Tab, Badge, InputAdornment, Tooltip,
+  Snackbar, Alert, Grid, CircularProgress,
 } from '@mui/material';
 import {
   PersonAdd, Check, Close, People, Search, Delete,
   ContentCopy, WhatsApp, ReceiptLong, Share, ArrowForward, QrCode2,
+  Visibility, HourglassEmpty, CheckCircle, WarningAmber, Group as GroupIcon,
+  Shield, CurrencyRupee,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -26,6 +28,7 @@ export default function FriendsPage() {
 
   const [friends, setFriends] = useState<any[]>([]);
   const [pending, setPending] = useState<any[]>([]);
+  const [sentRequests, setSentRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState(0);
   const [searchFilter, setSearchFilter] = useState('');
@@ -35,13 +38,25 @@ export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // Friend Profile Dialog State (safe, non-confidential view)
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [selectedFriendProfile, setSelectedFriendProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  // Remove friend confirmation dialog
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [friendToRemove, setFriendToRemove] = useState<{ id: string; name: string } | null>(null);
 
   // Toast message
   const [toastMessage, setToastMessage] = useState('');
+  const [toastSeverity, setToastSeverity] = useState<'success' | 'info' | 'warning' | 'error'>('success');
   const [copiedLink, setCopiedLink] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
 
   const hasLoadedFriendsRef = useRef(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
@@ -56,12 +71,14 @@ export default function FriendsPage() {
       if (!hasLoadedFriendsRef.current) {
         setLoading(true);
       }
-      const [friendsRes, pendingRes] = await Promise.all([
+      const [friendsRes, pendingRes, sentRes] = await Promise.all([
         friendApi.list(),
         friendApi.pending(),
+        friendApi.sent ? friendApi.sent().catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
       ]);
       setFriends(friendsRes.data?.data || []);
       setPending(pendingRes.data?.data || []);
+      setSentRequests(sentRes.data?.data || []);
       hasLoadedFriendsRef.current = true;
     } catch (error) {
       console.error('Fetch friends error:', error);
@@ -70,14 +87,52 @@ export default function FriendsPage() {
     }
   };
 
-  const handleSearch = async () => {
-    if (searchQuery.length < 2) return;
+  // Debounced auto-search as the user types
+  useEffect(() => {
+    if (!searchOpen) return;
+    const query = searchQuery.trim();
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    if (query.length < 2) {
+      setSearchResults([]);
+      setHasSearched(false);
+      setSearching(false);
+      return;
+    }
+
+    setSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const res = await userApi.search(query);
+        setSearchResults(res.data?.data || []);
+        setHasSearched(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+        setHasSearched(true);
+      } finally {
+        setSearching(false);
+      }
+    }, 350);
+
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [searchQuery, searchOpen]);
+
+  const handleManualSearch = async () => {
+    const query = searchQuery.trim();
+    if (query.length < 2) return;
     setSearching(true);
     try {
-      const res = await userApi.search(searchQuery);
+      const res = await userApi.search(query);
       setSearchResults(res.data?.data || []);
+      setHasSearched(true);
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('Manual search error:', error);
+      setSearchResults([]);
+      setHasSearched(true);
     } finally {
       setSearching(false);
     }
@@ -86,56 +141,103 @@ export default function FriendsPage() {
   const handleSendRequest = async (friendId: string) => {
     try {
       await friendApi.request(friendId);
-      setSearchResults((prev) => prev.filter((u) => u.id !== friendId));
-      setToastMessage('Friend request sent!');
+      setSearchResults((prev) =>
+        prev.map((u) => (u.id === friendId ? { ...u, friendshipStatus: 'REQUEST_SENT' } : u))
+      );
+      setToastSeverity('success');
+      setToastMessage('Friend request sent! Awaiting their acceptance.');
+      fetchData();
     } catch (error: any) {
-      setToastMessage(error.response?.data?.error || 'Failed to send request.');
+      setToastSeverity('error');
+      setToastMessage(error.response?.data?.error || 'Failed to send friend request.');
     }
   };
 
   const handleDirectInvite = async () => {
-    if (searchQuery.includes('@')) {
+    const query = searchQuery.trim();
+    if (query.includes('@')) {
       try {
-        await friendApi.request({ email: searchQuery.trim() });
-        setToastMessage(`Friend invitation sent to ${searchQuery}!`);
+        await friendApi.request({ email: query });
+        setToastSeverity('success');
+        setToastMessage(`Friend invitation sent to ${query}!`);
         setSearchQuery('');
         setSearchOpen(false);
         fetchData();
       } catch (err: any) {
+        setToastSeverity('error');
         setToastMessage(err.response?.data?.error || 'Failed to send invite.');
       }
-    } else if (/^\+?[0-9]{7,15}$/.test(searchQuery.replace(/[\s-]/g, ''))) {
+    } else if (/^\+?[0-9]{7,15}$/.test(query.replace(/[\s-]/g, ''))) {
       try {
-        await friendApi.request({ phone: searchQuery.trim() });
-        setToastMessage(`Friend invitation sent to ${searchQuery}!`);
+        await friendApi.request({ phone: query });
+        setToastSeverity('success');
+        setToastMessage(`Friend invitation sent to ${query}!`);
         setSearchQuery('');
         setSearchOpen(false);
         fetchData();
       } catch (err: any) {
+        setToastSeverity('error');
         setToastMessage(err.response?.data?.error || 'Failed to send invite.');
       }
     } else {
-      handleSearch();
+      handleManualSearch();
     }
   };
 
   const handleAccept = async (id: string) => {
     try {
       await friendApi.accept(id);
-      setToastMessage('Friend request accepted!');
+      setToastSeverity('success');
+      setToastMessage('Friend request accepted! You are now mutual friends.');
       fetchData();
     } catch (error) {
       console.error('Accept error:', error);
+      setToastSeverity('error');
+      setToastMessage('Failed to accept friend request.');
     }
   };
 
-  const handleRemove = async (id: string) => {
+  const handleCancelOrDecline = async (id: string, isSent = false) => {
     try {
       await friendApi.remove(id);
-      setToastMessage('Friend removed.');
+      setToastSeverity('info');
+      setToastMessage(isSent ? 'Friend request cancelled.' : 'Friend request declined.');
       fetchData();
     } catch (error) {
-      console.error('Remove error:', error);
+      console.error('Cancel request error:', error);
+      setToastSeverity('error');
+      setToastMessage('Failed to cancel request.');
+    }
+  };
+
+  const confirmRemoveFriend = async () => {
+    if (!friendToRemove) return;
+    try {
+      await friendApi.remove(friendToRemove.id);
+      setToastSeverity('info');
+      setToastMessage(`Removed ${friendToRemove.name} from friends.`);
+      setRemoveDialogOpen(false);
+      setFriendToRemove(null);
+      if (profileModalOpen) setProfileModalOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error('Remove friend error:', error);
+      setToastSeverity('error');
+      setToastMessage('Failed to remove friend.');
+    }
+  };
+
+  const openFriendProfile = async (friendUserId: string) => {
+    setProfileModalOpen(true);
+    setProfileLoading(true);
+    try {
+      const res = await userApi.getPublicProfile(friendUserId);
+      setSelectedFriendProfile(res.data?.data || null);
+    } catch (error) {
+      console.error('Failed to load friend profile:', error);
+      setSelectedFriendProfile(null);
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -147,6 +249,7 @@ export default function FriendsPage() {
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(personalInviteLink);
       setCopiedLink(true);
+      setToastSeverity('success');
       setToastMessage('Personal invite link copied to clipboard!');
       setTimeout(() => setCopiedLink(false), 2500);
     }
@@ -171,7 +274,7 @@ export default function FriendsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
+      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 }, width: '100%', maxWidth: '100%', minWidth: 0 }}>
         {/* Header Row */}
         <Box
           sx={{
@@ -188,7 +291,7 @@ export default function FriendsPage() {
               Friends & Connections
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, letterSpacing: '-0.01em', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-              Manage your personal contacts for direct 1-on-1 expenses and group splits
+              Mutual friendship connections for direct 1-on-1 expenses and group splits
             </Typography>
           </Box>
 
@@ -219,7 +322,12 @@ export default function FriendsPage() {
               variant="contained"
               className="glass-emerald-active"
               startIcon={<PersonAdd />}
-              onClick={() => setSearchOpen(true)}
+              onClick={() => {
+                setSearchOpen(true);
+                setSearchQuery('');
+                setSearchResults([]);
+                setHasSearched(false);
+              }}
               sx={{
                 flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
@@ -249,22 +357,17 @@ export default function FriendsPage() {
           <Grid container spacing={2.5} sx={{ alignItems: 'center' }}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  className="glass-tertiary"
+                <Avatar
                   sx={{
-                    width: 46,
-                    height: 46,
-                    borderRadius: 3,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    color: '#10B981',
-                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    width: 48,
+                    height: 48,
+                    bgcolor: 'rgba(16, 185, 129, 0.18)',
+                    color: '#34D399',
+                    border: '1px solid rgba(52, 211, 153, 0.35)',
                   }}
                 >
-                  <Share fontSize="small" />
-                </Box>
+                  <Share />
+                </Avatar>
                 <Box>
                   <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary', letterSpacing: '-0.01em' }}>
                     Invite Friends to FairShare
@@ -349,20 +452,24 @@ export default function FriendsPage() {
           </Grid>
         </Card>
 
-        {/* Segmented Liquid Glass Tabs */}
+        {/* Segmented Liquid Glass Tabs (Proper fitting capsule width) */}
         <Box sx={{ mb: 3 }}>
           <Box
-            className="glass-tertiary"
+            className="glass-control-surface"
             sx={{
-              display: 'inline-flex',
+              display: { xs: 'flex', sm: 'inline-flex' },
               p: 0.5,
               borderRadius: 3,
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              width: { xs: '100%', sm: 'auto' },
+              maxWidth: '100%',
+              overflowX: 'auto',
             }}
           >
             <Tabs
               value={tab}
               onChange={(_, v) => setTab(v)}
+              variant="scrollable"
+              scrollButtons="auto"
               sx={{
                 minHeight: 40,
                 '& .MuiTabs-indicator': {
@@ -396,8 +503,28 @@ export default function FriendsPage() {
                     color="error"
                     sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', height: 18, minWidth: 18 } }}
                   >
-                    <Box sx={{ pr: pending.length > 0 ? 1.5 : 0 }}>Pending Requests</Box>
+                    <Box sx={{ pr: pending.length > 0 ? 1.5 : 0 }}>Received ({pending.length})</Box>
                   </Badge>
+                }
+              />
+              <Tab
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>Sent Requests</span>
+                    {sentRequests.length > 0 && (
+                      <Chip
+                        label={sentRequests.length}
+                        size="small"
+                        sx={{
+                          height: 20,
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          bgcolor: 'rgba(245, 158, 11, 0.2)',
+                          color: '#F59E0B',
+                        }}
+                      />
+                    )}
+                  </Box>
                 }
               />
             </Tabs>
@@ -458,27 +585,35 @@ export default function FriendsPage() {
                   <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
                     <People sx={{ fontSize: 56, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
                     <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', mb: 0.5 }}>
-                      {searchFilter ? 'No friends match your search' : 'No friends yet'}
+                      {searchFilter ? 'No matching friends found' : 'No friends added yet'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 420, mx: 'auto', mb: 3 }}>
                       {searchFilter
-                        ? 'Try typing another name or clearing the filter.'
-                        : 'Connect with friends to start splitting expenses directly.'}
+                        ? 'Try searching with a different name or email'
+                        : 'Connect with friends to start splitting expenses directly, settle up balances, and share group trips.'}
                     </Typography>
-                    <Button
-                      variant="contained"
-                      className="glass-emerald-active"
-                      startIcon={<PersonAdd />}
-                      onClick={() => setSearchOpen(true)}
-                      sx={{
-                        color: '#FFFFFF',
-                        borderRadius: 2.5,
-                        fontWeight: 600,
-                        textTransform: 'none',
-                      }}
-                    >
-                      Find Friends
-                    </Button>
+                    {!searchFilter && (
+                      <Button
+                        variant="contained"
+                        className="glass-emerald-active"
+                        startIcon={<PersonAdd />}
+                        onClick={() => {
+                          setSearchOpen(true);
+                          setSearchQuery('');
+                          setSearchResults([]);
+                          setHasSearched(false);
+                        }}
+                        sx={{
+                          borderRadius: 2.5,
+                          fontWeight: 700,
+                          color: '#FFFFFF',
+                          textTransform: 'none',
+                          px: 3,
+                        }}
+                      >
+                        Add Your First Friend
+                      </Button>
+                    )}
                   </Box>
                 ) : (
                   <List disablePadding>
@@ -486,43 +621,79 @@ export default function FriendsPage() {
                       <React.Fragment key={f.friendshipId || i}>
                         <ListItem
                           sx={{
-                            px: 3,
+                            px: { xs: 2, sm: 3 },
                             py: 2,
                             display: 'flex',
-                            alignItems: 'center',
-                            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                            '&:hover': {
-                              bgcolor: 'rgba(255, 255, 255, 0.04)',
-                            },
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            alignItems: { xs: 'flex-start', sm: 'center' },
+                            gap: { xs: 1.5, sm: 2 },
                           }}
                         >
-                          <ListItemAvatar>
-                            <Avatar
-                              src={f.friend?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(f.friend?.name || f.friend?.email || 'friend')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0, width: '100%' }}>
+                            <ListItemAvatar sx={{ minWidth: 'auto' }}>
+                              <Avatar
+                                src={f.friend?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(f.friend?.name || f.friend?.email || 'friend')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
+                                sx={{
+                                  width: 44,
+                                  height: 44,
+                                  bgcolor: 'rgba(16, 185, 129, 0.2)',
+                                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                                  fontSize: '0.95rem',
+                                  fontWeight: 700,
+                                  color: '#34D399',
+                                }}
+                              >
+                                {f.friend?.name?.charAt(0) || '?'}
+                              </Avatar>
+                            </ListItemAvatar>
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {f.friend?.name}
+                                </Typography>
+                                <Chip
+                                  label="Mutual"
+                                  size="small"
+                                  sx={{
+                                    height: 18,
+                                    fontSize: '0.65rem',
+                                    fontWeight: 700,
+                                    bgcolor: 'rgba(16, 185, 129, 0.15)',
+                                    color: '#34D399',
+                                    border: '1px solid rgba(52, 211, 153, 0.3)',
+                                  }}
+                                />
+                              </Box>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {f.friend?.email || 'Verified mutual contact'}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          {/* Action Buttons */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'flex-end', sm: 'flex-start' }, mt: { xs: 0.5, sm: 0 } }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              className="glass-tertiary"
+                              startIcon={<Visibility fontSize="small" />}
+                              onClick={() => openFriendProfile(f.friend?.id)}
                               sx={{
-                                width: 44,
-                                height: 44,
-                                bgcolor: 'rgba(16, 185, 129, 0.2)',
-                                border: '1px solid rgba(52, 211, 153, 0.3)',
-                                fontSize: '0.95rem',
-                                fontWeight: 700,
-                                color: '#34D399',
+                                borderRadius: 2,
+                                fontWeight: 600,
+                                fontSize: '0.775rem',
+                                textTransform: 'none',
+                                color: 'text.primary',
+                                border: '1px solid rgba(255, 255, 255, 0.12)',
+                                '&:hover': {
+                                  borderColor: 'rgba(59, 130, 246, 0.4)',
+                                  bgcolor: 'rgba(59, 130, 246, 0.08)',
+                                },
                               }}
                             >
-                              {f.friend?.name?.charAt(0) || '?'}
-                            </Avatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            disableTypography
-                            primary={
-                              <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary' }}>
-                                {f.friend?.name}
-                              </Typography>
-                            }
-                            secondary={f.friend?.email || f.friend?.phone || 'Verified friend'}
-                          />
+                              Profile
+                            </Button>
 
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                             <Button
                               size="small"
                               variant="outlined"
@@ -545,10 +716,13 @@ export default function FriendsPage() {
                               Split Bill
                             </Button>
 
-                            <Tooltip title="Remove Connection">
+                            <Tooltip title="Remove Friend">
                               <IconButton
                                 size="small"
-                                onClick={() => handleRemove(f.friendshipId)}
+                                onClick={() => {
+                                  setFriendToRemove({ id: f.friendshipId, name: f.friend?.name || 'Friend' });
+                                  setRemoveDialogOpen(true);
+                                }}
                                 sx={{
                                   color: 'text.secondary',
                                   transition: 'all 0.15s ease',
@@ -576,7 +750,7 @@ export default function FriendsPage() {
           </Box>
         )}
 
-        {/* TAB 1: PENDING REQUESTS */}
+        {/* TAB 1: RECEIVED PENDING REQUESTS */}
         {tab === 1 && (
           <Card
             className="glass-secondary glass-specular-top"
@@ -589,81 +763,92 @@ export default function FriendsPage() {
               {pending.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
                   <Typography variant="body1" fontWeight={600} color="text.secondary">
-                    No pending friend requests
+                    No received friend requests
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    When someone sends you a connection request, it will appear here.
+                    When someone sends you a connection request, you can approve or decline it here.
                   </Typography>
                 </Box>
               ) : (
                 <List disablePadding>
                   {pending.map((req, i) => (
                     <React.Fragment key={req.id || i}>
-                      <ListItem sx={{ px: 3, py: 2 }}>
-                        <ListItemAvatar>
-                          <Avatar
-                            src={req.user?.avatarUrl || undefined}
-                            sx={{
-                              width: 44,
-                              height: 44,
-                              bgcolor: 'rgba(59, 130, 246, 0.2)',
-                              border: '1px solid rgba(59, 130, 246, 0.4)',
-                              fontSize: '0.95rem',
-                              fontWeight: 700,
-                              color: '#60A5FA',
-                            }}
-                          >
-                            {req.user?.name?.charAt(0) || '?'}
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          disableTypography
-                          primary={
-                            <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary' }}>
+                      <ListItem
+                        sx={{
+                          px: { xs: 2, sm: 3 },
+                          py: 2,
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          alignItems: { xs: 'flex-start', sm: 'center' },
+                          gap: { xs: 1.5, sm: 2 },
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0, width: '100%' }}>
+                          <ListItemAvatar sx={{ minWidth: 'auto' }}>
+                            <Avatar
+                              src={req.user?.avatarUrl || undefined}
+                              sx={{
+                                width: 44,
+                                height: 44,
+                                bgcolor: 'rgba(59, 130, 246, 0.2)',
+                                border: '1px solid rgba(59, 130, 246, 0.4)',
+                                fontSize: '0.95rem',
+                                fontWeight: 700,
+                                color: '#60A5FA',
+                              }}
+                            >
+                              {req.user?.name?.charAt(0) || '?'}
+                            </Avatar>
+                          </ListItemAvatar>
+                          <Box sx={{ minWidth: 0, flex: 1 }}>
+                            <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {req.user?.name}
                             </Typography>
-                          }
-                          secondary={req.user?.email || 'Wants to connect with you'}
-                        />
-                        <ListItemSecondaryAction>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              className="glass-emerald-active"
-                              startIcon={<Check fontSize="small" />}
-                              onClick={() => handleAccept(req.id)}
-                              sx={{
-                                borderRadius: 2,
-                                fontWeight: 700,
-                                color: '#FFFFFF',
-                                textTransform: 'none',
-                              }}
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              className="glass-tertiary"
-                              onClick={() => handleRemove(req.id)}
-                              sx={{
-                                borderRadius: 2,
-                                fontWeight: 600,
-                                color: 'text.secondary',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                textTransform: 'none',
-                                '&:hover': {
-                                  color: '#EF4444',
-                                  borderColor: 'rgba(239, 68, 68, 0.4)',
-                                  bgcolor: 'rgba(239, 68, 68, 0.08)',
-                                },
-                              }}
-                            >
-                              Decline
-                            </Button>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {req.user?.email || 'Sent you an invite to become mutual friends'}
+                            </Typography>
                           </Box>
-                        </ListItemSecondaryAction>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'flex-end', sm: 'flex-start' } }}>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            className="glass-emerald-active"
+                            startIcon={<Check fontSize="small" />}
+                            onClick={() => handleAccept(req.id)}
+                            sx={{
+                              borderRadius: 2,
+                              fontWeight: 700,
+                              color: '#FFFFFF',
+                              textTransform: 'none',
+                              px: 2,
+                            }}
+                          >
+                            Accept
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            className="glass-tertiary"
+                            onClick={() => handleCancelOrDecline(req.id, false)}
+                            sx={{
+                              borderRadius: 2,
+                              fontWeight: 600,
+                              color: 'text.secondary',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              textTransform: 'none',
+                              px: 2,
+                              '&:hover': {
+                                color: '#EF4444',
+                                borderColor: 'rgba(239, 68, 68, 0.4)',
+                                bgcolor: 'rgba(239, 68, 68, 0.08)',
+                              },
+                            }}
+                          >
+                            Decline
+                          </Button>
+                        </Box>
                       </ListItem>
                       {i < pending.length - 1 && (
                         <Divider component="li" sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
@@ -676,13 +861,145 @@ export default function FriendsPage() {
           </Card>
         )}
 
-        {/* Search & Add Friend Dialog */}
+        {/* TAB 2: SENT REQUESTS (OUTGOING) */}
+        {tab === 2 && (
+          <Card
+            className="glass-secondary glass-specular-top"
+            sx={{
+              borderRadius: 3.5,
+              overflow: 'hidden',
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
+              {sentRequests.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
+                  <HourglassEmpty sx={{ fontSize: 56, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
+                  <Typography variant="body1" fontWeight={600} color="text.primary">
+                    No active outgoing requests
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, maxWidth: 380, mx: 'auto' }}>
+                    When you send a friend request, it stays in this tab until the recipient accepts your invitation.
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    className="glass-tertiary"
+                    startIcon={<PersonAdd />}
+                    onClick={() => {
+                      setSearchOpen(true);
+                      setSearchQuery('');
+                      setSearchResults([]);
+                      setHasSearched(false);
+                    }}
+                    sx={{
+                      mt: 2.5,
+                      borderRadius: 2.5,
+                      textTransform: 'none',
+                      fontWeight: 650,
+                      color: 'text.primary',
+                    }}
+                  >
+                    Send an Invite
+                  </Button>
+                </Box>
+              ) : (
+                <List disablePadding>
+                  {sentRequests.map((req, i) => (
+                    <React.Fragment key={req.id || i}>
+                      <ListItem
+                        sx={{
+                          px: { xs: 2, sm: 3 },
+                          py: 2,
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          alignItems: { xs: 'flex-start', sm: 'center' },
+                          gap: { xs: 1.5, sm: 2 },
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0, width: '100%' }}>
+                          <ListItemAvatar sx={{ minWidth: 'auto' }}>
+                            <Avatar
+                              src={req.friend?.avatarUrl || undefined}
+                              sx={{
+                                width: 44,
+                                height: 44,
+                                bgcolor: 'rgba(245, 158, 11, 0.15)',
+                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                fontSize: '0.95rem',
+                                fontWeight: 700,
+                                color: '#F59E0B',
+                              }}
+                            >
+                              {req.friend?.name?.charAt(0) || '?'}
+                            </Avatar>
+                          </ListItemAvatar>
+                          <Box sx={{ minWidth: 0, flex: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {req.friend?.name}
+                              </Typography>
+                              <Chip
+                                label="Awaiting Approval"
+                                size="small"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  bgcolor: 'rgba(245, 158, 11, 0.15)',
+                                  color: '#F59E0B',
+                                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                                }}
+                              />
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {req.friend?.email || 'Invited user'} • Sent {new Date(req.createdAt).toLocaleDateString()}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'flex-end', sm: 'flex-start' } }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            className="glass-tertiary"
+                            onClick={() => handleCancelOrDecline(req.id, true)}
+                            sx={{
+                              borderRadius: 2,
+                              fontWeight: 600,
+                              color: 'text.secondary',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              textTransform: 'none',
+                              fontSize: '0.775rem',
+                              px: 2,
+                              '&:hover': {
+                                color: '#EF4444',
+                                borderColor: 'rgba(239, 68, 68, 0.4)',
+                                bgcolor: 'rgba(239, 68, 68, 0.08)',
+                              },
+                            }}
+                          >
+                            Cancel Request
+                          </Button>
+                        </Box>
+                      </ListItem>
+                      {i < sentRequests.length - 1 && (
+                        <Divider component="li" sx={{ borderColor: 'rgba(255, 255, 255, 0.06)' }} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </List>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Search & Add Friend Dialog (With Realtime Debounced Search) */}
         <Dialog
           open={searchOpen}
           onClose={() => {
             setSearchOpen(false);
             setSearchResults([]);
             setSearchQuery('');
+            setHasSearched(false);
           }}
           maxWidth="sm"
           fullWidth
@@ -706,12 +1023,12 @@ export default function FriendsPage() {
               Add Friends
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' } }}>
-              Search by name, email, or phone number
+              Search across registered users by name, email, or phone number
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
-              {/* Direct Search / Invite Box */}
+              {/* Search Box */}
               <Box>
                 <Typography variant="body2" fontWeight={600} sx={{ mb: 1, color: 'text.secondary' }}>
                   Enter Name, Email, or Phone
@@ -720,7 +1037,8 @@ export default function FriendsPage() {
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="friend@gmail.com or +919876543210 or name"
+                    autoFocus
+                    placeholder="Search by name, email, or phone..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="glass-tertiary"
@@ -730,18 +1048,23 @@ export default function FriendsPage() {
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        if (searchQuery.includes('@') || /^\+?[0-9]{7,15}$/.test(searchQuery.replace(/[\s-]/g, ''))) {
-                          handleDirectInvite();
-                        } else {
-                          handleSearch();
-                        }
+                        handleDirectInvite();
                       }
+                    }}
+                    slotProps={{
+                      input: {
+                        endAdornment: searching ? (
+                          <InputAdornment position="end">
+                            <CircularProgress size={18} sx={{ color: '#34D399' }} />
+                          </InputAdornment>
+                        ) : null,
+                      },
                     }}
                   />
                   <Button
                     variant="contained"
                     onClick={handleDirectInvite}
-                    disabled={searching || searchQuery.length < 2}
+                    disabled={searching || searchQuery.trim().length < 2}
                     className="glass-emerald-active"
                     sx={{
                       borderRadius: 2.5,
@@ -756,73 +1079,151 @@ export default function FriendsPage() {
                 </Box>
               </Box>
 
+              {/* Informational tip on friendship model */}
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: 2.5,
+                  bgcolor: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                }}
+              >
+                <CheckCircle sx={{ color: '#60A5FA', fontSize: 20 }} />
+                <Typography variant="caption" sx={{ color: isLight ? '#1E40AF' : '#93C5FD', lineHeight: 1.4 }}>
+                  <strong>Mutual Confirmation:</strong> Once you send an invitation, the recipient will review and accept it before you become mutual friends.
+                </Typography>
+              </Box>
+
               {/* Search Results */}
               {searchResults.length > 0 && (
-                <List disablePadding>
-                  {searchResults.map((u) => (
-                    <ListItem
-                      key={u.id}
-                      className="glass-tertiary"
-                      sx={{
-                        px: 1.5,
-                        py: 1.5,
-                        mb: 1,
-                        borderRadius: 2.5,
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.04)' },
-                      }}
-                    >
-                      <ListItemAvatar>
-                        <Avatar
-                          src={u.avatarUrl || undefined}
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            bgcolor: 'rgba(16, 185, 129, 0.2)',
-                            color: '#34D399',
-                            border: '1px solid rgba(52, 211, 153, 0.3)',
-                          }}
-                        >
-                          {u.name?.charAt(0)}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={<Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>{u.name}</Typography>}
-                        secondary={<Typography variant="caption" sx={{ color: 'text.secondary' }}>{u.email}</Typography>}
-                      />
-                      <Button
-                        size="small"
-                        variant="outlined"
+                <Box>
+                  <Typography variant="caption" fontWeight={700} sx={{ color: 'text.secondary', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+                    Matching Users ({searchResults.length})
+                  </Typography>
+                  <List disablePadding>
+                    {searchResults.map((u) => (
+                      <ListItem
+                        key={u.id}
                         className="glass-tertiary"
-                        startIcon={<PersonAdd />}
-                        onClick={() => handleSendRequest(u.id)}
                         sx={{
-                          borderRadius: 2,
-                          fontWeight: 600,
-                          fontSize: '0.75rem',
-                          textTransform: 'none',
-                          color: 'text.primary',
-                          border: '1px solid rgba(255, 255, 255, 0.12)',
-                          '&:hover': {
-                            borderColor: 'rgba(16, 185, 129, 0.4)',
-                            bgcolor: 'rgba(16, 185, 129, 0.08)',
-                          },
+                          px: 1.5,
+                          py: 1.5,
+                          mb: 1,
+                          borderRadius: 2.5,
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5,
                         }}
                       >
-                        Add
-                      </Button>
-                    </ListItem>
-                  ))}
-                </List>
+                        <ListItemAvatar sx={{ minWidth: 'auto' }}>
+                          <Avatar
+                            src={u.avatarUrl || undefined}
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              bgcolor: 'rgba(16, 185, 129, 0.2)',
+                              color: '#34D399',
+                              border: '1px solid rgba(52, 211, 153, 0.3)',
+                            }}
+                          >
+                            {u.name?.charAt(0)}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {u.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {u.email}
+                          </Typography>
+                        </Box>
+
+                        {/* Status / Action */}
+                        {u.friendshipStatus === 'FRIENDS' ? (
+                          <Chip
+                            label="Connected"
+                            size="small"
+                            icon={<Check sx={{ fontSize: 14 }} />}
+                            sx={{
+                              height: 26,
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                              bgcolor: 'rgba(16, 185, 129, 0.15)',
+                              color: '#34D399',
+                            }}
+                          />
+                        ) : u.friendshipStatus === 'REQUEST_SENT' ? (
+                          <Chip
+                            label="Invite Sent"
+                            size="small"
+                            sx={{
+                              height: 26,
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                              bgcolor: 'rgba(245, 158, 11, 0.15)',
+                              color: '#F59E0B',
+                            }}
+                          />
+                        ) : u.friendshipStatus === 'REQUEST_RECEIVED' ? (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            className="glass-emerald-active"
+                            onClick={() => {
+                              handleAccept(u.friendshipId);
+                              setSearchOpen(false);
+                            }}
+                            sx={{
+                              borderRadius: 2,
+                              fontWeight: 700,
+                              fontSize: '0.75rem',
+                              textTransform: 'none',
+                              color: '#FFFFFF',
+                            }}
+                          >
+                            Accept
+                          </Button>
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            className="glass-tertiary"
+                            startIcon={<PersonAdd />}
+                            onClick={() => handleSendRequest(u.id)}
+                            sx={{
+                              borderRadius: 2,
+                              fontWeight: 650,
+                              fontSize: '0.75rem',
+                              textTransform: 'none',
+                              color: 'text.primary',
+                              border: '1px solid rgba(255, 255, 255, 0.14)',
+                              '&:hover': {
+                                borderColor: 'rgba(16, 185, 129, 0.4)',
+                                bgcolor: 'rgba(16, 185, 129, 0.08)',
+                              },
+                            }}
+                          >
+                            Add
+                          </Button>
+                        )}
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
               )}
 
-              {searchResults.length === 0 && searchQuery.length >= 2 && !searching && !searchQuery.includes('@') && (
-                <Box sx={{ textAlign: 'center', py: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
+              {/* Clean Empty State only after search completes */}
+              {hasSearched && searchResults.length === 0 && !searching && (
+                <Box sx={{ textAlign: 'center', py: 2.5, px: 2, bgcolor: 'rgba(255, 255, 255, 0.02)', borderRadius: 2.5 }}>
+                  <Typography variant="body2" fontWeight={600} color="text.primary">
                     No registered user matching "{searchQuery}".
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Tip: Enter their full email address or phone number to send an invitation.
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                    Enter their email address or phone number above and click "Invite" to send them a direct invitation.
                   </Typography>
                 </Box>
               )}
@@ -834,6 +1235,7 @@ export default function FriendsPage() {
                 setSearchOpen(false);
                 setSearchResults([]);
                 setSearchQuery('');
+                setHasSearched(false);
               }}
               className="glass-tertiary"
               sx={{
@@ -846,6 +1248,292 @@ export default function FriendsPage() {
               Close
             </Button>
           </DialogActions>
+        </Dialog>
+
+        {/* Friend Profile Modal (Safe, Non-Confidential Data) */}
+        <Dialog
+          open={profileModalOpen}
+          onClose={() => setProfileModalOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: { xs: 3, sm: 4 },
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65)',
+                p: { xs: 2.5, sm: 3 },
+                m: { xs: 1.5, sm: 3 },
+              },
+            },
+          }}
+        >
+          {profileLoading ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6, gap: 2 }}>
+              <CircularProgress size={36} sx={{ color: '#34D399' }} />
+              <Typography variant="body2" color="text.secondary">Loading friend profile...</Typography>
+            </Box>
+          ) : selectedFriendProfile ? (
+            <Box>
+              {/* Profile Header */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, mb: 3 }}>
+                <Avatar
+                  src={selectedFriendProfile.avatarUrl || undefined}
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    bgcolor: 'rgba(16, 185, 129, 0.2)',
+                    color: '#34D399',
+                    border: '2px solid rgba(52, 211, 153, 0.4)',
+                    fontSize: '1.4rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {selectedFriendProfile.name?.charAt(0) || '?'}
+                </Avatar>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="h5" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em' }}>
+                    {selectedFriendProfile.name}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                    <Chip
+                      label={`${selectedFriendProfile.fairScoreTier} Member`}
+                      size="small"
+                      sx={{
+                        height: 20,
+                        fontSize: '0.675rem',
+                        fontWeight: 700,
+                        bgcolor: 'rgba(16, 185, 129, 0.15)',
+                        color: '#34D399',
+                        border: '1px solid rgba(52, 211, 153, 0.3)',
+                      }}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      Member since {new Date(selectedFriendProfile.memberSince).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Net Balance Highlight */}
+              <Card
+                className="glass-tertiary"
+                sx={{
+                  p: 2,
+                  borderRadius: 2.5,
+                  mb: 2.5,
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+              >
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase' }}>
+                  Direct Balance Status
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 0.5 }}>
+                  <Typography
+                    variant="h6"
+                    fontWeight={800}
+                    sx={{
+                      color:
+                        selectedFriendProfile.netBalance > 0
+                          ? '#10B981'
+                          : selectedFriendProfile.netBalance < 0
+                          ? '#EF4444'
+                          : 'text.secondary',
+                    }}
+                  >
+                    {selectedFriendProfile.netBalance > 0
+                      ? `Owes you ₹${selectedFriendProfile.netBalance.toFixed(2)}`
+                      : selectedFriendProfile.netBalance < 0
+                      ? `You owe ₹${Math.abs(selectedFriendProfile.netBalance).toFixed(2)}`
+                      : 'Settled Up (₹0.00)'}
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    className="glass-tertiary"
+                    onClick={() => {
+                      setProfileModalOpen(false);
+                      router.push('/settlements');
+                    }}
+                    sx={{
+                      borderRadius: 2,
+                      fontSize: '0.75rem',
+                      fontWeight: 650,
+                      textTransform: 'none',
+                      color: 'text.primary',
+                    }}
+                  >
+                    Settlement Center
+                  </Button>
+                </Box>
+              </Card>
+
+              {/* Mutual Groups */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.primary', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <GroupIcon sx={{ fontSize: 18, color: '#34D399' }} />
+                  Mutual Shared Groups ({selectedFriendProfile.mutualGroups?.length || 0})
+                </Typography>
+                {selectedFriendProfile.mutualGroups?.length > 0 ? (
+                  <Stack spacing={1}>
+                    {selectedFriendProfile.mutualGroups.map((g: any) => (
+                      <Box
+                        key={g.id}
+                        className="glass-tertiary"
+                        onClick={() => {
+                          setProfileModalOpen(false);
+                          router.push(`/groups/${g.id}`);
+                        }}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.05)' },
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA', fontSize: '0.8rem', fontWeight: 700 }}>
+                            {g.name?.charAt(0)}
+                          </Avatar>
+                          <Typography variant="body2" fontWeight={650} sx={{ color: 'text.primary' }}>
+                            {g.name}
+                          </Typography>
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">
+                          {g.memberCount} members
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography variant="caption" color="text.secondary">
+                    No mutual groups shared yet. You can add them to any of your groups.
+                  </Typography>
+                )}
+              </Box>
+
+              {/* Privacy Shield Disclaimer */}
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: 2,
+                  bgcolor: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  mb: 3,
+                }}
+              >
+                <Shield sx={{ fontSize: 18, color: '#10B981' }} />
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.725rem', lineHeight: 1.4 }}>
+                  <strong>FairShare Privacy Shield:</strong> Confidential records (passwords, private personal budgets, and external transactions) are kept private and secure.
+                </Typography>
+              </Box>
+
+              {/* Modal Actions */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5 }}>
+                <Button
+                  color="error"
+                  size="small"
+                  startIcon={<Delete fontSize="small" />}
+                  onClick={() => {
+                    setFriendToRemove({ id: selectedFriendProfile.friendshipId, name: selectedFriendProfile.name });
+                    setRemoveDialogOpen(true);
+                  }}
+                  sx={{ textTransform: 'none', fontWeight: 650, fontSize: '0.8rem' }}
+                >
+                  Remove Friend
+                </Button>
+
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    className="glass-tertiary"
+                    onClick={() => setProfileModalOpen(false)}
+                    sx={{ borderRadius: 2, textTransform: 'none', color: 'text.secondary' }}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    variant="contained"
+                    className="glass-emerald-active"
+                    startIcon={<ReceiptLong fontSize="small" />}
+                    onClick={() => {
+                      setProfileModalOpen(false);
+                      router.push(`/expenses/new?friendId=${selectedFriendProfile.id}`);
+                    }}
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, color: '#FFFFFF' }}
+                  >
+                    Split Bill
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body2" color="text.secondary">Profile could not be retrieved.</Typography>
+              <Button onClick={() => setProfileModalOpen(false)} sx={{ mt: 2 }}>Close</Button>
+            </Box>
+          )}
+        </Dialog>
+
+        {/* Remove Friend Confirmation Dialog */}
+        <Dialog
+          open={removeDialogOpen}
+          onClose={() => {
+            setRemoveDialogOpen(false);
+            setFriendToRemove(null);
+          }}
+          maxWidth="xs"
+          fullWidth
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: 3.5,
+                p: 2.5,
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+              },
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+            <Avatar sx={{ bgcolor: 'rgba(239, 68, 68, 0.15)', color: '#EF4444' }}>
+              <WarningAmber />
+            </Avatar>
+            <Typography variant="h6" fontWeight={750} sx={{ color: 'text.primary' }}>
+              Remove Friend
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Are you sure you want to remove <strong>{friendToRemove?.name}</strong> from your friends? Both of you will no longer appear in each other's direct friends list, though shared group expenses and balances will be preserved.
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+            <Button
+              onClick={() => {
+                setRemoveDialogOpen(false);
+                setFriendToRemove(null);
+              }}
+              className="glass-tertiary"
+              sx={{ borderRadius: 2, textTransform: 'none', color: 'text.secondary' }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmRemoveFriend}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+            >
+              Confirm Remove
+            </Button>
+          </Box>
         </Dialog>
 
         {/* Friend Connect QR Modal */}
@@ -866,7 +1554,7 @@ export default function FriendsPage() {
           onClose={() => setToastMessage('')}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert severity="success" sx={{ borderRadius: 3, fontWeight: 600 }}>
+          <Alert severity={toastSeverity} sx={{ borderRadius: 3, fontWeight: 600 }}>
             {toastMessage}
           </Alert>
         </Snackbar>

@@ -153,7 +153,7 @@ friendRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<
   }
 });
 
-// GET /api/friends/pending — Get pending friend requests
+// GET /api/friends/pending — Get pending friend requests received by current user
 friendRouter.get('/pending', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const requests = await prisma.friendship.findMany({
@@ -167,6 +167,24 @@ friendRouter.get('/pending', async (req: AuthenticatedRequest, res: Response): P
     res.json({ success: true, data: requests });
   } catch (error: any) {
     console.error('Get pending requests error:', error);
+    res.json({ success: true, data: [] });
+  }
+});
+
+// GET /api/friends/sent — Get outgoing friend requests sent by current user
+friendRouter.get('/sent', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const requests = await prisma.friendship.findMany({
+      where: { userId: req.user!.id, status: 'PENDING' },
+      include: {
+        friend: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({ success: true, data: requests });
+  } catch (error: any) {
+    console.error('Get sent requests error:', error);
     res.json({ success: true, data: [] });
   }
 });

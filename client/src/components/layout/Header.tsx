@@ -33,6 +33,7 @@ import {
   Group as GroupIcon,
   Warning as WarningIcon,
   DoneAll as DoneAllIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import { Chip, Button } from '@mui/material';
 import { useAuth } from '@/providers/AuthProvider';
@@ -496,6 +497,13 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           >
             <ListItemIcon><SettingsIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
             <ListItemText primary="Settings" />
+          </MenuItem>
+          <MenuItem
+            onClick={() => { handleMenuClose(); router.push('/admin'); }}
+            sx={{ borderRadius: 2, my: 0.25, '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' } }}
+          >
+            <ListItemIcon><AdminIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
+            <ListItemText primary="Admin Portal" />
           </MenuItem>
           <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
           <MenuItem

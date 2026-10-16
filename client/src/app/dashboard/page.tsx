@@ -242,13 +242,13 @@ export default function DashboardPage() {
         <Box
           className="glass-control-surface"
           sx={{
-            display: 'flex',
+            display: { xs: 'flex', sm: 'inline-flex' },
             alignItems: 'center',
             p: 0.6,
             mb: 3.5,
             borderRadius: 9999,
             gap: 0.5,
-            width: '100%',
+            width: { xs: '100%', sm: 'auto' },
             maxWidth: '100%',
             minWidth: 0,
             overflowX: 'auto',

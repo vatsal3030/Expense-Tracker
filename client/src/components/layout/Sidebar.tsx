@@ -31,6 +31,7 @@ import {
   ChevronRight as ExpandIcon,
   Insights as AnalyticsIcon,
   EmojiEvents as FairScoreIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -80,6 +81,7 @@ const navSections: NavSection[] = [
 ];
 
 const bottomNavItems: NavItem[] = [
+  { label: 'Admin Portal', icon: <AdminIcon sx={{ fontSize: 20 }} />, path: '/admin', badge: 'OPS' },
   { label: 'Settings', icon: <SettingsIcon sx={{ fontSize: 20 }} />, path: '/settings' },
 ];
 

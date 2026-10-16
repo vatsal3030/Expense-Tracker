@@ -843,8 +843,8 @@ export default function LandingPage() {
           <div
             className={`macos-glass-card p-6 rounded-3xl relative transition-all ${
               !simplificationActive
-                ? 'ring-2 ring-rose-500/40'
-                : 'opacity-70'
+                ? 'block ring-2 ring-rose-500/40'
+                : 'hidden md:block opacity-70'
             }`}
           >
             <div
@@ -901,8 +901,8 @@ export default function LandingPage() {
           <div
             className={`macos-glass-card p-6 rounded-3xl relative transition-all ${
               simplificationActive
-                ? 'ring-2 ring-emerald-500/40'
-                : 'opacity-70'
+                ? 'block ring-2 ring-emerald-500/40'
+                : 'hidden md:block opacity-70'
             }`}
           >
             <div

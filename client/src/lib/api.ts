@@ -126,6 +126,7 @@ export const activityApi = {
 export const friendApi = {
   list: () => api.get('/friends'),
   pending: () => api.get('/friends/pending'),
+  sent: () => api.get('/friends/sent'),
   request: (payload: { friendId?: string; email?: string; phone?: string } | string) =>
     api.post('/friends/request', typeof payload === 'string' ? { friendId: payload } : payload),
   accept: (id: string) => api.patch(`/friends/${id}/accept`),
@@ -138,6 +139,7 @@ export const userApi = {
   getProfile: () => api.get('/users/profile'),
   updateProfile: (data: any) => api.put('/users/profile', data),
   search: (query: string) => api.get('/users/search', { params: { q: query } }),
+  getPublicProfile: (id: string) => api.get(`/users/${id}/public-profile`),
 };
 
 // Notifications
@@ -146,5 +148,13 @@ export const notificationApi = {
   markRead: (id: string) => api.patch(`/notifications/${id}/read`),
   markAllRead: () => api.post('/notifications/mark-all-read'),
   clear: () => api.delete('/notifications'),
+};
+
+// Admin Operations
+export const adminApi = {
+  getOverview: () => api.get('/admin/overview'),
+  getUsers: (params?: Record<string, any>) => api.get('/admin/users', { params }),
+  getActivity: () => api.get('/admin/activity'),
+  toggleUserStatus: (id: string) => api.patch(`/admin/users/${id}/toggle-status`),
 };
 

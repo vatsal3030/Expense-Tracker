@@ -77,24 +77,28 @@ userRouter.put(
   }
 );
 
-// GET /api/users/search?q=query — Search users by email or name
+// GET /api/users/search?q=query — Search users by name, email, or phone
 userRouter.get('/search', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const query = (req.query.q as string)?.trim();
+    const currentUserId = req.user!.id;
 
     if (!query || query.length < 2) {
       res.status(400).json({ success: false, error: 'Search query must be at least 2 characters.' });
       return;
     }
 
+    const cleanDigits = query.replace(/\D/g, '');
+
     const users = await prisma.user.findMany({
       where: {
         AND: [
-          { id: { not: req.user!.id } },
+          { id: { not: currentUserId } },
           {
             OR: [
               { email: { contains: query, mode: 'insensitive' } },
               { name: { contains: query, mode: 'insensitive' } },
+              ...(cleanDigits.length >= 3 ? [{ phone: { contains: cleanDigits } }] : []),
             ],
           },
         ],
@@ -104,13 +108,198 @@ userRouter.get('/search', async (req: AuthenticatedRequest, res: Response): Prom
         email: true,
         name: true,
         avatarUrl: true,
+        phone: true,
       },
-      take: 10,
+      take: 12,
     });
 
-    res.json({ success: true, data: users });
+    if (users.length === 0) {
+      res.json({ success: true, data: [] });
+      return;
+    }
+
+    const userIds = users.map((u) => u.id);
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        OR: [
+          { userId: currentUserId, friendId: { in: userIds } },
+          { userId: { in: userIds }, friendId: currentUserId },
+        ],
+      },
+    });
+
+    const enrichedUsers = users.map((u) => {
+      const f = friendships.find(
+        (rel) =>
+          (rel.userId === currentUserId && rel.friendId === u.id) ||
+          (rel.userId === u.id && rel.friendId === currentUserId)
+      );
+
+      let friendshipStatus: 'NONE' | 'FRIENDS' | 'REQUEST_SENT' | 'REQUEST_RECEIVED' = 'NONE';
+      let friendshipId: string | null = null;
+
+      if (f) {
+        friendshipId = f.id;
+        if (f.status === 'ACCEPTED') {
+          friendshipStatus = 'FRIENDS';
+        } else if (f.userId === currentUserId) {
+          friendshipStatus = 'REQUEST_SENT';
+        } else {
+          friendshipStatus = 'REQUEST_RECEIVED';
+        }
+      }
+
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        avatarUrl: u.avatarUrl,
+        friendshipStatus,
+        friendshipId,
+      };
+    });
+
+    res.json({ success: true, data: enrichedUsers });
   } catch (error: any) {
     console.error('Search users error:', error);
     res.status(500).json({ success: false, error: 'Search failed.' });
   }
 });
+
+// GET /api/users/:id/public-profile — Get safe, non-confidential friend/user public profile
+userRouter.get('/:id/public-profile', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const targetUserId = req.params.id as string;
+    const currentUserId = req.user!.id;
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+        createdAt: true,
+        defaultCurrency: true,
+      },
+    });
+
+    if (!targetUser) {
+      res.status(404).json({ success: false, error: 'User not found.' });
+      return;
+    }
+
+    // Check friendship status
+    const friendship = await prisma.friendship.findFirst({
+      where: {
+        OR: [
+          { userId: currentUserId, friendId: targetUserId },
+          { userId: targetUserId, friendId: currentUserId },
+        ],
+      },
+    });
+
+    let friendshipStatus: 'NONE' | 'FRIENDS' | 'REQUEST_SENT' | 'REQUEST_RECEIVED' = 'NONE';
+    let friendshipId: string | null = null;
+    let friendsSince: Date | null = null;
+
+    if (friendship) {
+      friendshipId = friendship.id;
+      if (friendship.status === 'ACCEPTED') {
+        friendshipStatus = 'FRIENDS';
+        friendsSince = friendship.updatedAt;
+      } else if (friendship.userId === currentUserId) {
+        friendshipStatus = 'REQUEST_SENT';
+      } else {
+        friendshipStatus = 'REQUEST_RECEIVED';
+      }
+    }
+
+    // Find mutual groups where both users are active members
+    const mutualGroups = await prisma.group.findMany({
+      where: {
+        AND: [
+          { members: { some: { userId: currentUserId } } },
+          { members: { some: { userId: targetUserId } } },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+        type: true,
+        _count: { select: { members: true } },
+      },
+    });
+
+    // Compute net balance between current user and target user
+    // 1. Target owes current user: shares where userId is target, expense.paidById is current user, unpaid
+    const theyOweMe = await prisma.expenseShare.aggregate({
+      where: {
+        userId: targetUserId,
+        isPaid: false,
+        expense: {
+          paidById: currentUserId,
+          isDeleted: false,
+        },
+      },
+      _sum: { amount: true },
+    });
+
+    // 2. Current user owes target: shares where userId is current user, expense.paidById is target, unpaid
+    const iOweThem = await prisma.expenseShare.aggregate({
+      where: {
+        userId: currentUserId,
+        isPaid: false,
+        expense: {
+          paidById: targetUserId,
+          isDeleted: false,
+        },
+      },
+      _sum: { amount: true },
+    });
+
+    const owedToMe = Number(theyOweMe._sum.amount || 0);
+    const owedByMe = Number(iOweThem._sum.amount || 0);
+    const netBalance = owedToMe - owedByMe;
+
+    // FairScore Tier calculation based on their settlements count
+    const settlementsCount = await prisma.settlement.count({
+      where: {
+        OR: [{ payerId: targetUserId }, { payeeId: targetUserId }],
+        status: 'CONFIRMED',
+      },
+    });
+
+    let fairScoreTier = 'Silver';
+    if (settlementsCount >= 20) fairScoreTier = 'Diamond';
+    else if (settlementsCount >= 10) fairScoreTier = 'Platinum';
+    else if (settlementsCount >= 3) fairScoreTier = 'Gold';
+
+    res.json({
+      success: true,
+      data: {
+        id: targetUser.id,
+        name: targetUser.name,
+        avatarUrl: targetUser.avatarUrl,
+        memberSince: targetUser.createdAt,
+        defaultCurrency: targetUser.defaultCurrency || 'INR',
+        friendshipStatus,
+        friendshipId,
+        friendsSince,
+        mutualGroups: mutualGroups.map((g) => ({
+          id: g.id,
+          name: g.name,
+          imageUrl: g.imageUrl,
+          type: g.type,
+          memberCount: g._count.members,
+        })),
+        netBalance,
+        fairScoreTier,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get public profile error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch public profile.' });
+  }
+});
+
