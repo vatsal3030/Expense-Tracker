@@ -55,15 +55,19 @@ export default function GroupsPage() {
 
   const hasLoadedGroupsRef = useRef(false);
 
+  const isFetchingGroupsRef = useRef(false);
+
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
   useEffect(() => {
-    if (user?.id) fetchGroups();
+    if (user?.id && !hasLoadedGroupsRef.current) fetchGroups();
   }, [user?.id]);
 
   const fetchGroups = async () => {
+    if (isFetchingGroupsRef.current) return;
+    isFetchingGroupsRef.current = true;
     try {
       if (!hasLoadedGroupsRef.current) {
         setLoading(true);
@@ -74,6 +78,7 @@ export default function GroupsPage() {
     } catch (error) {
       console.error('Fetch groups error:', error);
     } finally {
+      isFetchingGroupsRef.current = false;
       setLoading(false);
     }
   };

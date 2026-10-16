@@ -60,11 +60,14 @@ export default function FairScorePage() {
   const [loading, setLoading] = useState(true);
   const [cheered, setCheered] = useState<Record<string, boolean>>({});
 
+  const hasLoadedGamificationRef = React.useRef(false);
+
   useEffect(() => {
+    if (!session?.access_token || hasLoadedGamificationRef.current) return;
     const fetchGamification = async () => {
-      if (!session?.access_token) return;
       try {
         setLoading(true);
+        hasLoadedGamificationRef.current = true;
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/dashboard/gamification`,
           {
@@ -83,7 +86,7 @@ export default function FairScorePage() {
     };
 
     fetchGamification();
-  }, [session]);
+  }, [session?.user?.id, session?.access_token]);
 
   const handleCheer = (name: string) => {
     setCheered((prev) => ({ ...prev, [name]: true }));

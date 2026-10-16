@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -72,7 +72,11 @@ export default function SettlementsPage() {
 
   const statusFilter = ['', 'PENDING', 'CONFIRMED'][tab];
 
+  const isFetchingSettlementsRef = useRef(false);
+
   const fetchSettlements = useCallback(async () => {
+    if (isFetchingSettlementsRef.current) return;
+    isFetchingSettlementsRef.current = true;
     try {
       if (!hasLoadedSettlementsRef.current) {
         setLoading(true);
@@ -96,6 +100,7 @@ export default function SettlementsPage() {
     } catch (error) {
       console.error('Fetch settlements error:', error);
     } finally {
+      isFetchingSettlementsRef.current = false;
       setLoading(false);
     }
   }, [page, statusFilter]);

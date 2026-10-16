@@ -43,6 +43,7 @@ export default function AdminPage() {
   // Feedback Snackbar
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState<'success' | 'info' | 'error'>('success');
+  const hasLoadedAdminRef = React.useRef(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -51,7 +52,8 @@ export default function AdminPage() {
   }, [user?.id, authLoading, router]);
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && !hasLoadedAdminRef.current) {
+      hasLoadedAdminRef.current = true;
       fetchOverview();
       fetchUsers(0, rowsPerPage, searchQuery);
     }

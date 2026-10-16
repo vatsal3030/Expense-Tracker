@@ -45,7 +45,11 @@ export default function ActivityPage() {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
+  const isFetchingActivitiesRef = useRef(false);
+
   const fetchActivities = useCallback(async () => {
+    if (isFetchingActivitiesRef.current) return;
+    isFetchingActivitiesRef.current = true;
     try {
       if (!hasLoadedActivitiesRef.current) {
         setLoading(true);
@@ -57,6 +61,7 @@ export default function ActivityPage() {
     } catch (error) {
       console.error('Fetch activities error:', error);
     } finally {
+      isFetchingActivitiesRef.current = false;
       setLoading(false);
     }
   }, [page]);

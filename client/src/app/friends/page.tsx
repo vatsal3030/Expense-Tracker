@@ -56,6 +56,7 @@ export default function FriendsPage() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
 
   const hasLoadedFriendsRef = useRef(false);
+  const isFetchingFriendsRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -63,10 +64,14 @@ export default function FriendsPage() {
   }, [user?.id, authLoading, router]);
 
   useEffect(() => {
-    if (user?.id) fetchData();
+    if (user?.id && !hasLoadedFriendsRef.current) {
+      fetchData();
+    }
   }, [user?.id]);
 
   const fetchData = async () => {
+    if (isFetchingFriendsRef.current) return;
+    isFetchingFriendsRef.current = true;
     try {
       if (!hasLoadedFriendsRef.current) {
         setLoading(true);
@@ -83,6 +88,7 @@ export default function FriendsPage() {
     } catch (error) {
       console.error('Fetch friends error:', error);
     } finally {
+      isFetchingFriendsRef.current = false;
       setLoading(false);
     }
   };
@@ -495,7 +501,7 @@ export default function FriendsPage() {
                 },
               }}
             >
-              <Tab label={`All Friends (${friends.length})`} />
+              <Tab label={`Friends (${friends.length})`} />
               <Tab
                 label={
                   <Badge
@@ -509,18 +515,20 @@ export default function FriendsPage() {
               />
               <Tab
                 label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <span>Sent Requests</span>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <span>Sent</span>
                     {sentRequests.length > 0 && (
                       <Chip
                         label={sentRequests.length}
                         size="small"
                         sx={{
-                          height: 20,
-                          fontSize: '0.7rem',
+                          height: 18,
+                          minWidth: 18,
+                          fontSize: '0.675rem',
                           fontWeight: 700,
                           bgcolor: 'rgba(245, 158, 11, 0.2)',
                           color: '#F59E0B',
+                          px: 0.5,
                         }}
                       />
                     )}
