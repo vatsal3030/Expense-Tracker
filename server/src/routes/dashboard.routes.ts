@@ -10,7 +10,7 @@ dashboardRouter.use(authenticate);
 dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.id;
   const cacheKey = `dashboard:summary:${userId}`;
-  const cached = appCache.get(cacheKey);
+  const cached = await appCache.get(cacheKey);
 
   try {
     if (cached) {
@@ -152,7 +152,7 @@ dashboardRouter.get('/spending-trend', async (req: AuthenticatedRequest, res: Re
   try {
     const userId = req.user!.id;
     const cacheKey = `dashboard:trend:${userId}`;
-    const cached = appCache.get(cacheKey);
+    const cached = await appCache.get(cacheKey);
     if (cached) {
       res.json({ success: true, data: cached });
       return;
@@ -220,6 +220,13 @@ dashboardRouter.get('/spending-trend', async (req: AuthenticatedRequest, res: Re
 dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
+    const cacheKey = `dashboard:analytics:${userId}`;
+    const cached = await appCache.get(cacheKey);
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
+
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
@@ -401,16 +408,19 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
       },
     ];
 
+    const analyticsData = {
+      total30Days: totalCategorySpend,
+      dailyTrends,
+      categoryBreakdown: categoriesWithPercent,
+      cashflow,
+      dayOfWeekData,
+      insights,
+    };
+
+    appCache.set(cacheKey, analyticsData, 30000);
     res.json({
       success: true,
-      data: {
-        total30Days: totalCategorySpend,
-        dailyTrends,
-        categoryBreakdown: categoriesWithPercent,
-        cashflow,
-        dayOfWeekData,
-        insights,
-      },
+      data: analyticsData,
     });
   } catch (error: any) {
     console.error('Analytics error:', error);
@@ -422,6 +432,12 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
 dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
+    const cacheKey = `dashboard:gamification:${userId}`;
+    const cached = await appCache.get(cacheKey);
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
 
     // 1. Settlements count & speed
     const confirmedSettlements = await prisma.settlement.count({
@@ -615,22 +631,25 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
       rank: index + 1,
     }));
 
+    const gamificationData = {
+      fairScore,
+      tier,
+      tierColor,
+      streakDays: 14,
+      scoreBreakdown: {
+        settlementDiscipline: settlementScore,
+        transparency: transparencyScore,
+        collaboration: collaborationScore,
+        consistency: streakScore,
+      },
+      badges,
+      leaderboard,
+    };
+
+    appCache.set(cacheKey, gamificationData, 30000);
     res.json({
       success: true,
-      data: {
-        fairScore,
-        tier,
-        tierColor,
-        streakDays: 14,
-        scoreBreakdown: {
-          settlementDiscipline: settlementScore,
-          transparency: transparencyScore,
-          collaboration: collaborationScore,
-          consistency: streakScore,
-        },
-        badges,
-        leaderboard,
-      },
+      data: gamificationData,
     });
   } catch (error: any) {
     console.error('Gamification error:', error);

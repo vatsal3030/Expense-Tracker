@@ -130,7 +130,7 @@ friendRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<
   try {
     const userId = req.user!.id;
     const cacheKey = `friends:list:${userId}`;
-    const cached = appCache.get(cacheKey);
+    const cached = await appCache.get(cacheKey);
     if (cached) {
       res.json({ success: true, data: cached });
       return;

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import appCache from '../lib/cache';
 
 export const healthRouter = Router();
 
@@ -15,6 +16,7 @@ healthRouter.get('/', async (_req: Request, res: Response) => {
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || 'development',
       version: '1.0.0',
+      cache: appCache.getProviderInfo(),
     });
   } catch (error) {
     res.status(503).json({
@@ -22,6 +24,7 @@ healthRouter.get('/', async (_req: Request, res: Response) => {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
       error: 'Database connection failed',
+      cache: appCache.getProviderInfo(),
     });
   }
 });
