@@ -9,17 +9,18 @@ import {
   Alert, Snackbar,
 } from '@mui/material';
 import {
-  ArrowBack, Add, Share, ContentCopy,
+  ArrowBack, Add, Edit, Delete, Share, ContentCopy,
   WhatsApp, PersonAdd, Check, Lock, Security,
   AccountBalanceWallet, ArrowForward, QrCode2,
   TrendingUp, TrendingDown, ReceiptLong, People, Close,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
-import { groupApi, settlementApi } from '@/lib/api';
+import { groupApi, settlementApi, expenseApi } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 import QrCodeModal from '@/components/common/QrCodeModal';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   FOOD: '🍔', TRANSPORT: '🚗', ENTERTAINMENT: '🎬', SHOPPING: '🛍️',
@@ -130,6 +131,31 @@ function GroupDetailContent() {
     return currentMember ? currentMember.balance : 0;
   }, [balances, user]);
 
+  const isGroupAdmin = useMemo(() => {
+    if (!group?.members || !user) return false;
+    const member = group.members.find((m: any) => m.userId === user.id || m.user?.id === user.id);
+    return member?.role === 'ADMIN';
+  }, [group, user]);
+
+  const handleDeleteGroupExpense = async (expenseId: string) => {
+    if (!group?.expenses) return;
+    const prevExpenses = [...group.expenses];
+    setGroup((prev: any) => ({
+      ...prev,
+      expenses: prev.expenses.filter((e: any) => e.id !== expenseId),
+    }));
+    setToastMessage('Expense removed from group.');
+
+    try {
+      await expenseApi.delete(expenseId);
+      groupApi.getBalances(group.id).then((res) => setBalances(res.data?.data || null)).catch(() => {});
+    } catch (err: any) {
+      console.error('Failed to delete expense:', err);
+      setGroup((prev: any) => ({ ...prev, expenses: prevExpenses }));
+      setToastMessage(err.response?.data?.error || 'Failed to delete expense. Reverted.');
+    }
+  };
+
   const handleSettleUpi = (payeeName: string, amount: number) => {
     setUpiModal({
       open: true,
@@ -155,23 +181,7 @@ function GroupDetailContent() {
   };
 
   if (authLoading || (loading && !group)) {
-    return (
-      <AppLayout>
-        <Box sx={{ p: 3 }}>
-          <Skeleton width={220} height={40} />
-          <Skeleton width={320} sx={{ mt: 1 }} />
-          <Grid container spacing={3} sx={{ mt: 2 }}>
-            {[1, 2, 3].map((i) => (
-              <Grid size={{ xs: 12, md: 4 }} key={i}>
-                <Card sx={{ borderRadius: 3.5, p: 3 }}>
-                  <Skeleton height={90} />
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      </AppLayout>
-    );
+    return <CategoryCycleLoader message="Loading group details & split balance..." />;
   }
 
   return (
@@ -523,13 +533,43 @@ function GroupDetailContent() {
                             </Typography>
                           }
                         />
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary' }}>
-                            {formatCurrency(Number(exp.amount))}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {exp.shares?.length || group.members?.length || 1} shares
-                          </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary' }}>
+                              {formatCurrency(Number(exp.amount))}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {exp.shares?.length || group.members?.length || 1} shares
+                            </Typography>
+                          </Box>
+                          {(isGroupAdmin || exp.createdById === user?.id || exp.paidById === user?.id) && (
+                            <Box sx={{ display: 'flex', gap: 0.5, ml: 0.5 }}>
+                              <Tooltip title="Edit Expense">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => router.push(`/expenses/new?edit=${exp.id}&groupId=${group.id}`)}
+                                  sx={{
+                                    color: 'text.secondary',
+                                    '&:hover': { color: '#10B981', bgcolor: 'rgba(16, 185, 129, 0.1)' },
+                                  }}
+                                >
+                                  <Edit sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete Expense">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDeleteGroupExpense(exp.id)}
+                                  sx={{
+                                    color: 'text.secondary',
+                                    '&:hover': { color: '#EF4444', bgcolor: 'rgba(239, 68, 68, 0.1)' },
+                                  }}
+                                >
+                                  <Delete sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          )}
                         </Box>
                       </ListItem>
                       {i < group.expenses.length - 1 && (

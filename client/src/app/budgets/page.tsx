@@ -23,6 +23,8 @@ const CATEGORY_EMOJI: Record<string, string> = {
   TRAVEL: '✈️', GROCERIES: '🛒', SUBSCRIPTIONS: '📱', GENERAL: '📋',
 };
 
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
+
 export default function BudgetsPage() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -56,24 +58,44 @@ export default function BudgetsPage() {
   const handleCreate = async () => {
     if (!form.amount) return;
     setSubmitting(true);
+    const parsedAmount = parseFloat(form.amount);
+    const tempId = `temp-${Date.now()}`;
+    const optimisticBudget = {
+      id: tempId,
+      category: form.category,
+      amount: parsedAmount,
+      period: form.period,
+      alertAt: form.alertAt,
+      spent: 0,
+      percentage: 0,
+    };
+    const prevBudgets = [...budgets];
+    setBudgets((prev) => [optimisticBudget, ...prev]);
+    setDialogOpen(false);
+    const currentForm = { ...form };
+    setForm({ category: 'FOOD', amount: '', period: 'MONTHLY', alertAt: 80 });
+
     try {
-      await budgetApi.create({ ...form, amount: parseFloat(form.amount), alertAt: form.alertAt });
-      setDialogOpen(false);
-      setForm({ category: 'FOOD', amount: '', period: 'MONTHLY', alertAt: 80 });
-      fetchBudgets();
+      const res = await budgetApi.create({ ...currentForm, amount: parsedAmount, alertAt: currentForm.alertAt });
+      if (res.data?.data) {
+        setBudgets((prev) => prev.map((b) => (b.id === tempId ? res.data.data : b)));
+      }
     } catch (error) {
       console.error('Create budget error:', error);
+      setBudgets(prevBudgets);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
+    const prevBudgets = [...budgets];
+    setBudgets((prev) => prev.filter((b) => b.id !== id));
     try {
       await budgetApi.delete(id);
-      fetchBudgets();
     } catch (error) {
       console.error('Delete budget error:', error);
+      setBudgets(prevBudgets);
     }
   };
 
@@ -86,7 +108,9 @@ export default function BudgetsPage() {
     return theme.palette.success.main;
   };
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return <CategoryCycleLoader message="Loading budget telemetry..." />;
+  }
 
   return (
     <AppLayout>

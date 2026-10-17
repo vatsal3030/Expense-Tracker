@@ -28,6 +28,8 @@ const GROUP_TYPE_CONFIG: Record<string, { icon: React.ReactElement; color: strin
   OTHER: { icon: <MoreHoriz fontSize="small" />, color: '#64748B', label: 'Other' },
 };
 
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
+
 export default function GroupsPage() {
   const theme = useTheme();
   const router = useRouter();
@@ -84,20 +86,53 @@ export default function GroupsPage() {
   };
 
   const handleCreate = async () => {
-    if (!form.name) return;
+    if (!form.name.trim()) return;
     setSubmitting(true);
+
+    const tempId = `temp-${Date.now()}`;
+    const optimisticGroup = {
+      id: tempId,
+      name: form.name.trim(),
+      description: form.description || null,
+      type: form.type,
+      currency: form.currency,
+      members: [{ userId: user?.id, role: 'ADMIN', user: { name: user?.user_metadata?.full_name || 'You' } }],
+      _count: { expenses: 0, members: 1 },
+      createdAt: new Date().toISOString(),
+    };
+
+    const previousSnapshot = [...groups];
+    setGroups((prev) => [optimisticGroup, ...prev]);
+    setDialogOpen(false);
+    setToastMessage('Group created successfully!');
+
+    const currentForm = { ...form };
+    setForm({
+      name: '',
+      description: '',
+      type: 'FRIENDS',
+      currency: 'INR',
+      requireApproval: false,
+      isPasswordProtected: false,
+      password: '',
+      inviteContacts: '',
+    });
+
     try {
       const payload = {
-        name: form.name,
-        description: form.description,
-        type: form.type,
-        currency: form.currency,
-        password: form.isPasswordProtected ? form.password : undefined,
-        requireAdminApproval: form.requireApproval,
+        name: currentForm.name.trim(),
+        description: currentForm.description || undefined,
+        type: currentForm.type,
+        currency: currentForm.currency,
+        password: currentForm.isPasswordProtected ? currentForm.password : undefined,
+        requireAdminApproval: currentForm.requireApproval,
       };
       const res = await groupApi.create(payload);
-      if (form.inviteContacts && res.data?.data?.id) {
-        const contacts = form.inviteContacts.split(',').map((c) => c.trim()).filter(Boolean);
+      if (res.data?.data) {
+        setGroups((prev) => prev.map((g) => (g.id === tempId ? res.data.data : g)));
+      }
+      if (currentForm.inviteContacts && res.data?.data?.id) {
+        const contacts = currentForm.inviteContacts.split(',').map((c) => c.trim()).filter(Boolean);
         for (const contact of contacts) {
           if (contact.includes('@')) {
             await groupApi.addMember(res.data.data.id, { email: contact }).catch(() => {});
@@ -106,21 +141,10 @@ export default function GroupsPage() {
           }
         }
       }
-      setDialogOpen(false);
-      setForm({
-        name: '',
-        description: '',
-        type: 'FRIENDS',
-        currency: 'INR',
-        requireApproval: false,
-        isPasswordProtected: false,
-        password: '',
-        inviteContacts: '',
-      });
-      setToastMessage('Group created successfully!');
-      fetchGroups();
     } catch (error) {
       console.error('Create group error:', error);
+      setGroups(previousSnapshot);
+      setToastMessage('Failed to create group. Reverted.');
     } finally {
       setSubmitting(false);
     }
@@ -157,7 +181,9 @@ export default function GroupsPage() {
     return groups.reduce((acc, g) => acc + (g._count?.expenses || 0), 0);
   }, [groups]);
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return <CategoryCycleLoader message="Loading your groups..." />;
+  }
 
   return (
     <AppLayout>

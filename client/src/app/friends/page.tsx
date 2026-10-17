@@ -19,6 +19,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { friendApi, userApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import QrCodeModal from '@/components/common/QrCodeModal';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 export default function FriendsPage() {
   const theme = useTheme();
@@ -210,15 +211,22 @@ export default function FriendsPage() {
       setToastMessage('You cannot add yourself as a friend.');
       return;
     }
+    const previousSearchResults = [...searchResults];
+    setSearchResults((prev) =>
+      prev.map((u) => (u.id === friendId ? { ...u, friendshipStatus: 'REQUEST_SENT' } : u))
+    );
+    setToastSeverity('success');
+    setToastMessage('Friend request sent! Awaiting their acceptance.');
+
     try {
       await friendApi.request(friendId);
-      setSearchResults((prev) =>
-        prev.map((u) => (u.id === friendId ? { ...u, friendshipStatus: 'REQUEST_SENT' } : u))
-      );
-      setToastSeverity('success');
-      setToastMessage('Friend request sent! Awaiting their acceptance.');
-      fetchData();
+      if (friendApi.sent) {
+        friendApi.sent().then((res) => {
+          if (res.data?.data) setSentRequests(res.data.data);
+        }).catch(() => {});
+      }
     } catch (error: any) {
+      setSearchResults(previousSearchResults);
       setToastSeverity('error');
       setToastMessage(error.response?.data?.error || 'Failed to send friend request.');
     }
@@ -269,45 +277,76 @@ export default function FriendsPage() {
   };
 
   const handleAccept = async (id: string) => {
+    const acceptedReq = pending.find((r) => r.id === id);
+    const previousPending = [...pending];
+    const previousFriends = [...friends];
+
+    setPending((prev) => prev.filter((r) => r.id !== id));
+    if (acceptedReq) {
+      const newFriendObj = {
+        friendshipId: acceptedReq.id,
+        status: 'ACCEPTED',
+        friend: acceptedReq.user || { name: 'Friend', email: '' },
+      };
+      setFriends((prev) => [newFriendObj, ...prev]);
+    }
+    setToastSeverity('success');
+    setToastMessage('Friend request accepted! You are now mutual friends.');
+
     try {
       await friendApi.accept(id);
-      setToastSeverity('success');
-      setToastMessage('Friend request accepted! You are now mutual friends.');
-      fetchData();
     } catch (error) {
       console.error('Accept error:', error);
+      setPending(previousPending);
+      setFriends(previousFriends);
       setToastSeverity('error');
-      setToastMessage('Failed to accept friend request.');
+      setToastMessage('Failed to accept friend request. Reverted.');
     }
   };
 
   const handleCancelOrDecline = async (id: string, isSent = false) => {
+    const previousPending = [...pending];
+    const previousSent = [...sentRequests];
+
+    if (isSent) {
+      setSentRequests((prev) => prev.filter((r) => r.id !== id));
+    } else {
+      setPending((prev) => prev.filter((r) => r.id !== id));
+    }
+    setToastSeverity('info');
+    setToastMessage(isSent ? 'Friend request cancelled.' : 'Friend request declined.');
+
     try {
       await friendApi.remove(id);
-      setToastSeverity('info');
-      setToastMessage(isSent ? 'Friend request cancelled.' : 'Friend request declined.');
-      fetchData();
     } catch (error) {
       console.error('Cancel request error:', error);
+      if (isSent) setSentRequests(previousSent);
+      else setPending(previousPending);
       setToastSeverity('error');
-      setToastMessage('Failed to cancel request.');
+      setToastMessage('Failed to update request. Reverted.');
     }
   };
 
   const confirmRemoveFriend = async () => {
     if (!friendToRemove) return;
+    const removedId = friendToRemove.id;
+    const removedName = friendToRemove.name;
+    const previousFriends = [...friends];
+
+    setFriends((prev) => prev.filter((f) => f.friendshipId !== removedId && f.id !== removedId));
+    setToastSeverity('info');
+    setToastMessage(`Removed ${removedName} from friends.`);
+    setRemoveDialogOpen(false);
+    setFriendToRemove(null);
+    if (profileModalOpen) setProfileModalOpen(false);
+
     try {
-      await friendApi.remove(friendToRemove.id);
-      setToastSeverity('info');
-      setToastMessage(`Removed ${friendToRemove.name} from friends.`);
-      setRemoveDialogOpen(false);
-      setFriendToRemove(null);
-      if (profileModalOpen) setProfileModalOpen(false);
-      fetchData();
+      await friendApi.remove(removedId);
     } catch (error) {
       console.error('Remove friend error:', error);
+      setFriends(previousFriends);
       setToastSeverity('error');
-      setToastMessage('Failed to remove friend.');
+      setToastMessage('Failed to remove friend. Reverted.');
     }
   };
 
@@ -354,7 +393,9 @@ export default function FriendsPage() {
     );
   }, [friends, searchFilter]);
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return <CategoryCycleLoader message="Loading friends & connections..." />;
+  }
 
   return (
     <AppLayout>

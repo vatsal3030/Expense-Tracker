@@ -18,6 +18,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { expenseApi, groupApi, friendApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 const CATEGORIES = [
   'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'SHOPPING', 'UTILITIES', 'RENT',
@@ -45,6 +46,8 @@ function NewExpenseContent() {
 
   const preselectedGroupId = searchParams.get('groupId') || '';
   const preselectedFriendId = searchParams.get('friendId') || '';
+  const editId = searchParams.get('edit') || '';
+  const isEditMode = Boolean(editId);
 
   // Form Fields
   const [description, setDescription] = useState('');
@@ -97,7 +100,7 @@ function NewExpenseContent() {
 
   // Save draft to localStorage (debounced)
   useEffect(() => {
-    if (loadingInitial) return;
+    if (loadingInitial || isEditMode) return;
     const timer = setTimeout(() => {
       try {
         const draftData = {
@@ -125,7 +128,7 @@ function NewExpenseContent() {
     return () => clearTimeout(timer);
   }, [
     description, amount, category, groupId, paidById, splitType, notes,
-    date, selectedMemberIds, exactAmounts, percentages, shares, adjustments, loadingInitial
+    date, selectedMemberIds, exactAmounts, percentages, shares, adjustments, loadingInitial, isEditMode
   ]);
 
   // Auth redirect
@@ -153,6 +156,55 @@ function NewExpenseContent() {
       const friendList = friendsRes.data?.data || [];
       setGroups(groupList);
       setFriends(friendList);
+
+      // Handle Edit Mode: Load existing expense and current group members
+      if (isEditMode) {
+        try {
+          const expRes = await expenseApi.get(editId);
+          const exp = expRes.data?.data;
+          if (exp) {
+            setDescription(exp.description || '');
+            setAmount(String(exp.amount || ''));
+            setCategory(exp.category || 'FOOD');
+            setSplitType(exp.splitType || 'EQUAL');
+            setNotes(exp.notes || '');
+            if (exp.date) {
+              setDate(new Date(exp.date).toISOString().split('T')[0]);
+            }
+            if (exp.paidById) {
+              setPaidById(exp.paidById);
+            }
+            const targetGid = exp.groupId || '';
+            setGroupId(targetGid);
+
+            const existingSplitMemberIds = (exp.shares || []).map((s: any) => s.userId);
+
+            if (targetGid) {
+              // Load all CURRENT group members dynamically so newly joined members can be shared with!
+              await loadGroupMembers(targetGid, existingSplitMemberIds);
+            } else {
+              initializePersonalMembers(friendList, existingSplitMemberIds);
+            }
+
+            if (exp.splitType === 'EXACT') {
+              const exactMap: Record<string, string> = {};
+              exp.shares?.forEach((s: any) => { exactMap[s.userId] = String(s.amount); });
+              setExactAmounts(exactMap);
+            } else if (exp.splitType === 'PERCENTAGE') {
+              const pctMap: Record<string, string> = {};
+              const totalAmt = Number(exp.amount) || 1;
+              exp.shares?.forEach((s: any) => {
+                pctMap[s.userId] = String(Math.round((Number(s.amount) / totalAmt) * 100));
+              });
+              setPercentages(pctMap);
+            }
+            return;
+          }
+        } catch (err) {
+          console.error('Failed to load expense for editing:', err);
+          setErrorMsg('Failed to load expense details for editing.');
+        }
+      }
 
       // Check for saved draft
       let restoredFromDraft = false;
@@ -530,11 +582,13 @@ function NewExpenseContent() {
     try {
       setSubmitting(true);
       setErrorMsg('');
-      await expenseApi.create(payload);
-
-      // On success: clear draft & dirty flag
-      isFormDirtyRef.current = false;
-      localStorage.removeItem(DRAFT_KEY);
+      if (isEditMode) {
+        await expenseApi.update(editId, payload);
+      } else {
+        await expenseApi.create(payload);
+        isFormDirtyRef.current = false;
+        localStorage.removeItem(DRAFT_KEY);
+      }
 
       if (groupId) {
         router.push(`/groups/${groupId}`);
@@ -542,22 +596,15 @@ function NewExpenseContent() {
         router.push('/expenses');
       }
     } catch (err: any) {
-      console.error('Create expense error:', err);
-      setErrorMsg(err.response?.data?.error || 'Failed to create expense. Please try again.');
+      console.error(isEditMode ? 'Update expense error:' : 'Create expense error:', err);
+      setErrorMsg(err.response?.data?.error || `Failed to ${isEditMode ? 'update' : 'create'} expense. Please try again.`);
     } finally {
       setSubmitting(false);
     }
   };
 
   if (authLoading || loadingInitial) {
-    return (
-      <AppLayout>
-        <Box sx={{ maxWidth: 740, mx: 'auto', p: 3 }}>
-          <Skeleton width={220} height={40} sx={{ borderRadius: 2 }} />
-          <Skeleton width="100%" height={320} sx={{ mt: 3, borderRadius: 3.5 }} />
-        </Box>
-      </AppLayout>
-    );
+    return <CategoryCycleLoader message={isEditMode ? "Loading expense details..." : "Setting up expense..."} />;
   }
 
   return (
@@ -580,10 +627,10 @@ function NewExpenseContent() {
             </IconButton>
             <Box>
               <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.75rem', md: '2.125rem' } }}>
-                Add New Expense
+                {isEditMode ? 'Edit Expense' : 'Add New Expense'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-                Exact mathematical splits with zero calculation errors
+                {isEditMode ? 'Update bill details, adjust shares, or add newly joined group members' : 'Exact mathematical splits with zero calculation errors'}
               </Typography>
             </Box>
           </Box>
@@ -714,6 +761,14 @@ function NewExpenseContent() {
                       label="Shared In (Group / Personal)"
                       value={groupId}
                       onChange={(e) => handleGroupChange(e.target.value)}
+                      disabled={Boolean(preselectedGroupId || isEditMode)}
+                      helperText={
+                        preselectedGroupId
+                          ? '🔒 Locked to this group'
+                          : isEditMode
+                          ? '🔒 Group cannot be changed when editing an expense'
+                          : undefined
+                      }
                       slotProps={{ inputLabel: { shrink: true } }}
                     >
                       <MenuItem value="">👤 Direct with Friends (No group)</MenuItem>
@@ -1245,7 +1300,7 @@ function NewExpenseContent() {
                       '&:hover': { bgcolor: '#094A34' },
                     }}
                   >
-                    {submitting ? 'Saving...' : 'Save Expense'}
+                    {submitting ? 'Saving...' : isEditMode ? 'Update Expense' : 'Save Expense'}
                   </Button>
                 </Box>
               </Box>

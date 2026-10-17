@@ -357,12 +357,30 @@ expenseRouter.put(
       const { description, amount, category, date, notes, splitType, splits } = req.body;
 
       const existing = await prisma.expense.findFirst({
-        where: { id, createdById: req.user!.id, isDeleted: false },
-        include: { shares: true },
+        where: { id, isDeleted: false },
+        include: {
+          shares: true,
+          group: {
+            include: {
+              members: {
+                where: { userId: req.user!.id },
+              },
+            },
+          },
+        },
       });
 
       if (!existing) {
-        res.status(404).json({ success: false, error: 'Expense not found or unauthorized.' });
+        res.status(404).json({ success: false, error: 'Expense not found.' });
+        return;
+      }
+
+      const isCreator = existing.createdById === req.user!.id;
+      const isPayer = existing.paidById === req.user!.id;
+      const isGroupAdmin = existing.group?.members?.some((m) => m.role === 'ADMIN') ?? false;
+
+      if (!isCreator && !isPayer && !isGroupAdmin) {
+        res.status(403).json({ success: false, error: 'Unauthorized to modify this expense.' });
         return;
       }
 
@@ -372,8 +390,9 @@ expenseRouter.put(
       if (date) updateData.date = new Date(date);
       if (notes !== undefined) updateData.notes = notes;
 
+      const effectiveAmount = amount ? Number(amount) : Number(existing.amount);
+
       if (splits && splits.length > 0) {
-        const effectiveAmount = amount || Number(existing.amount);
         const effectiveSplitType = splitType || existing.splitType;
         const calculatedShares = calculateShares(effectiveSplitType, effectiveAmount, splits);
 
@@ -392,6 +411,31 @@ expenseRouter.put(
             expenseId: id,
             userId: s.userId,
             amount: new Prisma.Decimal(s.amount),
+          })),
+        });
+      } else if (amount && Number(amount) !== Number(existing.amount) && existing.shares.length > 0) {
+        // Automatically scale existing shares proportionally to match the new amount
+        const oldTotal = existing.shares.reduce((sum, s) => sum + Number(s.amount), 0);
+        const newTotal = Number(amount);
+        const ratio = oldTotal > 0 ? newTotal / oldTotal : 1 / existing.shares.length;
+
+        let accumulated = 0;
+        const recomputedShares = existing.shares.map((s, idx) => {
+          let sAmt = Math.round(Number(s.amount) * ratio * 100) / 100;
+          if (idx === existing.shares.length - 1) {
+            sAmt = Math.round((newTotal - accumulated) * 100) / 100;
+          } else {
+            accumulated += sAmt;
+          }
+          return { userId: s.userId, amount: new Prisma.Decimal(sAmt) };
+        });
+
+        await prisma.expenseShare.deleteMany({ where: { expenseId: id } });
+        await prisma.expenseShare.createMany({
+          data: recomputedShares.map((s) => ({
+            expenseId: id,
+            userId: s.userId,
+            amount: s.amount,
           })),
         });
       }
@@ -419,6 +463,12 @@ expenseRouter.put(
         },
       });
 
+      appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+      if (existing.groupId) {
+        appCache.invalidatePrefix(`groups:${existing.groupId}`);
+        appCache.invalidatePrefix('groups:list:');
+      }
+
       res.json({ success: true, data: updated });
     } catch (error: any) {
       console.error('Update expense error:', error);
@@ -432,11 +482,29 @@ expenseRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): P
   try {
     const id = req.params.id as string;
     const existing = await prisma.expense.findFirst({
-      where: { id, createdById: req.user!.id, isDeleted: false },
+      where: { id, isDeleted: false },
+      include: {
+        group: {
+          include: {
+            members: {
+              where: { userId: req.user!.id },
+            },
+          },
+        },
+      },
     });
 
     if (!existing) {
       res.status(404).json({ success: false, error: 'Expense not found or already deleted.' });
+      return;
+    }
+
+    const isCreator = existing.createdById === req.user!.id;
+    const isPayer = existing.paidById === req.user!.id;
+    const isGroupAdmin = existing.group?.members?.some((m) => m.role === 'ADMIN') ?? false;
+
+    if (!isCreator && !isPayer && !isGroupAdmin) {
+      res.status(403).json({ success: false, error: 'Unauthorized to delete this expense.' });
       return;
     }
 
@@ -457,6 +525,7 @@ expenseRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): P
 
     appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
     if (existing.groupId) {
+      appCache.invalidatePrefix(`groups:${existing.groupId}`);
       appCache.invalidatePrefix('groups:list:');
     }
 

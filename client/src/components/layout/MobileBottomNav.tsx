@@ -56,7 +56,7 @@ export default function MobileBottomNav() {
             <Box key={index} sx={{ position: 'relative', top: -14 }}>
               <IconButton
                 component={Link}
-                href="/expenses?new=true"
+                href="/expenses/new"
                 prefetch={true}
                 sx={{
                   width: 52,

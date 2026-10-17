@@ -13,6 +13,10 @@ import {
   LinearProgress,
   useTheme,
   alpha,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -24,6 +28,9 @@ import {
   Lightbulb,
   CheckCircle,
   CalendarMonth,
+  PersonOutlined,
+  PaymentsOutlined,
+  RestartAlt,
 } from '@mui/icons-material';
 import {
   AreaChart,
@@ -41,6 +48,8 @@ import {
 } from 'recharts';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
+import { groupApi } from '@/lib/api';
 
 const CATEGORY_COLORS: Record<string, string> = {
   FOOD: '#0E6245',
@@ -58,18 +67,42 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function AnalyticsPage() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [timeframe, setTimeframe] = useState<'30D' | '90D' | '6M'>('30D');
+  const [timeframe, setTimeframe] = useState<'7D' | '30D' | '90D' | '1Y' | 'ALL'>('30D');
+  const [groupId, setGroupId] = useState<string>('all');
+  const [category, setCategory] = useState<string>('all');
+  const [viewType, setViewType] = useState<'share' | 'total'>('share');
+  const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([]);
 
+  // Fetch available groups for filter dropdown
+  useEffect(() => {
+    if (!session?.access_token) return;
+    groupApi
+      .list()
+      .then((res) => {
+        if (res.data?.data) {
+          setGroups(res.data.data.map((g: any) => ({ id: g.id, name: g.name })));
+        }
+      })
+      .catch((err) => console.error('Failed to load groups for analytics filter:', err));
+  }, [session?.access_token]);
+
+  // Fetch telemetry data whenever filters change
   useEffect(() => {
     const fetchAnalytics = async () => {
       if (!session?.access_token) return;
       try {
         setLoading(true);
+        const params = new URLSearchParams({
+          timeframe,
+          groupId,
+          category,
+          viewType,
+        });
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/dashboard/analytics`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/dashboard/analytics?${params.toString()}`,
           {
             headers: { Authorization: `Bearer ${session.access_token}` },
           }
@@ -86,7 +119,7 @@ export default function AnalyticsPage() {
     };
 
     fetchAnalytics();
-  }, [session]);
+  }, [session?.access_token, timeframe, groupId, category, viewType]);
 
   const handleExportCSV = () => {
     if (!data?.categoryBreakdown) return;
@@ -98,12 +131,17 @@ export default function AnalyticsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `fairshare_analytics_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `fairshare_analytics_${timeframe}_${viewType}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
 
-  const totalSpend = data?.total30Days || 0;
-  const dailyAverage = totalSpend > 0 ? Math.round(totalSpend / 30) : 0;
+  if (authLoading) {
+    return <CategoryCycleLoader message="Loading financial telemetry..." />;
+  }
+
+  const daysCount = data?.daysCount || (timeframe === '7D' ? 7 : timeframe === '90D' ? 90 : timeframe === '1Y' ? 365 : timeframe === 'ALL' ? 365 : 30);
+  const totalSpend = data?.totalSpend ?? data?.total30Days ?? 0;
+  const dailyAverage = daysCount > 0 && totalSpend > 0 ? Math.round(totalSpend / daysCount) : 0;
   const categories = data?.categoryBreakdown || [];
 
   return (
@@ -115,7 +153,7 @@ export default function AnalyticsPage() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            mb: 4,
+            mb: 3,
             flexWrap: 'wrap',
             gap: 2,
           }}
@@ -129,68 +167,218 @@ export default function AnalyticsPage() {
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Box
-              className="glass-control-surface"
-              sx={{
-                borderRadius: 2.5,
-                p: 0.5,
-                display: 'flex',
-                gap: 0.5,
-              }}
-            >
-              {(['30D', '90D', '6M'] as const).map((tf) => {
-                const active = timeframe === tf;
-                return (
-                  <Button
-                    key={tf}
-                    size="small"
-                    onClick={() => setTimeframe(tf)}
-                    className={active ? "glass-emerald-active" : undefined}
-                    sx={{
-                      px: 1.75,
-                      py: 0.5,
-                      fontSize: '0.75rem',
-                      fontWeight: active ? 750 : 600,
-                      borderRadius: 2,
-                      minWidth: 'auto',
-                      color: active ? '#FFFFFF' : 'text.secondary',
-                      bgcolor: active ? (isLight ? '#1A1D1F' : 'rgba(16, 185, 129, 0.25)') : 'transparent',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        bgcolor: active ? undefined : alpha(theme.palette.text.primary, 0.05),
-                      },
-                    }}
-                  >
-                    {tf}
-                  </Button>
-                );
-              })}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<Download fontSize="small" />}
+            onClick={handleExportCSV}
+            className="glass-tertiary"
+            sx={{
+              color: 'text.primary',
+              borderRadius: 2.5,
+              fontWeight: 600,
+              textTransform: 'none',
+              py: 0.75,
+              px: 2,
+              '&:hover': {
+                borderColor: '#10B981',
+                bgcolor: alpha('#10B981', 0.08),
+              },
+            }}
+          >
+            Export CSV
+          </Button>
+        </Box>
+
+        {/* Filter Surface */}
+        <Card
+          className="glass-secondary glass-specular-top"
+          sx={{
+            borderRadius: 3.5,
+            p: { xs: 2, sm: 2.25 },
+            mb: 4,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', lg: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'stretch', lg: 'center' },
+              gap: 2,
+            }}
+          >
+            {/* Left Controls: Timeframe & View Mode */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+              {/* Timeframe Pills */}
+              <Box
+                className="glass-control-surface"
+                sx={{
+                  borderRadius: 2.5,
+                  p: 0.5,
+                  display: 'flex',
+                  gap: 0.5,
+                }}
+              >
+                {(['7D', '30D', '90D', '1Y', 'ALL'] as const).map((tf) => {
+                  const active = timeframe === tf;
+                  return (
+                    <Button
+                      key={tf}
+                      size="small"
+                      onClick={() => setTimeframe(tf)}
+                      className={active ? 'glass-emerald-active' : undefined}
+                      sx={{
+                        px: { xs: 1.25, sm: 1.75 },
+                        py: 0.5,
+                        fontSize: '0.75rem',
+                        fontWeight: active ? 750 : 600,
+                        borderRadius: 2,
+                        minWidth: 'auto',
+                        color: active ? '#FFFFFF' : 'text.secondary',
+                        bgcolor: active ? (isLight ? '#1A1D1F' : 'rgba(16, 185, 129, 0.25)') : 'transparent',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          bgcolor: active ? undefined : alpha(theme.palette.text.primary, 0.05),
+                        },
+                      }}
+                    >
+                      {tf}
+                    </Button>
+                  );
+                })}
+              </Box>
+
+              {/* View Type Toggle: Personal Share vs Total Amount */}
+              <Box
+                className="glass-control-surface"
+                sx={{
+                  borderRadius: 2.5,
+                  p: 0.5,
+                  display: 'flex',
+                  gap: 0.5,
+                }}
+              >
+                <Button
+                  size="small"
+                  onClick={() => setViewType('share')}
+                  startIcon={<PersonOutlined sx={{ fontSize: '0.9rem !important' }} />}
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: '0.75rem',
+                    fontWeight: viewType === 'share' ? 750 : 600,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    minWidth: 'auto',
+                    color: viewType === 'share' ? '#FFFFFF' : 'text.secondary',
+                    bgcolor: viewType === 'share' ? (isLight ? '#1A1D1F' : 'rgba(16, 185, 129, 0.25)') : 'transparent',
+                    '&:hover': {
+                      bgcolor: viewType === 'share' ? undefined : alpha(theme.palette.text.primary, 0.05),
+                    },
+                  }}
+                >
+                  My Share
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setViewType('total')}
+                  startIcon={<PaymentsOutlined sx={{ fontSize: '0.9rem !important' }} />}
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: '0.75rem',
+                    fontWeight: viewType === 'total' ? 750 : 600,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    minWidth: 'auto',
+                    color: viewType === 'total' ? '#FFFFFF' : 'text.secondary',
+                    bgcolor: viewType === 'total' ? (isLight ? '#1A1D1F' : 'rgba(16, 185, 129, 0.25)') : 'transparent',
+                    '&:hover': {
+                      bgcolor: viewType === 'total' ? undefined : alpha(theme.palette.text.primary, 0.05),
+                    },
+                  }}
+                >
+                  Total Volume
+                </Button>
+              </Box>
             </Box>
 
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<Download fontSize="small" />}
-              onClick={handleExportCSV}
-              className="glass-tertiary"
-              sx={{
-                color: 'text.primary',
-                borderRadius: 2.5,
-                fontWeight: 600,
-                textTransform: 'none',
-                py: 0.75,
-                px: 2,
-                '&:hover': {
-                  borderColor: '#10B981',
-                  bgcolor: alpha('#10B981', 0.08),
-                },
-              }}
-            >
-              Export CSV
-            </Button>
+            {/* Right Controls: Group & Category Dropdowns */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
+                <InputLabel id="analytics-group-label" sx={{ fontSize: '0.8rem' }}>Group</InputLabel>
+                <Select
+                  labelId="analytics-group-label"
+                  value={groupId}
+                  label="Group"
+                  onChange={(e) => setGroupId(e.target.value)}
+                  sx={{
+                    borderRadius: 2.5,
+                    fontSize: '0.8rem',
+                    bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
+                  }}
+                >
+                  <MenuItem value="all">All Groups</MenuItem>
+                  {groups.map((g) => (
+                    <MenuItem key={g.id} value={g.id}>
+                      {g.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
+                <InputLabel id="analytics-category-label" sx={{ fontSize: '0.8rem' }}>Category</InputLabel>
+                <Select
+                  labelId="analytics-category-label"
+                  value={category}
+                  label="Category"
+                  onChange={(e) => setCategory(e.target.value)}
+                  sx={{
+                    borderRadius: 2.5,
+                    fontSize: '0.8rem',
+                    bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
+                  }}
+                >
+                  <MenuItem value="all">All Categories</MenuItem>
+                  <MenuItem value="FOOD">🍽️ Food & Dining</MenuItem>
+                  <MenuItem value="TRANSPORT">🚗 Transport</MenuItem>
+                  <MenuItem value="ENTERTAINMENT">🎬 Entertainment</MenuItem>
+                  <MenuItem value="SHOPPING">🛍️ Shopping</MenuItem>
+                  <MenuItem value="UTILITIES">⚡ Utilities</MenuItem>
+                  <MenuItem value="RENT">🏠 Rent & Housing</MenuItem>
+                  <MenuItem value="TRAVEL">✈️ Travel & Trips</MenuItem>
+                  <MenuItem value="GROCERIES">🛒 Groceries</MenuItem>
+                  <MenuItem value="GENERAL">📦 General</MenuItem>
+                  <MenuItem value="OTHER">🏷️ Other</MenuItem>
+                </Select>
+              </FormControl>
+
+              {(groupId !== 'all' || category !== 'all' || viewType !== 'share' || timeframe !== '30D') && (
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setTimeframe('30D');
+                    setGroupId('all');
+                    setCategory('all');
+                    setViewType('share');
+                  }}
+                  startIcon={<RestartAlt fontSize="small" />}
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: '0.75rem',
+                    textTransform: 'none',
+                    borderRadius: 2,
+                    '&:hover': { color: '#EF4444' },
+                  }}
+                >
+                  Reset
+                </Button>
+              )}
+            </Box>
           </Box>
-        </Box>
+        </Card>
 
         {/* 4 Telemetry Metrics */}
         <Grid container spacing={2.5} sx={{ mb: 4 }}>
@@ -205,7 +393,7 @@ export default function AnalyticsPage() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box>
                   <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#34D399' : 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    30-Day Spending
+                    {timeframe === '7D' ? '7-Day' : timeframe === '90D' ? '90-Day' : timeframe === '1Y' ? '1-Year' : timeframe === 'ALL' ? 'All-Time' : '30-Day'} {viewType === 'total' ? 'Gross Spend' : 'Net Share'}
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.5 }}>
                     {loading ? <Skeleton width={100} /> : `₹${totalSpend.toLocaleString('en-IN')}`}
@@ -218,8 +406,7 @@ export default function AnalyticsPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.5 }}>
                 <Chip
                   size="small"
-                  icon={<ArrowUpward sx={{ '&&': { fontSize: 12, color: '#34D399' } }} />}
-                  label="12% vs last month"
+                  label={viewType === 'total' ? 'Total bill volume' : 'Your personal share'}
                   sx={{
                     bgcolor: 'rgba(16, 185, 129, 0.15)',
                     color: '#34D399',
@@ -333,7 +520,7 @@ export default function AnalyticsPage() {
                     Daily Spending Velocity
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    Cumulative spend curve across the past 30 days
+                    Cumulative spend curve ({viewType === 'total' ? 'gross total' : 'your share'}) across {timeframe === '7D' ? 'the past 7 days' : timeframe === '90D' ? 'the past 90 days' : timeframe === '1Y' ? 'the past year' : timeframe === 'ALL' ? 'all recorded history' : 'the past 30 days'}
                   </Typography>
                 </Box>
                 <Chip

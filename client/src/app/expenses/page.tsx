@@ -46,6 +46,7 @@ import {
 } from '@mui/material';
 import {
   Add,
+  Edit,
   FilterList,
   Delete,
   Receipt,
@@ -70,6 +71,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { expenseApi, groupApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 const CATEGORIES = [
   'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'SHOPPING', 'UTILITIES', 'RENT',
@@ -404,7 +406,9 @@ function ExpensesContent() {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return <CategoryCycleLoader message="Loading your expenses..." />;
+  }
 
   return (
     <AppLayout>
@@ -1067,7 +1071,27 @@ function ExpensesContent() {
                     '&:hover': { bgcolor: '#094A34' },
                   }}
                 >
-                  Settle Your Share
+                  Settle
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<Edit fontSize="small" />}
+                  onClick={() => {
+                    const editUrl = selectedExpense.groupId
+                      ? `/expenses/new?edit=${selectedExpense.id}&groupId=${selectedExpense.groupId}`
+                      : `/expenses/new?edit=${selectedExpense.id}`;
+                    router.push(editUrl);
+                  }}
+                  sx={{
+                    borderRadius: 2.5,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    color: 'text.primary',
+                    borderColor: 'rgba(255,255,255,0.2)',
+                    '&:hover': { borderColor: '#10B981', color: '#10B981' },
+                  }}
+                >
+                  Edit
                 </Button>
                 <Button
                   variant="outlined"

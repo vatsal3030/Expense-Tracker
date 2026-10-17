@@ -31,7 +31,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fairshare_user_profile');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return null;
+  });
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,6 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json();
         if (data.success) {
           setProfile(data.data);
+          try {
+            localStorage.setItem('fairshare_user_profile', JSON.stringify(data.data));
+          } catch {}
         }
       }
     } catch (error) {
@@ -55,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session quickly from local storage
     const initAuth = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -64,8 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userRef.current = currentSession?.user ?? null;
         setUser(currentSession?.user ?? null);
 
+        // Fetch fresh profile in the background without blocking UI initialization
         if (currentSession?.access_token) {
-          await fetchProfile(currentSession.access_token);
+          fetchProfile(currentSession.access_token);
         }
       } catch (error) {
         console.error('Auth init error:', error);
@@ -89,6 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
           setProfile(null);
           setSession(null);
+          try {
+            localStorage.removeItem('fairshare_user_profile');
+          } catch {}
           return;
         }
 

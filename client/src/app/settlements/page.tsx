@@ -37,6 +37,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { settlementApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 export default function SettlementsPage() {
   const theme = useTheme();
@@ -148,7 +149,9 @@ export default function SettlementsPage() {
     REJECTED: { color: 'error', label: 'Rejected' },
   };
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return <CategoryCycleLoader message="Loading settlements & debt balances..." />;
+  }
 
   return (
     <AppLayout>

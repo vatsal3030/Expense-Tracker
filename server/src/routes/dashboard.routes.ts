@@ -220,7 +220,14 @@ dashboardRouter.get('/spending-trend', async (req: AuthenticatedRequest, res: Re
 dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
-    const cacheKey = `dashboard:analytics:${userId}`;
+    const { timeframe = '30D', groupId, category, viewType = 'share' } = req.query as {
+      timeframe?: string;
+      groupId?: string;
+      category?: string;
+      viewType?: string;
+    };
+
+    const cacheKey = `dashboard:analytics:${userId}:${timeframe}:${groupId || 'all'}:${category || 'all'}:${viewType}`;
     const cached = await appCache.get(cacheKey);
     if (cached) {
       res.json({ success: true, data: cached });
@@ -228,53 +235,67 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
     }
 
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    let daysCount = 30;
+    if (timeframe === '7D') daysCount = 7;
+    else if (timeframe === '30D') daysCount = 30;
+    else if (timeframe === '90D') daysCount = 90;
+    else if (timeframe === '1Y') daysCount = 365;
+    else if (timeframe === 'ALL') daysCount = 1095;
 
-    // 1. Fetch expenses for the last 60 days to calculate daily curves
+    const startDate = new Date(now.getTime() - daysCount * 24 * 60 * 60 * 1000);
+    const windowStart = new Date(now.getTime() - daysCount * 2 * 24 * 60 * 60 * 1000);
+
+    const where: any = {
+      isDeleted: false,
+      date: { gte: windowStart, lte: now },
+      OR: [
+        { paidById: userId },
+        { shares: { some: { userId } } },
+      ],
+    };
+
+    if (groupId && typeof groupId === 'string' && groupId.trim() !== '' && groupId !== 'all') {
+      where.groupId = groupId.trim();
+    }
+    if (category && typeof category === 'string' && category.trim() !== '' && category !== 'all') {
+      where.category = category.trim();
+    }
+
+    // 1. Fetch expenses for the calculated period
     const recentExpenses = await prisma.expense.findMany({
-      where: {
-        isDeleted: false,
-        date: { gte: sixtyDaysAgo, lte: now },
-        OR: [
-          { paidById: userId },
-          { shares: { some: { userId } } },
-        ],
-      },
+      where,
       include: {
         shares: true,
       },
       orderBy: { date: 'asc' },
     });
 
-    // 2. Generate daily timeline for the last 30 days
+    // 2. Generate daily timeline
     const dailySpendMap: Record<string, number> = {};
-    const prevDailySpendMap: Record<string, number> = {};
     const dayOfWeekSpend: Record<string, number> = {
       Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0,
     };
-
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     recentExpenses.forEach((exp) => {
       const expDate = new Date(exp.date);
       const userShare = exp.shares.find((s) => s.userId === userId);
-      const amount = userShare ? Number(userShare.amount) : Number(exp.amount);
+      const amount = viewType === 'total'
+        ? Number(exp.amount)
+        : (userShare ? Number(userShare.amount) : Number(exp.amount));
 
-      if (expDate >= thirtyDaysAgo) {
+      if (expDate >= startDate) {
         const dateKey = expDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         dailySpendMap[dateKey] = (dailySpendMap[dateKey] || 0) + amount;
         const dayName = days[expDate.getDay()];
         dayOfWeekSpend[dayName] = (dayOfWeekSpend[dayName] || 0) + amount;
-      } else {
-        const dateKey = expDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        prevDailySpendMap[dateKey] = (prevDailySpendMap[dateKey] || 0) + amount;
       }
     });
 
+    const step = daysCount > 90 ? Math.ceil(daysCount / 30) : 1;
     const dailyTrends = [];
     let cumulativeCurrent = 0;
-    for (let i = 29; i >= 0; i--) {
+    for (let i = daysCount - 1; i >= 0; i -= step) {
       const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       const currentDaySpend = dailySpendMap[key] || 0;
@@ -287,21 +308,23 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
       });
     }
 
-    // 3. Category breakdown from recentExpenses (avoids Prisma groupBy relation filter limitation)
+    // 3. Category breakdown
     const categoryMap: Record<string, { amount: number; count: number }> = {};
     recentExpenses
-      .filter((e) => new Date(e.date) >= thirtyDaysAgo)
+      .filter((e) => new Date(e.date) >= startDate)
       .forEach((e) => {
         const cat = e.category || 'OTHER';
         const userShare = e.shares?.find((s: any) => s.userId === userId);
-        const amt = userShare ? Number(userShare.amount) : Number(e.amount);
+        const amt = viewType === 'total'
+          ? Number(e.amount)
+          : (userShare ? Number(userShare.amount) : Number(e.amount));
         if (!categoryMap[cat]) categoryMap[cat] = { amount: 0, count: 0 };
         categoryMap[cat].amount += amt;
         categoryMap[cat].count += 1;
       });
 
-    const categoryAggregates = Object.entries(categoryMap).map(([category, data]) => ({
-      category,
+    const categoryAggregates = Object.entries(categoryMap).map(([cat, data]) => ({
+      category: cat,
       _sum: { amount: data.amount },
       _count: data.count,
     }));
@@ -410,6 +433,10 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
 
     const analyticsData = {
       total30Days: totalCategorySpend,
+      totalSpend: totalCategorySpend,
+      timeframe,
+      daysCount,
+      viewType,
       dailyTrends,
       categoryBreakdown: categoriesWithPercent,
       cashflow,
@@ -474,7 +501,7 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
       },
     });
 
-    // 6. Large expense paid
+    // 6. Large expenses fronted (>= ₹10,000)
     const largeExpensePaid = await prisma.expense.count({
       where: {
         paidById: userId,
@@ -483,17 +510,72 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
       },
     });
 
+    // 7. Calculate REAL consecutive active streak days based on user's activities & expenses
+    const [recentUserActivities, recentUserExpenses] = await Promise.all([
+      prisma.activity.findMany({
+        where: { userId },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      }),
+      prisma.expense.findMany({
+        where: {
+          OR: [{ paidById: userId }, { createdById: userId }],
+          isDeleted: false,
+        },
+        select: { createdAt: true, date: true },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      }),
+    ]);
+
+    const activeDatesSet = new Set<string>();
+    recentUserActivities.forEach((a) => {
+      activeDatesSet.add(new Date(a.createdAt).toISOString().split('T')[0]);
+    });
+    recentUserExpenses.forEach((e) => {
+      activeDatesSet.add(new Date(e.createdAt).toISOString().split('T')[0]);
+      if (e.date) activeDatesSet.add(new Date(e.date).toISOString().split('T')[0]);
+    });
+
+    let streakDays = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    const hasToday = activeDatesSet.has(todayStr);
+    const hasYesterday = activeDatesSet.has(yesterdayStr);
+
+    if (hasToday || hasYesterday) {
+      let checkDate = hasToday ? new Date(today) : new Date(yesterday);
+      while (true) {
+        const checkStr = checkDate.toISOString().split('T')[0];
+        if (activeDatesSet.has(checkStr)) {
+          streakDays++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+    } else {
+      streakDays = 0;
+    }
+
     // Calculate FairScore (Max 1000)
     // - Settlement Discipline: 300 pts (increases with confirmed settlements, penalizes unpaid)
     // - Activity & Transparency: 300 pts (expenses created, details attached)
     // - Collaboration: 200 pts (groups and trips)
-    // - Consistency Streak: 200 pts
+    // - Consistency Streak: 200 pts (dynamically scored by consecutive days)
     let settlementScore = Math.min(300, 150 + confirmedSettlements * 30 - unpaidShares * 25);
     settlementScore = Math.max(50, settlementScore);
 
     const transparencyScore = Math.min(300, 120 + expensesCreatedCount * 25);
     const collaborationScore = Math.min(200, 80 + groupsCount * 30 + tripGroupsCount * 40);
-    const streakScore = 180; // active 14-day streak baseline
+    const streakScore = Math.min(200, Math.max(25, streakDays * 15 + (activeDatesSet.size > 0 ? 30 : 0)));
 
     const fairScore = Math.min(1000, Math.max(300, settlementScore + transparencyScore + collaborationScore + streakScore));
 
@@ -615,7 +697,7 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
         tier,
         isCurrentUser: true,
         avatarUrl: currentUser?.avatarUrl || null,
-        streak: 14,
+        streak: streakDays,
       },
       ...friends.map((f, idx) => ({
         rank: idx + 2,
@@ -624,7 +706,7 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
         tier: idx === 0 ? 'Platinum' : 'Gold',
         isCurrentUser: false,
         avatarUrl: f.avatarUrl,
-        streak: Math.max(3, 12 - idx * 3),
+        streak: Math.max(1, Math.min(streakDays + (2 - idx), 25)),
       })),
     ].sort((a, b) => b.score - a.score).map((item, index) => ({
       ...item,
@@ -635,7 +717,7 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
       fairScore,
       tier,
       tierColor,
-      streakDays: 14,
+      streakDays,
       scoreBreakdown: {
         settlementDiscipline: settlementScore,
         transparency: transparencyScore,

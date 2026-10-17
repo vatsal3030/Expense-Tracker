@@ -43,6 +43,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { notificationApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 export default function NotificationsPage() {
   const theme = useTheme();
@@ -91,51 +92,71 @@ export default function NotificationsPage() {
   };
 
   const handleMarkAsRead = async (id: string) => {
+    const prevNotifications = [...notifications];
+    const prevCount = unreadCount;
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
     try {
       await notificationApi.markRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Failed to mark as read:', err);
+      setNotifications(prevNotifications);
+      setUnreadCount(prevCount);
     }
   };
 
   const handleMarkAllRead = async () => {
+    const prevNotifications = [...notifications];
+    const prevCount = unreadCount;
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnreadCount(0);
+    setToastSeverity('success');
+    setToastMessage('All notifications marked as read.');
+
     try {
       await notificationApi.markAllRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      setUnreadCount(0);
-      setToastSeverity('success');
-      setToastMessage('All notifications marked as read.');
     } catch (err) {
       console.error('Failed to mark all read:', err);
+      setNotifications(prevNotifications);
+      setUnreadCount(prevCount);
     }
   };
 
   const handleDeleteItem = async (id: string, wasUnread: boolean) => {
+    const prevNotifications = [...notifications];
+    const prevCount = unreadCount;
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (wasUnread) setUnreadCount((prev) => Math.max(0, prev - 1));
+    setToastSeverity('info');
+    setToastMessage('Notification removed.');
+
     try {
       await notificationApi.delete(id);
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-      if (wasUnread) setUnreadCount((prev) => Math.max(0, prev - 1));
-      setToastSeverity('info');
-      setToastMessage('Notification removed.');
     } catch (err) {
       console.error('Failed to delete notification:', err);
+      setNotifications(prevNotifications);
+      setUnreadCount(prevCount);
     }
   };
 
   const handleClearAll = async () => {
+    const prevNotifications = [...notifications];
+    const prevCount = unreadCount;
+    setNotifications([]);
+    setUnreadCount(0);
+    setClearDialogOpen(false);
+    setToastSeverity('info');
+    setToastMessage('All notifications cleared.');
+
     try {
       await notificationApi.clear();
-      setNotifications([]);
-      setUnreadCount(0);
-      setClearDialogOpen(false);
-      setToastSeverity('info');
-      setToastMessage('All notifications cleared.');
     } catch (err) {
       console.error('Failed to clear notifications:', err);
+      setNotifications(prevNotifications);
+      setUnreadCount(prevCount);
     }
   };
 
@@ -194,7 +215,9 @@ export default function NotificationsPage() {
     }
   };
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return <CategoryCycleLoader message="Loading notifications..." />;
+  }
 
   return (
     <AppLayout>

@@ -47,6 +47,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { dashboardApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import CoinSplitLoader from '@/components/common/CoinSplitLoader';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 import Link from 'next/link';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -148,7 +149,9 @@ export default function DashboardPage() {
     }).format(amount);
   };
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return <CategoryCycleLoader message="Loading your financial overview..." />;
+  }
 
   const totalSpent = data?.categoryBreakdown?.reduce((acc, c) => acc + c.amount, 0) || 1;
 
@@ -209,7 +212,7 @@ export default function DashboardPage() {
               variant="contained"
               size="small"
               component={Link}
-              href="/expenses"
+              href="/expenses/new"
               prefetch={true}
               startIcon={<AddIcon fontSize="small" />}
               sx={{
