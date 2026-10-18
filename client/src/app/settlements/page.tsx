@@ -149,7 +149,7 @@ export default function SettlementsPage() {
     REJECTED: { color: 'error', label: 'Rejected' },
   };
 
-  if (authLoading) {
+  if (authLoading && !profile) {
     return <CategoryCycleLoader message="Loading settlements & debt balances..." />;
   }
 

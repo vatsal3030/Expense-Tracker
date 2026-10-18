@@ -29,7 +29,7 @@ export default function BudgetsPage() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -108,7 +108,7 @@ export default function BudgetsPage() {
     return theme.palette.success.main;
   };
 
-  if (authLoading) {
+  if (authLoading && !profile) {
     return <CategoryCycleLoader message="Loading budget telemetry..." />;
   }
 

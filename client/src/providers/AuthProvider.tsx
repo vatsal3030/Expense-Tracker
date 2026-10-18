@@ -25,6 +25,8 @@ interface AuthContextType {
   signInWithGithub: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -142,11 +144,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
     try {
+      const emailRedirectTo = typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/callback`
+        : undefined;
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { full_name: name },
+          emailRedirectTo,
         },
       });
 
@@ -243,6 +249,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPasswordForEmail = async (email: string) => {
+    if (!isSupabaseConfigured()) {
+      return {
+        error:
+          'Supabase API key is missing. Please configure client/.env.local.',
+      };
+    }
+    try {
+      const redirectTo = typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/callback?type=recovery`
+        : undefined;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+      if (error) return { error: error.message };
+      return { error: null };
+    } catch (err: any) {
+      return { error: err?.message || 'Failed to send password reset email.' };
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    if (!isSupabaseConfigured()) {
+      return {
+        error:
+          'Supabase API key is missing. Please configure client/.env.local.',
+      };
+    }
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) return { error: error.message };
+      return { error: null };
+    } catch (err: any) {
+      return { error: err?.message || 'Failed to update password.' };
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -269,6 +312,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithGithub,
         signOut,
         refreshProfile,
+        resetPasswordForEmail,
+        updatePassword,
       }}
     >
       {children}

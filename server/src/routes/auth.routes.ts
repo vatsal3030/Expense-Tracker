@@ -4,6 +4,7 @@ import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import supabaseAdmin from '../lib/supabase';
+import appCache from '../lib/cache';
 
 export const authRouter = Router();
 
@@ -155,9 +156,16 @@ authRouter.post('/refresh', async (req: AuthenticatedRequest, res: Response): Pr
   }
 });
 
-// GET /api/auth/me — Get current user info
+// GET /api/auth/me — Get current user info (cached for 10 minutes)
 authRouter.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    const cacheKey = `user:profile:${req.user!.id}`;
+    const cached = await appCache.get(cacheKey);
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: req.user!.id },
       select: {
@@ -177,6 +185,7 @@ authRouter.get('/me', authenticate, async (req: AuthenticatedRequest, res: Respo
       return;
     }
 
+    appCache.set(cacheKey, user, 10 * 60 * 1000);
     res.json({ success: true, data: user });
   } catch (error: any) {
     console.error('Get me error:', error);
@@ -192,6 +201,11 @@ authRouter.post('/logout', authenticate, async (req: AuthenticatedRequest, res: 
 
     if (token) {
       await supabaseAdmin.auth.admin.signOut(token);
+    }
+
+    if (req.user?.id) {
+      appCache.delete(`user:profile:${req.user.id}`);
+      appCache.delete(`user:sub:${req.user.supabaseId}`);
     }
 
     res.json({ success: true, message: 'Signed out successfully.' });

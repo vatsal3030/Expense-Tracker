@@ -17,6 +17,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { adminApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 export default function AdminPage() {
   const theme = useTheme();
@@ -133,7 +134,9 @@ export default function AdminPage() {
     return `${d > 0 ? `${d}d ` : ''}${h}h ${m}m`;
   };
 
-  if (authLoading) return null;
+  if (authLoading && !profile) {
+    return <CategoryCycleLoader fullPage={true} message="Verifying administrative credentials..." />;
+  }
 
   if (profile && !(profile as any).isAdmin) {
     return (

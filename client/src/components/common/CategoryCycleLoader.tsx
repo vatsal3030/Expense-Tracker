@@ -114,7 +114,7 @@ interface CategoryCycleLoaderProps {
 }
 
 export default function CategoryCycleLoader({
-  fullPage = false,
+  fullPage = true,
   message,
   size = 'md',
 }: CategoryCycleLoaderProps) {
@@ -320,16 +320,22 @@ export default function CategoryCycleLoader({
     return (
       <Box
         sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100dvh',
           minHeight: '100dvh',
-          width: '100%',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           bgcolor: 'background.default',
-          position: 'relative',
-          overflow: 'visible',
           zIndex: 9999,
           p: 2,
+          overflow: 'hidden',
         }}
       >
         {content}
@@ -337,5 +343,19 @@ export default function CategoryCycleLoader({
     );
   }
 
-  return content;
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        minHeight: '50vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2,
+      }}
+    >
+      {content}
+    </Box>
+  );
 }

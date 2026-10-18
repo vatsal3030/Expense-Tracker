@@ -393,7 +393,7 @@ export default function FriendsPage() {
     );
   }, [friends, searchFilter]);
 
-  if (authLoading) {
+  if (authLoading && !profile) {
     return <CategoryCycleLoader message="Loading friends & connections..." />;
   }
 

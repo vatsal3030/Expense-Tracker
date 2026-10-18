@@ -112,6 +112,9 @@ model Expense {
   paidBy      User              @relation("PaidByUser", fields: [paidById], references: [id])
   recurring   RecurringExpense? @relation(fields: [recurringId], references: [id])
 
+  @@index([groupId, isDeleted, date])
+  @@index([paidById, isDeleted, date])
+  @@index([createdById])
   @@index([groupId])
   @@index([paidById])
   @@index([date])
@@ -206,6 +209,7 @@ model Notification {
   createdAt DateTime         @default(now()) @map("created_at")
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, createdAt])
   @@index([userId, isRead])
   @@map("notifications")
 }
@@ -223,6 +227,7 @@ model Activity {
   group     Group?       @relation(fields: [groupId], references: [id])
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, createdAt])
   @@index([userId])
   @@index([groupId])
   @@index([createdAt])

@@ -92,21 +92,47 @@ function ExpensesContent() {
   const isLight = theme.palette.mode === 'light';
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category') || '';
+  const initialGroup = searchParams.get('groupId') || '';
+  const initialPage = parseInt(searchParams.get('page') || '1') || 1;
+  const initialSearch = searchParams.get('search') || '';
+
+  const [expenses, setExpenses] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fairshare_cached_expenses');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
   // Search & Filtering State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [filterGroup, setFilterGroup] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [filterCategory, setFilterCategory] = useState(initialCategory);
+  const [filterGroup, setFilterGroup] = useState(initialGroup);
   const [filterSplitType, setFilterSplitType] = useState('');
   const [filterDatePreset, setFilterDatePreset] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [sortBy, setSortBy] = useState('date_desc');
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
+
+  // Sync state changes with URL query string
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', String(page));
+    if (filterCategory) params.set('category', filterCategory);
+    if (filterGroup) params.set('groupId', filterGroup);
+    if (searchQuery.trim()) params.set('search', searchQuery.trim());
+    const queryStr = params.toString();
+    const newUrl = queryStr ? `/expenses?${queryStr}` : '/expenses';
+    window.history.replaceState(null, '', newUrl);
+  }, [page, filterCategory, filterGroup, searchQuery]);
 
   // Modals & Drawers
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -138,7 +164,6 @@ function ExpensesContent() {
   }, []);
 
   const hasLoadedExpensesRef = React.useRef(false);
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (searchParams.get('new') === 'true') {
@@ -188,6 +213,11 @@ function ExpensesContent() {
       const res = await expenseApi.list(params);
       if (res.data?.data) {
         setExpenses(res.data.data);
+        if (typeof window !== 'undefined' && page === 1 && !filterCategory && !filterGroup && !searchQuery) {
+          try {
+            localStorage.setItem('fairshare_cached_expenses', JSON.stringify(res.data.data));
+          } catch {}
+        }
         setTotalPages(res.data.pagination?.totalPages || 1);
         setTotalCount(res.data.pagination?.total || res.data.data.length);
       }
@@ -406,7 +436,7 @@ function ExpensesContent() {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
-  if (authLoading) {
+  if (authLoading && !profile) {
     return <CategoryCycleLoader message="Loading your expenses..." />;
   }
 

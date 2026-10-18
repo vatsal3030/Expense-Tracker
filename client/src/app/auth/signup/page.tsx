@@ -21,7 +21,7 @@ import {
   Visibility,
   VisibilityOff,
   Google as GoogleIcon,
-  GitHub as GitHubIcon,
+  MarkEmailRead,
 } from '@mui/icons-material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
@@ -32,7 +32,7 @@ export default function SignupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const refCode = searchParams?.get('ref');
-  const { signUp, signInWithGoogle, signInWithGithub, user, loading: authLoading } = useAuth();
+  const { signUp, signInWithGoogle, user, loading: authLoading } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -41,7 +41,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (refCode) {
@@ -64,7 +64,6 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
@@ -82,7 +81,7 @@ export default function SignupPage() {
     if (result.error) {
       setError(result.error);
     } else {
-      setSuccess('Account created! Check your email to verify, or sign in now.');
+      setSuccess(true);
     }
     setLoading(false);
   };
@@ -90,12 +89,6 @@ export default function SignupPage() {
   const handleGoogleSignup = async () => {
     setError('');
     const res = await signInWithGoogle();
-    if (res.error) setError(res.error);
-  };
-
-  const handleGithubSignup = async () => {
-    setError('');
-    const res = await signInWithGithub();
     if (res.error) setError(res.error);
   };
 
@@ -143,71 +136,96 @@ export default function SignupPage() {
           <Box sx={{ textAlign: 'center', mb: 1.5 }}>
             <BrandLogo size="sm" className="justify-center mb-1" />
             <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', fontSize: '1.25rem' }}>
-              Create your account
+              {success ? 'Check your email' : 'Create your account'}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-              Start splitting expenses fairly
+              {success ? 'We sent you an activation link' : 'Start splitting expenses fairly'}
             </Typography>
           </Box>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 1.5, borderRadius: 2, py: 0.25, fontSize: '0.78rem' }} onClose={() => setError('')}>
-              {error}
-            </Alert>
-          )}
-          {success && (
-            <Alert severity="success" sx={{ mb: 1.5, borderRadius: 2, py: 0.25, fontSize: '0.78rem' }}>
-              {success}
-            </Alert>
-          )}
+          {success ? (
+            <Box sx={{ textAlign: 'center', py: 2 }}>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  p: 2,
+                  borderRadius: '50%',
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main,
+                  mb: 2,
+                }}
+              >
+                <MarkEmailRead sx={{ fontSize: 48 }} />
+              </Box>
+              <Typography variant="body2" sx={{ mb: 1.5, color: 'text.primary' }}>
+                A confirmation link was sent to <strong>{email}</strong>.
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 3, lineHeight: 1.6 }}>
+                Click the verification link in that email to activate your account. Be sure to check your spam or junk folder if you don&apos;t see it within a minute.
+              </Typography>
+              <Stack spacing={1.5}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={() => router.push('/auth/login')}
+                  sx={{
+                    py: 1,
+                    borderRadius: 2.5,
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                    bgcolor: '#059669',
+                    color: '#ffffff',
+                    '&:hover': { bgcolor: '#047857' },
+                  }}
+                >
+                  Go to Sign In
+                </Button>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => setSuccess(false)}
+                  sx={{ fontSize: '0.78rem', color: 'text.secondary' }}
+                >
+                  Didn&apos;t receive it? Try another email
+                </Button>
+              </Stack>
+            </Box>
+          ) : (
+            <>
+              {error && (
+                <Alert severity="error" sx={{ mb: 1.5, borderRadius: 2, py: 0.25, fontSize: '0.78rem' }} onClose={() => setError('')}>
+                  {error}
+                </Alert>
+              )}
 
-          {/* Social OAuth in 2-column row */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1.5 }}>
-            <Button
-              fullWidth
-              size="small"
-              variant="outlined"
-              startIcon={<GoogleIcon sx={{ fontSize: '18px !important' }} />}
-              onClick={handleGoogleSignup}
-              sx={{
-                py: 0.7,
-                borderRadius: 2,
-                borderColor: theme.palette.divider,
-                color: theme.palette.text.primary,
-                fontWeight: 600,
-                fontSize: '0.78rem',
-                textTransform: 'none',
-                '&:hover': { borderColor: theme.palette.primary.main },
-              }}
-            >
-              Google
-            </Button>
-            <Button
-              fullWidth
-              size="small"
-              variant="outlined"
-              startIcon={<GitHubIcon sx={{ fontSize: '18px !important' }} />}
-              onClick={handleGithubSignup}
-              sx={{
-                py: 0.7,
-                borderRadius: 2,
-                borderColor: theme.palette.divider,
-                color: theme.palette.text.primary,
-                fontWeight: 600,
-                fontSize: '0.78rem',
-                textTransform: 'none',
-                '&:hover': { borderColor: theme.palette.text.primary },
-              }}
-            >
-              GitHub
-            </Button>
-          </Box>
+              {/* Social OAuth */}
+              <Box sx={{ mb: 1.5 }}>
+                <Button
+                  fullWidth
+                  size="small"
+                  variant="outlined"
+                  startIcon={<GoogleIcon sx={{ fontSize: '18px !important' }} />}
+                  onClick={handleGoogleSignup}
+                  sx={{
+                    py: 0.8,
+                    borderRadius: 2.5,
+                    borderColor: theme.palette.divider,
+                    color: theme.palette.text.primary,
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    textTransform: 'none',
+                    '&:hover': { borderColor: theme.palette.primary.main },
+                  }}
+                >
+                  Continue with Google
+                </Button>
+              </Box>
 
-          <Divider sx={{ my: 1.2 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ px: 1, fontSize: '0.7rem' }}>
-              OR WITH EMAIL
-            </Typography>
-          </Divider>
+              <Divider sx={{ my: 1.2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ px: 1, fontSize: '0.7rem' }}>
+                  OR WITH EMAIL
+                </Typography>
+              </Divider>
 
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={1.2}>
@@ -299,6 +317,8 @@ export default function SignupPage() {
               Sign in
             </Typography>
           </Typography>
+            </>
+          )}
         </Paper>
       </Container>
     </Box>

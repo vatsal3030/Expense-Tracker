@@ -67,9 +67,17 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function AnalyticsPage() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
-  const { session, loading: authLoading } = useAuth();
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { session, profile, loading: authLoading } = useAuth();
+  const [data, setData] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fairshare_cached_analytics');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(!data);
   const [timeframe, setTimeframe] = useState<'7D' | '30D' | '90D' | '1Y' | 'ALL'>('30D');
   const [groupId, setGroupId] = useState<string>('all');
   const [category, setCategory] = useState<string>('all');
@@ -108,8 +116,13 @@ export default function AnalyticsPage() {
           }
         );
         const json = await res.json();
-        if (json.success) {
+        if (json.success && json.data) {
           setData(json.data);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('fairshare_cached_analytics', JSON.stringify(json.data));
+            } catch {}
+          }
         }
       } catch (err) {
         console.error('Failed to load analytics:', err);
@@ -135,7 +148,7 @@ export default function AnalyticsPage() {
     a.click();
   };
 
-  if (authLoading) {
+  if (authLoading && !profile) {
     return <CategoryCycleLoader message="Loading financial telemetry..." />;
   }
 

@@ -21,7 +21,6 @@ import {
   Visibility,
   VisibilityOff,
   Google as GoogleIcon,
-  GitHub as GitHubIcon,
 } from '@mui/icons-material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
@@ -33,7 +32,9 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTarget = searchParams.get('redirect') || '/dashboard';
-  const { signIn, signInWithGoogle, signInWithGithub, user, loading: authLoading } = useAuth();
+  const isVerified = searchParams.get('verified') === 'true';
+  const isReset = searchParams.get('reset') === 'true';
+  const { signIn, signInWithGoogle, user, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,11 +76,6 @@ function LoginForm() {
     if (error) setError(error);
   };
 
-  const handleGithubLogin = async () => {
-    const { error } = await signInWithGithub();
-    if (error) setError(error);
-  };
-
   return (
     <Box
       sx={{
@@ -118,8 +114,20 @@ function LoginForm() {
             </Typography>
           </Box>
 
+          {isVerified && (
+            <Alert severity="success" sx={{ mb: 1.5, py: 0.5, px: 1.5, borderRadius: 2, fontSize: '0.8rem' }}>
+              Email verified successfully! You can now sign in.
+            </Alert>
+          )}
+
+          {isReset && (
+            <Alert severity="success" sx={{ mb: 1.5, py: 0.5, px: 1.5, borderRadius: 2, fontSize: '0.8rem' }}>
+              Password updated successfully! Please sign in with your new password.
+            </Alert>
+          )}
+
           {/* Social Logins */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1.8 }}>
+          <Box sx={{ mb: 1.8 }}>
             <Button
               fullWidth
               variant="outlined"
@@ -127,11 +135,11 @@ function LoginForm() {
               startIcon={<GoogleIcon sx={{ fontSize: 17 }} />}
               onClick={handleGoogleLogin}
               sx={{
-                py: 0.8,
+                py: 0.9,
                 borderRadius: 2.5,
                 borderColor: theme.palette.divider,
                 color: 'text.primary',
-                fontSize: '0.78rem',
+                fontSize: '0.82rem',
                 fontWeight: 600,
                 textTransform: 'none',
                 '&:hover': {
@@ -140,29 +148,7 @@ function LoginForm() {
                 },
               }}
             >
-              Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              size="small"
-              startIcon={<GitHubIcon sx={{ fontSize: 17 }} />}
-              onClick={handleGithubLogin}
-              sx={{
-                py: 0.8,
-                borderRadius: 2.5,
-                borderColor: theme.palette.divider,
-                color: 'text.primary',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                textTransform: 'none',
-                '&:hover': {
-                  borderColor: theme.palette.primary.main,
-                  bgcolor: alpha(theme.palette.primary.main, 0.04),
-                },
-              }}
-            >
-              GitHub
+              Continue with Google
             </Button>
           </Box>
 
@@ -221,6 +207,16 @@ function LoginForm() {
                   },
                 }}
               />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -0.5 }}>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{ fontWeight: 600, cursor: 'pointer', fontSize: '0.76rem', '&:hover': { textDecoration: 'underline' } }}
+                  onClick={() => router.push('/auth/forgot-password')}
+                >
+                  Forgot password?
+                </Typography>
+              </Box>
               <Button
                 fullWidth
                 type="submit"

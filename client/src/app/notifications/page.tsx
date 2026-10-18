@@ -49,11 +49,19 @@ export default function NotificationsPage() {
   const theme = useTheme();
   const router = useRouter();
   const isLight = theme.palette.mode === 'light';
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fairshare_cached_notifications');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState(0); // 0 = All, 1 = Unread, 2 = Friends, 3 = Settlements, 4 = Groups/Expenses
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -215,7 +223,7 @@ export default function NotificationsPage() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading && !profile) {
     return <CategoryCycleLoader message="Loading notifications..." />;
   }
 

@@ -86,10 +86,26 @@ interface DashboardData {
 export default function DashboardPage() {
   const theme = useTheme();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [trendData, setTrendData] = useState<Array<{ month: string; amount: number }>>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, loading: authLoading } = useAuth();
+  const [data, setData] = useState<DashboardData | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fairshare_cached_summary');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return null;
+  });
+  const [trendData, setTrendData] = useState<Array<{ month: string; amount: number }>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fairshare_cached_trend');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(!data);
   const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'balances' | 'activity'>('overview');
   const [mounted, setMounted] = useState(false);
 
@@ -102,17 +118,17 @@ export default function DashboardPage() {
   const hasLoadedDashboardRef = React.useRef(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !profile) {
       router.push('/auth/login');
     }
-  }, [user?.id, authLoading, router]);
+  }, [user?.id, profile, authLoading, router]);
 
   useEffect(() => {
-    if (user?.id && !hasLoadedDashboardRef.current) {
+    if ((user?.id || profile?.id) && !hasLoadedDashboardRef.current) {
       hasLoadedDashboardRef.current = true;
       fetchDashboard();
     }
-  }, [user?.id]);
+  }, [user?.id, profile?.id]);
 
   const fetchDashboard = async (retry = true) => {
     try {
@@ -121,11 +137,21 @@ export default function DashboardPage() {
         dashboardApi.getSpendingTrend(),
       ]);
 
-      if (summaryRes.status === 'fulfilled') {
-        setData(summaryRes.value.data?.data);
+      if (summaryRes.status === 'fulfilled' && summaryRes.value.data?.data) {
+        setData(summaryRes.value.data.data);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('fairshare_cached_summary', JSON.stringify(summaryRes.value.data.data));
+          } catch {}
+        }
       }
-      if (trendRes.status === 'fulfilled') {
-        setTrendData(trendRes.value.data?.data || []);
+      if (trendRes.status === 'fulfilled' && trendRes.value.data?.data) {
+        setTrendData(trendRes.value.data.data || []);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('fairshare_cached_trend', JSON.stringify(trendRes.value.data.data));
+          } catch {}
+        }
       }
 
       if (retry && (summaryRes.status === 'rejected' || trendRes.status === 'rejected')) {
@@ -149,7 +175,7 @@ export default function DashboardPage() {
     }).format(amount);
   };
 
-  if (authLoading) {
+  if (authLoading && !profile) {
     return <CategoryCycleLoader message="Loading your financial overview..." />;
   }
 

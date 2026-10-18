@@ -15,7 +15,7 @@ import {
   Payment, Notifications as NotificationsIcon, Palette, Tune,
   QrCode2, Shield, Download, Visibility, VisibilityOff, Devices,
   DeleteForever, Cached, ArrowForward, HelpOutlined, Language,
-  CurrencyExchange, Calculate, Speed, VolumeUp, Email,
+  CurrencyExchange, Calculate, Speed, VolumeUp, Email, LockReset,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -46,7 +46,7 @@ export default function SettingsPage() {
   const theme = useTheme();
   const router = useRouter();
   const isLight = theme.palette.mode === 'light';
-  const { profile, signOut, refreshProfile, loading: authLoading, user } = useAuth();
+  const { profile, signOut, refreshProfile, loading: authLoading, user, updatePassword } = useAuth();
   const { mode, toggleTheme, setMode } = useThemeMode();
 
   const [activeTab, setActiveTab] = useState(0);
@@ -98,6 +98,35 @@ export default function SettingsPage() {
 
   // Danger Zone confirmation dialog
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+
+  // Change Password State
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [passwordToast, setPasswordToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      setPasswordToast({ type: 'error', message: 'Password must be at least 8 characters long.' });
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordToast({ type: 'error', message: 'Passwords do not match.' });
+      return;
+    }
+    setUpdatingPassword(true);
+    const { error } = await updatePassword(newPassword);
+    if (error) {
+      setPasswordToast({ type: 'error', message: error });
+    } else {
+      setPasswordToast({ type: 'success', message: 'Password updated successfully!' });
+      setNewPassword('');
+      setConfirmNewPassword('');
+    }
+    setUpdatingPassword(false);
+  };
 
   const hasLoadedProfileRef = useRef(false);
 
@@ -276,7 +305,7 @@ export default function SettingsPage() {
     router.push('/auth/login');
   };
 
-  if (authLoading) {
+  if (authLoading && !profile) {
     return <CategoryCycleLoader message="Loading settings & profile..." />;
   }
 
@@ -1297,6 +1326,86 @@ export default function SettingsPage() {
                       </ListItemSecondaryAction>
                     </ListItem>
                   </List>
+                </Card>
+
+                {/* Password & Security Card */}
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                    <LockReset sx={{ color: '#34D399' }} />
+                    <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
+                      Change Password
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                    Update your account password. Must be at least 8 characters long.
+                  </Typography>
+
+                  {passwordToast && (
+                    <Alert
+                      severity={passwordToast.type}
+                      onClose={() => setPasswordToast(null)}
+                      sx={{ mb: 2.5, borderRadius: 2.5 }}
+                    >
+                      {passwordToast.message}
+                    </Alert>
+                  )}
+
+                  <Box component="form" onSubmit={handleChangePassword}>
+                    <Stack spacing={2} sx={{ maxWidth: 440 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="New Password"
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() => setShowNewPassword(!showNewPassword)}
+                                  edge="end"
+                                  size="small"
+                                >
+                                  {showNewPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Confirm New Password"
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        error={confirmNewPassword.length > 0 && newPassword !== confirmNewPassword}
+                        helperText={confirmNewPassword.length > 0 && newPassword !== confirmNewPassword ? 'Passwords do not match' : ''}
+                      />
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={updatingPassword || !newPassword || !confirmNewPassword || newPassword !== confirmNewPassword}
+                        sx={{
+                          py: 0.9,
+                          borderRadius: 2.5,
+                          fontWeight: 700,
+                          bgcolor: '#059669',
+                          color: '#ffffff',
+                          width: 'fit-content',
+                          '&:hover': { bgcolor: '#047857' },
+                        }}
+                      >
+                        {updatingPassword ? <CircularProgress size={18} color="inherit" /> : 'Update Password'}
+                      </Button>
+                    </Stack>
+                  </Box>
                 </Card>
 
                 {/* Data Export Archive */}

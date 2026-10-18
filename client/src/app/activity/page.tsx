@@ -27,11 +27,13 @@ const ACTIVITY_TYPE_CONFIG: Record<string, { icon: React.ReactElement; color: st
   BUDGET_ALERT: { icon: <Savings fontSize="small" />, color: '#DC2626', category: 'BUDGETS' },
 };
 
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
+
 export default function ActivityPage() {
   const theme = useTheme();
   const router = useRouter();
   const isLight = theme.palette.mode === 'light';
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,7 +95,9 @@ export default function ActivityPage() {
     });
   }, [activities, selectedCategory]);
 
-  if (authLoading) return null;
+  if (authLoading && !profile) {
+    return <CategoryCycleLoader message="Loading activity feed..." />;
+  }
 
   return (
     <AppLayout>

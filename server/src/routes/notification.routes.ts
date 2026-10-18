@@ -1,32 +1,44 @@
 import { Router, Response } from 'express';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
+import appCache from '../lib/cache';
 
 export const notificationRouter = Router();
 notificationRouter.use(authenticate);
 
-// GET /api/notifications — Get all notifications for current user
+// GET /api/notifications — Get all notifications for current user (cached for 15s)
 notificationRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
     const limit = parseInt(req.query.limit as string) || 20;
+    const cacheKey = `notifications:${userId}:${limit}`;
 
-    const notifications = await prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
+    const cached = await appCache.get(cacheKey);
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
 
-    const unreadCount = await prisma.notification.count({
-      where: { userId, isRead: false },
-    });
+    const [notifications, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      }),
+      prisma.notification.count({
+        where: { userId, isRead: false },
+      }),
+    ]);
 
+    const data = {
+      notifications,
+      unreadCount,
+    };
+
+    appCache.set(cacheKey, data, 15000); // 15 seconds
     res.json({
       success: true,
-      data: {
-        notifications,
-        unreadCount,
-      },
+      data,
     });
   } catch (error: any) {
     console.error('Get notifications error:', error);
@@ -45,6 +57,7 @@ notificationRouter.patch('/:id/read', async (req: AuthenticatedRequest, res: Res
       data: { isRead: true },
     });
 
+    appCache.invalidatePrefix(`notifications:${userId}`);
     res.json({ success: true, message: 'Notification marked as read.' });
   } catch (error: any) {
     console.error('Mark read error:', error);
@@ -62,6 +75,7 @@ notificationRouter.post('/mark-all-read', async (req: AuthenticatedRequest, res:
       data: { isRead: true },
     });
 
+    appCache.invalidatePrefix(`notifications:${userId}`);
     res.json({ success: true, message: 'All notifications marked as read.' });
   } catch (error: any) {
     console.error('Mark all read error:', error);
@@ -78,6 +92,7 @@ notificationRouter.delete('/', async (req: AuthenticatedRequest, res: Response):
       where: { userId },
     });
 
+    appCache.invalidatePrefix(`notifications:${userId}`);
     res.json({ success: true, message: 'Notifications cleared.' });
   } catch (error: any) {
     console.error('Clear notifications error:', error);
@@ -95,6 +110,7 @@ notificationRouter.delete('/:id', async (req: AuthenticatedRequest, res: Respons
       where: { id, userId },
     });
 
+    appCache.invalidatePrefix(`notifications:${userId}`);
     res.json({ success: true, message: 'Notification deleted.' });
   } catch (error: any) {
     console.error('Delete notification error:', error);

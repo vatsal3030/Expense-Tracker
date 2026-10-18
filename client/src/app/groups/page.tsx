@@ -34,9 +34,17 @@ export default function GroupsPage() {
   const theme = useTheme();
   const router = useRouter();
   const isLight = theme.palette.mode === 'light';
-  const { user, loading: authLoading } = useAuth();
-  const [groups, setGroups] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, loading: authLoading } = useAuth();
+  const [groups, setGroups] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fairshare_cached_groups');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('ALL');
@@ -75,7 +83,14 @@ export default function GroupsPage() {
         setLoading(true);
       }
       const res = await groupApi.list();
-      setGroups(res.data?.data || []);
+      if (res.data?.data) {
+        setGroups(res.data.data);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('fairshare_cached_groups', JSON.stringify(res.data.data));
+          } catch {}
+        }
+      }
       hasLoadedGroupsRef.current = true;
     } catch (error) {
       console.error('Fetch groups error:', error);
@@ -181,7 +196,7 @@ export default function GroupsPage() {
     return groups.reduce((acc, g) => acc + (g._count?.expenses || 0), 0);
   }, [groups]);
 
-  if (authLoading) {
+  if (authLoading && !profile) {
     return <CategoryCycleLoader message="Loading your groups..." />;
   }
 

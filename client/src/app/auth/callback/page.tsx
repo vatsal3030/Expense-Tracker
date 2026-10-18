@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, CircularProgress, Typography } from '@mui/material';
 import { supabase } from '@/lib/supabase';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -11,8 +11,15 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        let isRecovery = false;
         if (typeof window !== 'undefined') {
           const searchParams = new URLSearchParams(window.location.search);
+          const hashParams = new URLSearchParams(window.location.hash.startsWith('#') ? window.location.hash.substring(1) : window.location.hash);
+          
+          if (searchParams.get('type') === 'recovery' || hashParams.get('type') === 'recovery') {
+            isRecovery = true;
+          }
+
           const code = searchParams.get('code');
           if (code) {
             await supabase.auth.exchangeCodeForSession(code);
@@ -27,10 +34,15 @@ export default function AuthCallbackPage() {
           return;
         }
 
+        if (isRecovery) {
+          router.push('/auth/reset-password');
+          return;
+        }
+
         if (session) {
-          router.push('/dashboard');
+          router.push('/dashboard?verified=true');
         } else {
-          router.push('/auth/login');
+          router.push('/auth/login?verified=true');
         }
       } catch (err) {
         console.error('Auth callback exception:', err);
@@ -42,18 +54,6 @@ export default function AuthCallbackPage() {
   }, [router]);
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 2,
-      }}
-    >
-      <CircularProgress size={40} />
-      <Typography color="text.secondary">Completing sign in...</Typography>
-    </Box>
+    <CategoryCycleLoader fullPage={true} message="Verifying authentication session..." />
   );
 }
