@@ -180,13 +180,14 @@ function GroupDetailContent() {
     }
   };
 
-  if (authLoading || (loading && !group)) {
-    return <CategoryCycleLoader message="Loading group details & split balance..." />;
-  }
-
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
+      {loading && !group ? (
+        <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+          <CategoryCycleLoader fullPage={false} message="Loading group details & split balance..." />
+        </Box>
+      ) : (
+        <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Top Header Row */}
         <Box
           sx={{
@@ -1109,7 +1110,8 @@ function GroupDetailContent() {
             {toastMessage}
           </Alert>
         </Snackbar>
-      </Box>
+        </Box>
+      )}
     </AppLayout>
   );
 }

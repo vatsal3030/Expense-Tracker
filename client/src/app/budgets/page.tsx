@@ -23,7 +23,6 @@ const CATEGORY_EMOJI: Record<string, string> = {
   TRAVEL: '✈️', GROCERIES: '🛒', SUBSCRIPTIONS: '📱', GENERAL: '📋',
 };
 
-import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 export default function BudgetsPage() {
   const theme = useTheme();
@@ -107,10 +106,6 @@ export default function BudgetsPage() {
     if (percentage >= 80) return theme.palette.warning.main;
     return theme.palette.success.main;
   };
-
-  if (authLoading && !profile) {
-    return <CategoryCycleLoader message="Loading budget telemetry..." />;
-  }
 
   return (
     <AppLayout>

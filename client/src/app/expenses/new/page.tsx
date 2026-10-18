@@ -603,13 +603,14 @@ function NewExpenseContent() {
     }
   };
 
-  if (authLoading || loadingInitial) {
-    return <CategoryCycleLoader message={isEditMode ? "Loading expense details..." : "Setting up expense..."} />;
-  }
-
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ maxWidth: 760, mx: 'auto', pb: { xs: 8, sm: 8 } }}>
+      {loadingInitial ? (
+        <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+          <CategoryCycleLoader fullPage={false} message={isEditMode ? "Loading expense details..." : "Setting up expense..."} />
+        </Box>
+      ) : (
+        <Box className="animate-fade-in" sx={{ maxWidth: 760, mx: 'auto', pb: { xs: 8, sm: 8 } }}>
         {/* Top Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -1307,7 +1308,8 @@ function NewExpenseContent() {
             </Stack>
           </Card>
         </form>
-      </Box>
+        </Box>
+      )}
     </AppLayout>
   );
 }

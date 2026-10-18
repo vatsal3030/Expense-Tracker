@@ -19,7 +19,6 @@ import { useAuth } from '@/providers/AuthProvider';
 import { friendApi, userApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import QrCodeModal from '@/components/common/QrCodeModal';
-import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 export default function FriendsPage() {
   const theme = useTheme();
@@ -393,9 +392,6 @@ export default function FriendsPage() {
     );
   }, [friends, searchFilter]);
 
-  if (authLoading && !profile) {
-    return <CategoryCycleLoader message="Loading friends & connections..." />;
-  }
 
   return (
     <AppLayout>

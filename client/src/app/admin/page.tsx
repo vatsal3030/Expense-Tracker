@@ -134,10 +134,6 @@ export default function AdminPage() {
     return `${d > 0 ? `${d}d ` : ''}${h}h ${m}m`;
   };
 
-  if (authLoading && !profile) {
-    return <CategoryCycleLoader fullPage={true} message="Verifying administrative credentials..." />;
-  }
-
   if (profile && !(profile as any).isAdmin) {
     return (
       <AppLayout>

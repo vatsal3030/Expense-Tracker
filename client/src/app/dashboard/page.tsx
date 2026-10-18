@@ -47,7 +47,6 @@ import { useAuth } from '@/providers/AuthProvider';
 import { dashboardApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import CoinSplitLoader from '@/components/common/CoinSplitLoader';
-import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 import Link from 'next/link';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -87,25 +86,9 @@ export default function DashboardPage() {
   const theme = useTheme();
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
-  const [data, setData] = useState<DashboardData | null>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('fairshare_cached_summary');
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return null;
-  });
-  const [trendData, setTrendData] = useState<Array<{ month: string; amount: number }>>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('fairshare_cached_trend');
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return [];
-  });
-  const [loading, setLoading] = useState(!data);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [trendData, setTrendData] = useState<Array<{ month: string; amount: number }>>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'balances' | 'activity'>('overview');
   const [mounted, setMounted] = useState(false);
 
@@ -113,6 +96,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true);
+    try {
+      const saved = localStorage.getItem('fairshare_cached_summary');
+      if (saved) {
+        setData(JSON.parse(saved));
+        setLoading(false);
+      }
+      const savedTrend = localStorage.getItem('fairshare_cached_trend');
+      if (savedTrend) setTrendData(JSON.parse(savedTrend));
+    } catch {}
   }, []);
 
   const hasLoadedDashboardRef = React.useRef(false);
@@ -175,9 +167,6 @@ export default function DashboardPage() {
     }).format(amount);
   };
 
-  if (authLoading && !profile) {
-    return <CategoryCycleLoader message="Loading your financial overview..." />;
-  }
 
   const totalSpent = data?.categoryBreakdown?.reduce((acc, c) => acc + c.amount, 0) || 1;
 

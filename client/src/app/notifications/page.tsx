@@ -43,7 +43,6 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { notificationApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 export default function NotificationsPage() {
   const theme = useTheme();
@@ -51,17 +50,16 @@ export default function NotificationsPage() {
   const isLight = theme.palette.mode === 'light';
   const { user, profile, loading: authLoading } = useAuth();
 
-  const [notifications, setNotifications] = useState<any[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('fairshare_cached_notifications');
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return [];
-  });
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fairshare_cached_notifications');
+      if (saved) setNotifications(JSON.parse(saved));
+    } catch {}
+  }, []);
   const [tab, setTab] = useState(0); // 0 = All, 1 = Unread, 2 = Friends, 3 = Settlements, 4 = Groups/Expenses
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -223,9 +221,6 @@ export default function NotificationsPage() {
     }
   };
 
-  if (authLoading && !profile) {
-    return <CategoryCycleLoader message="Loading notifications..." />;
-  }
 
   return (
     <AppLayout>

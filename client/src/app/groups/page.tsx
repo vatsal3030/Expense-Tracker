@@ -28,23 +28,20 @@ const GROUP_TYPE_CONFIG: Record<string, { icon: React.ReactElement; color: strin
   OTHER: { icon: <MoreHoriz fontSize="small" />, color: '#64748B', label: 'Other' },
 };
 
-import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
-
 export default function GroupsPage() {
   const theme = useTheme();
   const router = useRouter();
   const isLight = theme.palette.mode === 'light';
   const { user, profile, loading: authLoading } = useAuth();
-  const [groups, setGroups] = useState<any[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('fairshare_cached_groups');
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return [];
-  });
+  const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fairshare_cached_groups');
+      if (saved) setGroups(JSON.parse(saved));
+    } catch {}
+  }, []);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('ALL');
@@ -196,9 +193,6 @@ export default function GroupsPage() {
     return groups.reduce((acc, g) => acc + (g._count?.expenses || 0), 0);
   }, [groups]);
 
-  if (authLoading && !profile) {
-    return <CategoryCycleLoader message="Loading your groups..." />;
-  }
 
   return (
     <AppLayout>

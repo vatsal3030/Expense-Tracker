@@ -40,7 +40,6 @@ const PRESET_AVATARS = [
 ];
 
 const PREFERENCES_STORAGE_KEY = 'owino_user_preferences';
-import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 export default function SettingsPage() {
   const theme = useTheme();
@@ -305,9 +304,6 @@ export default function SettingsPage() {
     router.push('/auth/login');
   };
 
-  if (authLoading && !profile) {
-    return <CategoryCycleLoader message="Loading settings & profile..." />;
-  }
 
   // Standard UPI URI format
   const sampleUpiUri = `upi://pay?pa=${encodeURIComponent(

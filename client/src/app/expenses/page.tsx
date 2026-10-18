@@ -71,7 +71,6 @@ import { useAuth } from '@/providers/AuthProvider';
 import { expenseApi, groupApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
-import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
 const CATEGORIES = [
   'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'SHOPPING', 'UTILITIES', 'RENT',
@@ -98,16 +97,15 @@ function ExpensesContent() {
   const initialPage = parseInt(searchParams.get('page') || '1') || 1;
   const initialSearch = searchParams.get('search') || '';
 
-  const [expenses, setExpenses] = useState<any[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('fairshare_cached_expenses');
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return [];
-  });
+  const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fairshare_cached_expenses');
+      if (saved) setExpenses(JSON.parse(saved));
+    } catch {}
+  }, []);
   const [page, setPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -436,9 +434,6 @@ function ExpensesContent() {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
-  if (authLoading && !profile) {
-    return <CategoryCycleLoader message="Loading your expenses..." />;
-  }
 
   return (
     <AppLayout>

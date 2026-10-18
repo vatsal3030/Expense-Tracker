@@ -33,15 +33,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('fairshare_user_profile');
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return null;
-  });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -68,6 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Restore cached profile immediately on client mount
+    try {
+      const saved = localStorage.getItem('fairshare_user_profile');
+      if (saved) setProfile(JSON.parse(saved));
+    } catch {}
+
     // Get initial session quickly from local storage
     const initAuth = async () => {
       try {
