@@ -30,6 +30,14 @@ settlementRouter.post(
         return;
       }
 
+      // Idempotency guard: prevent duplicate settlement submissions within 8 seconds
+      const idempotencyKey = (req.headers['idempotency-key'] as string) || `settle:${req.user!.id}:${payeeId}:${amount}:${groupId || 'none'}`;
+      const cachedSettlement = appCache.getSync(`idempotent:${idempotencyKey}`);
+      if (cachedSettlement) {
+        res.status(200).json({ success: true, data: cachedSettlement, idempotent: true });
+        return;
+      }
+
       const settlement = await prisma.settlement.create({
         data: {
           groupId: groupId || null,
@@ -69,6 +77,10 @@ settlementRouter.post(
 
       appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
       appCache.invalidatePrefix(`dashboard:${payeeId}`);
+      if (groupId) {
+        appCache.invalidatePrefix(`group:${groupId}`);
+      }
+      appCache.set(`idempotent:${idempotencyKey}`, settlement, 8000);
 
       res.status(201).json({ success: true, data: settlement });
     } catch (error: any) {

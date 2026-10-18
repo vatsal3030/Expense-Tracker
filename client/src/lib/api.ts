@@ -79,7 +79,7 @@ export const dashboardApi = {
 export const expenseApi = {
   list: (params?: Record<string, any>) => api.get('/expenses', { params }),
   get: (id: string) => api.get(`/expenses/${id}`),
-  create: (data: any) => api.post('/expenses', data),
+  create: (data: any, config?: any) => api.post('/expenses', data, config),
   update: (id: string, data: any) => api.put(`/expenses/${id}`, data),
   delete: (id: string) => api.delete(`/expenses/${id}`),
 };
@@ -92,6 +92,8 @@ export const groupApi = {
   update: (id: string, data: any) => api.put(`/groups/${id}`, data),
   addMember: (groupId: string, payload: { userId?: string; email?: string; phone?: string } | string) =>
     api.post(`/groups/${groupId}/members`, typeof payload === 'string' ? { userId: payload } : payload),
+  updateMemberRole: (groupId: string, userId: string, role: 'ADMIN' | 'MEMBER') =>
+    api.patch(`/groups/${groupId}/members/${userId}/role`, { role }),
   removeMember: (groupId: string, userId: string) =>
     api.delete(`/groups/${groupId}/members/${userId}`),
   getBalances: (groupId: string) => api.get(`/groups/${groupId}/balances`),
@@ -104,7 +106,7 @@ export const groupApi = {
 // Settlements
 export const settlementApi = {
   list: (params?: Record<string, any>) => api.get('/settlements', { params }),
-  create: (data: any) => api.post('/settlements', data),
+  create: (data: any, config?: any) => api.post('/settlements', data, config),
   confirm: (id: string) => api.patch(`/settlements/${id}/confirm`),
   reject: (id: string) => api.patch(`/settlements/${id}/reject`),
   cancel: (id: string) => api.delete(`/settlements/${id}`),

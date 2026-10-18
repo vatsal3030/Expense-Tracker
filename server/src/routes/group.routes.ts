@@ -285,6 +285,13 @@ groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<v
 groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const cacheKey = `group:${id}:${req.user!.id}`;
+    const cached = await appCache.get(cacheKey);
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
+
     const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
 
     const group = await prisma.group.findFirst({
@@ -316,14 +323,17 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
     }
 
     const meta = parseGroupMeta(group.description);
+    const data = {
+      ...group,
+      description: meta.description,
+      isPasswordProtected: meta.isPasswordProtected,
+      requireAdminApproval: meta.requireAdminApproval,
+    };
+
+    appCache.set(cacheKey, data, 20000);
     res.json({
       success: true,
-      data: {
-        ...group,
-        description: meta.description,
-        isPasswordProtected: meta.isPasswordProtected,
-        requireAdminApproval: meta.requireAdminApproval,
-      },
+      data,
     });
   } catch (error: any) {
     console.error('Get group error:', error);
@@ -704,6 +714,10 @@ groupRouter.post(
         },
       }).catch(() => {});
 
+      appCache.invalidatePrefix(`group:${id}`);
+      appCache.invalidatePrefix(`groups:list:${targetUserId}`);
+      appCache.invalidatePrefix(`groups:list:${req.user!.id}`);
+
       res.status(201).json({ success: true, data: member });
     } catch (error: any) {
       console.error('Add member error:', error);
@@ -747,10 +761,91 @@ groupRouter.delete('/:id/members/:userId', async (req: AuthenticatedRequest, res
   }
 });
 
-// GET /api/groups/:id/balances — Get simplified balances for a group
+// PATCH /api/groups/:id/members/:userId/role — Update member role (WhatsApp-style multiple admins)
+groupRouter.patch(
+  '/:id/members/:userId/role',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const targetUserId = req.params.userId as string;
+      const { role } = req.body;
+
+      if (!['ADMIN', 'MEMBER'].includes(role)) {
+        res.status(400).json({ success: false, error: 'Invalid role. Must be ADMIN or MEMBER.' });
+        return;
+      }
+
+      // Verify requester is group ADMIN
+      const requesterMembership = await prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId: id, userId: req.user!.id } },
+      });
+
+      if (!requesterMembership || requesterMembership.role !== 'ADMIN') {
+        res.status(403).json({ success: false, error: 'Only group admins can manage member roles.' });
+        return;
+      }
+
+      const targetMembership = await prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId: id, userId: targetUserId } },
+        include: { user: { select: { id: true, name: true } } },
+      });
+
+      if (!targetMembership) {
+        res.status(404).json({ success: false, error: 'Member not found in this group.' });
+        return;
+      }
+
+      // If demoting an admin, ensure at least one other admin remains
+      if (role === 'MEMBER' && targetMembership.role === 'ADMIN') {
+        const adminCount = await prisma.groupMember.count({
+          where: { groupId: id, role: 'ADMIN' },
+        });
+        if (adminCount <= 1) {
+          res.status(400).json({
+            success: false,
+            error: 'Cannot demote the only remaining admin. Make another member admin first.',
+          });
+          return;
+        }
+      }
+
+      const updated = await prisma.groupMember.update({
+        where: { groupId_userId: { groupId: id, userId: targetUserId } },
+        data: { role },
+        include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+      });
+
+      // Activity log
+      await prisma.activity.create({
+        data: {
+          userId: req.user!.id,
+          groupId: id,
+          type: 'GROUP_MEMBER_ADDED',
+          message: role === 'ADMIN'
+            ? `made ${targetMembership.user.name} a group admin`
+            : `dismissed ${targetMembership.user.name} as admin`,
+        },
+      });
+
+      appCache.invalidatePrefix(`group:${id}`);
+      res.json({ success: true, data: updated });
+    } catch (error: any) {
+      console.error('Update member role error:', error);
+      res.status(500).json({ success: false, error: 'Failed to update member role.' });
+    }
+  }
+);
+
+// GET /api/groups/:id/balances — Get simplified balances for a group (cached & optimized)
 groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const cacheKey = `group:${id}:balances`;
+    const cached = await appCache.get(cacheKey);
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
 
     // Verify membership
     const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
@@ -763,15 +858,20 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Get all expenses and settlements for the group
-    const expenses = await prisma.expense.findMany({
-      where: { groupId: id, isDeleted: false },
-      include: { shares: true },
-    });
-
-    const settlements = await prisma.settlement.findMany({
-      where: { groupId: id, status: 'CONFIRMED' },
-    });
+    // Concurrently fetch expenses, settlements, and members (Promise.all eliminates sequential DB stalls)
+    const [expenses, settlements, members] = await Promise.all([
+      prisma.expense.findMany({
+        where: { groupId: id, isDeleted: false },
+        include: { shares: true },
+      }),
+      prisma.settlement.findMany({
+        where: { groupId: id, status: 'CONFIRMED' },
+      }),
+      prisma.groupMember.findMany({
+        where: { groupId: id },
+        include: { user: { select: { id: true, name: true, avatarUrl: true } } },
+      }),
+    ]);
 
     // Calculate net balances
     const balanceMap: Record<string, number> = {};
@@ -792,12 +892,6 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
       balanceMap[settlement.payeeId] = (balanceMap[settlement.payeeId] || 0) - amount;
     }
 
-    // Get user details
-    const members = await prisma.groupMember.findMany({
-      where: { groupId: id },
-      include: { user: { select: { id: true, name: true, avatarUrl: true } } },
-    });
-
     const balances = members.map((member) => ({
       user: member.user,
       balance: Math.round((balanceMap[member.userId] || 0) * 100) / 100,
@@ -805,10 +899,12 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
 
     // Simplify debts (minimize transactions)
     const simplifiedDebts = simplifyDebts(balances);
+    const data = { balances, simplifiedDebts };
 
+    appCache.set(cacheKey, data, 20000);
     res.json({
       success: true,
-      data: { balances, simplifiedDebts },
+      data,
     });
   } catch (error: any) {
     console.error('Get balances error:', error);

@@ -84,7 +84,7 @@ function JoinGroupSkeleton() {
             textAlign: 'center',
           }}
         >
-          <Stack spacing={2.5} alignItems="center">
+          <Stack spacing={2.5} sx={{ alignItems: 'center' }}>
             <Skeleton variant="circular" width={76} height={76} />
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
               <Skeleton width="40%" height={16} />
@@ -243,7 +243,7 @@ export default function JoinGroupPage() {
               </Button>
             </Box>
           ) : (
-            <Stack spacing={2.5} alignItems="center">
+            <Stack spacing={2.5} sx={{ alignItems: 'center' }}>
               {/* Group Avatar Hero */}
               <Box sx={{ position: 'relative' }}>
                 <Avatar
@@ -500,7 +500,7 @@ export default function JoinGroupPage() {
                   expandIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
                   sx={{ px: 2, minHeight: 42, '& .MuiAccordionSummary-content': { my: 0.5 } }}
                 >
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <InfoOutlinedIcon sx={{ fontSize: 17, color: 'primary.main' }} />
                     <Typography variant="body2" fontWeight={700} fontSize="0.84rem">
                       Group Rules & Details

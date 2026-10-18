@@ -77,16 +77,33 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           .then((res) => {
             const serverNotifs = res.data?.data?.notifications;
             if (serverNotifs && serverNotifs.length > 0) {
-              setNotifications(serverNotifs.map((n: any) => ({
-                id: n.id,
-                title: n.title,
-                message: n.message,
-                isRead: n.isRead,
-                type: n.type || 'SYSTEM',
-                data: n.data,
-                time: new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                actionUrl: n.type?.includes('EXPENSE') ? '/expenses' : n.type?.includes('SETTLEMENT') ? '/settlements' : '/groups',
-              })));
+              setNotifications(serverNotifs.map((n: any) => {
+                let targetUrl = '/notifications';
+                if (n.data?.groupId) {
+                  targetUrl = `/groups/${n.data.groupId}`;
+                } else if (n.type?.includes('EXPENSE')) {
+                  targetUrl = '/expenses';
+                } else if (n.type?.includes('SETTLEMENT')) {
+                  targetUrl = '/settlements';
+                } else if (n.type?.includes('FRIEND')) {
+                  targetUrl = '/friends';
+                } else if (n.type?.includes('BUDGET')) {
+                  targetUrl = '/budgets';
+                } else if (n.type?.includes('GROUP')) {
+                  targetUrl = '/groups';
+                }
+
+                return {
+                  id: n.id,
+                  title: n.title,
+                  message: n.message,
+                  isRead: n.isRead,
+                  type: n.type || 'SYSTEM',
+                  data: n.data,
+                  time: new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  actionUrl: targetUrl,
+                };
+              }));
             }
           })
           .catch(() => {});
@@ -209,7 +226,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           easing: theme.transitions.easing.sharp,
           duration: theme.transitions.duration.leavingScreen,
         }),
-        zIndex: theme.zIndex.drawer + 1,
+        zIndex: theme.zIndex.appBar,
       }}
     >
       {/* Hairline Specular Edge */}

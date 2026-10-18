@@ -29,6 +29,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
   }, [user?.id, loading, pathname, router]);
 
+  // Prevent accidental number changes when scrolling mouse wheel over number inputs
+  useEffect(() => {
+    const handleWheel = () => {
+      const activeEl = document.activeElement;
+      if (activeEl && activeEl.tagName === 'INPUT' && (activeEl as HTMLInputElement).type === 'number') {
+        (activeEl as HTMLInputElement).blur();
+      }
+    };
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
+
   // While auth session is restoring from Supabase, show the animated category loader
   if (loading) {
     return <CategoryCycleLoader fullPage={true} />;

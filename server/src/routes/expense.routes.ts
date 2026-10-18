@@ -40,6 +40,14 @@ expenseRouter.post(
     try {
       const { groupId, description, amount, currency, category, splitType, date, notes, paidById, splits } = req.body;
 
+      // Idempotency guard: prevent duplicate submission within 8 seconds
+      const idempotencyKey = (req.headers['idempotency-key'] as string) || `expense:${req.user!.id}:${description}:${amount}:${groupId || 'none'}`;
+      const cachedExpense = appCache.getSync(`idempotent:${idempotencyKey}`);
+      if (cachedExpense) {
+        res.status(200).json({ success: true, data: cachedExpense, idempotent: true });
+        return;
+      }
+
       const actualPaidBy = paidById && paidById.trim() !== '' ? paidById : req.user!.id;
 
       // Resolve user IDs in splits (map Supabase ID to internal Postgres ID if needed)
@@ -164,8 +172,10 @@ expenseRouter.post(
       }
       if (groupId) {
         appCache.invalidatePrefix('groups:list:');
+        appCache.invalidatePrefix(`group:${groupId}`);
       }
 
+      appCache.set(`idempotent:${idempotencyKey}`, expense, 8000);
       res.status(201).json({ success: true, data: expense });
     } catch (error: any) {
       console.error('Create expense error:', error);

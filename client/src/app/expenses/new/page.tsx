@@ -517,10 +517,42 @@ function NewExpenseContent() {
   // Quick distribution helpers
   const handleAutoDistributeExact = () => {
     if (numericTotal <= 0 || activeMembers.length === 0) return;
-    const perPerson = Math.floor((numericTotal / activeMembers.length) * 100) / 100;
-    const remainder = Math.round((numericTotal - perPerson * activeMembers.length) * 100) / 100;
-    const nextMap: Record<string, string> = {};
-    activeMembers.forEach((m, i) => {
+
+    // Check which members have a valid positive amount already filled
+    const filledUids = new Set<string>();
+    let filledSum = 0;
+    activeMembers.forEach((m) => {
+      const uid = m.user?.id || m.userId;
+      const val = parseFloat(exactAmounts[uid] || '0');
+      if (!isNaN(val) && val > 0) {
+        filledUids.add(uid);
+        filledSum += val;
+      }
+    });
+
+    const unfilledMembers = activeMembers.filter((m) => !filledUids.has(m.user?.id || m.userId));
+
+    // If none are filled, or all are filled, or sum already >= total: split whole total evenly among all members
+    if (unfilledMembers.length === 0 || unfilledMembers.length === activeMembers.length || filledSum >= numericTotal) {
+      const perPerson = Math.floor((numericTotal / activeMembers.length) * 100) / 100;
+      const remainder = Math.round((numericTotal - perPerson * activeMembers.length) * 100) / 100;
+      const nextMap: Record<string, string> = {};
+      activeMembers.forEach((m, i) => {
+        const uid = m.user?.id || m.userId;
+        const amt = i === 0 ? perPerson + remainder : perPerson;
+        nextMap[uid] = amt.toFixed(2);
+      });
+      setExactAmounts(nextMap);
+      return;
+    }
+
+    // Distribute remaining amount evenly among unfilled members
+    const remaining = Math.round((numericTotal - filledSum) * 100) / 100;
+    const perPerson = Math.floor((remaining / unfilledMembers.length) * 100) / 100;
+    const remainder = Math.round((remaining - perPerson * unfilledMembers.length) * 100) / 100;
+
+    const nextMap = { ...exactAmounts };
+    unfilledMembers.forEach((m, i) => {
       const uid = m.user?.id || m.userId;
       const amt = i === 0 ? perPerson + remainder : perPerson;
       nextMap[uid] = amt.toFixed(2);
@@ -530,13 +562,45 @@ function NewExpenseContent() {
 
   const handleAutoDistributePercentages = () => {
     if (activeMembers.length === 0) return;
-    const count = activeMembers.length;
-    const equalPct = Math.floor((100 / count) * 10) / 10;
-    const remainder = Math.round((100 - equalPct * count) * 10) / 10;
-    const nextMap: Record<string, string> = {};
-    activeMembers.forEach((m, i) => {
+
+    // Check which members have a valid percentage already filled
+    const filledUids = new Set<string>();
+    let filledSum = 0;
+    activeMembers.forEach((m) => {
       const uid = m.user?.id || m.userId;
-      const pct = i === 0 ? equalPct + remainder : equalPct;
+      const val = parseFloat(percentages[uid] || '0');
+      if (!isNaN(val) && val > 0) {
+        filledUids.add(uid);
+        filledSum += val;
+      }
+    });
+
+    const unfilledMembers = activeMembers.filter((m) => !filledUids.has(m.user?.id || m.userId));
+
+    // If none or all are filled or sum >= 100: split 100% equally among all
+    if (unfilledMembers.length === 0 || unfilledMembers.length === activeMembers.length || filledSum >= 100) {
+      const count = activeMembers.length;
+      const equalPct = Math.floor((100 / count) * 10) / 10;
+      const remainder = Math.round((100 - equalPct * count) * 10) / 10;
+      const nextMap: Record<string, string> = {};
+      activeMembers.forEach((m, i) => {
+        const uid = m.user?.id || m.userId;
+        const pct = i === 0 ? equalPct + remainder : equalPct;
+        nextMap[uid] = pct.toString();
+      });
+      setPercentages(nextMap);
+      return;
+    }
+
+    // Distribute remaining percentage among unfilled members
+    const remaining = Math.round((100 - filledSum) * 10) / 10;
+    const perPerson = Math.floor((remaining / unfilledMembers.length) * 10) / 10;
+    const remainder = Math.round((remaining - perPerson * unfilledMembers.length) * 10) / 10;
+
+    const nextMap = { ...percentages };
+    unfilledMembers.forEach((m, i) => {
+      const uid = m.user?.id || m.userId;
+      const pct = i === 0 ? perPerson + remainder : perPerson;
       nextMap[uid] = pct.toString();
     });
     setPercentages(nextMap);
@@ -673,7 +737,10 @@ function NewExpenseContent() {
       if (isEditMode) {
         await expenseApi.update(editId, payload);
       } else {
-        await expenseApi.create(payload);
+        const idempotencyKey = `exp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        await expenseApi.create(payload, {
+          headers: { 'idempotency-key': idempotencyKey },
+        });
         isFormDirtyRef.current = false;
         localStorage.removeItem(DRAFT_KEY);
       }

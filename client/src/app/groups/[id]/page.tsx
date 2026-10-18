@@ -6,13 +6,14 @@ import {
   List, ListItem, ListItemAvatar, ListItemText, Divider, Button,
   Skeleton, useTheme, alpha, IconButton, Tooltip, Stack, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tabs, Tab,
-  Alert, Snackbar, FormControlLabel, Switch, MenuItem, Paper,
+  Alert, Snackbar, FormControlLabel, Switch, MenuItem, Paper, Menu, ListItemIcon,
 } from '@mui/material';
 import {
   ArrowBack, Add, Edit, Delete, Share, ContentCopy,
   WhatsApp, PersonAdd, Check, Lock, Security,
   AccountBalanceWallet, ArrowForward, QrCode2,
   TrendingUp, TrendingDown, ReceiptLong, People, Close,
+  MoreVert, SupervisorAccount, PersonRemove,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -20,6 +21,7 @@ import { groupApi, settlementApi, expenseApi } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 import QrCodeModal from '@/components/common/QrCodeModal';
+import SplitwiseExpenseItem from '@/components/expense/SplitwiseExpenseItem';
 
 function GroupDetailSkeleton() {
   const theme = useTheme();
@@ -39,7 +41,7 @@ function GroupDetailSkeleton() {
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
           <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: 2.5 }} />
           <Box>
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
               <Skeleton width={180} height={36} />
               <Skeleton width={60} height={24} sx={{ borderRadius: 2 }} />
             </Stack>
@@ -233,6 +235,68 @@ function GroupDetailContent() {
     return member?.role === 'ADMIN';
   }, [group, user]);
 
+  const [memberMenuAnchor, setMemberMenuAnchor] = useState<{ el: HTMLElement; member: any } | null>(null);
+
+  // Group expenses by Month & Year
+  const groupedGroupExpenses = useMemo(() => {
+    if (!group?.expenses) return {};
+    const groups: Record<string, any[]> = {};
+    group.expenses.forEach((exp: any) => {
+      const d = exp.date ? new Date(exp.date) : new Date();
+      const monthKey = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      if (!groups[monthKey]) {
+        groups[monthKey] = [];
+      }
+      groups[monthKey].push(exp);
+    });
+    return groups;
+  }, [group?.expenses]);
+
+  // WhatsApp-style Multiple Admin Role Toggle
+  const handleUpdateMemberRole = async (targetUserId: string, targetName: string, newRole: 'ADMIN' | 'MEMBER') => {
+    if (!group?.id) return;
+    const prevMembers = [...(group.members || [])];
+    setGroup((prev: any) => ({
+      ...prev,
+      members: prev.members.map((m: any) =>
+        (m.userId === targetUserId || m.user?.id === targetUserId)
+          ? { ...m, role: newRole }
+          : m
+      ),
+    }));
+
+    try {
+      await groupApi.updateMemberRole(group.id, targetUserId, newRole);
+      setToastMessage(newRole === 'ADMIN' ? `${targetName} is now a Group Admin 👑` : `${targetName} dismissed as Admin`);
+      fetchGroup();
+    } catch (err: any) {
+      console.error('Update member role error:', err);
+      setGroup((prev: any) => ({ ...prev, members: prevMembers }));
+      setToastMessage(err.response?.data?.error || 'Failed to update member role.');
+    }
+  };
+
+  // Remove member from group
+  const handleRemoveMember = async (targetUserId: string, targetName: string) => {
+    if (!group?.id) return;
+    if (!confirm(`Are you sure you want to remove ${targetName} from the group?`)) return;
+    const prevMembers = [...(group.members || [])];
+    setGroup((prev: any) => ({
+      ...prev,
+      members: prev.members.filter((m: any) => m.userId !== targetUserId && m.user?.id !== targetUserId),
+    }));
+
+    try {
+      await groupApi.removeMember(group.id, targetUserId);
+      setToastMessage(`${targetName} removed from group.`);
+      fetchGroup();
+    } catch (err: any) {
+      console.error('Remove member error:', err);
+      setGroup((prev: any) => ({ ...prev, members: prevMembers }));
+      setToastMessage(err.response?.data?.error || 'Failed to remove member.');
+    }
+  };
+
   const handleDeleteGroupExpense = async (expenseId: string) => {
     if (!group?.expenses) return;
     const prevExpenses = [...group.expenses];
@@ -263,11 +327,14 @@ function GroupDetailContent() {
 
   const handleRecordSettlement = async (toUserId: string, amount: number) => {
     try {
+      const idempotencyKey = `settle_${group.id}_${toUserId}_${Date.now()}`;
       await settlementApi.create({
         payeeId: toUserId,
         amount,
         groupId: group.id,
         notes: 'Group settlement via FairShare',
+      }, {
+        headers: { 'idempotency-key': idempotencyKey },
       });
       setToastMessage('Settlement recorded successfully!');
       fetchGroup();
@@ -698,99 +765,64 @@ function GroupDetailContent() {
           >
             <CardContent sx={{ p: 0 }}>
               {group?.expenses && group.expenses.length > 0 ? (
-                <List disablePadding>
-                  {group.expenses.map((exp: any, i: number) => (
-                    <React.Fragment key={exp.id}>
-                      <ListItem
+                <Box sx={{ width: '100%' }}>
+                  {Object.entries(groupedGroupExpenses).map(([monthKey, monthItems]) => (
+                    <Box key={monthKey}>
+                      <Box
                         sx={{
-                          px: 3,
-                          py: 2,
-                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
-                          },
+                          px: { xs: 2, sm: 3 },
+                          py: 0.9,
+                          bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
+                          borderBottom: `1px solid ${theme.palette.divider}`,
+                          borderTop: `1px solid ${theme.palette.divider}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                         }}
-                        onClick={() => router.push(`/expenses?id=${exp.id}`)}
                       >
-                        <ListItemAvatar>
-                          <Avatar
-                            className="glass-tertiary"
-                            sx={{
-                              width: 44,
-                              height: 44,
-                              bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.12)' : alpha('#0E6245', 0.1),
-                              border: '1px solid rgba(16, 185, 129, 0.25)',
-                              fontSize: '1.25rem',
-                            }}
-                          >
-                            {CATEGORY_EMOJI[exp.category] || '📋'}
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          disableTypography
-                          primary={
-                            <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary' }}>
-                              {exp.description}
-                            </Typography>
-                          }
-                          secondary={
-                            <Typography variant="caption" color="text.secondary">
-                              Paid by <strong>{exp.paidBy?.name}</strong> •{' '}
-                              {new Date(exp.date).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}{' '}
-                              • {exp.splitType}
-                            </Typography>
-                          }
-                        />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Box sx={{ textAlign: 'right' }}>
-                            <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary' }}>
-                              {formatCurrency(Number(exp.amount))}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {exp.shares?.length || group.members?.length || 1} shares
-                            </Typography>
-                          </Box>
-                          {(isGroupAdmin || exp.createdById === user?.id || exp.paidById === user?.id) && (
-                            <Box sx={{ display: 'flex', gap: 0.5, ml: 0.5 }}>
-                              <Tooltip title="Edit Expense">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => router.push(`/expenses/new?edit=${exp.id}&groupId=${group.id}`)}
-                                  sx={{
-                                    color: 'text.secondary',
-                                    '&:hover': { color: '#10B981', bgcolor: 'rgba(16, 185, 129, 0.1)' },
-                                  }}
-                                >
-                                  <Edit sx={{ fontSize: 18 }} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Delete Expense">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleDeleteGroupExpense(exp.id)}
-                                  sx={{
-                                    color: 'text.secondary',
-                                    '&:hover': { color: '#EF4444', bgcolor: 'rgba(239, 68, 68, 0.1)' },
-                                  }}
-                                >
-                                  <Delete sx={{ fontSize: 18 }} />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          )}
-                        </Box>
-                      </ListItem>
-                      {i < group.expenses.length - 1 && (
-                        <Divider component="li" sx={{ borderColor: theme.palette.divider }} />
-                      )}
-                    </React.Fragment>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: '0.725rem',
+                            letterSpacing: '0.05em',
+                            textTransform: 'uppercase',
+                            color: isLight ? '#475569' : '#94A3B8',
+                          }}
+                        >
+                          {monthKey}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
+                          {monthItems.length} {monthItems.length === 1 ? 'expense' : 'expenses'}
+                        </Typography>
+                      </Box>
+
+                      {monthItems.map((exp: any, idx: number) => {
+                        const canEdit = isGroupAdmin || exp.createdById === user?.id || exp.paidById === user?.id;
+                        const canDelete = isGroupAdmin || exp.createdById === user?.id;
+
+                        return (
+                          <React.Fragment key={exp.id}>
+                            <SplitwiseExpenseItem
+                              expense={exp}
+                              currentUserId={user?.id}
+                              currency={group.currency || 'INR'}
+                              showGroupTag={false}
+                              canEdit={canEdit}
+                              canDelete={canDelete}
+                              onClick={() => router.push(`/expenses?id=${exp.id}`)}
+                              onEdit={() => router.push(`/expenses/new?edit=${exp.id}&groupId=${group.id}`)}
+                              onDelete={() => handleDeleteGroupExpense(exp.id)}
+                            />
+                            {idx < monthItems.length - 1 && (
+                              <Divider sx={{ borderColor: theme.palette.divider, opacity: 0.6, ml: { xs: 7.5, sm: 9 } }} />
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </Box>
                   ))}
-                </List>
+                </Box>
               ) : (
                 <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
                   <ReceiptLong sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
@@ -1047,40 +1079,151 @@ function GroupDetailContent() {
                 </Box>
 
                 <List disablePadding>
-                  {group?.members?.map((m: any, i: number) => (
-                    <React.Fragment key={m.user?.id || i}>
-                      <ListItem disablePadding sx={{ py: 1.5 }}>
-                        <ListItemAvatar>
-                          <Avatar
-                            src={m.user?.avatarUrl || undefined}
-                            className="glass-tertiary"
-                            sx={{ width: 40, height: 40, bgcolor: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34D399', fontSize: '0.9rem', fontWeight: 700 }}
-                          >
-                            {m.user?.name?.charAt(0) || '?'}
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          disableTypography
-                          primary={<Typography variant="body2" fontWeight={700}>{m.user?.name}</Typography>}
-                          secondary={m.user?.email || m.user?.phone || 'Member'}
-                        />
-                        <Chip
-                          label={m.role === 'ADMIN' ? '👑 Admin' : 'Member'}
-                          size="small"
+                  {group?.members?.map((m: any, i: number) => {
+                    const memberId = m.userId || m.user?.id;
+                    const isSelf = memberId === user?.id;
+                    const memberName = m.user?.name || 'Member';
+
+                    return (
+                      <React.Fragment key={memberId || i}>
+                        <ListItem
+                          disablePadding
                           sx={{
-                            fontWeight: 600,
-                            fontSize: '0.7rem',
-                            bgcolor: m.role === 'ADMIN' ? alpha('#F59E0B', 0.1) : alpha(theme.palette.text.secondary, 0.08),
-                            color: m.role === 'ADMIN' ? '#D97706' : 'text.secondary',
+                            py: 1.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
                           }}
-                        />
-                      </ListItem>
-                      {i < group.members.length - 1 && (
-                        <Divider component="li" sx={{ borderColor: theme.palette.divider }} />
-                      )}
-                    </React.Fragment>
-                  ))}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, flex: 1 }}>
+                            <ListItemAvatar sx={{ minWidth: 'auto' }}>
+                              <Avatar
+                                src={m.user?.avatarUrl || undefined}
+                                className="glass-tertiary"
+                                sx={{
+                                  width: 40,
+                                  height: 40,
+                                  bgcolor: 'rgba(16, 185, 129, 0.2)',
+                                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                                  color: '#34D399',
+                                  fontSize: '0.9rem',
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {memberName.charAt(0) || '?'}
+                              </Avatar>
+                            </ListItemAvatar>
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Typography variant="body2" fontWeight={700} noWrap>
+                                {memberName} {isSelf && '(You)'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                                {m.user?.email || m.user?.phone || 'Member'}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                            <Chip
+                              label={m.role === 'ADMIN' ? '👑 Admin' : 'Member'}
+                              size="small"
+                              sx={{
+                                fontWeight: 650,
+                                fontSize: '0.7rem',
+                                bgcolor: m.role === 'ADMIN' ? alpha('#F59E0B', 0.12) : alpha(theme.palette.text.secondary, 0.08),
+                                color: m.role === 'ADMIN' ? '#D97706' : 'text.secondary',
+                                border: m.role === 'ADMIN' ? '1px solid rgba(245, 158, 11, 0.3)' : undefined,
+                              }}
+                            />
+
+                            {/* WhatsApp-Style Admin Management Menu (Available if viewer is an Admin and member is not self) */}
+                            {isGroupAdmin && !isSelf && (
+                              <IconButton
+                                size="small"
+                                onClick={(e) => setMemberMenuAnchor({ el: e.currentTarget, member: m })}
+                                sx={{
+                                  color: 'text.secondary',
+                                  '&:hover': { color: 'text.primary', bgcolor: alpha(theme.palette.text.primary, 0.08) },
+                                }}
+                              >
+                                <MoreVert fontSize="small" />
+                              </IconButton>
+                            )}
+                          </Box>
+                        </ListItem>
+                        {i < group.members.length - 1 && (
+                          <Divider component="li" sx={{ borderColor: theme.palette.divider }} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </List>
+
+                {/* WhatsApp-Style Member Management Menu */}
+                <Menu
+                  anchorEl={memberMenuAnchor?.el}
+                  open={Boolean(memberMenuAnchor)}
+                  onClose={() => setMemberMenuAnchor(null)}
+                  slotProps={{
+                    paper: {
+                      className: 'glass-deep',
+                      sx: {
+                        minWidth: 195,
+                        borderRadius: 2.5,
+                        boxShadow: '0 8px 30px rgba(0,0,0,0.35)',
+                        border: `1px solid ${theme.palette.divider}`,
+                      },
+                    },
+                  }}
+                >
+                  {memberMenuAnchor?.member?.role === 'ADMIN' ? (
+                    <MenuItem
+                      onClick={() => {
+                        const m = memberMenuAnchor?.member;
+                        if (m) {
+                          handleUpdateMemberRole(m.userId || m.user?.id, m.user?.name || 'Member', 'MEMBER');
+                        }
+                        setMemberMenuAnchor(null);
+                      }}
+                    >
+                      <ListItemIcon>
+                        <Security fontSize="small" />
+                      </ListItemIcon>
+                      Dismiss as Admin
+                    </MenuItem>
+                  ) : (
+                    <MenuItem
+                      onClick={() => {
+                        const m = memberMenuAnchor?.member;
+                        if (m) {
+                          handleUpdateMemberRole(m.userId || m.user?.id, m.user?.name || 'Member', 'ADMIN');
+                        }
+                        setMemberMenuAnchor(null);
+                      }}
+                    >
+                      <ListItemIcon>
+                        <SupervisorAccount fontSize="small" sx={{ color: '#F59E0B' }} />
+                      </ListItemIcon>
+                      Make Group Admin 👑
+                    </MenuItem>
+                  )}
+                  <Divider sx={{ my: 0.5 }} />
+                  <MenuItem
+                    onClick={() => {
+                      const m = memberMenuAnchor?.member;
+                      if (m) {
+                        handleRemoveMember(m.userId || m.user?.id, m.user?.name || 'Member');
+                      }
+                      setMemberMenuAnchor(null);
+                    }}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <ListItemIcon>
+                      <PersonRemove fontSize="small" sx={{ color: 'error.main' }} />
+                    </ListItemIcon>
+                    Remove from Group
+                  </MenuItem>
+                </Menu>
               </Card>
             </Grid>
 

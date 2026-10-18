@@ -72,6 +72,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { expenseApi, groupApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
+import SplitwiseExpenseItem from '@/components/expense/SplitwiseExpenseItem';
 
 const CATEGORIES = [
   'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'SHOPPING', 'UTILITIES', 'RENT',
@@ -237,6 +238,20 @@ function ExpensesContent() {
       groupApi.list().then((res) => setGroups(res.data.data || [])).catch(console.error);
     }
   }, [user?.id]);
+
+  // Splitwise style grouping by month & year
+  const groupedExpenses = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    expenses.forEach((exp) => {
+      const d = exp.date ? new Date(exp.date) : new Date();
+      const monthKey = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      if (!groups[monthKey]) {
+        groups[monthKey] = [];
+      }
+      groups[monthKey].push(exp);
+    });
+    return groups;
+  }, [expenses]);
 
   // Fast Optimistic UI Creation (0ms UI lag strategy)
   const handleCreate = async () => {
@@ -801,123 +816,71 @@ function ExpensesContent() {
                 )}
               </Box>
             ) : (
-              <List disablePadding>
-                {expenses.map((expense, i) => (
-                  <React.Fragment key={expense.id}>
-                    <ListItem
-                      onClick={() => setSelectedExpense(expense)}
+              <Box sx={{ width: '100%' }}>
+                {Object.entries(groupedExpenses).map(([monthKey, monthItems]) => (
+                  <Box key={monthKey}>
+                    {/* Splitwise Month Header Banner */}
+                    <Box
                       sx={{
-                        px: 3,
-                        py: 2,
-                        cursor: 'pointer',
-                        transition: 'background-color 0.18s ease',
-                        '&:hover': {
-                          bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
-                        },
+                        px: { xs: 2, sm: 3 },
+                        py: 0.9,
+                        bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
+                        borderBottom: `1px solid ${theme.palette.divider}`,
+                        borderTop: `1px solid ${theme.palette.divider}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                       }}
                     >
-                      <ListItemAvatar>
-                        <Avatar
-                          className="glass-tertiary"
-                          sx={{
-                            width: 44,
-                            height: 44,
-                            bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.12)' : alpha('#0E6245', 0.1),
-                            border: '1px solid rgba(16, 185, 129, 0.25)',
-                            fontSize: '1.3rem',
-                          }}
-                        >
-                          {CATEGORY_EMOJI[expense.category] || '📋'}
-                        </Avatar>
-                      </ListItemAvatar>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: '0.725rem',
+                          letterSpacing: '0.05em',
+                          textTransform: 'uppercase',
+                          color: isLight ? '#475569' : '#94A3B8',
+                        }}
+                      >
+                        {monthKey}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
+                        {monthItems.length} {monthItems.length === 1 ? 'expense' : 'expenses'}
+                      </Typography>
+                    </Box>
 
-                      <ListItemText
-                        disableTypography
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body1" fontWeight={600} sx={{ color: 'text.primary' }}>
-                              {expense.description}
-                            </Typography>
-                            {expense.group && (
-                              <Chip
-                                label={expense.group.name}
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: '0.675rem',
-                                  bgcolor: alpha('#0E6245', 0.08),
-                                  color: '#0E6245',
-                                  fontWeight: 600,
-                                }}
-                              />
-                            )}
-                          </Box>
-                        }
-                        secondary={
-                          <Typography variant="caption" color="text.secondary">
-                            Paid by <strong>{expense.paidBy?.name || 'Someone'}</strong> •{' '}
-                            {new Date(expense.date).toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })}{' '}
-                            • {expense.shares?.length || 1} people split ({expense.splitType?.toLowerCase() || 'equal'})
-                          </Typography>
-                        }
-                      />
+                    {/* Month's Expense Items */}
+                    {monthItems.map((expense, idx) => {
+                      const canEdit = expense.createdById === user?.id || expense.paidById === user?.id || (user as any)?.isAdmin;
+                      const canDelete = expense.createdById === user?.id || (user as any)?.isAdmin;
 
-                      <ListItemSecondaryAction>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Typography
-                            variant="h6"
-                            fontWeight={700}
-                            sx={{
-                              color: 'text.primary',
-                              fontVariantNumeric: 'tabular-nums',
-                              fontFeatureSettings: '"tnum"',
-                              letterSpacing: '-0.02em',
+                      return (
+                        <React.Fragment key={expense.id}>
+                          <SplitwiseExpenseItem
+                            expense={expense}
+                            currentUserId={profile?.id || user?.id}
+                            currency={expense.group?.currency || 'INR'}
+                            showGroupTag={true}
+                            canEdit={canEdit}
+                            canDelete={canDelete}
+                            onClick={() => setSelectedExpense(expense)}
+                            onEdit={() => {
+                              const editUrl = expense.groupId
+                                ? `/expenses/new?edit=${expense.id}&groupId=${expense.groupId}`
+                                : `/expenses/new?edit=${expense.id}`;
+                              router.push(editUrl);
                             }}
-                          >
-                            {formatCurrency(Number(expense.amount))}
-                          </Typography>
-                          {(expense.createdById === user?.id || expense.paidById === user?.id || (user as any)?.isAdmin) && (
-                            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                              <Tooltip title="Edit Expense">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const editUrl = expense.groupId
-                                      ? `/expenses/new?edit=${expense.id}&groupId=${expense.groupId}`
-                                      : `/expenses/new?edit=${expense.id}`;
-                                    router.push(editUrl);
-                                  }}
-                                  sx={{ color: 'text.secondary', '&:hover': { color: '#10B981' } }}
-                                >
-                                  <Edit fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Delete Expense">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(expense.id);
-                                  }}
-                                  sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
-                                >
-                                  <Delete fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
+                            onDelete={() => handleDelete(expense.id)}
+                          />
+                          {idx < monthItems.length - 1 && (
+                            <Divider sx={{ borderColor: theme.palette.divider, opacity: 0.6, ml: { xs: 7.5, sm: 9 } }} />
                           )}
-                        </Box>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                    {i < expenses.length - 1 && <Divider component="li" sx={{ borderColor: theme.palette.divider }} />}
-                  </React.Fragment>
+                        </React.Fragment>
+                      );
+                    })}
+                  </Box>
                 ))}
-              </List>
+              </Box>
             )}
 
             {/* Pagination Controls */}
@@ -959,11 +922,13 @@ function ExpensesContent() {
           anchor="right"
           open={Boolean(selectedExpense)}
           onClose={() => setSelectedExpense(null)}
+          sx={{ zIndex: 1400 }}
           slotProps={{
-            backdrop: { sx: { bgcolor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' } },
+            backdrop: { sx: { zIndex: 1400, bgcolor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' } },
             paper: {
               className: 'glass-deep glass-specular-top',
               sx: {
+                zIndex: 1401,
                 width: { xs: '100%', sm: 480 },
                 p: 3,
                 borderLeft: (th) => `1px solid ${th.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,

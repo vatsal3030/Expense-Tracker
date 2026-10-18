@@ -201,8 +201,13 @@ export default function NotificationsPage() {
 
   const handleActionClick = (n: any) => {
     if (!n.isRead) handleMarkAsRead(n.id);
+    if (n.data?.groupId) {
+      router.push(`/groups/${n.data.groupId}`);
+      return;
+    }
     switch (n.type) {
       case 'FRIEND_REQUEST':
+      case 'FRIEND_ACCEPTED':
         router.push('/friends');
         break;
       case 'SETTLEMENT_REQUEST':
@@ -210,13 +215,23 @@ export default function NotificationsPage() {
         router.push('/settlements');
         break;
       case 'GROUP_INVITE':
+      case 'GROUP_JOINED':
         if (n.data?.groupId) router.push(`/groups/${n.data.groupId}`);
         else router.push('/groups');
         break;
       case 'EXPENSE_ADDED':
+      case 'EXPENSE_UPDATED':
+      case 'EXPENSE_DELETED':
         router.push('/expenses');
         break;
+      case 'BUDGET_WARNING':
+      case 'BUDGET_EXCEEDED':
+        router.push('/budgets');
+        break;
       default:
+        if (n.type?.includes('GROUP')) router.push('/groups');
+        else if (n.type?.includes('EXPENSE')) router.push('/expenses');
+        else if (n.type?.includes('SETTLEMENT')) router.push('/settlements');
         break;
     }
   };
@@ -386,15 +401,17 @@ export default function NotificationsPage() {
                 {filteredNotifications.map((item, idx) => (
                   <React.Fragment key={item.id || idx}>
                     <Box
+                      onClick={() => handleActionClick(item)}
                       sx={{
                         p: { xs: 2, sm: 2.5 },
                         display: 'flex',
                         alignItems: { xs: 'flex-start', sm: 'center' },
                         gap: 2,
+                        cursor: 'pointer',
                         bgcolor: item.isRead ? 'transparent' : isLight ? 'rgba(16, 185, 129, 0.04)' : 'rgba(52, 211, 153, 0.05)',
                         transition: 'all 0.15s ease',
                         '&:hover': {
-                          bgcolor: isLight ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.03)',
+                          bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
                         },
                       }}
                     >
