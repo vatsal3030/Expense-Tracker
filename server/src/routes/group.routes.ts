@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth';
+import { authenticate, optionalAuth, AuthenticatedRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
@@ -7,6 +7,134 @@ import bcrypt from 'bcryptjs';
 import appCache from '../lib/cache';
 
 export const groupRouter = Router();
+
+// Helper to provide comprehensive group rules & guidelines
+function getGroupRules(type: string, isApprovalRequired: boolean, isPasswordProtected: boolean, currency: string): string[] {
+  const rules = [
+    'Fair & transparent ledger: all expenses and splits are recorded in real-time.',
+    `All financial accounting is calculated in base currency (${currency}).`,
+    'Settlements can be paid directly via UPI or logged in-app with instant balance reconciliation.',
+  ];
+
+  if (type === 'TRIP') {
+    rules.unshift('Trip expenses are split equally among active travelers unless customized.');
+    rules.push('Attach bills or keep original receipts for food, cabs, and accommodation.');
+  } else if (type === 'HOME') {
+    rules.unshift('Shared rent, utilities, and household supplies logged on a unified monthly ledger.');
+    rules.push('Notify group members before committing to large unexpected shared purchases.');
+  } else if (type === 'OFFICE' || type === 'PROJECT') {
+    rules.unshift('Project and team outing expenses require clear descriptions and itemized receipts.');
+  } else if (type === 'COUPLE') {
+    rules.unshift('Shared partner finances with customizable split ratios.');
+  }
+
+  if (isApprovalRequired) {
+    rules.push('Member admission requires approval by the group admin to maintain privacy.');
+  }
+  if (isPasswordProtected) {
+    rules.push('A valid group passcode is required to complete joining.');
+  }
+
+  return rules;
+}
+
+// GET /api/groups/public/:id — Public info for invite link preview (open to unauthenticated & authenticated users)
+groupRouter.get('/public/:id', optionalAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, avatarUrl: true } },
+          },
+        },
+        _count: {
+          select: { expenses: true },
+        },
+      },
+    });
+
+    if (!group) {
+      res.status(404).json({ success: false, error: 'Group not found.' });
+      return;
+    }
+
+    const meta = parseGroupMeta(group.description);
+    const admin = group.members.find((m) => m.role === 'ADMIN') || group.members[0];
+    const isMember = req.user?.id ? group.members.some((m) => m.userId === req.user?.id) : false;
+
+    // Detect mutual friends (Instagram-style) if viewer is authenticated
+    let mutualFriends: { id: string; name: string; avatarUrl: string | null }[] = [];
+    if (req.user?.id) {
+      const friendships = await prisma.friendship.findMany({
+        where: {
+          status: 'ACCEPTED',
+          OR: [{ userId: req.user.id }, { friendId: req.user.id }],
+        },
+        include: {
+          user: { select: { id: true, name: true, avatarUrl: true } },
+          friend: { select: { id: true, name: true, avatarUrl: true } },
+        },
+      });
+
+      const friendMap = new Map<string, { id: string; name: string; avatarUrl: string | null }>();
+      for (const f of friendships) {
+        const other = f.userId === req.user.id ? f.friend : f.user;
+        if (other && other.id !== req.user.id) {
+          friendMap.set(other.id, other);
+        }
+      }
+
+      for (const m of group.members) {
+        if (m.userId !== req.user.id && friendMap.has(m.userId)) {
+          mutualFriends.push(friendMap.get(m.userId)!);
+        }
+      }
+    }
+
+    // Member preview list (up to 8 members)
+    const membersPreview = group.members.slice(0, 8).map((m) => ({
+      id: m.user.id,
+      name: m.user.name,
+      avatarUrl: m.user.avatarUrl,
+      role: m.role,
+      joinedAt: m.joinedAt,
+    }));
+
+    const rules = getGroupRules(group.type, meta.requireAdminApproval, meta.isPasswordProtected, group.currency);
+
+    res.json({
+      success: true,
+      data: {
+        id: group.id,
+        name: group.name,
+        description: meta.description || '',
+        type: group.type,
+        currency: group.currency,
+        createdAt: group.createdAt,
+        memberCount: group.members.length,
+        expenseCount: group._count.expenses,
+        admin: {
+          name: admin?.user?.name || 'Group Admin',
+          avatarUrl: admin?.user?.avatarUrl || null,
+        },
+        adminName: admin?.user?.name || 'Group Admin',
+        isPasswordProtected: meta.isPasswordProtected,
+        requireAdminApproval: meta.requireAdminApproval,
+        isMember,
+        mutualFriends,
+        members: membersPreview,
+        rules,
+      },
+    });
+  } catch (error: any) {
+    console.error('Public group info error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch group info.' });
+  }
+});
+
 groupRouter.use(authenticate);
 
 // Security metadata helpers for password protection and admin approval
@@ -150,49 +278,6 @@ groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<v
   } catch (error: any) {
     console.error('Get groups error:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch groups.' });
-  }
-});
-
-// GET /api/groups/public/:id — Public info for invite link preview
-groupRouter.get('/public/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const id = req.params.id as string;
-    const group = await prisma.group.findUnique({
-      where: { id },
-      include: {
-        members: {
-          include: {
-            user: { select: { id: true, name: true, avatarUrl: true } },
-          },
-        },
-      },
-    });
-
-    if (!group) {
-      res.status(404).json({ success: false, error: 'Group not found.' });
-      return;
-    }
-
-    const meta = parseGroupMeta(group.description);
-    const admin = group.members.find((m) => m.role === 'ADMIN');
-    const isMember = group.members.some((m) => m.userId === req.user?.id);
-
-    res.json({
-      success: true,
-      data: {
-        id: group.id,
-        name: group.name,
-        type: group.type,
-        currency: group.currency,
-        memberCount: group.members.length,
-        adminName: admin?.user?.name || 'Admin',
-        isPasswordProtected: meta.isPasswordProtected,
-        requireAdminApproval: meta.requireAdminApproval,
-        isMember,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: 'Failed to fetch group info.' });
   }
 });
 

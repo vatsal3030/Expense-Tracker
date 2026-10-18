@@ -24,6 +24,7 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   Skeleton,
+  Paper,
   useTheme,
   alpha,
   Stack,
@@ -1325,13 +1326,57 @@ function ExpensesContent() {
   );
 }
 
+function ExpensesPageSkeleton() {
+  return (
+    <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 4 } }}>
+      {/* Header Skeleton */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Skeleton width={180} height={36} />
+          <Skeleton width={240} height={20} sx={{ mt: 0.5 }} />
+        </Box>
+        <Stack direction="row" spacing={1.5}>
+          <Skeleton variant="rounded" width={100} height={40} sx={{ borderRadius: 2.5 }} />
+          <Skeleton variant="rounded" width={130} height={40} sx={{ borderRadius: 2.5 }} />
+        </Stack>
+      </Box>
+
+      {/* Filter and Search Bar Skeleton */}
+      <Paper className="glass-card" sx={{ p: 2, mb: 3, borderRadius: 3 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+          <Skeleton variant="rounded" width="60%" height={42} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rounded" width="20%" height={42} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rounded" width="20%" height={42} sx={{ borderRadius: 2 }} />
+        </Stack>
+      </Paper>
+
+      {/* Expenses Table Skeleton */}
+      <Paper className="glass-card" sx={{ p: 2, borderRadius: 3 }}>
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <Skeleton variant="circular" width={44} height={44} />
+            <Box sx={{ flex: 1 }}>
+              <Skeleton width="40%" height={22} />
+              <Skeleton width="25%" height={16} sx={{ mt: 0.5 }} />
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <Skeleton width={80} height={24} />
+              <Skeleton width={60} height={14} sx={{ mt: 0.5 }} />
+            </Box>
+          </Box>
+        ))}
+      </Paper>
+    </Box>
+  );
+}
+
 export default function ExpensesPage() {
   return (
     <Suspense
       fallback={
-        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <CircularProgress />
-        </Box>
+        <AppLayout>
+          <ExpensesPageSkeleton />
+        </AppLayout>
       }
     >
       <ExpensesContent />

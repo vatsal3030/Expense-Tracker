@@ -1393,9 +1393,16 @@ export default function FriendsPage() {
           }}
         >
           {profileLoading ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6, gap: 2 }}>
-              <CircularProgress size={36} sx={{ color: '#34D399' }} />
-              <Typography variant="body2" color="text.secondary">Loading friend profile...</Typography>
+            <Box sx={{ py: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, mb: 3 }}>
+                <Skeleton variant="circular" width={64} height={64} />
+                <Box sx={{ flex: 1 }}>
+                  <Skeleton width="50%" height={28} />
+                  <Skeleton width="30%" height={18} sx={{ mt: 0.5 }} />
+                </Box>
+              </Box>
+              <Skeleton variant="rounded" width="100%" height={90} sx={{ borderRadius: 3, mb: 2 }} />
+              <Skeleton variant="rounded" width="100%" height={120} sx={{ borderRadius: 3 }} />
             </Box>
           ) : selectedFriendProfile ? (
             <Box>

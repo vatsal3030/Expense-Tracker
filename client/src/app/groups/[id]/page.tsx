@@ -6,7 +6,7 @@ import {
   List, ListItem, ListItemAvatar, ListItemText, Divider, Button,
   Skeleton, useTheme, alpha, IconButton, Tooltip, Stack, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tabs, Tab,
-  Alert, Snackbar, FormControlLabel, Switch, MenuItem,
+  Alert, Snackbar, FormControlLabel, Switch, MenuItem, Paper,
 } from '@mui/material';
 import {
   ArrowBack, Add, Edit, Delete, Share, ContentCopy,
@@ -20,7 +20,85 @@ import { groupApi, settlementApi, expenseApi } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 import QrCodeModal from '@/components/common/QrCodeModal';
-import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
+
+function GroupDetailSkeleton() {
+  const theme = useTheme();
+  return (
+    <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
+      {/* Top Header Row Skeleton */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', md: 'center' },
+          mb: 3,
+          gap: 2,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+          <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: 2.5 }} />
+          <Box>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Skeleton width={180} height={36} />
+              <Skeleton width={60} height={24} sx={{ borderRadius: 2 }} />
+            </Stack>
+            <Skeleton width={240} height={20} sx={{ mt: 0.5 }} />
+          </Box>
+        </Box>
+        <Stack direction="row" spacing={1.5}>
+          <Skeleton variant="rounded" width={110} height={38} sx={{ borderRadius: 2.5 }} />
+          <Skeleton variant="rounded" width={120} height={38} sx={{ borderRadius: 2.5 }} />
+          <Skeleton variant="rounded" width={130} height={38} sx={{ borderRadius: 2.5 }} />
+        </Stack>
+      </Box>
+
+      {/* Balance Summary Cards Skeleton */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {[1, 2, 3].map((i) => (
+          <Paper key={i} className="glass-secondary" sx={{ p: 2.5, borderRadius: 3 }}>
+            <Skeleton width="40%" height={16} />
+            <Skeleton width="70%" height={36} sx={{ my: 1 }} />
+            <Skeleton width="50%" height={14} />
+          </Paper>
+        ))}
+      </Box>
+
+      {/* Tabs Skeleton */}
+      <Box sx={{ mb: 3 }}>
+        <Stack direction="row" spacing={1.5}>
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} variant="rounded" width={90} height={36} sx={{ borderRadius: 2.5 }} />
+          ))}
+        </Stack>
+      </Box>
+
+      {/* Expenses List Skeleton */}
+      <Paper className="glass-card" sx={{ p: 2, borderRadius: 3 }}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.75, borderBottom: `1px solid ${theme.palette.divider}` }}>
+            <Skeleton variant="circular" width={42} height={42} />
+            <Box sx={{ flex: 1 }}>
+              <Skeleton width="45%" height={22} />
+              <Skeleton width="25%" height={16} sx={{ mt: 0.5 }} />
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <Skeleton width={70} height={24} />
+              <Skeleton width={50} height={14} sx={{ mt: 0.5 }} />
+            </Box>
+          </Box>
+        ))}
+      </Paper>
+    </Box>
+  );
+}
 
 const GROUP_TYPES = ['HOME', 'TRIP', 'COUPLE', 'OFFICE', 'FRIENDS', 'FAMILY', 'PROJECT', 'OTHER'];
 
@@ -279,9 +357,7 @@ function GroupDetailContent() {
   return (
     <AppLayout>
       {loading && !group ? (
-        <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
-          <CategoryCycleLoader fullPage={false} message="Loading group details & split balance..." />
-        </Box>
+        <GroupDetailSkeleton />
       ) : (
         <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 } }}>
         {/* Top Header Row */}
@@ -1447,9 +1523,9 @@ export default function GroupDetailPage() {
   return (
     <Suspense
       fallback={
-        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <CircularProgress />
-        </Box>
+        <AppLayout>
+          <GroupDetailSkeleton />
+        </AppLayout>
       }
     >
       <GroupDetailContent />

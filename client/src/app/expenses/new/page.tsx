@@ -18,7 +18,55 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { expenseApi, groupApi, friendApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
-import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
+
+function NewExpenseSkeleton() {
+  return (
+    <Box className="animate-fade-in" sx={{ maxWidth: 760, mx: 'auto', pb: { xs: 8, sm: 8 } }}>
+      {/* Top Header Skeleton */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: 2.5 }} />
+        <Box>
+          <Skeleton width={180} height={36} />
+          <Skeleton width={220} height={18} sx={{ mt: 0.5 }} />
+        </Box>
+      </Box>
+
+      {/* Form Card Skeleton */}
+      <Card className="glass-card" sx={{ p: { xs: 2.5, sm: 3.5 }, borderRadius: 4 }}>
+        <Stack spacing={3}>
+          {/* Amount input skeleton */}
+          <Box sx={{ p: 2.5, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <Skeleton width="30%" height={16} />
+            <Skeleton width="60%" height={56} sx={{ my: 1 }} />
+            <Skeleton width="40%" height={16} />
+          </Box>
+
+          {/* Description input skeleton */}
+          <Skeleton variant="rounded" width="100%" height={54} sx={{ borderRadius: 2.5 }} />
+
+          {/* Category chips skeleton */}
+          <Box>
+            <Skeleton width={120} height={20} sx={{ mb: 1.5 }} />
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} variant="rounded" width={80} height={32} sx={{ borderRadius: 3 }} />
+              ))}
+            </Stack>
+          </Box>
+
+          {/* Split selector skeleton */}
+          <Box>
+            <Skeleton width={100} height={20} sx={{ mb: 1.5 }} />
+            <Skeleton variant="rounded" width="100%" height={44} sx={{ borderRadius: 2.5 }} />
+          </Box>
+
+          {/* Save button skeleton */}
+          <Skeleton variant="rounded" width="100%" height={48} sx={{ borderRadius: 2.5 }} />
+        </Stack>
+      </Card>
+    </Box>
+  );
+}
 
 const CATEGORIES = [
   'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'SHOPPING', 'UTILITIES', 'RENT',
@@ -646,9 +694,7 @@ function NewExpenseContent() {
   return (
     <AppLayout>
       {loadingInitial ? (
-        <Box sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
-          <CategoryCycleLoader fullPage={false} message={isEditMode ? "Loading expense details..." : "Setting up expense..."} />
-        </Box>
+        <NewExpenseSkeleton />
       ) : (
         <Box className="animate-fade-in" sx={{ maxWidth: 760, mx: 'auto', pb: { xs: 8, sm: 8 } }}>
         {/* Top Header */}
@@ -1364,9 +1410,9 @@ export default function NewExpensePage() {
   return (
     <Suspense
       fallback={
-        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <CircularProgress />
-        </Box>
+        <AppLayout>
+          <NewExpenseSkeleton />
+        </AppLayout>
       }
     >
       <NewExpenseContent />
