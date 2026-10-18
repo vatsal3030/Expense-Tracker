@@ -12,9 +12,9 @@ expenseRouter.use(authenticate);
 // POST /api/expenses — Create a new expense
 const createExpenseSchema = z.object({
   groupId: z.string().nullish().transform((val) => (val && val.trim() !== '' ? val : null)),
-  description: z.string().min(1, 'Description is required').max(200),
-  amount: z.number().positive('Amount must be positive').max(99999999.99),
-  currency: z.string().length(3).default('INR'),
+  description: z.string().trim().min(1, 'Description is required').max(150, 'Description cannot exceed 150 characters'),
+  amount: z.number().positive('Amount must be positive').min(0.01, 'Minimum amount is ₹0.01').max(10000000, 'Amount cannot exceed ₹10,000,000'),
+  currency: z.string().trim().length(3).default('INR'),
   category: z.enum([
     'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'SHOPPING', 'UTILITIES', 'RENT',
     'HEALTH', 'EDUCATION', 'TRAVEL', 'GROCERIES', 'SUBSCRIPTIONS', 'INSURANCE',
@@ -22,14 +22,14 @@ const createExpenseSchema = z.object({
   ]).default('GENERAL'),
   splitType: z.enum(['EQUAL', 'EXACT', 'PERCENTAGE', 'SHARES', 'ADJUSTMENT']).default('EQUAL'),
   date: z.any().optional(),
-  notes: z.string().max(500).nullish(),
+  notes: z.string().trim().max(500, 'Notes cannot exceed 500 characters').nullish(),
   paidById: z.string().nullish(),
   splits: z.array(z.object({
-    userId: z.string(),
-    amount: z.number().optional(),
-    percentage: z.number().optional(),
-    shares: z.number().optional(),
-    adjustment: z.number().optional(),
+    userId: z.string().trim().min(1, 'User ID is required'),
+    amount: z.number().min(0, 'Split amount cannot be negative').max(10000000).optional(),
+    percentage: z.number().min(0, 'Percentage cannot be negative').max(100, 'Percentage cannot exceed 100%').optional(),
+    shares: z.number().positive('Shares must be positive').max(1000, 'Shares cannot exceed 1000').optional(),
+    adjustment: z.number().min(-10000000).max(10000000).optional(),
   })).min(1, 'At least one split is required'),
 });
 
@@ -330,21 +330,21 @@ expenseRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Prom
 
 // PUT /api/expenses/:id — Update expense
 const updateExpenseSchema = z.object({
-  description: z.string().min(1).max(200).optional(),
-  amount: z.number().positive().max(99999999.99).optional(),
+  description: z.string().trim().min(1, 'Description is required').max(150, 'Description cannot exceed 150 characters').optional(),
+  amount: z.number().positive('Amount must be positive').min(0.01, 'Minimum amount is ₹0.01').max(10000000, 'Amount cannot exceed ₹10,000,000').optional(),
   category: z.enum([
     'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'SHOPPING', 'UTILITIES', 'RENT',
     'HEALTH', 'EDUCATION', 'TRAVEL', 'GROCERIES', 'SUBSCRIPTIONS', 'INSURANCE',
     'GIFTS', 'DONATIONS', 'INVESTMENTS', 'SALARY', 'FREELANCE', 'GENERAL', 'OTHER',
   ]).optional(),
   date: z.any().optional(),
-  notes: z.string().max(500).nullable().optional(),
+  notes: z.string().trim().max(500, 'Notes cannot exceed 500 characters').nullable().optional(),
   splitType: z.enum(['EQUAL', 'EXACT', 'PERCENTAGE', 'SHARES']).optional(),
   splits: z.array(z.object({
-    userId: z.string(),
-    amount: z.number().optional(),
-    percentage: z.number().optional(),
-    shares: z.number().optional(),
+    userId: z.string().trim().min(1, 'User ID is required'),
+    amount: z.number().min(0, 'Split amount cannot be negative').max(10000000).optional(),
+    percentage: z.number().min(0, 'Percentage cannot be negative').max(100, 'Percentage cannot exceed 100%').optional(),
+    shares: z.number().positive('Shares must be positive').max(1000, 'Shares cannot exceed 1000').optional(),
   })).optional(),
 });
 

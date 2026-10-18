@@ -33,7 +33,7 @@ import {
   EmojiEvents as FairScoreIcon,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/providers/AuthProvider';
 import BrandLogo from '@/components/brand/BrandLogo';
@@ -95,17 +95,48 @@ interface SidebarProps {
 export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) {
   const theme = useTheme();
   const pathname = usePathname();
+  const router = useRouter();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { profile } = useAuth();
+  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
+
+  // Clear optimistic path once route navigation completes
+  React.useEffect(() => {
+    setPendingPath(null);
+  }, [pathname]);
+
+  // Proactively prefetch all routes in background so page transitions are instantaneous
+  React.useEffect(() => {
+    const primaryRoutes = [
+      '/dashboard',
+      '/expenses',
+      '/groups',
+      '/analytics',
+      '/fairscore',
+      '/settlements',
+      '/budgets',
+      '/friends',
+      '/activity',
+      '/settings',
+      '/admin',
+    ];
+    primaryRoutes.forEach((route) => {
+      try {
+        router.prefetch(route);
+      } catch {}
+    });
+  }, [router]);
 
   const isLight = theme.palette.mode === 'light';
   const drawerWidth = collapsed && !isMobile ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH;
 
+  const currentPath = pendingPath || pathname;
+
   const isActive = (path: string) => {
-    if (!pathname) return false;
-    if (pathname === path) return true;
+    if (!currentPath) return false;
+    if (currentPath === path) return true;
     if (path === '/dashboard') return false;
-    return pathname.startsWith(path + '/');
+    return currentPath.startsWith(path + '/');
   };
 
   const drawerContent = (
@@ -212,7 +243,13 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                       component={Link}
                       href={item.path}
                       prefetch={true}
+                      onMouseEnter={() => {
+                        try {
+                          router.prefetch(item.path);
+                        } catch {}
+                      }}
                       onClick={() => {
+                        setPendingPath(item.path);
                         if (isMobile) onClose();
                       }}
                       sx={{
@@ -341,7 +378,13 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                 component={Link}
                 href={item.path}
                 prefetch={true}
+                onMouseEnter={() => {
+                  try {
+                    router.prefetch(item.path);
+                  } catch {}
+                }}
                 onClick={() => {
+                  setPendingPath(item.path);
                   if (isMobile) onClose();
                 }}
                 sx={{

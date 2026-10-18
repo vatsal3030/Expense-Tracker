@@ -13,9 +13,9 @@ settlementRouter.use(authenticate);
 const createSettlementSchema = z.object({
   groupId: z.string().uuid().optional().nullable(),
   payeeId: z.string().uuid('Payee ID is required'),
-  amount: z.number().positive('Amount must be positive'),
-  currency: z.string().length(3).default('INR'),
-  notes: z.string().max(500).optional(),
+  amount: z.number().positive('Amount must be positive').min(0.01, 'Minimum settlement is ₹0.01').max(10000000, 'Settlement amount cannot exceed ₹10,000,000'),
+  currency: z.string().trim().length(3).default('INR'),
+  notes: z.string().trim().max(300, 'Notes cannot exceed 300 characters').optional(),
 });
 
 settlementRouter.post(
@@ -324,5 +324,30 @@ settlementRouter.patch('/:id/reject', async (req: AuthenticatedRequest, res: Res
   } catch (error: any) {
     console.error('Reject settlement error:', error);
     res.status(500).json({ success: false, error: 'Failed to reject settlement.' });
+  }
+});
+
+// DELETE /api/settlements/:id — Cancel pending settlement (Payer/Creator accountability)
+settlementRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const settlement = await prisma.settlement.findFirst({
+      where: { id, payerId: req.user!.id, status: 'PENDING' },
+    });
+
+    if (!settlement) {
+      res.status(404).json({ success: false, error: 'Pending settlement not found or already processed.' });
+      return;
+    }
+
+    await prisma.settlement.delete({ where: { id } });
+
+    appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+    appCache.invalidatePrefix(`dashboard:${settlement.payeeId}`);
+
+    res.json({ success: true, message: 'Settlement request cancelled successfully.' });
+  } catch (error: any) {
+    console.error('Cancel settlement error:', error);
+    res.status(500).json({ success: false, error: 'Failed to cancel settlement.' });
   }
 });

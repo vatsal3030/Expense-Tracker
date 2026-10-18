@@ -510,8 +510,20 @@ function NewExpenseContent() {
   // Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim() || numericTotal <= 0) {
-      setErrorMsg('Please enter a valid description and positive amount.');
+    if (!description.trim()) {
+      setErrorMsg('Please enter an expense description.');
+      return;
+    }
+    if (description.trim().length > 150) {
+      setErrorMsg('Expense description cannot exceed 150 characters.');
+      return;
+    }
+    if (numericTotal <= 0) {
+      setErrorMsg('Please enter a positive amount greater than ₹0.');
+      return;
+    }
+    if (numericTotal > 10000000) {
+      setErrorMsg('Expense amount cannot exceed ₹10,000,000.');
       return;
     }
 
@@ -529,6 +541,18 @@ function NewExpenseContent() {
         userId: m.user?.id || m.userId,
       }));
     } else if (splitType === 'EXACT') {
+      for (const m of activeMembers) {
+        const uid = m.user?.id || m.userId;
+        const val = parseFloat(exactAmounts[uid] || '0');
+        if (isNaN(val) || val < 0) {
+          setErrorMsg('Individual split amounts cannot be negative.');
+          return;
+        }
+        if (val > 10000000) {
+          setErrorMsg('Individual split amount cannot exceed ₹10,000,000.');
+          return;
+        }
+      }
       splitsPayload = activeMembers.map((m) => {
         const uid = m.user?.id || m.userId;
         return {
@@ -537,6 +561,14 @@ function NewExpenseContent() {
         };
       });
     } else if (splitType === 'PERCENTAGE') {
+      for (const m of activeMembers) {
+        const uid = m.user?.id || m.userId;
+        const val = parseFloat(percentages[uid] || '0');
+        if (isNaN(val) || val < 0 || val > 100) {
+          setErrorMsg('Split percentage must be between 0% and 100%.');
+          return;
+        }
+      }
       splitsPayload = activeMembers.map((m) => {
         const uid = m.user?.id || m.userId;
         return {
@@ -545,6 +577,14 @@ function NewExpenseContent() {
         };
       });
     } else if (splitType === 'SHARES') {
+      for (const m of activeMembers) {
+        const uid = m.user?.id || m.userId;
+        const val = parseFloat(shares[uid] || '1');
+        if (isNaN(val) || val < 1 || val > 1000) {
+          setErrorMsg('Share count must be between 1 and 1000.');
+          return;
+        }
+      }
       splitsPayload = activeMembers.map((m) => {
         const uid = m.user?.id || m.userId;
         return {
@@ -684,7 +724,11 @@ function NewExpenseContent() {
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       required
-                      slotProps={{ inputLabel: { shrink: true } }}
+                      slotProps={{
+                        inputLabel: { shrink: true },
+                        htmlInput: { maxLength: 150 },
+                      }}
+                      helperText="Max 150 characters"
                     />
                   </Grid>
 
@@ -699,6 +743,7 @@ function NewExpenseContent() {
                       required
                       slotProps={{
                         inputLabel: { shrink: true },
+                        htmlInput: { min: 0.01, max: 10000000, step: 'any' },
                         input: {
                           startAdornment: (
                             <InputAdornment position="start">
@@ -709,6 +754,7 @@ function NewExpenseContent() {
                           ),
                         },
                       }}
+                      helperText="Range: ₹0.01 to ₹10,000,000"
                     />
                   </Grid>
 

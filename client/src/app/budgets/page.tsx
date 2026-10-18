@@ -4,9 +4,9 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, Grid, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, MenuItem, IconButton, Stack,
-  LinearProgress, useTheme, alpha, Skeleton, Chip,
+  LinearProgress, useTheme, alpha, Skeleton, Chip, Tooltip,
 } from '@mui/material';
-import { Add, Close, Delete, Savings } from '@mui/icons-material';
+import { Add, Close, Delete, Edit, Savings } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { budgetApi } from '@/lib/api';
@@ -32,7 +32,12 @@ export default function BudgetsPage() {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [form, setForm] = useState({ category: 'FOOD', amount: '', period: 'MONTHLY', alertAt: 80 });
+  const [editBudget, setEditBudget] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ amount: '', period: 'MONTHLY', alertAt: 80 });
+  const [formError, setFormError] = useState('');
+  const [editError, setEditError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -55,9 +60,26 @@ export default function BudgetsPage() {
   };
 
   const handleCreate = async () => {
-    if (!form.amount) return;
-    setSubmitting(true);
+    if (!form.amount) {
+      setFormError('Please enter a budget amount.');
+      return;
+    }
     const parsedAmount = parseFloat(form.amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setFormError('Budget amount must be a positive number greater than ₹0.');
+      return;
+    }
+    if (parsedAmount > 10000000) {
+      setFormError('Budget amount cannot exceed ₹10,000,000.');
+      return;
+    }
+    if (form.alertAt < 1 || form.alertAt > 100) {
+      setFormError('Alert threshold must be between 1% and 100%.');
+      return;
+    }
+
+    setFormError('');
+    setSubmitting(true);
     const tempId = `temp-${Date.now()}`;
     const optimisticBudget = {
       id: tempId,
@@ -78,10 +100,79 @@ export default function BudgetsPage() {
       const res = await budgetApi.create({ ...currentForm, amount: parsedAmount, alertAt: currentForm.alertAt });
       if (res.data?.data) {
         setBudgets((prev) => prev.map((b) => (b.id === tempId ? res.data.data : b)));
+        fetchBudgets();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Create budget error:', error);
       setBudgets(prevBudgets);
+      alert(error.response?.data?.error || 'Failed to create budget.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOpenEdit = (budget: any) => {
+    setEditBudget(budget);
+    setEditForm({
+      amount: String(budget.amount),
+      period: budget.period,
+      alertAt: budget.alertAt || 80,
+    });
+    setEditError('');
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editBudget) return;
+    if (!editForm.amount) {
+      setEditError('Please enter a budget amount.');
+      return;
+    }
+    const parsedAmount = parseFloat(editForm.amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setEditError('Budget amount must be a positive number greater than ₹0.');
+      return;
+    }
+    if (parsedAmount > 10000000) {
+      setEditError('Budget amount cannot exceed ₹10,000,000.');
+      return;
+    }
+    if (editForm.alertAt < 1 || editForm.alertAt > 100) {
+      setEditError('Alert threshold must be between 1% and 100%.');
+      return;
+    }
+
+    setEditError('');
+    setSubmitting(true);
+    const prevBudgets = [...budgets];
+
+    setBudgets((prev) =>
+      prev.map((b) =>
+        b.id === editBudget.id
+          ? {
+              ...b,
+              amount: parsedAmount,
+              period: editForm.period,
+              alertAt: editForm.alertAt,
+              remaining: Math.max(parsedAmount - (b.spent || 0), 0),
+              percentage: parsedAmount > 0 ? Math.round(((b.spent || 0) / parsedAmount) * 100) : 0,
+            }
+          : b
+      )
+    );
+    setEditDialogOpen(false);
+
+    try {
+      await budgetApi.update(editBudget.id, {
+        amount: parsedAmount,
+        period: editForm.period,
+        alertAt: editForm.alertAt,
+      });
+      fetchBudgets();
+    } catch (error: any) {
+      console.error('Update budget error:', error);
+      setBudgets(prevBudgets);
+      alert(error.response?.data?.error || 'Failed to update budget. Reverted.');
     } finally {
       setSubmitting(false);
     }
@@ -203,9 +294,28 @@ export default function BudgetsPage() {
                             </Typography>
                           </Box>
                         </Box>
-                        <IconButton size="small" onClick={() => handleDelete(budget.id)} className="glass-tertiary" sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}>
-                          <Delete fontSize="small" />
-                        </IconButton>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Tooltip title="Edit Budget">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenEdit(budget)}
+                              className="glass-tertiary"
+                              sx={{ color: 'text.secondary', '&:hover': { color: '#10B981' } }}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Budget">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDelete(budget.id)}
+                              className="glass-tertiary"
+                              sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </Box>
 
                       <Box sx={{ mb: 2 }}>
@@ -250,7 +360,7 @@ export default function BudgetsPage() {
         {/* Create Budget Dialog */}
         <Dialog
           open={dialogOpen}
-          onClose={() => setDialogOpen(false)}
+          onClose={() => { setDialogOpen(false); setFormError(''); }}
           maxWidth="sm"
           fullWidth
           slotProps={{
@@ -280,27 +390,52 @@ export default function BudgetsPage() {
             <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>
               Set Budget
             </Typography>
-            <IconButton onClick={() => setDialogOpen(false)} size="small" className="glass-tertiary">
+            <IconButton onClick={() => { setDialogOpen(false); setFormError(''); }} size="small" className="glass-tertiary">
               <Close />
             </IconButton>
           </DialogTitle>
           <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
             <Stack spacing={2.5} sx={{ mt: 1 }}>
+              {formError && (
+                <Typography variant="caption" sx={{ color: '#EF4444', fontWeight: 600 }}>
+                  ⚠️ {formError}
+                </Typography>
+              )}
               <TextField fullWidth select label="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 {CATEGORIES.map(cat => <MenuItem key={cat} value={cat}>{CATEGORY_EMOJI[cat]} {cat.charAt(0) + cat.slice(1).toLowerCase()}</MenuItem>)}
               </TextField>
-              <TextField fullWidth label="Budget Amount" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+              <TextField
+                fullWidth
+                label="Budget Amount (₹)"
+                type="number"
+                value={form.amount}
+                onChange={(e) => { setForm({ ...form, amount: e.target.value }); setFormError(''); }}
+                slotProps={{ htmlInput: { min: 1, max: 10000000, step: 'any' } }}
+                helperText="Allowed range: ₹1 to ₹10,000,000"
+                required
+              />
               <TextField fullWidth select label="Period" value={form.period} onChange={(e) => setForm({ ...form, period: e.target.value })}>
                 <MenuItem value="WEEKLY">Weekly</MenuItem>
                 <MenuItem value="MONTHLY">Monthly</MenuItem>
                 <MenuItem value="QUARTERLY">Quarterly</MenuItem>
                 <MenuItem value="YEARLY">Yearly</MenuItem>
               </TextField>
-              <TextField fullWidth label="Alert at (%)" type="number" value={form.alertAt} onChange={(e) => setForm({ ...form, alertAt: parseInt(e.target.value) || 80 })} helperText="Get notified when spending reaches this percentage" />
+              <TextField
+                fullWidth
+                label="Alert at (%)"
+                type="number"
+                value={form.alertAt}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  setForm({ ...form, alertAt: val });
+                }}
+                slotProps={{ htmlInput: { min: 1, max: 100 } }}
+                helperText="Percentage between 1% and 100% (defaults to 80%)"
+              />
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
-            <Button onClick={() => setDialogOpen(false)} sx={{ borderRadius: 2.5, textTransform: 'none' }}>Cancel</Button>
+            <Button onClick={() => { setDialogOpen(false); setFormError(''); }} sx={{ borderRadius: 2.5, textTransform: 'none' }}>Cancel</Button>
             <Button
               variant="contained"
               onClick={handleCreate}
@@ -317,6 +452,105 @@ export default function BudgetsPage() {
               }}
             >
               {submitting ? 'Creating...' : 'Set Budget'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Budget Dialog */}
+        <Dialog
+          open={editDialogOpen}
+          onClose={() => { setEditDialogOpen(false); setEditError(''); }}
+          maxWidth="sm"
+          fullWidth
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: { xs: 3, sm: 4 },
+                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                m: { xs: 1.5, sm: 3 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: '500px' },
+              },
+            },
+          }}
+        >
+          <DialogTitle
+            component="div"
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              pb: 1,
+              px: { xs: 2, sm: 3 },
+              pt: { xs: 2, sm: 2.5 },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography fontSize="1.3rem">{editBudget ? (CATEGORY_EMOJI[editBudget.category] || '📋') : ''}</Typography>
+              <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>
+                Edit Budget — {editBudget?.category?.toLowerCase()}
+              </Typography>
+            </Box>
+            <IconButton onClick={() => { setEditDialogOpen(false); setEditError(''); }} size="small" className="glass-tertiary">
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+            <Stack spacing={2.5} sx={{ mt: 1 }}>
+              {editError && (
+                <Typography variant="caption" sx={{ color: '#EF4444', fontWeight: 600 }}>
+                  ⚠️ {editError}
+                </Typography>
+              )}
+              <TextField
+                fullWidth
+                label="Budget Amount (₹)"
+                type="number"
+                value={editForm.amount}
+                onChange={(e) => { setEditForm({ ...editForm, amount: e.target.value }); setEditError(''); }}
+                slotProps={{ htmlInput: { min: 1, max: 10000000, step: 'any' } }}
+                helperText="Allowed range: ₹1 to ₹10,000,000"
+                required
+              />
+              <TextField fullWidth select label="Period" value={editForm.period} onChange={(e) => setEditForm({ ...editForm, period: e.target.value })}>
+                <MenuItem value="WEEKLY">Weekly</MenuItem>
+                <MenuItem value="MONTHLY">Monthly</MenuItem>
+                <MenuItem value="QUARTERLY">Quarterly</MenuItem>
+                <MenuItem value="YEARLY">Yearly</MenuItem>
+              </TextField>
+              <TextField
+                fullWidth
+                label="Alert at (%)"
+                type="number"
+                value={editForm.alertAt}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  setEditForm({ ...editForm, alertAt: val });
+                }}
+                slotProps={{ htmlInput: { min: 1, max: 100 } }}
+                helperText="Percentage between 1% and 100%"
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
+            <Button onClick={() => { setEditDialogOpen(false); setEditError(''); }} sx={{ borderRadius: 2.5, textTransform: 'none' }}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={handleUpdate}
+              disabled={submitting || !editForm.amount}
+              className="glass-emerald-active"
+              sx={{
+                borderRadius: 2.5,
+                px: 3.5,
+                fontWeight: 700,
+                textTransform: 'none',
+                bgcolor: '#0E6245',
+                color: '#ffffff',
+                '&:hover': { bgcolor: '#094A34' },
+              }}
+            >
+              {submitting ? 'Saving...' : 'Update Budget'}
             </Button>
           </DialogActions>
         </Dialog>

@@ -239,10 +239,25 @@ function ExpensesContent() {
 
   // Fast Optimistic UI Creation (0ms UI lag strategy)
   const handleCreate = async () => {
-    if (!form.description || !form.amount) return;
+    if (!form.description.trim()) {
+      alert('Please enter an expense description.');
+      return;
+    }
+    if (form.description.trim().length > 150) {
+      alert('Expense description cannot exceed 150 characters.');
+      return;
+    }
+    const numericAmount = parseFloat(form.amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      alert('Please enter a positive amount greater than ₹0.');
+      return;
+    }
+    if (numericAmount > 10000000) {
+      alert('Expense amount cannot exceed ₹10,000,000.');
+      return;
+    }
 
     const currentUserId = profile?.id || user?.id || '';
-    const numericAmount = parseFloat(form.amount);
 
     const splits = splitUsers.length > 0
       ? splitUsers.map((uid) => ({ userId: uid }))
@@ -864,18 +879,37 @@ function ExpensesContent() {
                           >
                             {formatCurrency(Number(expense.amount))}
                           </Typography>
-                          <Tooltip title="Delete">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(expense.id);
-                              }}
-                              sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
-                            >
-                              <Delete fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          {(expense.createdById === user?.id || expense.paidById === user?.id || (user as any)?.isAdmin) && (
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <Tooltip title="Edit Expense">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const editUrl = expense.groupId
+                                      ? `/expenses/new?edit=${expense.id}&groupId=${expense.groupId}`
+                                      : `/expenses/new?edit=${expense.id}`;
+                                    router.push(editUrl);
+                                  }}
+                                  sx={{ color: 'text.secondary', '&:hover': { color: '#10B981' } }}
+                                >
+                                  <Edit fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete Expense">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(expense.id);
+                                  }}
+                                  sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          )}
                         </Box>
                       </ListItemSecondaryAction>
                     </ListItem>
@@ -1179,6 +1213,8 @@ function ExpensesContent() {
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="e.g. Dinner with team"
+                slotProps={{ htmlInput: { maxLength: 150 } }}
+                helperText="Max 150 characters"
                 required
               />
               <TextField
@@ -1188,10 +1224,12 @@ function ExpensesContent() {
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
                 slotProps={{
+                  htmlInput: { min: 0.01, max: 10000000, step: 'any' },
                   input: {
                     startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                   },
                 }}
+                helperText="Range: ₹0.01 to ₹10,000,000"
                 required
               />
               <Grid container spacing={2}>

@@ -17,6 +17,18 @@ export default function MobileBottomNav() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setPendingPath(null);
+  }, [pathname]);
+
+  React.useEffect(() => {
+    ['/dashboard', '/groups', '/activity', '/friends', '/expenses/new'].forEach((r) => {
+      try { router.prefetch(r); } catch {}
+    });
+  }, [router]);
+
   const navItems = [
     { label: 'Home', icon: <DashboardIcon sx={{ fontSize: 22 }} />, path: '/dashboard' },
     { label: 'Groups', icon: <GroupIcon sx={{ fontSize: 22 }} />, path: '/groups' },
@@ -25,9 +37,11 @@ export default function MobileBottomNav() {
     { label: 'Friends', icon: <FriendsIcon sx={{ fontSize: 22 }} />, path: '/friends' },
   ];
 
+  const currentPath = pendingPath || pathname;
+
   const isActive = (path?: string) => {
-    if (!path) return false;
-    return pathname === path || (path !== '/dashboard' && pathname?.startsWith(path));
+    if (!path || !currentPath) return false;
+    return currentPath === path || (path !== '/dashboard' && currentPath.startsWith(path));
   };
 
   return (
@@ -87,6 +101,7 @@ export default function MobileBottomNav() {
             component={Link}
             href={item.path || '/dashboard'}
             prefetch={true}
+            onClick={() => setPendingPath(item.path || '/dashboard')}
             sx={{
               display: 'flex',
               flexDirection: 'column',

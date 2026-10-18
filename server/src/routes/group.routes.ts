@@ -12,7 +12,7 @@ groupRouter.use(authenticate);
 // Security metadata helpers for password protection and admin approval
 async function encodeGroupMeta(description?: string | null, password?: string | null, requireAdminApproval?: boolean | null): Promise<string | undefined> {
   if (!password && !requireAdminApproval) return description || undefined;
-  const hashedPwd = password ? await bcrypt.hash(password, 10) : null;
+  const hashedPwd = password ? (password.startsWith('$2') ? password : await bcrypt.hash(password, 10)) : null;
   const meta = { pwd: hashedPwd, approval: Boolean(requireAdminApproval) };
   const clean = (description || '').replace(/\s*<!--fs_meta:.*?-->\s*/g, '').trim();
   return `${clean}\n<!--fs_meta:${JSON.stringify(meta)}-->`;
@@ -38,10 +38,10 @@ export function parseGroupMeta(description?: string | null) {
 
 // POST /api/groups — Create a new group
 const createGroupSchema = z.object({
-  name: z.string().min(1, 'Group name is required').max(100),
-  description: z.string().max(500).optional(),
+  name: z.string().trim().min(1, 'Group name is required').max(100, 'Group name cannot exceed 100 characters'),
+  description: z.string().trim().max(500, 'Description cannot exceed 500 characters').optional(),
   type: z.enum(['HOME', 'TRIP', 'COUPLE', 'OFFICE', 'FRIENDS', 'FAMILY', 'PROJECT', 'OTHER']).optional(),
-  currency: z.string().length(3).default('INR'),
+  currency: z.string().trim().length(3).default('INR'),
   memberIds: z.array(z.string().uuid()).optional(),
   password: z.string().max(50).optional(),
   requireAdminApproval: z.boolean().optional(),
@@ -243,6 +243,151 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
   } catch (error: any) {
     console.error('Get group error:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch group details.' });
+  }
+});
+
+// PUT /api/groups/:id — Update group details (Admin only)
+const updateGroupSchema = z.object({
+  name: z.string().trim().min(1, 'Group name cannot be empty').max(100, 'Group name cannot exceed 100 characters').optional(),
+  description: z.string().trim().max(500, 'Description cannot exceed 500 characters').optional(),
+  type: z.enum(['HOME', 'TRIP', 'COUPLE', 'OFFICE', 'FRIENDS', 'FAMILY', 'PROJECT', 'OTHER']).optional(),
+  currency: z.string().trim().length(3).optional(),
+  password: z.string().max(50).nullable().optional(),
+  requireAdminApproval: z.boolean().optional(),
+});
+
+groupRouter.put(
+  '/:id',
+  validate({ body: updateGroupSchema }),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+
+      // Verify admin role for authenticity & accountability
+      const requesterMembership = await prisma.groupMember.findFirst({
+        where: { groupId: id, userId: { in: userIds } },
+      });
+
+      if (!requesterMembership) {
+        res.status(404).json({ success: false, error: 'Group not found or you are not a member.' });
+        return;
+      }
+
+      if (requesterMembership.role !== 'ADMIN') {
+        res.status(403).json({ success: false, error: 'Only group administrators can modify group settings.' });
+        return;
+      }
+
+      const existingGroup = await prisma.group.findUnique({ where: { id } });
+      if (!existingGroup) {
+        res.status(404).json({ success: false, error: 'Group not found.' });
+        return;
+      }
+
+      const existingMeta = parseGroupMeta(existingGroup.description);
+      const newDesc = req.body.description !== undefined ? req.body.description : existingMeta.description;
+      const newApproval = req.body.requireAdminApproval !== undefined ? req.body.requireAdminApproval : existingMeta.requireAdminApproval;
+
+      let pwdToEncode: string | null = null;
+      if (req.body.password === null || req.body.password === '') {
+        pwdToEncode = null;
+      } else if (req.body.password) {
+        pwdToEncode = req.body.password;
+      } else if (existingMeta.isPasswordProtected && existingMeta.password) {
+        pwdToEncode = existingMeta.password;
+      }
+
+      const finalDescription = await encodeGroupMeta(newDesc, pwdToEncode, newApproval);
+
+      const updateData: any = {};
+      if (req.body.name) updateData.name = req.body.name.trim();
+      if (finalDescription !== undefined) updateData.description = finalDescription;
+      if (req.body.type) updateData.type = req.body.type;
+      if (req.body.currency) updateData.currency = req.body.currency.trim().toUpperCase();
+
+      const updated = await prisma.group.update({
+        where: { id },
+        data: updateData,
+        include: {
+          members: {
+            include: {
+              user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            },
+          },
+        },
+      });
+
+      await prisma.activity.create({
+        data: {
+          userId: req.user!.id,
+          groupId: id,
+          type: 'GROUP_CREATED',
+          message: `updated group details`,
+        },
+      });
+
+      appCache.invalidatePrefix(`groups:list`);
+      appCache.invalidatePrefix(`dashboard`);
+
+      const meta = parseGroupMeta(updated.description);
+      res.json({
+        success: true,
+        data: {
+          ...updated,
+          description: meta.description,
+          isPasswordProtected: meta.isPasswordProtected,
+          requireAdminApproval: meta.requireAdminApproval,
+        },
+      });
+    } catch (error: any) {
+      console.error('Update group error:', error);
+      res.status(500).json({ success: false, error: 'Failed to update group.' });
+    }
+  }
+);
+
+// DELETE /api/groups/:id — Soft-delete / archive group (Admin only)
+groupRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+
+    const requesterMembership = await prisma.groupMember.findFirst({
+      where: { groupId: id, userId: { in: userIds } },
+    });
+
+    if (!requesterMembership) {
+      res.status(404).json({ success: false, error: 'Group not found or you are not a member.' });
+      return;
+    }
+
+    if (requesterMembership.role !== 'ADMIN') {
+      res.status(403).json({ success: false, error: 'Only group administrators can delete or archive this group.' });
+      return;
+    }
+
+    await prisma.group.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    await prisma.activity.create({
+      data: {
+        userId: req.user!.id,
+        groupId: id,
+        type: 'GROUP_MEMBER_REMOVED',
+        message: `deleted/archived group`,
+      },
+    });
+
+    appCache.invalidatePrefix(`groups:list`);
+    appCache.invalidatePrefix(`dashboard`);
+
+    res.json({ success: true, message: 'Group deleted successfully.' });
+  } catch (error: any) {
+    console.error('Delete group error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete group.' });
   }
 });
 

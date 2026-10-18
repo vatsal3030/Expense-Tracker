@@ -6,7 +6,7 @@ import {
   List, ListItem, ListItemAvatar, ListItemText, Divider, Button,
   Skeleton, useTheme, alpha, IconButton, Tooltip, Stack, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tabs, Tab,
-  Alert, Snackbar,
+  Alert, Snackbar, FormControlLabel, Switch, MenuItem,
 } from '@mui/material';
 import {
   ArrowBack, Add, Edit, Delete, Share, ContentCopy,
@@ -21,6 +21,8 @@ import { useRouter, useParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 import QrCodeModal from '@/components/common/QrCodeModal';
 import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
+
+const GROUP_TYPES = ['HOME', 'TRIP', 'COUPLE', 'OFFICE', 'FRIENDS', 'FAMILY', 'PROJECT', 'OTHER'];
 
 const CATEGORY_EMOJI: Record<string, string> = {
   FOOD: '🍔', TRANSPORT: '🚗', ENTERTAINMENT: '🎬', SHOPPING: '🛍️',
@@ -58,6 +60,22 @@ function GroupDetailContent() {
   });
 
   const hasLoadedGroupRef = useRef(false);
+
+  // Edit & Delete Group State
+  const [editGroupOpen, setEditGroupOpen] = useState(false);
+  const [deleteGroupOpen, setDeleteGroupOpen] = useState(false);
+  const [editGroupForm, setEditGroupForm] = useState({
+    name: '',
+    description: '',
+    type: 'OTHER',
+    currency: 'INR',
+    isPasswordProtected: false,
+    password: '',
+    requireAdminApproval: false,
+  });
+  const [editGroupError, setEditGroupError] = useState('');
+  const [savingGroup, setSavingGroup] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
@@ -180,6 +198,84 @@ function GroupDetailContent() {
     }
   };
 
+  const handleOpenEditGroup = () => {
+    if (!group) return;
+    setEditGroupForm({
+      name: group.name || '',
+      description: group.description || '',
+      type: group.type || 'OTHER',
+      currency: group.currency || 'INR',
+      isPasswordProtected: Boolean(group.isPasswordProtected),
+      password: '',
+      requireAdminApproval: Boolean(group.requireAdminApproval),
+    });
+    setEditGroupError('');
+    setEditGroupOpen(true);
+  };
+
+  const handleSaveGroup = async () => {
+    if (!editGroupForm.name.trim()) {
+      setEditGroupError('Group name is required.');
+      return;
+    }
+    if (editGroupForm.name.trim().length > 100) {
+      setEditGroupError('Group name cannot exceed 100 characters.');
+      return;
+    }
+    if (editGroupForm.description.length > 500) {
+      setEditGroupError('Description cannot exceed 500 characters.');
+      return;
+    }
+
+    setSavingGroup(true);
+    setEditGroupError('');
+
+    try {
+      const payload: any = {
+        name: editGroupForm.name.trim(),
+        description: editGroupForm.description.trim(),
+        type: editGroupForm.type,
+        currency: editGroupForm.currency,
+        requireAdminApproval: editGroupForm.requireAdminApproval,
+      };
+      if (editGroupForm.isPasswordProtected && editGroupForm.password) {
+        payload.password = editGroupForm.password;
+      } else if (!editGroupForm.isPasswordProtected) {
+        payload.password = null;
+      }
+
+      const res = await groupApi.update(group.id, payload);
+      if (res.data?.data) {
+        setGroup((prev: any) => ({
+          ...prev,
+          ...res.data.data,
+        }));
+      }
+      setToastMessage('Group details updated successfully!');
+      setEditGroupOpen(false);
+    } catch (err: any) {
+      console.error('Update group error:', err);
+      setEditGroupError(err.response?.data?.error || 'Failed to update group.');
+    } finally {
+      setSavingGroup(false);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!group?.id) return;
+    setDeletingGroup(true);
+    try {
+      await groupApi.delete(group.id);
+      setToastMessage('Group deleted successfully.');
+      router.push('/groups');
+    } catch (err: any) {
+      console.error('Delete group error:', err);
+      setToastMessage(err.response?.data?.error || 'Failed to delete group.');
+      setDeletingGroup(false);
+      setDeleteGroupOpen(false);
+    }
+  };
+
   return (
     <AppLayout>
       {loading && !group ? (
@@ -253,6 +349,46 @@ function GroupDetailContent() {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+            {isGroupAdmin && (
+              <>
+                <Button
+                  variant="outlined"
+                  startIcon={<Edit fontSize="small" />}
+                  onClick={handleOpenEditGroup}
+                  className="glass-tertiary"
+                  sx={{
+                    borderRadius: 2.5,
+                    color: 'text.primary',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    px: 2,
+                    py: 0.75,
+                    '&:hover': {
+                      borderColor: '#10B981',
+                      bgcolor: alpha('#10B981', 0.08),
+                    },
+                  }}
+                >
+                  Edit Group
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<Delete fontSize="small" />}
+                  onClick={() => setDeleteGroupOpen(true)}
+                  className="glass-tertiary"
+                  sx={{
+                    borderRadius: 2.5,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    px: 2,
+                    py: 0.75,
+                  }}
+                >
+                  Delete
+                </Button>
+              </>
+            )}
             <Button
               variant="outlined"
               startIcon={<QrCode2 fontSize="small" />}
@@ -1069,6 +1205,197 @@ function GroupDetailContent() {
           <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2.5 } }}>
             <Button onClick={() => setInviteOpen(false)} sx={{ borderRadius: 2, textTransform: 'none' }}>
               Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Group Dialog (Admin Only) */}
+        <Dialog
+          open={editGroupOpen}
+          onClose={() => { setEditGroupOpen(false); setEditGroupError(''); }}
+          maxWidth="sm"
+          fullWidth
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: {
+                borderRadius: { xs: 3, sm: 4 },
+                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                m: { xs: 1.5, sm: 3 },
+                width: { xs: 'calc(100% - 24px)', sm: '100%' },
+                maxWidth: { xs: 'calc(100% - 24px)', sm: '500px' },
+              },
+            },
+          }}
+        >
+          <DialogTitle
+            component="div"
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              pb: 1,
+              px: { xs: 2, sm: 3 },
+              pt: { xs: 2, sm: 2.5 },
+            }}
+          >
+            <Typography variant="h6" component="span" fontWeight={800} sx={{ color: 'text.primary' }}>
+              Edit Group Settings
+            </Typography>
+            <IconButton onClick={() => { setEditGroupOpen(false); setEditGroupError(''); }} size="small" className="glass-tertiary">
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+            <Stack spacing={2.5} sx={{ mt: 1 }}>
+              {editGroupError && (
+                <Typography variant="caption" sx={{ color: '#EF4444', fontWeight: 600 }}>
+                  ⚠️ {editGroupError}
+                </Typography>
+              )}
+              <TextField
+                fullWidth
+                label="Group Name"
+                value={editGroupForm.name}
+                onChange={(e) => {
+                  setEditGroupForm({ ...editGroupForm, name: e.target.value });
+                  setEditGroupError('');
+                }}
+                slotProps={{ htmlInput: { maxLength: 100 } }}
+                helperText="Between 1 and 100 characters"
+                required
+              />
+              <TextField
+                fullWidth
+                label="Description (optional)"
+                value={editGroupForm.description}
+                onChange={(e) => setEditGroupForm({ ...editGroupForm, description: e.target.value })}
+                multiline
+                rows={2}
+                slotProps={{ htmlInput: { maxLength: 500 } }}
+                helperText="Up to 500 characters"
+              />
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Group Type"
+                    value={editGroupForm.type}
+                    onChange={(e) => setEditGroupForm({ ...editGroupForm, type: e.target.value })}
+                  >
+                    {GROUP_TYPES.map((t) => (
+                      <MenuItem key={t} value={t}>
+                        {t.charAt(0) + t.slice(1).toLowerCase()}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Currency"
+                    value={editGroupForm.currency}
+                    onChange={(e) => setEditGroupForm({ ...editGroupForm, currency: e.target.value.toUpperCase() })}
+                    slotProps={{ htmlInput: { maxLength: 3 } }}
+                  />
+                </Grid>
+              </Grid>
+
+              <Divider sx={{ my: 0.5 }} />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={editGroupForm.isPasswordProtected}
+                    onChange={(e) => setEditGroupForm({ ...editGroupForm, isPasswordProtected: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label={<Typography variant="body2" fontWeight={600}>Require Passcode to Join</Typography>}
+              />
+
+              {editGroupForm.isPasswordProtected && (
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="New Passcode (leave blank to keep current)"
+                  type="password"
+                  value={editGroupForm.password}
+                  onChange={(e) => setEditGroupForm({ ...editGroupForm, password: e.target.value })}
+                  slotProps={{ htmlInput: { maxLength: 50 } }}
+                />
+              )}
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={editGroupForm.requireAdminApproval}
+                    onChange={(e) => setEditGroupForm({ ...editGroupForm, requireAdminApproval: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label={<Typography variant="body2" fontWeight={600}>Require Admin Approval for New Members</Typography>}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
+            <Button onClick={() => { setEditGroupOpen(false); setEditGroupError(''); }} sx={{ borderRadius: 2.5, textTransform: 'none' }}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveGroup}
+              disabled={savingGroup || !editGroupForm.name.trim()}
+              className="glass-emerald-active"
+              sx={{
+                borderRadius: 2.5,
+                px: 3.5,
+                fontWeight: 700,
+                textTransform: 'none',
+                bgcolor: '#0E6245',
+                color: '#ffffff',
+                '&:hover': { bgcolor: '#094A34' },
+              }}
+            >
+              {savingGroup ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Group Confirmation Dialog */}
+        <Dialog
+          open={deleteGroupOpen}
+          onClose={() => setDeleteGroupOpen(false)}
+          maxWidth="xs"
+          fullWidth
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: { borderRadius: 3.5, p: 1 },
+            },
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: 800, color: 'text.primary' }}>
+            Delete Group?
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to delete and archive &quot;{group?.name}&quot;? All member invitations will be closed. Existing shared expenses will remain preserved for accounting.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setDeleteGroupOpen(false)} sx={{ borderRadius: 2, textTransform: 'none' }}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleDeleteGroup}
+              disabled={deletingGroup}
+              sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}
+            >
+              {deletingGroup ? 'Deleting...' : 'Yes, Delete Group'}
             </Button>
           </DialogActions>
         </Dialog>

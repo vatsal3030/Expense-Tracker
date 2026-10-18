@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import {
   Box,
   Button,
@@ -26,8 +26,9 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import BrandLogo from '@/components/brand/BrandLogo';
+import CategoryCycleLoader from '@/components/common/CategoryCycleLoader';
 
-export default function SignupPage() {
+function SignupForm() {
   const theme = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -322,5 +323,13 @@ export default function SignupPage() {
         </Paper>
       </Container>
     </Box>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<CategoryCycleLoader fullPage={true} />}>
+      <SignupForm />
+    </Suspense>
   );
 }

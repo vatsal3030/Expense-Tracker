@@ -98,6 +98,7 @@ export const groupApi = {
   getInviteLink: (groupId: string) => api.get(`/groups/${groupId}/invite`),
   getPublicInfo: (groupId: string) => api.get(`/groups/public/${groupId}`),
   join: (groupId: string, data?: { passcode?: string }) => api.post(`/groups/${groupId}/join`, data || {}),
+  delete: (id: string) => api.delete(`/groups/${id}`),
 };
 
 // Settlements
@@ -106,6 +107,7 @@ export const settlementApi = {
   create: (data: any) => api.post('/settlements', data),
   confirm: (id: string) => api.patch(`/settlements/${id}/confirm`),
   reject: (id: string) => api.patch(`/settlements/${id}/reject`),
+  cancel: (id: string) => api.delete(`/settlements/${id}`),
   getSimplified: () => api.get('/settlements/simplified'),
 };
 

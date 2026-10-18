@@ -98,7 +98,18 @@ export default function GroupsPage() {
   };
 
   const handleCreate = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      alert('Please enter a group name.');
+      return;
+    }
+    if (form.name.trim().length > 100) {
+      alert('Group name cannot exceed 100 characters.');
+      return;
+    }
+    if (form.description.length > 500) {
+      alert('Description cannot exceed 500 characters.');
+      return;
+    }
     setSubmitting(true);
 
     const tempId = `temp-${Date.now()}`;
@@ -721,7 +732,11 @@ export default function GroupsPage() {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
                 placeholder="e.g. Goa Trip, Flat 402, Office Lunch"
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{
+                  inputLabel: { shrink: true },
+                  htmlInput: { maxLength: 100 },
+                }}
+                helperText="Between 1 and 100 characters"
               />
 
               <TextField
@@ -732,7 +747,11 @@ export default function GroupsPage() {
                 multiline
                 rows={2}
                 placeholder="What is this group for?"
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{
+                  inputLabel: { shrink: true },
+                  htmlInput: { maxLength: 500 },
+                }}
+                helperText="Up to 500 characters"
               />
 
               <Grid container spacing={2}>

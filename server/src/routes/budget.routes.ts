@@ -15,10 +15,10 @@ const createBudgetSchema = z.object({
     'HEALTH', 'EDUCATION', 'TRAVEL', 'GROCERIES', 'SUBSCRIPTIONS', 'INSURANCE',
     'GIFTS', 'DONATIONS', 'INVESTMENTS', 'SALARY', 'FREELANCE', 'GENERAL', 'OTHER',
   ]),
-  amount: z.number().positive('Budget amount must be positive'),
-  currency: z.string().length(3).default('INR'),
+  amount: z.number().positive('Budget amount must be positive').min(1, 'Minimum budget is ₹1').max(10000000, 'Budget amount cannot exceed ₹10,000,000'),
+  currency: z.string().trim().length(3).default('INR'),
   period: z.enum(['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).default('MONTHLY'),
-  alertAt: z.number().int().min(1).max(100).default(80),
+  alertAt: z.number().int().min(1, 'Alert threshold must be at least 1%').max(100, 'Alert threshold cannot exceed 100%').default(80),
 });
 
 budgetRouter.post(
@@ -116,8 +116,9 @@ budgetRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<
 
 // PUT /api/budgets/:id — Update budget
 const updateBudgetSchema = z.object({
-  amount: z.number().positive().optional(),
-  alertAt: z.number().int().min(1).max(100).optional(),
+  amount: z.number().positive('Budget amount must be positive').min(1, 'Minimum budget is ₹1').max(10000000, 'Budget amount cannot exceed ₹10,000,000').optional(),
+  alertAt: z.number().int().min(1, 'Alert threshold must be between 1% and 100%').max(100, 'Alert threshold cannot exceed 100%').optional(),
+  period: z.enum(['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -136,11 +137,31 @@ budgetRouter.put(
         return;
       }
 
+      if (req.body.period && req.body.period !== budget.period) {
+        const conflict = await prisma.budget.findUnique({
+          where: {
+            userId_category_period: {
+              userId: req.user!.id,
+              category: budget.category,
+              period: req.body.period,
+            },
+          },
+        });
+        if (conflict && conflict.id !== id) {
+          res.status(409).json({
+            success: false,
+            error: `A ${req.body.period.toLowerCase()} budget for ${budget.category.toLowerCase()} already exists.`,
+          });
+          return;
+        }
+      }
+
       const updated = await prisma.budget.update({
         where: { id },
         data: {
           ...(req.body.amount && { amount: new Decimal(req.body.amount) }),
           ...(req.body.alertAt !== undefined && { alertAt: req.body.alertAt }),
+          ...(req.body.period && { period: req.body.period }),
           ...(req.body.isActive !== undefined && { isActive: req.body.isActive }),
         },
       });
