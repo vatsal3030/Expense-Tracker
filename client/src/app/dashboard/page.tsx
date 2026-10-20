@@ -48,6 +48,7 @@ import { dashboardApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import CoinSplitLoader from '@/components/common/CoinSplitLoader';
 import Link from 'next/link';
+import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
 
 const CATEGORY_COLORS: Record<string, string> = {
   FOOD: '#0E6245',
@@ -255,6 +256,9 @@ export default function DashboardPage() {
             </Button>
           </Box>
         </Box>
+
+        {/* Smart Natural Language Quick-Add Bar (Time-Saving Fast Mode) */}
+        <SmartQuickAddBar onExpenseCreated={fetchDashboard} />
 
         {/* Segmented Control Pills (Floating Control Capsule - Layer 2: Z2) */}
         <Box

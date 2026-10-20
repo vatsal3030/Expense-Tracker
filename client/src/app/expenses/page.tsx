@@ -73,6 +73,7 @@ import { expenseApi, groupApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 import SplitwiseExpenseItem from '@/components/expense/SplitwiseExpenseItem';
+import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
 
 const CATEGORIES = [
   'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'SHOPPING', 'UTILITIES', 'RENT',
@@ -585,6 +586,9 @@ function ExpensesContent() {
           </Box>
         </Box>
 
+        {/* Smart Quick-Add Bar (Time-Saving Fast Mode) */}
+        <SmartQuickAddBar onExpenseCreated={fetchExpenses} />
+
         {/* Rich Search, Filter & Sort Control Panel (Floating Control Surface - Layer 2: Z2) */}
         <Card
           className="glass-filter-surface glass-specular-top"
@@ -871,6 +875,12 @@ function ExpensesContent() {
                               router.push(editUrl);
                             }}
                             onDelete={() => handleDelete(expense.id)}
+                            onClone={() => {
+                              const cloneUrl = expense.groupId
+                                ? `/expenses/new?clone=${expense.id}&groupId=${expense.groupId}`
+                                : `/expenses/new?clone=${expense.id}`;
+                              router.push(cloneUrl);
+                            }}
                           />
                           {idx < monthItems.length - 1 && (
                             <Divider sx={{ borderColor: theme.palette.divider, opacity: 0.6, ml: { xs: 7.5, sm: 9 } }} />

@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Edit,
   Delete,
+  ContentCopy,
 } from '@mui/icons-material';
 
 export const CATEGORY_EMOJI: Record<string, string> = {
@@ -60,6 +61,7 @@ interface SplitwiseExpenseItemProps {
   onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onClone?: () => void;
 }
 
 export default function SplitwiseExpenseItem({
@@ -72,6 +74,7 @@ export default function SplitwiseExpenseItem({
   onClick,
   onEdit,
   onDelete,
+  onClone,
 }: SplitwiseExpenseItemProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -319,6 +322,21 @@ export default function SplitwiseExpenseItem({
               transition: 'opacity 0.15s ease',
             }}
           >
+            {onClone && (
+              <Tooltip title="Clone / Re-record Expense">
+                <IconButton
+                  size="small"
+                  onClick={onClone}
+                  sx={{
+                    color: 'text.secondary',
+                    p: 0.75,
+                    '&:hover': { color: '#3B82F6', bgcolor: alpha('#3B82F6', 0.1) },
+                  }}
+                >
+                  <ContentCopy sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
+            )}
             {canEdit && onEdit && (
               <Tooltip title="Edit Expense">
                 <IconButton

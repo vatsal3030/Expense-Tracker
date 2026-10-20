@@ -24,6 +24,7 @@ import { useRouter, useParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 import QrCodeModal from '@/components/common/QrCodeModal';
 import SplitwiseExpenseItem from '@/components/expense/SplitwiseExpenseItem';
+import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
 
 function GroupDetailSkeleton() {
   const theme = useTheme();
@@ -895,102 +896,112 @@ function GroupDetailContent() {
 
         {/* TAB 0: EXPENSES */}
         {activeTab === 0 && (
-          <Card
-            className="glass-secondary glass-specular-top"
-            sx={{
-              borderRadius: 3.5,
-              overflow: 'hidden',
-              boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
-            }}
-          >
-            <CardContent sx={{ p: 0 }}>
-              {group?.expenses && group.expenses.length > 0 ? (
-                <Box sx={{ width: '100%' }}>
-                  {Object.entries(groupedGroupExpenses).map(([monthKey, monthItems]) => (
-                    <Box key={monthKey}>
-                      <Box
-                        sx={{
-                          px: { xs: 2, sm: 3 },
-                          py: 0.9,
-                          bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
-                          borderBottom: `1px solid ${theme.palette.divider}`,
-                          borderTop: `1px solid ${theme.palette.divider}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
+          <Box sx={{ width: '100%' }}>
+            {/* Smart Quick-Add Bar scoped to this group */}
+            <SmartQuickAddBar
+              initialGroupId={group?.id}
+              onExpenseCreated={fetchGroup}
+              placeholder={`⚡ Quick Add in ${group?.name || 'this group'}: e.g. "Dinner 1200" or "Taxi 350"`}
+            />
+
+            <Card
+              className="glass-secondary glass-specular-top"
+              sx={{
+                borderRadius: 3.5,
+                overflow: 'hidden',
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+              }}
+            >
+              <CardContent sx={{ p: 0 }}>
+                {group?.expenses && group.expenses.length > 0 ? (
+                  <Box sx={{ width: '100%' }}>
+                    {Object.entries(groupedGroupExpenses).map(([monthKey, monthItems]) => (
+                      <Box key={monthKey}>
+                        <Box
                           sx={{
-                            fontWeight: 800,
-                            fontSize: '0.725rem',
-                            letterSpacing: '0.05em',
-                            textTransform: 'uppercase',
-                            color: isLight ? '#475569' : '#94A3B8',
+                            px: { xs: 2, sm: 3 },
+                            py: 0.9,
+                            bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
+                            borderBottom: `1px solid ${theme.palette.divider}`,
+                            borderTop: `1px solid ${theme.palette.divider}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
                           }}
                         >
-                          {monthKey}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
-                          {monthItems.length} {monthItems.length === 1 ? 'expense' : 'expenses'}
-                        </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: '0.725rem',
+                              letterSpacing: '0.05em',
+                              textTransform: 'uppercase',
+                              color: isLight ? '#475569' : '#94A3B8',
+                            }}
+                          >
+                            {monthKey}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
+                            {monthItems.length} {monthItems.length === 1 ? 'expense' : 'expenses'}
+                          </Typography>
+                        </Box>
+
+                        {monthItems.map((exp: any, idx: number) => {
+                          const canEdit = isGroupAdmin || (!group?.onlyAdminEdit && (exp.createdById === user?.id || exp.paidById === user?.id));
+                          const canDelete = isGroupAdmin || (!group?.onlyAdminEdit && exp.createdById === user?.id);
+
+                          return (
+                            <React.Fragment key={exp.id}>
+                              <SplitwiseExpenseItem
+                                expense={exp}
+                                currentUserId={user?.id}
+                                currency={group.currency || 'INR'}
+                                showGroupTag={false}
+                                canEdit={canEdit}
+                                canDelete={canDelete}
+                                onClick={() => router.push(`/expenses?id=${exp.id}`)}
+                                onEdit={() => router.push(`/expenses/new?edit=${exp.id}&groupId=${group.id}`)}
+                                onDelete={() => handleDeleteGroupExpense(exp.id)}
+                                onClone={() => router.push(`/expenses/new?clone=${exp.id}&groupId=${group.id}`)}
+                              />
+                              {idx < monthItems.length - 1 && (
+                                <Divider sx={{ borderColor: theme.palette.divider, opacity: 0.6, ml: { xs: 7.5, sm: 9 } }} />
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
                       </Box>
-
-                      {monthItems.map((exp: any, idx: number) => {
-                        const canEdit = isGroupAdmin || (!group?.onlyAdminEdit && (exp.createdById === user?.id || exp.paidById === user?.id));
-                        const canDelete = isGroupAdmin || (!group?.onlyAdminEdit && exp.createdById === user?.id);
-
-                        return (
-                          <React.Fragment key={exp.id}>
-                            <SplitwiseExpenseItem
-                              expense={exp}
-                              currentUserId={user?.id}
-                              currency={group.currency || 'INR'}
-                              showGroupTag={false}
-                              canEdit={canEdit}
-                              canDelete={canDelete}
-                              onClick={() => router.push(`/expenses?id=${exp.id}`)}
-                              onEdit={() => router.push(`/expenses/new?edit=${exp.id}&groupId=${group.id}`)}
-                              onDelete={() => handleDeleteGroupExpense(exp.id)}
-                            />
-                            {idx < monthItems.length - 1 && (
-                              <Divider sx={{ borderColor: theme.palette.divider, opacity: 0.6, ml: { xs: 7.5, sm: 9 } }} />
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </Box>
-                  ))}
-                </Box>
-              ) : (
-                <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
-                  <ReceiptLong sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
-                  <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', mb: 0.5 }}>
-                    No expenses yet
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Record your first group bill or expense to start splitting.
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={() => router.push(`/expenses/new?groupId=${group?.id}`)}
-                    sx={{
-                      bgcolor: '#0E6245',
-                      color: '#FFFFFF',
-                      borderRadius: 2.5,
-                      fontWeight: 600,
-                      textTransform: 'none',
-                      '&:hover': { bgcolor: '#094A34' },
-                    }}
-                  >
-                    Add First Expense
-                  </Button>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </Box>
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
+                    <ReceiptLong sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
+                    <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', mb: 0.5 }}>
+                      No expenses yet
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                      Use the Quick-Add bar above or tap below to record your first bill.
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<Add />}
+                      onClick={() => router.push(`/expenses/new?groupId=${group?.id}`)}
+                      sx={{
+                        bgcolor: '#0E6245',
+                        color: '#FFFFFF',
+                        borderRadius: 2.5,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        '&:hover': { bgcolor: '#094A34' },
+                      }}
+                    >
+                      Add First Expense
+                    </Button>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Box>
         )}
 
         {/* TAB 1: BALANCES & SETTLE UP */}

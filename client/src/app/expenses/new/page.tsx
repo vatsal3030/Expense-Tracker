@@ -12,7 +12,7 @@ import {
   ArrowBack, Check, ReceiptLong, Group as GroupIcon,
   AttachMoney, Person, CalendarToday, Notes, PieChart,
   Percent, Functions, Balance, Refresh,
-  DeleteSweep, Calculate, ErrorOutlined,
+  DeleteSweep, Calculate, ErrorOutlined, FlashOn, ContentCopy,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -95,12 +95,17 @@ function NewExpenseContent() {
   const preselectedGroupId = searchParams.get('groupId') || '';
   const preselectedFriendId = searchParams.get('friendId') || '';
   const editId = searchParams.get('edit') || '';
+  const cloneId = searchParams.get('clone') || '';
+  const queryDescription = searchParams.get('description') || '';
+  const queryAmount = searchParams.get('amount') || '';
+  const queryCategory = searchParams.get('category') || '';
   const isEditMode = Boolean(editId);
+  const isCloneMode = Boolean(cloneId);
 
   // Form Fields
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('FOOD');
+  const [description, setDescription] = useState(queryDescription);
+  const [amount, setAmount] = useState(queryAmount);
+  const [category, setCategory] = useState(queryCategory || 'FOOD');
   const [groupId, setGroupId] = useState(preselectedGroupId);
   const [paidById, setPaidById] = useState('');
   const [splitType, setSplitType] = useState<SplitType>('EQUAL');
@@ -205,10 +210,11 @@ function NewExpenseContent() {
       setGroups(groupList);
       setFriends(friendList);
 
-      // Handle Edit Mode: Load existing expense and current group members
-      if (isEditMode) {
+      // Handle Edit or Clone Mode: Load existing expense and current group members
+      const targetExpId = editId || cloneId;
+      if (targetExpId) {
         try {
-          const expRes = await expenseApi.get(editId);
+          const expRes = await expenseApi.get(targetExpId);
           const exp = expRes.data?.data;
           if (exp) {
             setDescription(exp.description || '');
@@ -216,13 +222,15 @@ function NewExpenseContent() {
             setCategory(exp.category || 'FOOD');
             setSplitType(exp.splitType || 'EQUAL');
             setNotes(exp.notes || '');
-            if (exp.date) {
+            if (isEditMode && exp.date) {
               setDate(new Date(exp.date).toISOString().split('T')[0]);
+            } else {
+              setDate(new Date().toISOString().split('T')[0]);
             }
             if (exp.paidById) {
               setPaidById(exp.paidById);
             }
-            const targetGid = exp.groupId || '';
+            const targetGid = exp.groupId || preselectedGroupId || '';
             setGroupId(targetGid);
 
             const existingSplitMemberIds = (exp.shares || []).map((s: any) => s.userId);
@@ -249,8 +257,8 @@ function NewExpenseContent() {
             return;
           }
         } catch (err) {
-          console.error('Failed to load expense for editing:', err);
-          setErrorMsg('Failed to load expense details for editing.');
+          console.error('Failed to load expense for edit/clone:', err);
+          setErrorMsg('Failed to load expense details.');
         }
       }
 
@@ -619,6 +627,36 @@ function NewExpenseContent() {
     setAdjustments({});
   };
 
+  // 1-Click Fast Split Presets (Time-Saving Fast Mode)
+  const handlePresetSplitEqually = () => {
+    setSplitType('EQUAL');
+    setSelectedMemberIds(selectedGroupMembers.map((m: any) => m.user?.id || m.userId));
+  };
+
+  const handlePresetYouPaidTheyOwe = () => {
+    const myId = user?.id || profile?.id;
+    if (myId) setPaidById(myId);
+    const otherMembers = selectedGroupMembers
+      .map((m: any) => m.user?.id || m.userId)
+      .filter((uid: string) => uid !== myId);
+    if (otherMembers.length > 0) {
+      setSelectedMemberIds(otherMembers);
+      setSplitType('EQUAL');
+    }
+  };
+
+  const handlePresetTheyPaidYouOwe = () => {
+    const myId = user?.id || profile?.id;
+    const otherMembers = selectedGroupMembers
+      .map((m: any) => m.user?.id || m.userId)
+      .filter((uid: string) => uid !== myId);
+    if (otherMembers.length > 0) {
+      setPaidById(otherMembers[0]);
+      if (myId) setSelectedMemberIds([myId]);
+      setSplitType('EQUAL');
+    }
+  };
+
   // Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -805,6 +843,23 @@ function NewExpenseContent() {
             />
           )}
         </Box>
+
+        {isCloneMode && (
+          <Alert
+            severity="info"
+            icon={<ContentCopy fontSize="small" />}
+            sx={{
+              mb: 3,
+              borderRadius: 3,
+              fontWeight: 600,
+              border: '1px solid',
+              borderColor: alpha('#0288d1', 0.3),
+              bgcolor: alpha('#0288d1', 0.08),
+            }}
+          >
+            Cloned Expense — We&apos;ve duplicated participants and splits. Today&apos;s date has been prefilled. Review and click Save when ready!
+          </Alert>
+        )}
 
         {errorMsg && (
           <Alert severity="error" sx={{ mb: 3, borderRadius: 3, fontWeight: 600 }}>
@@ -1024,6 +1079,60 @@ function NewExpenseContent() {
 
               {/* Advanced Split Methods */}
               <Box>
+                {/* 1-Click Fast Split Presets */}
+                <Box sx={{ mb: 2, p: 1.5, borderRadius: 2.5, bgcolor: alpha('#0E6245', 0.05), border: `1px dashed ${alpha('#0E6245', 0.25)}` }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <FlashOn sx={{ fontSize: 18, color: '#0E6245' }} />
+                    <Typography variant="caption" fontWeight={750} sx={{ color: '#0E6245', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Fast Split Presets (1-Click)
+                    </Typography>
+                  </Box>
+                  <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                    <Chip
+                      clickable
+                      size="small"
+                      icon={<Check sx={{ fontSize: 16 }} />}
+                      label="Split Equally (All)"
+                      onClick={handlePresetSplitEqually}
+                      variant={splitType === 'EQUAL' && selectedMemberIds.length === selectedGroupMembers.length ? 'filled' : 'outlined'}
+                      sx={{
+                        fontWeight: 650,
+                        fontSize: '0.75rem',
+                        bgcolor: splitType === 'EQUAL' && selectedMemberIds.length === selectedGroupMembers.length ? alpha('#0E6245', 0.15) : 'transparent',
+                        borderColor: alpha('#0E6245', 0.3),
+                        color: splitType === 'EQUAL' && selectedMemberIds.length === selectedGroupMembers.length ? '#0E6245' : 'text.primary',
+                        '&:hover': { bgcolor: alpha('#0E6245', 0.12) },
+                      }}
+                    />
+                    <Chip
+                      clickable
+                      size="small"
+                      label="You Paid, They Owe 100%"
+                      onClick={handlePresetYouPaidTheyOwe}
+                      variant="outlined"
+                      sx={{
+                        fontWeight: 650,
+                        fontSize: '0.75rem',
+                        borderColor: alpha('#0E6245', 0.3),
+                        '&:hover': { bgcolor: alpha('#0E6245', 0.12) },
+                      }}
+                    />
+                    <Chip
+                      clickable
+                      size="small"
+                      label="They Paid, You Owe 100%"
+                      onClick={handlePresetTheyPaidYouOwe}
+                      variant="outlined"
+                      sx={{
+                        fontWeight: 650,
+                        fontSize: '0.75rem',
+                        borderColor: alpha('#0E6245', 0.3),
+                        '&:hover': { bgcolor: alpha('#0E6245', 0.12) },
+                      }}
+                    />
+                  </Stack>
+                </Box>
+
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
                   <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
                     3. Split Method & Allocation
