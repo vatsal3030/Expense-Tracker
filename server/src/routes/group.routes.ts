@@ -144,7 +144,8 @@ async function encodeGroupMeta(
   requireAdminApproval?: boolean | null,
   onlyAdminInvite?: boolean | null,
   onlyAdminEdit?: boolean | null,
-  simplifyDebts?: boolean | null
+  simplifyDebts?: boolean | null,
+  requireSettlementConfirmation?: boolean | null
 ): Promise<string | undefined> {
   const clean = (description || '').replace(/\s*<!--fs_meta:.*?-->\s*/g, '').trim();
   const hasSettings =
@@ -152,7 +153,8 @@ async function encodeGroupMeta(
     requireAdminApproval !== undefined ||
     onlyAdminInvite !== undefined ||
     onlyAdminEdit !== undefined ||
-    simplifyDebts !== undefined;
+    simplifyDebts !== undefined ||
+    requireSettlementConfirmation !== undefined;
 
   if (!hasSettings && !password && !requireAdminApproval) return clean || undefined;
 
@@ -163,6 +165,7 @@ async function encodeGroupMeta(
     onlyAdminInvite: Boolean(onlyAdminInvite),
     onlyAdminEdit: Boolean(onlyAdminEdit),
     simplifyDebts: simplifyDebts !== false,
+    requireSettlementConfirmation: Boolean(requireSettlementConfirmation),
   };
   return `${clean}\n<!--fs_meta:${JSON.stringify(meta)}-->`;
 }
@@ -177,6 +180,7 @@ export function parseGroupMeta(description?: string | null) {
       onlyAdminInvite: false,
       onlyAdminEdit: false,
       simplifyDebts: true,
+      requireSettlementConfirmation: false,
     };
   }
   const match = description.match(/<!--fs_meta:(.*?)-->/);
@@ -189,6 +193,7 @@ export function parseGroupMeta(description?: string | null) {
       onlyAdminInvite: false,
       onlyAdminEdit: false,
       simplifyDebts: true,
+      requireSettlementConfirmation: false,
     };
   }
   try {
@@ -202,6 +207,7 @@ export function parseGroupMeta(description?: string | null) {
       onlyAdminInvite: Boolean(meta.onlyAdminInvite),
       onlyAdminEdit: Boolean(meta.onlyAdminEdit),
       simplifyDebts: meta.simplifyDebts !== false,
+      requireSettlementConfirmation: Boolean(meta.requireSettlementConfirmation),
     };
   } catch {
     return {
@@ -212,6 +218,7 @@ export function parseGroupMeta(description?: string | null) {
       onlyAdminInvite: false,
       onlyAdminEdit: false,
       simplifyDebts: true,
+      requireSettlementConfirmation: false,
     };
   }
 }
@@ -249,7 +256,7 @@ groupRouter.post(
           },
         },
         include: {
-          members: { include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } } },
+          members: { include: { user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true } } } },
         },
       });
 
@@ -307,7 +314,7 @@ groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<v
       include: {
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true } },
           },
         },
         _count: { select: { expenses: true } },
@@ -354,14 +361,14 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
       include: {
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true } },
           },
         },
         expenses: {
           where: { isDeleted: false },
           include: {
-            paidBy: { select: { id: true, name: true, avatarUrl: true } },
-            shares: { include: { user: { select: { id: true, name: true } } } },
+            paidBy: { select: { id: true, name: true, avatarUrl: true, username: true } },
+            shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, username: true } } } },
           },
           orderBy: { date: 'desc' },
           take: 20,
@@ -383,6 +390,7 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
       onlyAdminInvite: meta.onlyAdminInvite,
       onlyAdminEdit: meta.onlyAdminEdit,
       simplifyDebts: meta.simplifyDebts,
+      requireSettlementConfirmation: meta.requireSettlementConfirmation,
     };
 
     appCache.set(cacheKey, data, 20000);
@@ -444,6 +452,7 @@ groupRouter.put(
       const newOnlyAdminInvite = req.body.onlyAdminInvite !== undefined ? req.body.onlyAdminInvite : existingMeta.onlyAdminInvite;
       const newOnlyAdminEdit = req.body.onlyAdminEdit !== undefined ? req.body.onlyAdminEdit : existingMeta.onlyAdminEdit;
       const newSimplifyDebts = req.body.simplifyDebts !== undefined ? req.body.simplifyDebts : existingMeta.simplifyDebts;
+      const newRequireSettlementConfirmation = req.body.requireSettlementConfirmation !== undefined ? req.body.requireSettlementConfirmation : existingMeta.requireSettlementConfirmation;
 
       let pwdToEncode: string | null = null;
       if (req.body.password === null || req.body.password === '') {
@@ -460,7 +469,8 @@ groupRouter.put(
         newApproval,
         newOnlyAdminInvite,
         newOnlyAdminEdit,
-        newSimplifyDebts
+        newSimplifyDebts,
+        newRequireSettlementConfirmation
       );
 
       const updateData: any = {};
@@ -505,6 +515,7 @@ groupRouter.put(
           onlyAdminInvite: meta.onlyAdminInvite,
           onlyAdminEdit: meta.onlyAdminEdit,
           simplifyDebts: meta.simplifyDebts,
+          requireSettlementConfirmation: meta.requireSettlementConfirmation,
         },
       });
     } catch (error: any) {
@@ -815,7 +826,7 @@ groupRouter.post('/:id/join', async (req: AuthenticatedRequest, res: Response): 
     // Direct join
     const member = await prisma.groupMember.create({
       data: { groupId: id, userId, role: 'MEMBER' },
-      include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+      include: { user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true } } },
     });
 
     await prisma.activity.create({
@@ -934,7 +945,7 @@ groupRouter.post(
 
       const member = await prisma.groupMember.create({
         data: { groupId: id, userId: targetUserId, role: 'MEMBER' },
-        include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+        include: { user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true } } },
       });
 
       // Activity log
@@ -1056,7 +1067,7 @@ groupRouter.patch(
       const updated = await prisma.groupMember.update({
         where: { groupId_userId: { groupId: id, userId: targetUserId } },
         data: { role },
-        include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+        include: { user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true } } },
       });
 
       // Activity log
@@ -1113,7 +1124,7 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
       }),
       prisma.groupMember.findMany({
         where: { groupId: id },
-        include: { user: { select: { id: true, name: true, avatarUrl: true } } },
+        include: { user: { select: { id: true, name: true, avatarUrl: true, username: true } } },
       }),
       prisma.group.findUnique({
         where: { id },

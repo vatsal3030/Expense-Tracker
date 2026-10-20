@@ -69,11 +69,12 @@ import {
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
-import { expenseApi, groupApi } from '@/lib/api';
+import { expenseApi, groupApi, settlementApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 import SplitwiseExpenseItem from '@/components/expense/SplitwiseExpenseItem';
 import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
+import { useDataRefresh, triggerDataRefresh } from '@/lib/events';
 
 const CATEGORIES = [
   'FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'SHOPPING', 'UTILITIES', 'RENT',
@@ -139,7 +140,7 @@ function ExpensesContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [settleModalOpen, setSettleModalOpen] = useState(false);
-  const [settleTarget, setSettleTarget] = useState<{ name: string; amount: number; upiId?: string }>({
+  const [settleTarget, setSettleTarget] = useState<{ name: string; amount: number; upiId?: string; payeeId?: string; groupId?: string }>({
     name: '',
     amount: 0,
   });
@@ -233,6 +234,10 @@ function ExpensesContent() {
   useEffect(() => {
     if (user?.id) fetchExpenses();
   }, [user?.id, fetchExpenses]);
+
+  useDataRefresh(useCallback(() => {
+    fetchExpenses();
+  }, [fetchExpenses]));
 
   useEffect(() => {
     if (user?.id) {
@@ -773,7 +778,7 @@ function ExpensesContent() {
             boxShadow: theme.palette.mode === 'dark' ? '0 18px 45px rgba(0,0,0,0.45)' : '0 10px 30px rgba(0,0,0,0.05)',
           }}
         >
-          <CardContent sx={{ p: 0 }}>
+          <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
             {loading && expenses.length === 0 ? (
               <Box sx={{ p: 3 }}>
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -1090,9 +1095,13 @@ function ExpensesContent() {
                   variant="contained"
                   startIcon={<QrCode2 />}
                   onClick={() => {
+                    const myShare = selectedExpense.shares?.find((s: any) => s.userId === user?.id || s.userId === profile?.id);
+                    const amountToSettle = myShare ? Number(myShare.amount) : Number(selectedExpense.amount) / (selectedExpense.shares?.length || 1);
                     setSettleTarget({
                       name: selectedExpense.paidBy?.name || 'Friend',
-                      amount: Number(selectedExpense.amount) / (selectedExpense.shares?.length || 1),
+                      amount: amountToSettle,
+                      payeeId: selectedExpense.paidById,
+                      groupId: selectedExpense.groupId,
                     });
                     setSettleModalOpen(true);
                   }}
@@ -1292,7 +1301,20 @@ function ExpensesContent() {
           onClose={() => setSettleModalOpen(false)}
           payeeName={settleTarget.name}
           amount={settleTarget.amount}
-          onConfirmSettlement={() => {
+          onConfirmSettlement={async () => {
+            if (settleTarget.payeeId) {
+              try {
+                await settlementApi.create({
+                  payeeId: settleTarget.payeeId,
+                  amount: settleTarget.amount,
+                  groupId: settleTarget.groupId || null,
+                  notes: `Settled for expense: ${selectedExpense?.description || ''}`,
+                });
+              } catch (e) {
+                console.error('Failed to create settlement:', e);
+              }
+            }
+            setSettleModalOpen(false);
             fetchExpenses();
           }}
         />

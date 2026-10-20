@@ -25,6 +25,8 @@ import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 import QrCodeModal from '@/components/common/QrCodeModal';
 import SplitwiseExpenseItem from '@/components/expense/SplitwiseExpenseItem';
 import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
+import { useSocket } from '@/providers/SocketProvider';
+import { useDataRefresh, triggerDataRefresh } from '@/lib/events';
 
 function GroupDetailSkeleton() {
   const theme = useTheme();
@@ -136,6 +138,7 @@ function GroupDetailContent() {
     payeeName: string;
     amount: number;
     payeeUpiId?: string;
+    payeeId?: string;
   }>({
     open: false,
     payeeName: '',
@@ -161,6 +164,7 @@ function GroupDetailContent() {
     onlyAdminInvite: false,
     onlyAdminEdit: false,
     simplifyDebts: true,
+    requireSettlementConfirmation: false,
   });
   const [editGroupError, setEditGroupError] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
@@ -180,6 +184,7 @@ function GroupDetailContent() {
         onlyAdminInvite: Boolean(group.onlyAdminInvite),
         onlyAdminEdit: Boolean(group.onlyAdminEdit),
         simplifyDebts: group.simplifyDebts !== false,
+        requireSettlementConfirmation: Boolean(group.requireSettlementConfirmation),
       });
     }
   }, [group]);
@@ -188,9 +193,24 @@ function GroupDetailContent() {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
+  const { joinGroup, leaveGroup } = useSocket();
+
+  useEffect(() => {
+    if (params.id) {
+      joinGroup(params.id as string);
+      return () => {
+        leaveGroup(params.id as string);
+      };
+    }
+  }, [params.id, joinGroup, leaveGroup]);
+
   useEffect(() => {
     if (user?.id && params.id) fetchGroup();
   }, [user?.id, params.id]);
+
+  useDataRefresh(React.useCallback(() => {
+    fetchGroup();
+  }, []));
 
   const fetchGroup = async () => {
     try {
@@ -336,6 +356,7 @@ function GroupDetailContent() {
     try {
       await expenseApi.delete(expenseId);
       groupApi.getBalances(group.id).then((res) => setBalances(res.data?.data || null)).catch(() => {});
+      triggerDataRefresh({ type: 'expense' });
     } catch (err: any) {
       console.error('Failed to delete expense:', err);
       setGroup((prev: any) => ({ ...prev, expenses: prevExpenses }));
@@ -343,11 +364,12 @@ function GroupDetailContent() {
     }
   };
 
-  const handleSettleUpi = (payeeName: string, amount: number) => {
+  const handleSettleUpi = (payeeName: string, amount: number, payeeId?: string) => {
     setUpiModal({
       open: true,
       payeeName,
       amount,
+      payeeId,
       payeeUpiId: `${payeeName.toLowerCase().replace(/\s+/g, '')}@okaxis`,
     });
   };
@@ -365,6 +387,7 @@ function GroupDetailContent() {
       });
       setToastMessage('Settlement recorded successfully!');
       fetchGroup();
+      triggerDataRefresh({ type: 'settlement' });
     } catch (err: any) {
       setToastMessage(err.response?.data?.error || 'Failed to record settlement.');
     }
@@ -389,6 +412,7 @@ function GroupDetailContent() {
       onlyAdminInvite: Boolean(group.onlyAdminInvite),
       onlyAdminEdit: Boolean(group.onlyAdminEdit),
       simplifyDebts: group.simplifyDebts !== false,
+      requireSettlementConfirmation: Boolean(group.requireSettlementConfirmation),
     });
     setEditGroupError('');
     setEditGroupOpen(true);
@@ -421,6 +445,7 @@ function GroupDetailContent() {
         onlyAdminInvite: editGroupForm.onlyAdminInvite,
         onlyAdminEdit: editGroupForm.onlyAdminEdit,
         simplifyDebts: editGroupForm.simplifyDebts,
+        requireSettlementConfirmation: editGroupForm.requireSettlementConfirmation,
       };
       if (editGroupForm.isPasswordProtected && editGroupForm.password) {
         payload.password = editGroupForm.password;
@@ -912,7 +937,7 @@ function GroupDetailContent() {
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
               }}
             >
-              <CardContent sx={{ p: 0 }}>
+              <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
                 {group?.expenses && group.expenses.length > 0 ? (
                   <Box sx={{ width: '100%' }}>
                     {Object.entries(groupedGroupExpenses).map(([monthKey, monthItems]) => (
@@ -1163,7 +1188,7 @@ function GroupDetailContent() {
                               size="small"
                               variant="contained"
                               startIcon={<QrCode2 fontSize="small" />}
-                              onClick={() => handleSettleUpi(debt.to.name, debt.amount)}
+                              onClick={() => handleSettleUpi(debt.to.name, debt.amount, debt.to.id)}
                               sx={{
                                 borderRadius: 2,
                                 fontWeight: 700,
@@ -1278,9 +1303,26 @@ function GroupDetailContent() {
                               </Avatar>
                             </ListItemAvatar>
                             <Box sx={{ minWidth: 0, flex: 1 }}>
-                              <Typography variant="body2" fontWeight={700} noWrap>
-                                {memberName} {isSelf && '(You)'}
-                              </Typography>
+                              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                                <Typography variant="body2" fontWeight={700} noWrap>
+                                  {memberName} {isSelf && '(You)'}
+                                </Typography>
+                                {(m.user?.username || m.user?.email) && (
+                                  <Chip
+                                    label={`@${m.user?.username || m.user?.email?.split('@')[0]}`}
+                                    size="small"
+                                    sx={{
+                                      height: 19,
+                                      fontSize: '0.68rem',
+                                      fontWeight: 650,
+                                      bgcolor: 'rgba(59, 130, 246, 0.12)',
+                                      color: '#60A5FA',
+                                      border: '1px solid rgba(59, 130, 246, 0.25)',
+                                      px: 0.3,
+                                    }}
+                                  />
+                                )}
+                              </Stack>
                               <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
                                 {m.user?.email || m.user?.phone || 'Member'}
                               </Typography>
@@ -1752,6 +1794,26 @@ function GroupDetailContent() {
                           <Box>
                             <Typography variant="body2" fontWeight={700}>Splitwise Debt Simplification</Typography>
                             <Typography variant="caption" color="text.secondary">Use greedy cash-flow algorithm to reduce the total number of transactions needed between members.</Typography>
+                          </Box>
+                        }
+                      />
+                    </Box>
+
+                    {/* Require Payee Settlement Confirmation */}
+                    <Box sx={{ p: 2, borderRadius: 2.5, bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)', border: `1px solid ${theme.palette.divider}` }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={editGroupForm.requireSettlementConfirmation}
+                            onChange={(e) => setEditGroupForm({ ...editGroupForm, requireSettlementConfirmation: e.target.checked })}
+                            disabled={!isGroupAdmin}
+                            color="primary"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>Require Payee Confirmation for Settlements</Typography>
+                            <Typography variant="caption" color="text.secondary">When enabled, recorded payments remain Pending until the receiver clicks Confirm Received. When disabled, payments settle instantly.</Typography>
                           </Box>
                         }
                       />
@@ -2296,10 +2358,15 @@ function GroupDetailContent() {
           payeeUpiId={upiModal.payeeUpiId}
           amount={upiModal.amount}
           currency={group?.currency || 'INR'}
-          onConfirmSettlement={() => {
+          onConfirmSettlement={async () => {
+            const targetPayeeId = upiModal.payeeId;
             setUpiModal({ ...upiModal, open: false });
-            setToastMessage(`Payment of ${formatCurrency(upiModal.amount)} to ${upiModal.payeeName} initiated!`);
-            fetchGroup();
+            if (targetPayeeId) {
+              await handleRecordSettlement(targetPayeeId, upiModal.amount);
+            } else {
+              setToastMessage(`Payment of ${formatCurrency(upiModal.amount)} to ${upiModal.payeeName} marked as completed!`);
+              fetchGroup();
+            }
           }}
         />
 

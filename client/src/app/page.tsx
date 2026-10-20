@@ -32,6 +32,9 @@ import {
   Sun,
   Moon,
   LayoutDashboard,
+  Mic,
+  Radio,
+  AtSign,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import QrCodeModal from '@/components/common/QrCodeModal';
@@ -135,6 +138,48 @@ export default function LandingPage() {
 
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  // Smart Natural Language & Voice Simulation
+  const [nlInput, setNlInput] = useState('Pizza 1200 Goa Trip');
+  const [isSimulatedListening, setIsSimulatedListening] = useState(false);
+
+  const parsedNl = useMemo(() => {
+    const raw = nlInput.trim();
+    if (!raw) return { item: 'Expense', amount: 0, category: 'GENERAL 📋', group: 'Personal Expense' };
+    const tokens = raw.split(/\s+/);
+    let amount = 0;
+    let amountIndex = -1;
+    for (let i = 0; i < tokens.length; i++) {
+      const clean = tokens[i].replace(/[₹$,]/g, '');
+      const num = parseFloat(clean);
+      if (!isNaN(num) && num > 0) {
+        amount = num;
+        amountIndex = i;
+        break;
+      }
+    }
+
+    let item = 'Expense';
+    let group = 'Personal Expense';
+    if (amountIndex !== -1) {
+      const itemTokens = tokens.slice(0, amountIndex);
+      if (itemTokens.length > 0) item = itemTokens.join(' ');
+      const groupTokens = tokens.slice(amountIndex + 1);
+      if (groupTokens.length > 0) group = groupTokens.join(' ');
+    } else {
+      item = raw;
+    }
+
+    const lower = item.toLowerCase();
+    let cat = 'FOOD 🍕';
+    if (/uber|ola|cab|auto|taxi|metro|fuel|train|bus/i.test(lower)) cat = 'TRANSPORT 🚗';
+    else if (/movie|cinema|netflix|game|party|drinks/i.test(lower)) cat = 'ENTERTAINMENT 🎬';
+    else if (/grocery|milk|veggies|ration|supermarket/i.test(lower)) cat = 'GROCERIES 🛒';
+    else if (/rent|wifi|electricity|maintenance/i.test(lower)) cat = 'UTILITIES 💡';
+    else if (/hotel|flight|trip|resort/i.test(lower)) cat = 'TRAVEL ✈️';
+
+    return { item, amount: amount || 1200, category: cat, group: group || 'Personal Expense' };
+  }, [nlInput]);
 
   // --- Dynamic Calculation of Member Shares ---
   const calculatedMembers = useMemo(() => {
@@ -977,6 +1022,189 @@ export default function LandingPage() {
       </section>
 
       {/* ========================================================================= */}
+      {/* NATURAL LANGUAGE & VOICE QUICK-ADD SHOWCASE */}
+      {/* ========================================================================= */}
+      <section
+        id="quick-add"
+        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
+          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
+        }`}
+      >
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold mb-3">
+            <Zap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span className={isLight ? 'text-emerald-900' : 'text-emerald-300'}>
+              Natural Language & Web Speech Voice Engine
+            </span>
+          </div>
+          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            Speak or type. Log in 1 second flat.
+          </h2>
+          <p className={`mt-4 text-sm sm:text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+            Forget clicking through 6 tedious form steps. Just speak or write in universal shorthand:{' '}
+            <code className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-bold">
+              item amount [group]
+            </code>
+            . FairShare auto-categorizes, matches the group, and syncs across all devices live.
+          </p>
+        </div>
+
+        {/* Interactive Try-it-Out Bar */}
+        <div className="macos-glass-card max-w-4xl mx-auto p-6 sm:p-8 rounded-3xl shadow-2xl">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
+              <input
+                type="text"
+                value={nlInput}
+                onChange={(e) => setNlInput(e.target.value)}
+                placeholder="e.g. Pizza 1200 Goa Trip, or Chai 40"
+                className={`w-full py-3.5 pl-4 pr-12 rounded-2xl text-sm sm:text-base font-medium outline-none transition-all ${
+                  isLight
+                    ? 'bg-white/80 border border-slate-300 text-slate-900 focus:border-emerald-500 shadow-inner'
+                    : 'bg-slate-950/70 border border-slate-700/80 text-white focus:border-emerald-500 shadow-inner'
+                }`}
+              />
+              <button
+                onClick={() => {
+                  setIsSimulatedListening(true);
+                  const samples = ['Pizza 1200 Goa Trip', 'Uber 350 Airport Ride', 'Chai 40', 'Movie 800 Weekend Fun'];
+                  const next = samples[(samples.indexOf(nlInput) + 1) % samples.length];
+                  setTimeout(() => {
+                    setNlInput(next);
+                    setIsSimulatedListening(false);
+                  }, 700);
+                }}
+                title="Simulate Voice Dictation"
+                className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${
+                  isSimulatedListening
+                    ? 'bg-rose-500 text-white animate-pulse'
+                    : 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30'
+                }`}
+              >
+                <Mic className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Syntax Preset Chips */}
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            <span className={`text-xs font-semibold ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              Try examples:
+            </span>
+            {[
+              { text: 'Pizza 1200 Goa Trip', icon: '🍕' },
+              { text: 'Chai 40', icon: '☕' },
+              { text: 'Uber 450 Weekend Outing', icon: '🚗' },
+              { text: 'Movie 800 @pixel', icon: '🎬' },
+              { text: 'Groceries 2400 Apartment Rent', icon: '🛒' },
+            ].map((ex) => (
+              <button
+                key={ex.text}
+                onClick={() => setNlInput(ex.text)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+                  nlInput === ex.text
+                    ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/50 font-bold'
+                    : isLight
+                    ? 'bg-white/60 hover:bg-white text-slate-700 border-slate-300/80'
+                    : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300 border-slate-800'
+                }`}
+              >
+                {ex.icon} {ex.text}
+              </button>
+            ))}
+          </div>
+
+          {/* Instant Parsed Preview Card */}
+          <div
+            className={`mt-6 p-4 sm:p-5 rounded-2xl border ${
+              isLight
+                ? 'bg-emerald-500/5 border-emerald-500/20'
+                : 'bg-emerald-950/20 border-emerald-500/20'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Live Instant Parsing Result
+              </span>
+              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+                Socket.io Live Sync Ready
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+              <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
+                <div className="text-[10px] uppercase font-bold text-slate-500">Expense Item</div>
+                <div className={`font-bold text-sm sm:text-base mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  {parsedNl.item}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
+                <div className="text-[10px] uppercase font-bold text-slate-500">Amount</div>
+                <div className="font-extrabold text-sm sm:text-base mt-0.5 text-emerald-600 dark:text-emerald-400">
+                  ₹{parsedNl.amount.toLocaleString('en-IN')}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
+                <div className="text-[10px] uppercase font-bold text-slate-500">Category</div>
+                <div className={`font-bold text-sm sm:text-base mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  {parsedNl.category}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
+                <div className="text-[10px] uppercase font-bold text-slate-500">Destination</div>
+                <div className={`font-bold text-sm sm:text-base mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  {parsedNl.group}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4 Feature Pillars Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto mt-8">
+          {[
+            {
+              icon: <Mic className="w-4 h-4 text-emerald-500" />,
+              title: 'Voice Dictation',
+              desc: 'Use Web Speech recognition directly in Chrome, Edge, and Safari with zero plugins.',
+            },
+            {
+              icon: <Radio className="w-4 h-4 text-emerald-500" />,
+              title: 'Socket.io Live Sync',
+              desc: 'Expenses, settlements, and notifications reflect across all devices in real-time without refreshing.',
+            },
+            {
+              icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />,
+              title: 'Payee Confirmation',
+              desc: 'Group admins can toggle settlement confirmation rules to match their group trust model.',
+            },
+            {
+              icon: <AtSign className="w-4 h-4 text-emerald-500" />,
+              title: 'Unique @Usernames',
+              desc: 'Clean disambiguation when multiple friends share the same common first name.',
+            },
+          ].map((card, i) => (
+            <div
+              key={i}
+              className="macos-glass-card p-4 rounded-2xl text-left border hover:border-emerald-500/40 transition-colors"
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                {card.icon}
+                <h4 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  {card.title}
+                </h4>
+              </div>
+              <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                {card.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
       {/* UNIVERSAL QR CODE ECOSYSTEM */}
       {/* ========================================================================= */}
       <section
@@ -1261,6 +1489,10 @@ export default function LandingPage() {
           >
             {[
               { feat: 'Daily Expense Entries', fair: 'Unlimited Always', other: 'Capped at 3/day' },
+              { feat: 'Natural Language & Voice Add', fair: 'Included (Speech + Syntax)', other: 'Tedious multi-step forms' },
+              { feat: 'Real-Time Sync (Socket.io)', fair: 'Live Zero-Refresh Updates', other: 'Manual refresh / 10s lag' },
+              { feat: 'Payee Settlement Verification', fair: 'Admin Governance Controls', other: 'Unverified manual checks' },
+              { feat: 'Unique @Username Handles', fair: 'Clean Disambiguation', other: 'Name collision confusion' },
               { feat: 'Debt Simplification Graph', fair: 'Free & Built-in', other: 'Locked behind Pro tier' },
               { feat: 'Instant UPI Settlement QR', fair: 'Integrated (Zero fees)', other: 'Not available' },
               { feat: 'Ad-Free Clean Experience', fair: '100% Ad-Free', other: 'Intrusive video & banner ads' },

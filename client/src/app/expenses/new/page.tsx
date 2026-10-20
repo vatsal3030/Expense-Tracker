@@ -18,6 +18,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { expenseApi, groupApi, friendApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { triggerDataRefresh } from '@/lib/events';
 
 function NewExpenseSkeleton() {
   return (
@@ -782,6 +783,8 @@ function NewExpenseContent() {
         isFormDirtyRef.current = false;
         localStorage.removeItem(DRAFT_KEY);
       }
+
+      triggerDataRefresh({ type: 'expense' });
 
       if (groupId) {
         router.push(`/groups/${groupId}`);

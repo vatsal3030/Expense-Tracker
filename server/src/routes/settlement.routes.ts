@@ -5,6 +5,8 @@ import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { Prisma } from '@prisma/client';
 import appCache from '../lib/cache';
+import { parseGroupMeta } from './group.routes';
+import { emitToUser, emitToGroup } from '../lib/socket';
 
 export const settlementRouter = Router();
 settlementRouter.use(authenticate);
@@ -38,6 +40,19 @@ settlementRouter.post(
         return;
       }
 
+      // Check group setting: Does group require explicit payee confirmation?
+      let autoConfirm = false;
+      if (groupId) {
+        const grp = await prisma.group.findUnique({
+          where: { id: groupId },
+          select: { description: true },
+        });
+        if (grp) {
+          const meta = parseGroupMeta(grp.description);
+          autoConfirm = !meta.requireSettlementConfirmation;
+        }
+      }
+
       const settlement = await prisma.settlement.create({
         data: {
           groupId: groupId || null,
@@ -46,7 +61,8 @@ settlementRouter.post(
           amount: new Prisma.Decimal(amount),
           currency,
           notes,
-          status: 'PENDING',
+          status: autoConfirm ? 'CONFIRMED' : 'PENDING',
+          settledAt: autoConfirm ? new Date() : null,
         },
         include: {
           payer: { select: { id: true, name: true, avatarUrl: true } },
@@ -56,22 +72,35 @@ settlementRouter.post(
       });
 
       // Create notification for payee
-      await prisma.notification.create({
+      const notifType = autoConfirm ? 'SETTLEMENT_CONFIRMED' : 'SETTLEMENT_REQUEST';
+      const notifTitle = autoConfirm ? 'Payment Settled' : 'Settlement Request';
+      const notifMessage = autoConfirm
+        ? `${settlement.payer.name} settled ₹${amount.toFixed(2)} with you.`
+        : `${settlement.payer.name} wants to settle ₹${amount.toFixed(2)} with you.`;
+
+      const notif = await prisma.notification.create({
         data: {
           userId: payeeId,
-          type: 'SETTLEMENT_REQUEST',
-          title: 'Settlement Request',
-          message: `${settlement.payer.name} wants to settle ₹${amount.toFixed(2)} with you.`,
+          type: notifType,
+          title: notifTitle,
+          message: notifMessage,
           data: { settlementId: settlement.id },
         },
       });
+
+      emitToUser(payeeId, 'notification', notif);
+      emitToUser(payeeId, 'settlement:created', settlement);
+      emitToUser(req.user!.id, 'settlement:created', settlement);
+      if (groupId) {
+        emitToGroup(groupId, 'settlement:created', settlement);
+      }
 
       await prisma.activity.create({
         data: {
           userId: req.user!.id,
           groupId: groupId || null,
-          type: 'SETTLEMENT_CREATED',
-          message: `recorded a payment of ₹${amount.toFixed(2)} to ${settlement.payee.name}`,
+          type: autoConfirm ? 'SETTLEMENT_CONFIRMED' : 'SETTLEMENT_CREATED',
+          message: `${autoConfirm ? 'settled' : 'recorded a payment of'} ₹${amount.toFixed(2)} to ${settlement.payee.name}`,
         },
       });
 
@@ -79,6 +108,7 @@ settlementRouter.post(
       appCache.invalidatePrefix(`dashboard:${payeeId}`);
       if (groupId) {
         appCache.invalidatePrefix(`group:${groupId}`);
+        appCache.invalidatePrefix('groups:list');
       }
       appCache.set(`idempotent:${idempotencyKey}`, settlement, 8000);
 
@@ -302,6 +332,13 @@ settlementRouter.patch('/:id/confirm', async (req: AuthenticatedRequest, res: Re
 
     appCache.invalidatePrefix(`dashboard:${settlement.payerId}`);
     appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+    if (settlement.groupId) {
+      appCache.invalidatePrefix(`group:${settlement.groupId}`);
+      appCache.invalidatePrefix('groups:list');
+      emitToGroup(settlement.groupId, 'settlement:confirmed', updated);
+    }
+    emitToUser(settlement.payerId, 'settlement:confirmed', updated);
+    emitToUser(req.user!.id, 'settlement:confirmed', updated);
 
     res.json({ success: true, data: updated });
   } catch (error: any) {

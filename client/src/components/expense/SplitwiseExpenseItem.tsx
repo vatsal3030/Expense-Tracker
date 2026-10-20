@@ -130,7 +130,7 @@ export default function SplitwiseExpenseItem({
     stance = 'borrowed';
     stanceLabel = 'you borrowed';
     stanceColor = '#EF4444';
-    stanceDisplayAmount = `-${formatAmount(myShareAmount)}`;
+    stanceDisplayAmount = formatAmount(myShareAmount);
   } else {
     stance = 'not_involved';
     stanceLabel = 'not involved';
@@ -138,9 +138,11 @@ export default function SplitwiseExpenseItem({
     stanceDisplayAmount = '';
   }
 
-  // Payer display string
+  // Payer display string with username identifier
   const payerName = isPayer
     ? 'You'
+    : expense.paidBy?.username
+    ? `${expense.paidBy.name} (@${expense.paidBy.username})`
     : expense.paidBy?.name || 'Someone';
   const payerSubtitle = `${payerName} paid ${formatAmount(totalAmount)}`;
 
@@ -225,20 +227,20 @@ export default function SplitwiseExpenseItem({
           </Typography>
         </Box>
 
-        {/* Category Icon Container */}
+        {/* Category Icon Container (Enlarged & Prominent) */}
         <Box
           sx={{
-            width: { xs: 40, sm: 44 },
-            height: { xs: 40, sm: 44 },
-            borderRadius: { xs: 2.25, sm: 2.5 },
+            width: { xs: 46, sm: 50 },
+            height: { xs: 46, sm: 50 },
+            borderRadius: { xs: 2.75, sm: 3 },
             bgcolor: catTheme.bg,
-            border: `1px solid ${catTheme.border}`,
+            border: `1.5px solid ${catTheme.border}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: { xs: '1.25rem', sm: '1.35rem' },
+            fontSize: { xs: '1.55rem', sm: '1.75rem' },
             flexShrink: 0,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            boxShadow: '0 3px 10px rgba(0,0,0,0.08)',
           }}
         >
           {CATEGORY_EMOJI[expense.category] || '📋'}

@@ -49,6 +49,7 @@ import { useRouter } from 'next/navigation';
 import CoinSplitLoader from '@/components/common/CoinSplitLoader';
 import Link from 'next/link';
 import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
+import { useDataRefresh } from '@/lib/events';
 
 const CATEGORY_COLORS: Record<string, string> = {
   FOOD: '#0E6245',
@@ -122,6 +123,10 @@ export default function DashboardPage() {
       fetchDashboard();
     }
   }, [user?.id, profile?.id]);
+
+  useDataRefresh(React.useCallback(() => {
+    fetchDashboard(false);
+  }, []));
 
   const fetchDashboard = async (retry = true) => {
     try {

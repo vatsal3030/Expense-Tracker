@@ -38,6 +38,7 @@ import {
 import { Chip, Button } from '@mui/material';
 import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
+import { useDataRefresh } from '@/lib/events';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '@/components/brand/BrandLogo';
 import GlobalSearchModal from '@/components/search/GlobalSearchModal';
@@ -70,13 +71,13 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
 
   const [notifications, setNotifications] = React.useState<any[]>([]);
 
-  React.useEffect(() => {
+  const fetchNotifs = React.useCallback(() => {
     if (profile) {
       import('@/lib/api').then(({ notificationApi }) => {
         notificationApi.list(20)
           .then((res) => {
             const serverNotifs = res.data?.data?.notifications;
-            if (serverNotifs && serverNotifs.length > 0) {
+            if (serverNotifs) {
               setNotifications(serverNotifs.map((n: any) => {
                 let targetUrl = '/notifications';
                 if (n.data?.groupId) {
@@ -110,6 +111,12 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
       });
     }
   }, [profile?.id]);
+
+  React.useEffect(() => {
+    fetchNotifs();
+  }, [fetchNotifs]);
+
+  useDataRefresh(fetchNotifs);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 

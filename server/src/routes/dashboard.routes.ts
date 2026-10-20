@@ -48,28 +48,27 @@ dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response)
         },
         _sum: { amount: true },
       }),
-      prisma.expense.groupBy({
-        by: ['category'],
+      // User's personal share of expenses this month (true personal spending, not entire group bill)
+      prisma.expenseShare.findMany({
         where: {
-          isDeleted: false,
-          date: { gte: startOfMonth, lte: endOfMonth },
-          OR: [
-            { paidById: userId },
-            { shares: { some: { userId } } },
-          ],
+          userId,
+          expense: {
+            isDeleted: false,
+            date: { gte: startOfMonth, lte: endOfMonth },
+          },
         },
-        _sum: { amount: true },
-        _count: true,
-        orderBy: { _sum: { amount: 'desc' } },
+        include: {
+          expense: { select: { category: true, amount: true } },
+        },
       }),
-      prisma.expense.aggregate({
+      // User's personal share of expenses last month
+      prisma.expenseShare.aggregate({
         where: {
-          isDeleted: false,
-          date: { gte: startOfLastMonth, lte: endOfLastMonth },
-          OR: [
-            { paidById: userId },
-            { shares: { some: { userId } } },
-          ],
+          userId,
+          expense: {
+            isDeleted: false,
+            date: { gte: startOfLastMonth, lte: endOfLastMonth },
+          },
         },
         _sum: { amount: true },
       }),
@@ -103,14 +102,30 @@ dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response)
 
     const youOweData = results[0].status === 'fulfilled' ? results[0].value : { _sum: { amount: 0 } };
     const owedToYouData = results[1].status === 'fulfilled' ? results[1].value : { _sum: { amount: 0 } };
-    const categoryBreakdown = results[2].status === 'fulfilled' ? results[2].value : [];
+    const thisMonthShares = results[2].status === 'fulfilled' ? (results[2].value as any[]) : [];
     const lastMonthSpending = results[3].status === 'fulfilled' ? results[3].value : { _sum: { amount: 0 } };
     const groupsCount = results[4].status === 'fulfilled' ? results[4].value : 0;
     const recentActivities = results[5].status === 'fulfilled' ? results[5].value : [];
     const pendingSettlements = results[6].status === 'fulfilled' ? results[6].value : 0;
 
-    const thisMonthTotal = categoryBreakdown.reduce((sum, c) => sum + Number(c._sum.amount || 0), 0);
-    const thisMonthCount = categoryBreakdown.reduce((sum, c) => sum + (c._count || 0), 0);
+    // Aggregate category breakdown strictly by user's actual share
+    const catMap: Record<string, { category: string; amount: number; count: number }> = {};
+    for (const s of thisMonthShares) {
+      const cat = s.expense.category || 'GENERAL';
+      if (!catMap[cat]) catMap[cat] = { category: cat, amount: 0, count: 0 };
+      catMap[cat].amount += Number(s.amount || 0);
+      catMap[cat].count += 1;
+    }
+    const categoryBreakdown = Object.values(catMap)
+      .map((c) => ({
+        category: c.category,
+        amount: Math.round(c.amount * 100) / 100,
+        count: c.count,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const thisMonthTotal = categoryBreakdown.reduce((sum, c) => sum + c.amount, 0);
+    const thisMonthCount = thisMonthShares.length;
     const lastMonthTotal = Number(lastMonthSpending._sum?.amount || 0);
     const monthOverMonthChange = lastMonthTotal > 0
       ? Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100)
@@ -121,15 +136,11 @@ dashboardRouter.get('/summary', async (req: AuthenticatedRequest, res: Response)
       owedToYou: Number(owedToYouData._sum?.amount || 0),
       totalBalance: Number(owedToYouData._sum?.amount || 0) - Number(youOweData._sum?.amount || 0),
       thisMonth: {
-        total: thisMonthTotal,
+        total: Math.round(thisMonthTotal * 100) / 100,
         count: thisMonthCount,
         change: monthOverMonthChange,
       },
-      categoryBreakdown: categoryBreakdown.map((c: any) => ({
-        category: c.category,
-        amount: Number(c._sum?.amount || 0),
-        count: c._count || 0,
-      })),
+      categoryBreakdown,
       groupsCount,
       pendingSettlements,
       recentActivities,
@@ -171,31 +182,32 @@ dashboardRouter.get('/spending-trend', async (req: AuthenticatedRequest, res: Re
       });
     }
 
-    // Single query for the 6-month period instead of 6 separate roundtrips
+    // Query user's personal shares across the 6-month period
     const earliestDate = monthRanges[0].start;
-    const allExpenses = await prisma.expense.findMany({
+    const allShares = await prisma.expenseShare.findMany({
       where: {
-        isDeleted: false,
-        date: { gte: earliestDate },
-        OR: [
-          { paidById: userId },
-          { shares: { some: { userId } } },
-        ],
+        userId,
+        expense: {
+          isDeleted: false,
+          date: { gte: earliestDate },
+        },
       },
-      select: { date: true, amount: true },
+      include: {
+        expense: { select: { date: true } },
+      },
     });
 
     const months = monthRanges.map((m) => {
-      const totalForMonth = allExpenses
-        .filter((e) => {
-          const d = new Date(e.date);
+      const totalForMonth = allShares
+        .filter((s) => {
+          const d = new Date(s.expense.date);
           return d >= m.start && d <= m.end;
         })
-        .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+        .reduce((sum, s) => sum + Number(s.amount || 0), 0);
 
       return {
         month: m.label,
-        amount: totalForMonth,
+        amount: Math.round(totalForMonth * 100) / 100,
       };
     });
 

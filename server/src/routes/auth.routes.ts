@@ -107,6 +107,7 @@ authRouter.post(
             id: dbUser?.id,
             email: dbUser?.email,
             name: dbUser?.name,
+            username: dbUser?.username,
             avatarUrl: dbUser?.avatarUrl,
           },
           session: {
@@ -172,6 +173,7 @@ authRouter.get('/me', authenticate, async (req: AuthenticatedRequest, res: Respo
         id: true,
         email: true,
         name: true,
+        username: true,
         avatarUrl: true,
         phone: true,
         defaultCurrency: true,

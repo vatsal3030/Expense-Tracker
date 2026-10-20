@@ -8,6 +8,7 @@ interface UserProfile {
   id: string;
   email: string;
   name: string;
+  username?: string | null;
   avatarUrl: string | null;
   phone: string | null;
   defaultCurrency: string;

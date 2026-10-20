@@ -5,6 +5,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { Prisma } from '@prisma/client';
 import appCache from '../lib/cache';
+import { emitToUser, emitToGroup, emitToUsers } from '../lib/socket';
 
 export const expenseRouter = Router();
 expenseRouter.use(authenticate);
@@ -121,8 +122,8 @@ expenseRouter.post(
           },
         },
         include: {
-          paidBy: { select: { id: true, name: true, avatarUrl: true } },
-          shares: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
+          paidBy: { select: { id: true, name: true, avatarUrl: true, username: true } },
+          shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, username: true } } } },
           group: { select: { id: true, name: true } },
         },
       });
@@ -162,6 +163,27 @@ expenseRouter.post(
             };
           }),
         }).catch((err) => console.error('Notification creation error:', err));
+
+        // Real-time socket notification to involved users
+        involvedUserIds.forEach((targetUid) => {
+          const userShare = calculatedShares.find((s) => s.userId === targetUid);
+          const shareAmount = userShare ? userShare.amount.toFixed(2) : '0.00';
+          emitToUser(targetUid, 'notification', {
+            type: 'EXPENSE_ADDED',
+            title: 'New Shared Expense',
+            message: `${creatorName} added "${description}". Your share is ₹${shareAmount}.`,
+            data: { expenseId: expense.id, groupId: groupId || null },
+          });
+        });
+      }
+
+      // Real-time socket event to all involved parties & group room
+      const allInvolvedUsers = Array.from(
+        new Set([req.user!.id, resolvedPaidById, ...calculatedShares.map((s) => s.userId)])
+      );
+      emitToUsers(allInvolvedUsers, 'expense:created', { expense, groupId: groupId || null });
+      if (groupId) {
+        emitToGroup(groupId, 'expense:created', { expense, groupId });
       }
 
       // Invalidate dashboard and group caches for all involved users
@@ -274,8 +296,8 @@ expenseRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise
     const expenses = await prisma.expense.findMany({
       where,
       include: {
-        paidBy: { select: { id: true, name: true, avatarUrl: true, email: true } },
-        shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, email: true } } } },
+        paidBy: { select: { id: true, name: true, avatarUrl: true, email: true, username: true } },
+        shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, email: true, username: true } } } },
         group: { select: { id: true, name: true } },
       },
       orderBy,
@@ -315,11 +337,11 @@ expenseRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Prom
         ],
       },
       include: {
-        paidBy: { select: { id: true, name: true, avatarUrl: true, email: true } },
-        createdBy: { select: { id: true, name: true, avatarUrl: true } },
+        paidBy: { select: { id: true, name: true, avatarUrl: true, email: true, username: true } },
+        createdBy: { select: { id: true, name: true, avatarUrl: true, username: true } },
         shares: {
           include: {
-            user: { select: { id: true, name: true, avatarUrl: true, email: true } },
+            user: { select: { id: true, name: true, avatarUrl: true, email: true, username: true } },
           },
         },
         group: { select: { id: true, name: true } },
@@ -458,8 +480,8 @@ expenseRouter.put(
           ...(splitType && { splitType }),
         },
         include: {
-          paidBy: { select: { id: true, name: true, avatarUrl: true } },
-          shares: { include: { user: { select: { id: true, name: true } } } },
+          paidBy: { select: { id: true, name: true, avatarUrl: true, username: true } },
+          shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, username: true } } } },
         },
       });
 
@@ -472,6 +494,21 @@ expenseRouter.put(
           message: `updated "${updated.description}"`,
         },
       });
+
+      // Real-time socket event to all involved parties & group room
+      const allInvolvedUsers = Array.from(
+        new Set([
+          req.user!.id,
+          existing.createdById,
+          existing.paidById,
+          ...existing.shares.map((s) => s.userId),
+          ...updated.shares.map((s: any) => s.userId),
+        ])
+      );
+      emitToUsers(allInvolvedUsers, 'expense:updated', { expense: updated, groupId: existing.groupId });
+      if (existing.groupId) {
+        emitToGroup(existing.groupId, 'expense:updated', { expense: updated, groupId: existing.groupId });
+      }
 
       appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
       if (existing.groupId) {
@@ -494,6 +531,7 @@ expenseRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): P
     const existing = await prisma.expense.findFirst({
       where: { id, isDeleted: false },
       include: {
+        shares: true,
         group: {
           include: {
             members: {
@@ -532,6 +570,20 @@ expenseRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): P
         message: `deleted "${existing.description}"`,
       },
     });
+
+    // Real-time socket event for expense deletion
+    const allInvolvedUsers = Array.from(
+      new Set([
+        req.user!.id,
+        existing.createdById,
+        existing.paidById,
+        ...existing.shares.map((s) => s.userId),
+      ])
+    );
+    emitToUsers(allInvolvedUsers, 'expense:deleted', { expenseId: id, groupId: existing.groupId });
+    if (existing.groupId) {
+      emitToGroup(existing.groupId, 'expense:deleted', { expenseId: id, groupId: existing.groupId });
+    }
 
     appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
     if (existing.groupId) {

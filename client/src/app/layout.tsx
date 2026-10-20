@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { SocketProvider } from '@/providers/SocketProvider';
 
 export const metadata: Metadata = {
   title: 'FairShare — Split Expenses Fairly',
@@ -55,7 +56,9 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <SocketProvider>
+              {children}
+            </SocketProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

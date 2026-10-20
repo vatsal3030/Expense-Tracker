@@ -101,21 +101,34 @@ async function verifyAndResolveUser(token: string): Promise<{ id: string; email:
   if (!dbUser) {
     let found = await prisma.user.findUnique({
       where: { supabaseId },
-      select: { id: true, email: true, supabaseId: true, lastLoginAt: true },
+      select: { id: true, email: true, supabaseId: true, lastLoginAt: true, username: true, name: true },
     });
 
     if (!found) {
+      const base = (email ? email.split('@')[0] : 'user').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+      const genUsername = `${base}_${Math.floor(100 + Math.random() * 900)}`;
       // Auto-create user on first authenticated request
       found = await prisma.user.create({
         data: {
           supabaseId,
           email: email || `${supabaseId}@fairshare.local`,
           name: email ? email.split('@')[0] : 'User',
+          username: genUsername,
           lastLoginAt: new Date(),
         },
-        select: { id: true, email: true, supabaseId: true, lastLoginAt: true },
+        select: { id: true, email: true, supabaseId: true, lastLoginAt: true, username: true, name: true },
       });
     } else {
+      // Auto-backfill username if missing
+      if (!found.username) {
+        const base = (found.name || found.email || 'user').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+        const genUsername = `${base.slice(0, 15)}_${Math.floor(100 + Math.random() * 900)}`;
+        prisma.user.update({
+          where: { id: found.id },
+          data: { username: genUsername },
+        }).catch(() => {});
+      }
+
       // Non-blocking update of last login timestamp
       const lastLogin = found.lastLoginAt ? new Date(found.lastLoginAt).getTime() : 0;
       if (Date.now() - lastLogin > 1000 * 60 * 30) {

@@ -48,7 +48,15 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'idempotency-key',
+    'Idempotency-Key',
+    'x-client-version',
+    'x-requested-with',
+    'Accept',
+  ],
 }));
 
 // Unthrottled health check
@@ -98,14 +106,19 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // =============================================================================
-// SERVER START
+// SERVER START & REAL-TIME SOCKET.IO
 // =============================================================================
+import http from 'http';
+import { initSocket } from './lib/socket';
 
-app.listen(PORT, () => {
+const httpServer = http.createServer(app);
+initSocket(httpServer);
+
+httpServer.listen(PORT, () => {
   console.log(`
   ╔═══════════════════════════════════════════════╗
   ║                                               ║
-  ║   🚀 FairShare API Server                     ║
+  ║   🚀 FairShare API Server & Socket.io         ║
   ║   Running on port ${PORT}                        ║
   ║   Environment: ${process.env.NODE_ENV || 'development'}               ║
   ║                                               ║

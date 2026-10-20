@@ -35,6 +35,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { groupApi, friendApi, expenseApi } from '@/lib/api';
 import { useAuth } from '@/providers/AuthProvider';
+import { triggerDataRefresh } from '@/lib/events';
 
 export const CATEGORY_LEXICON: Record<string, string> = {
   // Food & Dining
@@ -86,7 +87,7 @@ interface SmartQuickAddBarProps {
 export default function SmartQuickAddBar({
   initialGroupId,
   onExpenseCreated,
-  placeholder = '⚡ Quick Add: e.g. "Dinner 1200 with Goa Trip" or "Uber 350"',
+  placeholder = '⚡ Syntax: item amount [group] (e.g. "Pizza 1200 Goa Trip" or "Chai 40" for personal)',
 }: SmartQuickAddBarProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -96,7 +97,7 @@ export default function SmartQuickAddBar({
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastSeverity, setToastSeverity] = useState<'success' | 'error'>('success');
+  const [toastSeverity, setToastSeverity] = useState<'success' | 'error' | 'info' | 'warning'>('success');
 
   // Groups and Friends cache for entity matching
   const [groups, setGroups] = useState<any[]>([]);
@@ -132,46 +133,81 @@ export default function SmartQuickAddBar({
     return () => { isMounted = false; };
   }, [initialGroupId]);
 
-  // Speech Recognition setup (Web Speech API)
+  // Speech Recognition setup (Web Speech API) with robust fallback & live interim feedback
   const recognitionRef = useRef<any>(null);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recog = new SpeechRecognition();
-        recog.continuous = false;
-        recog.interimResults = false;
-        recog.lang = 'en-IN';
-        recog.onresult = (e: any) => {
-          const transcript = e.results[0]?.[0]?.transcript || '';
-          if (transcript) {
-            setInput(transcript);
-          }
-          setIsListening(false);
-        };
-        recog.onerror = () => setIsListening(false);
-        recog.onend = () => setIsListening(false);
-        recognitionRef.current = recog;
-      }
-    }
-  }, []);
 
   const toggleListening = () => {
-    if (!recognitionRef.current) {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
       setToastSeverity('error');
-      setToastMessage('Voice dictation is not supported by your current browser.');
+      setToastMessage('Voice dictation is not supported by your current browser. Try Chrome, Edge, or Safari.');
       return;
     }
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
+
+    if (isListening && recognitionRef.current) {
       try {
-        recognitionRef.current.start();
+        recognitionRef.current.stop();
+      } catch {}
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recog = new SpeechRecognition();
+      recog.continuous = false;
+      recog.interimResults = true;
+      recog.lang = navigator.language || 'en-IN';
+
+      recog.onstart = () => {
         setIsListening(true);
-      } catch (err) {
+        setToastSeverity('info');
+        setToastMessage('🎙️ Listening... Speak naturally (e.g. "Pizza 1200 Goa Trip" or "Chai 40")');
+      };
+
+      recog.onresult = (e: any) => {
+        let interim = '';
+        let final = '';
+        for (let i = 0; i < e.results.length; i++) {
+          const res = e.results[i];
+          if (res.isFinal) {
+            final += res[0].transcript;
+          } else {
+            interim += res[0].transcript;
+          }
+        }
+        const text = (final || interim).trim();
+        if (text) setInput(text);
+      };
+
+      recog.onerror = (e: any) => {
         setIsListening(false);
-      }
+        console.warn('Speech recognition event error:', e.error);
+        if (e.error === 'not-allowed') {
+          setToastSeverity('error');
+          setToastMessage('Microphone permission blocked. Please allow microphone access in your browser address bar.');
+        } else if (e.error === 'no-speech') {
+          setToastSeverity('warning');
+          setToastMessage('No speech was detected. Please speak closer to your microphone.');
+        } else if (e.error === 'network') {
+          setToastSeverity('error');
+          setToastMessage('Voice dictation network error. Please check your internet connection.');
+        }
+      };
+
+      recog.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recog;
+      recog.start();
+    } catch (err: any) {
+      console.error('Failed to start speech recognition:', err);
+      setIsListening(false);
+      setToastSeverity('error');
+      setToastMessage('Could not activate microphone: ' + (err.message || 'unknown error'));
     }
   };
 
@@ -316,6 +352,7 @@ export default function SmartQuickAddBar({
       if (onExpenseCreated) {
         onExpenseCreated();
       }
+      triggerDataRefresh({ type: 'expense' });
     } catch (err: any) {
       console.error('Instant quick add error:', err);
       setToastSeverity('error');
@@ -427,7 +464,7 @@ export default function SmartQuickAddBar({
             {submitting ? (
               <CircularProgress size={20} color="inherit" />
             ) : (
-              <Stack direction="row" spacing={0.75} alignItems="center">
+              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                 <Send sx={{ fontSize: 17 }} />
                 <Typography variant="body2" fontWeight={700} sx={{ display: { xs: 'none', sm: 'inline' } }}>
                   Quick Log
@@ -528,9 +565,21 @@ export default function SmartQuickAddBar({
           </Box>
         )}
 
-        {/* Quick Re-log Frequency Chips (When input is empty) */}
+        {/* Quick Re-log Frequency Chips & Syntax Guide (When input is empty) */}
         {!input && (
           <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Chip
+              label="💡 Syntax: item amount [group]"
+              size="small"
+              sx={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                borderRadius: 2,
+                bgcolor: alpha('#10B981', 0.1),
+                color: '#10B981',
+                border: '1px dashed rgba(16, 185, 129, 0.35)',
+              }}
+            />
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.725rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <History sx={{ fontSize: 14 }} /> Fast Presets:
             </Typography>

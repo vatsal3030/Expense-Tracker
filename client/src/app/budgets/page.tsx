@@ -283,8 +283,24 @@ export default function BudgetsPage() {
                   >
                     <CardContent sx={{ p: 3 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Typography fontSize="1.5rem">{CATEGORY_EMOJI[budget.category] || '📋'}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>
+                          <Box
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              borderRadius: 2.75,
+                              bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                              border: `1.5px solid ${theme.palette.divider}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.75rem',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                            }}
+                          >
+                            {CATEGORY_EMOJI[budget.category] || '📋'}
+                          </Box>
                           <Box>
                             <Typography variant="body1" fontWeight={750} sx={{ textTransform: 'capitalize', color: 'text.primary' }}>
                               {budget.category.toLowerCase()}
