@@ -14,6 +14,8 @@ import {
   AccountBalanceWallet, ArrowForward, QrCode2,
   TrendingUp, TrendingDown, ReceiptLong, People, Close,
   MoreVert, SupervisorAccount, PersonRemove,
+  Settings, FileDownload, Logout, AdminPanelSettings, Save,
+  TableChart, Shield,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -141,9 +143,12 @@ function GroupDetailContent() {
 
   const hasLoadedGroupRef = useRef(false);
 
-  // Edit & Delete Group State
+  // Edit, Settings & Leave Group State
   const [editGroupOpen, setEditGroupOpen] = useState(false);
   const [deleteGroupOpen, setDeleteGroupOpen] = useState(false);
+  const [leaveGroupOpen, setLeaveGroupOpen] = useState(false);
+  const [leavingGroup, setLeavingGroup] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [editGroupForm, setEditGroupForm] = useState({
     name: '',
     description: '',
@@ -152,10 +157,31 @@ function GroupDetailContent() {
     isPasswordProtected: false,
     password: '',
     requireAdminApproval: false,
+    onlyAdminInvite: false,
+    onlyAdminEdit: false,
+    simplifyDebts: true,
   });
   const [editGroupError, setEditGroupError] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState(false);
+
+  // Synchronize editGroupForm when group data loads
+  useEffect(() => {
+    if (group) {
+      setEditGroupForm({
+        name: group.name || '',
+        description: group.description || '',
+        type: group.type || 'OTHER',
+        currency: group.currency || 'INR',
+        isPasswordProtected: Boolean(group.isPasswordProtected),
+        password: '',
+        requireAdminApproval: Boolean(group.requireAdminApproval),
+        onlyAdminInvite: Boolean(group.onlyAdminInvite),
+        onlyAdminEdit: Boolean(group.onlyAdminEdit),
+        simplifyDebts: group.simplifyDebts !== false,
+      });
+    }
+  }, [group]);
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
@@ -343,6 +369,12 @@ function GroupDetailContent() {
     }
   };
 
+  const adminMembers = useMemo(() => {
+    return (group?.members || []).filter((m: any) => m.role === 'ADMIN');
+  }, [group?.members]);
+
+  const isOnlyAdmin = isGroupAdmin && adminMembers.length <= 1 && (group?.members?.length || 0) > 1;
+
   const handleOpenEditGroup = () => {
     if (!group) return;
     setEditGroupForm({
@@ -353,6 +385,9 @@ function GroupDetailContent() {
       isPasswordProtected: Boolean(group.isPasswordProtected),
       password: '',
       requireAdminApproval: Boolean(group.requireAdminApproval),
+      onlyAdminInvite: Boolean(group.onlyAdminInvite),
+      onlyAdminEdit: Boolean(group.onlyAdminEdit),
+      simplifyDebts: group.simplifyDebts !== false,
     });
     setEditGroupError('');
     setEditGroupOpen(true);
@@ -382,6 +417,9 @@ function GroupDetailContent() {
         type: editGroupForm.type,
         currency: editGroupForm.currency,
         requireAdminApproval: editGroupForm.requireAdminApproval,
+        onlyAdminInvite: editGroupForm.onlyAdminInvite,
+        onlyAdminEdit: editGroupForm.onlyAdminEdit,
+        simplifyDebts: editGroupForm.simplifyDebts,
       };
       if (editGroupForm.isPasswordProtected && editGroupForm.password) {
         payload.password = editGroupForm.password;
@@ -396,11 +434,13 @@ function GroupDetailContent() {
           ...res.data.data,
         }));
       }
-      setToastMessage('Group details updated successfully!');
+      setToastMessage('Group settings updated successfully!');
       setEditGroupOpen(false);
     } catch (err: any) {
       console.error('Update group error:', err);
-      setEditGroupError(err.response?.data?.error || 'Failed to update group.');
+      const msg = err.response?.data?.error || 'Failed to update group settings.';
+      setEditGroupError(msg);
+      setToastMessage(msg);
     } finally {
       setSavingGroup(false);
     }
@@ -418,6 +458,81 @@ function GroupDetailContent() {
       setToastMessage(err.response?.data?.error || 'Failed to delete group.');
       setDeletingGroup(false);
       setDeleteGroupOpen(false);
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!group?.id) return;
+    setLeavingGroup(true);
+    try {
+      await groupApi.leave(group.id);
+      setToastMessage('You have successfully left the group.');
+      router.push('/groups');
+    } catch (err: any) {
+      console.error('Leave group error:', err);
+      setToastMessage(err.response?.data?.error || 'Failed to leave group.');
+      setLeavingGroup(false);
+      setLeaveGroupOpen(false);
+    }
+  };
+
+  const handleExportGroup = async (format: 'csv' | 'json') => {
+    if (!group?.id) return;
+    setExporting(true);
+    try {
+      const res = await groupApi.export(group.id);
+      const exportData = res.data?.data;
+      if (!exportData) throw new Error('No data received');
+
+      const cleanName = (exportData.group?.name || 'group').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const timestamp = new Date().toISOString().split('T')[0];
+
+      if (format === 'json') {
+        const jsonStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${cleanName}_ledger_${timestamp}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setToastMessage('Ledger exported as JSON file!');
+      } else {
+        const headers = ['Date', 'Expense Title', 'Category', 'Paid By', 'Amount', 'Currency', 'Notes', 'Member Shares'];
+        const rows = (exportData.expenses || []).map((exp: any) => {
+          const dateStr = exp.date ? new Date(exp.date).toISOString().split('T')[0] : '';
+          const title = `"${(exp.title || '').replace(/"/g, '""')}"`;
+          const category = exp.category || 'GENERAL';
+          const paidBy = `"${(exp.paidBy?.name || exp.paidBy?.email || '').replace(/"/g, '""')}"`;
+          const amount = exp.amount;
+          const currency = exp.currency || exportData.group?.currency || 'INR';
+          const notes = `"${(exp.notes || '').replace(/"/g, '""')}"`;
+          const splits = (exp.splits || [])
+            .map((s: any) => `${s.user?.name || s.user?.email || 'User'}: ${s.amount}`)
+            .join('; ');
+          const splitWith = `"${splits.replace(/"/g, '""')}"`;
+          return [dateStr, title, category, paidBy, amount, currency, notes, splitWith].join(',');
+        });
+
+        const csvContent = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${cleanName}_ledger_${timestamp}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setToastMessage('Ledger exported as CSV spreadsheet!');
+      }
+    } catch (err: any) {
+      console.error('Export error:', err);
+      setToastMessage(err.response?.data?.error || 'Failed to export group data.');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -492,45 +607,46 @@ function GroupDetailContent() {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
-            {isGroupAdmin && (
-              <>
-                <Button
-                  variant="outlined"
-                  startIcon={<Edit fontSize="small" />}
-                  onClick={handleOpenEditGroup}
-                  className="glass-tertiary"
-                  sx={{
-                    borderRadius: 2.5,
-                    color: 'text.primary',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    px: 2,
-                    py: 0.75,
-                    '&:hover': {
-                      borderColor: '#10B981',
-                      bgcolor: alpha('#10B981', 0.08),
-                    },
-                  }}
-                >
-                  Edit Group
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<Delete fontSize="small" />}
-                  onClick={() => setDeleteGroupOpen(true)}
-                  className="glass-tertiary"
-                  sx={{
-                    borderRadius: 2.5,
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    px: 2,
-                    py: 0.75,
-                  }}
-                >
-                  Delete
-                </Button>
-              </>
+            {isGroupAdmin ? (
+              <Button
+                variant="outlined"
+                startIcon={<Settings fontSize="small" />}
+                onClick={() => setActiveTab(3)}
+                className="glass-tertiary"
+                sx={{
+                  borderRadius: 2.5,
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  px: 2,
+                  py: 0.75,
+                  '&:hover': {
+                    borderColor: '#10B981',
+                    bgcolor: alpha('#10B981', 0.08),
+                  },
+                }}
+              >
+                Settings
+              </Button>
+            ) : (
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<Logout fontSize="small" />}
+                onClick={() => setLeaveGroupOpen(true)}
+                className="glass-tertiary"
+                sx={{
+                  borderRadius: 2.5,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  px: 2,
+                  py: 0.75,
+                  color: 'text.secondary',
+                  '&:hover': { color: 'error.main', borderColor: 'error.main' },
+                }}
+              >
+                Leave
+              </Button>
             )}
             <Button
               variant="outlined"
@@ -552,26 +668,49 @@ function GroupDetailContent() {
             >
               Group QR
             </Button>
-            <Button
-              variant="outlined"
-              startIcon={<Share fontSize="small" />}
-              onClick={() => setInviteOpen(true)}
-              className="glass-tertiary"
-              sx={{
-                borderRadius: 2.5,
-                color: 'text.primary',
-                fontWeight: 600,
-                textTransform: 'none',
-                px: 2,
-                py: 0.75,
-                '&:hover': {
-                  borderColor: '#10B981',
-                  bgcolor: alpha('#10B981', 0.08),
-                },
-              }}
-            >
-              Invite People
-            </Button>
+            {(!group?.onlyAdminInvite || isGroupAdmin) ? (
+              <Button
+                variant="outlined"
+                startIcon={<Share fontSize="small" />}
+                onClick={() => setInviteOpen(true)}
+                className="glass-tertiary"
+                sx={{
+                  borderRadius: 2.5,
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  px: 2,
+                  py: 0.75,
+                  '&:hover': {
+                    borderColor: '#10B981',
+                    bgcolor: alpha('#10B981', 0.08),
+                  },
+                }}
+              >
+                Invite People
+              </Button>
+            ) : (
+              <Tooltip title="Only group administrators can invite new members">
+                <span>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Share fontSize="small" />}
+                    disabled
+                    className="glass-tertiary"
+                    sx={{
+                      borderRadius: 2.5,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      px: 2,
+                      py: 0.75,
+                      opacity: 0.6,
+                    }}
+                  >
+                    Invite (Admin Only)
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
             <Button
               variant="contained"
               startIcon={<Add fontSize="small" />}
@@ -750,6 +889,7 @@ function GroupDetailContent() {
             <Tab label={`Expenses (${group?.expenses?.length || 0})`} />
             <Tab label={`Balances & Settle Up (${balances?.balances?.length || 0})`} />
             <Tab label={`Members (${group?.members?.length || 0})`} />
+            <Tab label="Settings ⚙️" />
           </Tabs>
         </Box>
 
@@ -798,8 +938,8 @@ function GroupDetailContent() {
                       </Box>
 
                       {monthItems.map((exp: any, idx: number) => {
-                        const canEdit = isGroupAdmin || exp.createdById === user?.id || exp.paidById === user?.id;
-                        const canDelete = isGroupAdmin || exp.createdById === user?.id;
+                        const canEdit = isGroupAdmin || (!group?.onlyAdminEdit && (exp.createdById === user?.id || exp.paidById === user?.id));
+                        const canDelete = isGroupAdmin || (!group?.onlyAdminEdit && exp.createdById === user?.id);
 
                         return (
                           <React.Fragment key={exp.id}>
@@ -1062,20 +1202,33 @@ function GroupDetailContent() {
                   <Typography variant="h6" fontWeight={750} sx={{ color: 'text.primary' }}>
                     Group Members ({group?.members?.length || 0})
                   </Typography>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<PersonAdd fontSize="small" />}
-                    onClick={() => setInviteOpen(true)}
-                    className="glass-tertiary"
-                    sx={{
-                      borderRadius: 2,
-                      fontWeight: 600,
-                      textTransform: 'none',
-                    }}
-                  >
-                    Add Member
-                  </Button>
+                  {(!group?.onlyAdminInvite || isGroupAdmin) ? (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<PersonAdd fontSize="small" />}
+                      onClick={() => setInviteOpen(true)}
+                      className="glass-tertiary"
+                      sx={{
+                        borderRadius: 2,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                      }}
+                    >
+                      Add Member
+                    </Button>
+                  ) : (
+                    <Chip
+                      label="Admin-Only Invites"
+                      size="small"
+                      sx={{
+                        fontSize: '0.675rem',
+                        fontWeight: 700,
+                        bgcolor: alpha(theme.palette.text.secondary, 0.08),
+                        color: 'text.secondary',
+                      }}
+                    />
+                  )}
                 </Box>
 
                 <List disablePadding>
@@ -1311,6 +1464,435 @@ function GroupDetailContent() {
               </Card>
             </Grid>
           </Grid>
+        )}
+
+        {/* TAB 3: GROUP SETTINGS (Admin Configurable & Financial Portability) */}
+        {activeTab === 3 && (
+          <Box className="animate-fade-in" sx={{ width: '100%' }}>
+            {/* Role & Access Status Header Card */}
+            <Card
+              className={isGroupAdmin ? 'glass-secondary glass-specular-top glass-emerald-ambient' : 'glass-secondary glass-specular-top'}
+              sx={{
+                p: { xs: 2, sm: 2.75 },
+                mb: 3,
+                borderRadius: 3.5,
+                border: isGroupAdmin ? '1px solid rgba(16, 185, 129, 0.35) !important' : `1px solid ${theme.palette.divider}`,
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      bgcolor: isGroupAdmin ? 'rgba(16, 185, 129, 0.2)' : alpha(theme.palette.text.secondary, 0.12),
+                      color: isGroupAdmin ? '#34D399' : 'text.secondary',
+                      border: isGroupAdmin ? '1px solid rgba(16, 185, 129, 0.4)' : undefined,
+                    }}
+                  >
+                    {isGroupAdmin ? <AdminPanelSettings sx={{ fontSize: 28 }} /> : <Shield sx={{ fontSize: 28 }} />}
+                  </Avatar>
+                  <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                      <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
+                        {isGroupAdmin ? 'Administrator Controls Active 👑' : 'Group Member View (Read-Only)'}
+                      </Typography>
+                      <Chip
+                        label={isGroupAdmin ? 'Authorized Admin' : 'Member'}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '0.7rem',
+                          bgcolor: isGroupAdmin ? alpha('#10B981', 0.15) : alpha(theme.palette.text.secondary, 0.1),
+                          color: isGroupAdmin ? '#10B981' : 'text.secondary',
+                        }}
+                      />
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                      {isGroupAdmin
+                        ? 'You have administrative control to modify group settings, privacy, currency, invite permissions, and ledger rules.'
+                        : 'Group settings and security policies can only be adjusted by authorized group administrators.'}
+                    </Typography>
+                  </Box>
+                </Box>
+                {isGroupAdmin && (
+                  <Button
+                    variant="contained"
+                    startIcon={<Save />}
+                    onClick={handleSaveGroup}
+                    disabled={savingGroup || !editGroupForm.name.trim()}
+                    className="glass-emerald-active"
+                    sx={{
+                      borderRadius: 2.5,
+                      fontWeight: 700,
+                      bgcolor: '#0E6245',
+                      color: '#ffffff',
+                      textTransform: 'none',
+                      px: 3,
+                      py: 1,
+                      '&:hover': { bgcolor: '#094A34' },
+                    }}
+                  >
+                    {savingGroup ? 'Saving...' : 'Save Settings'}
+                  </Button>
+                )}
+              </Box>
+            </Card>
+
+            <Grid container spacing={3}>
+              {/* Profile & Identity Card */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{
+                    borderRadius: 3.5,
+                    p: 3,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  <Box>
+                    <Typography variant="h6" fontWeight={750} sx={{ mb: 2, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      Group Identity & Currency
+                    </Typography>
+                    <Stack spacing={2.5}>
+                      <TextField
+                        fullWidth
+                        label="Group Name"
+                        value={editGroupForm.name}
+                        onChange={(e) => setEditGroupForm({ ...editGroupForm, name: e.target.value })}
+                        disabled={!isGroupAdmin}
+                        slotProps={{ htmlInput: { maxLength: 100 } }}
+                        helperText={isGroupAdmin ? 'Public name displayed to all members' : 'Locked for non-admins'}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Description"
+                        value={editGroupForm.description}
+                        onChange={(e) => setEditGroupForm({ ...editGroupForm, description: e.target.value })}
+                        disabled={!isGroupAdmin}
+                        multiline
+                        rows={2.5}
+                        slotProps={{ htmlInput: { maxLength: 500 } }}
+                        helperText="Purpose or guidelines for this group"
+                      />
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <TextField
+                            fullWidth
+                            select
+                            label="Group Type"
+                            value={editGroupForm.type}
+                            onChange={(e) => setEditGroupForm({ ...editGroupForm, type: e.target.value })}
+                            disabled={!isGroupAdmin}
+                          >
+                            {GROUP_TYPES.map((t) => (
+                              <MenuItem key={t} value={t}>
+                                {t.charAt(0) + t.slice(1).toLowerCase()}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <TextField
+                            fullWidth
+                            select
+                            label="Base Currency"
+                            value={editGroupForm.currency}
+                            onChange={(e) => setEditGroupForm({ ...editGroupForm, currency: e.target.value.toUpperCase() })}
+                            disabled={!isGroupAdmin}
+                            helperText="Financial ledger unit"
+                          >
+                            {['INR', 'USD', 'EUR', 'GBP', 'AED', 'CAD', 'AUD', 'SGD', 'JPY', 'CHF'].map((c) => (
+                              <MenuItem key={c} value={c}>
+                                {c}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </Grid>
+                      </Grid>
+                    </Stack>
+                  </Box>
+                </Card>
+              </Grid>
+
+              {/* Permissions & Security Policies Card */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{
+                    borderRadius: 3.5,
+                    p: 3,
+                    boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  <Typography variant="h6" fontWeight={750} sx={{ mb: 2, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    Security & Permission Policies
+                  </Typography>
+
+                  <Stack spacing={2}>
+                    {/* Passcode Protection */}
+                    <Box sx={{ p: 2, borderRadius: 2.5, bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)', border: `1px solid ${theme.palette.divider}` }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={editGroupForm.isPasswordProtected}
+                            onChange={(e) => setEditGroupForm({ ...editGroupForm, isPasswordProtected: e.target.checked })}
+                            disabled={!isGroupAdmin}
+                            color="primary"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>Require Passcode to Join</Typography>
+                            <Typography variant="caption" color="text.secondary">Invitees must enter this secret passcode to access group.</Typography>
+                          </Box>
+                        }
+                      />
+                      {editGroupForm.isPasswordProtected && isGroupAdmin && (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Group Passcode (leave blank to retain current)"
+                          type="password"
+                          value={editGroupForm.password}
+                          onChange={(e) => setEditGroupForm({ ...editGroupForm, password: e.target.value })}
+                          sx={{ mt: 1.5 }}
+                        />
+                      )}
+                    </Box>
+
+                    {/* Require Admin Approval */}
+                    <Box sx={{ p: 2, borderRadius: 2.5, bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)', border: `1px solid ${theme.palette.divider}` }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={editGroupForm.requireAdminApproval}
+                            onChange={(e) => setEditGroupForm({ ...editGroupForm, requireAdminApproval: e.target.checked })}
+                            disabled={!isGroupAdmin}
+                            color="primary"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>Require Admin Approval</Typography>
+                            <Typography variant="caption" color="text.secondary">Admins must review and approve join requests before member joins.</Typography>
+                          </Box>
+                        }
+                      />
+                    </Box>
+
+                    {/* Admin-only Invites */}
+                    <Box sx={{ p: 2, borderRadius: 2.5, bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)', border: `1px solid ${theme.palette.divider}` }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={editGroupForm.onlyAdminInvite}
+                            onChange={(e) => setEditGroupForm({ ...editGroupForm, onlyAdminInvite: e.target.checked })}
+                            disabled={!isGroupAdmin}
+                            color="primary"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>Admin-Only Invites</Typography>
+                            <Typography variant="caption" color="text.secondary">Only group administrators can generate invite links or add members.</Typography>
+                          </Box>
+                        }
+                      />
+                    </Box>
+
+                    {/* Admin-only Expense Edit */}
+                    <Box sx={{ p: 2, borderRadius: 2.5, bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)', border: `1px solid ${theme.palette.divider}` }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={editGroupForm.onlyAdminEdit}
+                            onChange={(e) => setEditGroupForm({ ...editGroupForm, onlyAdminEdit: e.target.checked })}
+                            disabled={!isGroupAdmin}
+                            color="primary"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>Lock Expense Modifications</Typography>
+                            <Typography variant="caption" color="text.secondary">Only administrators can edit or delete recorded bills and expenses.</Typography>
+                          </Box>
+                        }
+                      />
+                    </Box>
+
+                    {/* Debt Simplification */}
+                    <Box sx={{ p: 2, borderRadius: 2.5, bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)', border: `1px solid ${theme.palette.divider}` }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={editGroupForm.simplifyDebts}
+                            onChange={(e) => setEditGroupForm({ ...editGroupForm, simplifyDebts: e.target.checked })}
+                            disabled={!isGroupAdmin}
+                            color="primary"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>Splitwise Debt Simplification</Typography>
+                            <Typography variant="caption" color="text.secondary">Use greedy cash-flow algorithm to reduce the total number of transactions needed between members.</Typography>
+                          </Box>
+                        }
+                      />
+                    </Box>
+                  </Stack>
+                </Card>
+              </Grid>
+
+              {/* Financial Ledger Portability & Export (Production-Ready) */}
+              <Grid size={{ xs: 12 }}>
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{
+                    borderRadius: 3.5,
+                    p: 3,
+                    boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
+                    <Box>
+                      <Typography variant="h6" fontWeight={750} sx={{ color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TableChart sx={{ color: '#10B981' }} /> Financial Reports & Ledger Export
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        Download complete ledger records for accounting, travel reimbursements, tax audits, or spreadsheet analysis in Excel and Google Sheets.
+                      </Typography>
+                    </Box>
+
+                    <Stack direction="row" spacing={1.5} sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<FileDownload />}
+                        onClick={() => handleExportGroup('csv')}
+                        disabled={exporting}
+                        className="glass-tertiary"
+                        sx={{
+                          borderRadius: 2.5,
+                          fontWeight: 700,
+                          textTransform: 'none',
+                          color: 'text.primary',
+                          px: 2.5,
+                          py: 1,
+                          flex: { xs: 1, sm: 'auto' },
+                          '&:hover': { borderColor: '#10B981', bgcolor: alpha('#10B981', 0.08) },
+                        }}
+                      >
+                        {exporting ? 'Exporting...' : 'Export CSV (Excel)'}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        startIcon={<FileDownload />}
+                        onClick={() => handleExportGroup('json')}
+                        disabled={exporting}
+                        className="glass-tertiary"
+                        sx={{
+                          borderRadius: 2.5,
+                          fontWeight: 700,
+                          textTransform: 'none',
+                          color: 'text.primary',
+                          px: 2.5,
+                          py: 1,
+                          flex: { xs: 1, sm: 'auto' },
+                          '&:hover': { borderColor: '#10B981', bgcolor: alpha('#10B981', 0.08) },
+                        }}
+                      >
+                        {exporting ? 'Exporting...' : 'Export JSON'}
+                      </Button>
+                    </Stack>
+                  </Box>
+                </Card>
+              </Grid>
+
+              {/* Danger Zone */}
+              <Grid size={{ xs: 12 }}>
+                <Card
+                  sx={{
+                    borderRadius: 3.5,
+                    p: 3,
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    bgcolor: alpha('#EF4444', 0.03),
+                    boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  <Typography variant="h6" fontWeight={750} sx={{ color: '#EF4444', mb: 1 }}>
+                    Danger Zone
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                    Actions here have permanent effects on your group participation and history.
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
+                        Leave this group
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Remove yourself from this group. Historical expenses will remain intact.
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<Logout />}
+                      onClick={() => setLeaveGroupOpen(true)}
+                      sx={{
+                        borderRadius: 2.5,
+                        fontWeight: 700,
+                        textTransform: 'none',
+                        px: 3,
+                        py: 0.85,
+                        width: { xs: '100%', sm: 'auto' },
+                      }}
+                    >
+                      Leave Group
+                    </Button>
+                  </Box>
+
+                  {isGroupAdmin && (
+                    <>
+                      <Divider sx={{ my: 2, borderColor: alpha('#EF4444', 0.2) }} />
+                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Box>
+                          <Typography variant="body2" fontWeight={700} sx={{ color: '#EF4444' }}>
+                            Delete & Archive Group
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Permanently closes member invitations and archives the group from active dashboards.
+                          </Typography>
+                        </Box>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          startIcon={<Delete />}
+                          onClick={() => setDeleteGroupOpen(true)}
+                          sx={{
+                            borderRadius: 2.5,
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            px: 3,
+                            py: 0.85,
+                            width: { xs: '100%', sm: 'auto' },
+                          }}
+                        >
+                          Delete Group
+                        </Button>
+                      </Box>
+                    </>
+                  )}
+                </Card>
+              </Grid>
+            </Grid>
+          </Box>
         )}
 
         {/* Invite Dialog */}
@@ -1556,6 +2138,39 @@ function GroupDetailContent() {
                 }
                 label={<Typography variant="body2" fontWeight={600}>Require Admin Approval for New Members</Typography>}
               />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={editGroupForm.onlyAdminInvite}
+                    onChange={(e) => setEditGroupForm({ ...editGroupForm, onlyAdminInvite: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label={<Typography variant="body2" fontWeight={600}>Admin-Only Invites (Members Cannot Invite)</Typography>}
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={editGroupForm.onlyAdminEdit}
+                    onChange={(e) => setEditGroupForm({ ...editGroupForm, onlyAdminEdit: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label={<Typography variant="body2" fontWeight={600}>Lock Expense Modifications (Admin Only)</Typography>}
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={editGroupForm.simplifyDebts}
+                    onChange={(e) => setEditGroupForm({ ...editGroupForm, simplifyDebts: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label={<Typography variant="body2" fontWeight={600}>Splitwise Debt Simplification Active</Typography>}
+              />
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
@@ -1578,6 +2193,49 @@ function GroupDetailContent() {
               }}
             >
               {savingGroup ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Leave Group Confirmation Dialog */}
+        <Dialog
+          open={leaveGroupOpen}
+          onClose={() => setLeaveGroupOpen(false)}
+          maxWidth="xs"
+          fullWidth
+          slotProps={{
+            paper: {
+              className: 'glass-deep glass-specular-top',
+              sx: { borderRadius: 3.5, p: 1 },
+            },
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: 800, color: 'text.primary' }}>
+            Leave Group?
+          </DialogTitle>
+          <DialogContent>
+            {isOnlyAdmin ? (
+              <Alert severity="warning" sx={{ borderRadius: 2.5, mb: 1, fontWeight: 600 }}>
+                You are currently the only administrator in this group. You must promote another member to Admin before leaving.
+              </Alert>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Are you sure you want to leave &quot;{group?.name}&quot;? You will no longer receive group updates or split new expenses here. Any pending debts or credits will remain recorded on the ledger.
+              </Typography>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setLeaveGroupOpen(false)} sx={{ borderRadius: 2, textTransform: 'none' }}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleLeaveGroup}
+              disabled={leavingGroup || isOnlyAdmin}
+              sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}
+            >
+              {leavingGroup ? 'Leaving...' : 'Yes, Leave Group'}
             </Button>
           </DialogActions>
         </Dialog>

@@ -137,19 +137,60 @@ groupRouter.get('/public/:id', optionalAuth, async (req: AuthenticatedRequest, r
 
 groupRouter.use(authenticate);
 
-// Security metadata helpers for password protection and admin approval
-async function encodeGroupMeta(description?: string | null, password?: string | null, requireAdminApproval?: boolean | null): Promise<string | undefined> {
-  if (!password && !requireAdminApproval) return description || undefined;
-  const hashedPwd = password ? (password.startsWith('$2') ? password : await bcrypt.hash(password, 10)) : null;
-  const meta = { pwd: hashedPwd, approval: Boolean(requireAdminApproval) };
+// Security and group configuration metadata helpers
+async function encodeGroupMeta(
+  description?: string | null,
+  password?: string | null,
+  requireAdminApproval?: boolean | null,
+  onlyAdminInvite?: boolean | null,
+  onlyAdminEdit?: boolean | null,
+  simplifyDebts?: boolean | null
+): Promise<string | undefined> {
   const clean = (description || '').replace(/\s*<!--fs_meta:.*?-->\s*/g, '').trim();
+  const hasSettings =
+    password !== undefined ||
+    requireAdminApproval !== undefined ||
+    onlyAdminInvite !== undefined ||
+    onlyAdminEdit !== undefined ||
+    simplifyDebts !== undefined;
+
+  if (!hasSettings && !password && !requireAdminApproval) return clean || undefined;
+
+  const hashedPwd = password ? (password.startsWith('$2') ? password : await bcrypt.hash(password, 10)) : null;
+  const meta: any = {
+    pwd: hashedPwd,
+    approval: Boolean(requireAdminApproval),
+    onlyAdminInvite: Boolean(onlyAdminInvite),
+    onlyAdminEdit: Boolean(onlyAdminEdit),
+    simplifyDebts: simplifyDebts !== false,
+  };
   return `${clean}\n<!--fs_meta:${JSON.stringify(meta)}-->`;
 }
 
 export function parseGroupMeta(description?: string | null) {
-  if (!description) return { description: '', isPasswordProtected: false, password: null as string | null, requireAdminApproval: false };
+  if (!description) {
+    return {
+      description: '',
+      isPasswordProtected: false,
+      password: null as string | null,
+      requireAdminApproval: false,
+      onlyAdminInvite: false,
+      onlyAdminEdit: false,
+      simplifyDebts: true,
+    };
+  }
   const match = description.match(/<!--fs_meta:(.*?)-->/);
-  if (!match) return { description, isPasswordProtected: false, password: null as string | null, requireAdminApproval: false };
+  if (!match) {
+    return {
+      description,
+      isPasswordProtected: false,
+      password: null as string | null,
+      requireAdminApproval: false,
+      onlyAdminInvite: false,
+      onlyAdminEdit: false,
+      simplifyDebts: true,
+    };
+  }
   try {
     const meta = JSON.parse(match[1]);
     const clean = description.replace(/\s*<!--fs_meta:.*?-->\s*/g, '').trim();
@@ -158,9 +199,20 @@ export function parseGroupMeta(description?: string | null) {
       isPasswordProtected: Boolean(meta.pwd),
       password: (meta.pwd as string) || null,
       requireAdminApproval: Boolean(meta.approval),
+      onlyAdminInvite: Boolean(meta.onlyAdminInvite),
+      onlyAdminEdit: Boolean(meta.onlyAdminEdit),
+      simplifyDebts: meta.simplifyDebts !== false,
     };
   } catch {
-    return { description, isPasswordProtected: false, password: null as string | null, requireAdminApproval: false };
+    return {
+      description,
+      isPasswordProtected: false,
+      password: null as string | null,
+      requireAdminApproval: false,
+      onlyAdminInvite: false,
+      onlyAdminEdit: false,
+      simplifyDebts: true,
+    };
   }
 }
 
@@ -328,6 +380,9 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
       description: meta.description,
       isPasswordProtected: meta.isPasswordProtected,
       requireAdminApproval: meta.requireAdminApproval,
+      onlyAdminInvite: meta.onlyAdminInvite,
+      onlyAdminEdit: meta.onlyAdminEdit,
+      simplifyDebts: meta.simplifyDebts,
     };
 
     appCache.set(cacheKey, data, 20000);
@@ -341,7 +396,7 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
   }
 });
 
-// PUT /api/groups/:id — Update group details (Admin only)
+// PUT /api/groups/:id — Update group details & configuration (Admin only)
 const updateGroupSchema = z.object({
   name: z.string().trim().min(1, 'Group name cannot be empty').max(100, 'Group name cannot exceed 100 characters').optional(),
   description: z.string().trim().max(500, 'Description cannot exceed 500 characters').optional(),
@@ -349,6 +404,9 @@ const updateGroupSchema = z.object({
   currency: z.string().trim().length(3).optional(),
   password: z.string().max(50).nullable().optional(),
   requireAdminApproval: z.boolean().optional(),
+  onlyAdminInvite: z.boolean().optional(),
+  onlyAdminEdit: z.boolean().optional(),
+  simplifyDebts: z.boolean().optional(),
 });
 
 groupRouter.put(
@@ -383,6 +441,9 @@ groupRouter.put(
       const existingMeta = parseGroupMeta(existingGroup.description);
       const newDesc = req.body.description !== undefined ? req.body.description : existingMeta.description;
       const newApproval = req.body.requireAdminApproval !== undefined ? req.body.requireAdminApproval : existingMeta.requireAdminApproval;
+      const newOnlyAdminInvite = req.body.onlyAdminInvite !== undefined ? req.body.onlyAdminInvite : existingMeta.onlyAdminInvite;
+      const newOnlyAdminEdit = req.body.onlyAdminEdit !== undefined ? req.body.onlyAdminEdit : existingMeta.onlyAdminEdit;
+      const newSimplifyDebts = req.body.simplifyDebts !== undefined ? req.body.simplifyDebts : existingMeta.simplifyDebts;
 
       let pwdToEncode: string | null = null;
       if (req.body.password === null || req.body.password === '') {
@@ -393,7 +454,14 @@ groupRouter.put(
         pwdToEncode = existingMeta.password;
       }
 
-      const finalDescription = await encodeGroupMeta(newDesc, pwdToEncode, newApproval);
+      const finalDescription = await encodeGroupMeta(
+        newDesc,
+        pwdToEncode,
+        newApproval,
+        newOnlyAdminInvite,
+        newOnlyAdminEdit,
+        newSimplifyDebts
+      );
 
       const updateData: any = {};
       if (req.body.name) updateData.name = req.body.name.trim();
@@ -418,11 +486,12 @@ groupRouter.put(
           userId: req.user!.id,
           groupId: id,
           type: 'GROUP_CREATED',
-          message: `updated group details`,
+          message: `updated group settings and preferences`,
         },
       });
 
       appCache.invalidatePrefix(`groups:list`);
+      appCache.invalidatePrefix(`group:${id}`);
       appCache.invalidatePrefix(`dashboard`);
 
       const meta = parseGroupMeta(updated.description);
@@ -433,6 +502,9 @@ groupRouter.put(
           description: meta.description,
           isPasswordProtected: meta.isPasswordProtected,
           requireAdminApproval: meta.requireAdminApproval,
+          onlyAdminInvite: meta.onlyAdminInvite,
+          onlyAdminEdit: meta.onlyAdminEdit,
+          simplifyDebts: meta.simplifyDebts,
         },
       });
     } catch (error: any) {
@@ -486,6 +558,149 @@ groupRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): Pro
   }
 });
 
+// POST /api/groups/:id/leave — Member leaves group (safeguards sole admin)
+groupRouter.post('/:id/leave', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: id, userId: { in: userIds } },
+    });
+
+    if (!membership) {
+      res.status(404).json({ success: false, error: 'You are not a member of this group.' });
+      return;
+    }
+
+    // Check if user is the sole remaining admin in a multi-member group
+    if (membership.role === 'ADMIN') {
+      const [adminCount, totalMembers] = await Promise.all([
+        prisma.groupMember.count({ where: { groupId: id, role: 'ADMIN' } }),
+        prisma.groupMember.count({ where: { groupId: id } }),
+      ]);
+
+      if (adminCount <= 1 && totalMembers > 1) {
+        res.status(400).json({
+          success: false,
+          error: 'You are the only admin in this group. Please make another member Admin before leaving.',
+        });
+        return;
+      }
+
+      // If user is the only member left in the group, archive the group on leave
+      if (totalMembers <= 1) {
+        await prisma.group.update({
+          where: { id },
+          data: { isActive: false },
+        });
+      }
+    }
+
+    await prisma.groupMember.delete({
+      where: { id: membership.id },
+    });
+
+    await prisma.activity.create({
+      data: {
+        userId: req.user!.id,
+        groupId: id,
+        type: 'GROUP_MEMBER_REMOVED',
+        message: 'left the group',
+      },
+    });
+
+    appCache.invalidatePrefix(`groups:list`);
+    appCache.invalidatePrefix(`group:${id}`);
+    appCache.invalidatePrefix(`dashboard`);
+
+    res.json({ success: true, message: 'You have left the group successfully.' });
+  } catch (error: any) {
+    console.error('Leave group error:', error);
+    res.status(500).json({ success: false, error: 'Failed to leave group.' });
+  }
+});
+
+// GET /api/groups/:id/export — Export group transaction history & ledger
+groupRouter.get('/:id/export', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: id, userId: { in: userIds } },
+    });
+
+    if (!membership) {
+      res.status(403).json({ success: false, error: 'Not a member of this group.' });
+      return;
+    }
+
+    const [group, expenses, settlements] = await Promise.all([
+      prisma.group.findUnique({
+        where: { id },
+        include: {
+          members: { include: { user: { select: { id: true, name: true, email: true } } } },
+        },
+      }),
+      prisma.expense.findMany({
+        where: { groupId: id, isDeleted: false },
+        include: {
+          paidBy: { select: { id: true, name: true } },
+          shares: { include: { user: { select: { id: true, name: true } } } },
+        },
+        orderBy: { date: 'asc' },
+      }),
+      prisma.settlement.findMany({
+        where: { groupId: id, status: 'CONFIRMED' },
+        include: {
+          payer: { select: { id: true, name: true } },
+          payee: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    if (!group) {
+      res.status(404).json({ success: false, error: 'Group not found.' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        group: {
+          id: group.id,
+          name: group.name,
+          currency: group.currency,
+          memberCount: group.members.length,
+          members: group.members.map((m) => ({ id: m.user.id, name: m.user.name, email: m.user.email, role: m.role })),
+        },
+        expenses: expenses.map((e) => ({
+          id: e.id,
+          description: e.description,
+          amount: Number(e.amount),
+          date: e.date,
+          category: e.category,
+          paidBy: e.paidBy.name,
+          splitType: e.splitType,
+          shares: e.shares.map((s) => ({ user: s.user.name, amount: Number(s.amount) })),
+        })),
+        settlements: settlements.map((s) => ({
+          id: s.id,
+          amount: Number(s.amount),
+          payer: s.payer.name,
+          payee: s.payee.name,
+          date: s.createdAt,
+        })),
+      },
+    });
+  } catch (error: any) {
+    console.error('Export group error:', error);
+    res.status(500).json({ success: false, error: 'Failed to export group data.' });
+  }
+});
+
 // GET /api/groups/:id/invite — Generate shareable group invite link
 groupRouter.get('/:id/invite', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -503,9 +718,22 @@ groupRouter.get('/:id/invite', async (req: AuthenticatedRequest, res: Response):
       return;
     }
 
+    const meta = parseGroupMeta(group.description);
+    if (meta.onlyAdminInvite) {
+      const membership = await prisma.groupMember.findFirst({
+        where: { groupId: id, userId: { in: userIds } },
+      });
+      if (membership?.role !== 'ADMIN') {
+        res.status(403).json({
+          success: false,
+          error: 'Only group administrators can view or share the invite link for this group.',
+        });
+        return;
+      }
+    }
+
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
     const inviteUrl = `${clientUrl}/groups/join/${id}`;
-    const meta = parseGroupMeta(group.description);
 
     res.json({
       success: true,
@@ -642,6 +870,22 @@ groupRouter.post(
       if (!membership) {
         res.status(403).json({ success: false, error: 'You are not a member of this group.' });
         return;
+      }
+
+      // Check group policy: onlyAdminInvite
+      const groupRecord = await prisma.group.findUnique({
+        where: { id },
+        select: { description: true },
+      });
+      if (groupRecord) {
+        const meta = parseGroupMeta(groupRecord.description);
+        if (meta.onlyAdminInvite && membership.role !== 'ADMIN') {
+          res.status(403).json({
+            success: false,
+            error: 'Only group administrators are authorized to invite or add members to this group.',
+          });
+          return;
+        }
       }
 
       let targetUserId = userId;
@@ -858,8 +1102,8 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Concurrently fetch expenses, settlements, and members (Promise.all eliminates sequential DB stalls)
-    const [expenses, settlements, members] = await Promise.all([
+    // Concurrently fetch expenses, settlements, members, and group config
+    const [expenses, settlements, members, groupRecord] = await Promise.all([
       prisma.expense.findMany({
         where: { groupId: id, isDeleted: false },
         include: { shares: true },
@@ -870,6 +1114,10 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
       prisma.groupMember.findMany({
         where: { groupId: id },
         include: { user: { select: { id: true, name: true, avatarUrl: true } } },
+      }),
+      prisma.group.findUnique({
+        where: { id },
+        select: { description: true },
       }),
     ]);
 
@@ -897,9 +1145,11 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
       balance: Math.round((balanceMap[member.userId] || 0) * 100) / 100,
     }));
 
-    // Simplify debts (minimize transactions)
-    const simplifiedDebts = simplifyDebts(balances);
-    const data = { balances, simplifiedDebts };
+    // Respect group's simplifyDebts toggle
+    const meta = parseGroupMeta(groupRecord?.description);
+    const simplifyDebtsEnabled = meta.simplifyDebts !== false;
+    const simplifiedDebts = simplifyDebtsEnabled ? simplifyDebts(balances) : [];
+    const data = { balances, simplifiedDebts, simplifyDebtsEnabled };
 
     appCache.set(cacheKey, data, 20000);
     res.json({

@@ -100,6 +100,8 @@ export const groupApi = {
   getInviteLink: (groupId: string) => api.get(`/groups/${groupId}/invite`),
   getPublicInfo: (groupId: string) => api.get(`/groups/public/${groupId}`),
   join: (groupId: string, data?: { passcode?: string }) => api.post(`/groups/${groupId}/join`, data || {}),
+  leave: (groupId: string) => api.post(`/groups/${groupId}/leave`),
+  export: (groupId: string) => api.get(`/groups/${groupId}/export`),
   delete: (id: string) => api.delete(`/groups/${id}`),
 };
 
