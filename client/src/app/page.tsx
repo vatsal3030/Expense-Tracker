@@ -130,8 +130,8 @@ export default function LandingPage() {
     badgeText: '',
   });
 
-  // Debt Graph Simplification Visualizer Toggle
-  const [simplificationActive, setSimplificationActive] = useState<boolean>(true);
+  // Debt Graph Simplification Visualizer Toggle ('optimized' | 'unoptimized' | 'compare')
+  const [debtViewMode, setDebtViewMode] = useState<'optimized' | 'unoptimized' | 'compare'>('optimized');
 
   // QR Ecosystem Tab
   const [qrTab, setQrTab] = useState<'UPI' | 'GROUP' | 'CONNECT'>('UPI');
@@ -852,172 +852,232 @@ export default function LandingPage() {
           </p>
 
           {/* Toggle Interactive Controller */}
-          <div className="macos-liquid-surface inline-flex p-1 rounded-2xl mt-6 shadow-inner">
+          <div className="macos-liquid-surface inline-flex flex-wrap items-center justify-center p-1.5 rounded-2xl mt-6 shadow-inner gap-1">
             <button
-              onClick={() => setSimplificationActive(false)}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
-                !simplificationActive
+              type="button"
+              id="btn-debt-unoptimized"
+              onClick={() => setDebtViewMode('unoptimized')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                debtViewMode === 'unoptimized'
                   ? isLight
-                    ? 'bg-rose-500/20 text-rose-900 border border-rose-400/40 shadow-sm'
-                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow'
+                    ? 'bg-rose-500/20 text-rose-900 border border-rose-400/50 shadow-sm ring-1 ring-rose-500/30'
+                    : 'bg-rose-500/25 text-rose-200 border border-rose-500/50 shadow ring-1 ring-rose-500/40'
                   : isLight
-                  ? 'text-slate-600 hover:text-slate-900'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
               Unoptimized Debts (5 Transfers)
             </button>
             <button
-              onClick={() => setSimplificationActive(true)}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
-                simplificationActive
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/30'
+              type="button"
+              id="btn-debt-optimized"
+              onClick={() => setDebtViewMode('optimized')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                debtViewMode === 'optimized'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/30 ring-1 ring-emerald-400/50'
                   : isLight
-                  ? 'text-slate-600 hover:text-slate-900'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
               FairShare Greedy Reduction (2 Transfers)
+            </button>
+            <button
+              type="button"
+              id="btn-debt-compare"
+              onClick={() => setDebtViewMode('compare')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                debtViewMode === 'compare'
+                  ? isLight
+                    ? 'bg-cyan-600 text-white shadow-md'
+                    : 'bg-cyan-500 text-slate-950 font-black shadow-md'
+                  : isLight
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              }`}
+            >
+              Compare Side-by-Side
             </button>
           </div>
         </div>
 
         {/* Visualizer Cards Container */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div
+          className={`transition-all duration-300 ${
+            debtViewMode === 'compare'
+              ? 'grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto'
+              : 'max-w-2xl mx-auto'
+          }`}
+        >
           {/* Card 1: Before Reduction */}
-          <div
-            className={`macos-glass-card p-6 rounded-3xl relative transition-all ${
-              !simplificationActive
-                ? 'block ring-2 ring-rose-500/40'
-                : 'hidden md:block opacity-70'
-            }`}
-          >
+          {(debtViewMode === 'unoptimized' || debtViewMode === 'compare') && (
             <div
-              className={`flex items-center justify-between pb-4 border-b mb-4 ${
-                isLight ? 'border-slate-300/60' : 'border-slate-800'
+              className={`macos-glass-card p-6 sm:p-7 rounded-3xl relative transition-all ring-2 ring-rose-500/40 shadow-xl ${
+                debtViewMode === 'unoptimized' ? 'w-full animate-in fade-in zoom-in-95 duration-200' : ''
               }`}
             >
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500" />
-                <h4 className={`font-bold text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  Without Simplification
-                </h4>
-              </div>
-              <span className="macos-glass-pill px-2.5 py-0.5 text-xs font-bold text-rose-700 dark:text-rose-300">
-                5 Separate Transfers
-              </span>
-            </div>
-
-            <div className="space-y-2.5">
-              {[
-                { from: 'Shadow Ninja', to: 'Pixel Mage', amt: 600, reason: 'Beach Shack Lunch' },
-                { from: 'Pixel Mage', to: 'Robo Mecha', amt: 600, reason: 'Cab Ride' },
-                { from: 'Robo Mecha', to: 'Astro Pilot', amt: 400, reason: 'Groceries' },
-                { from: 'Astro Pilot', to: 'Shadow Ninja', amt: 200, reason: 'Coffee' },
-                { from: 'Pixel Mage', to: 'Astro Pilot', amt: 300, reason: 'Snacks' },
-              ].map((t, idx) => (
-                <div
-                  key={idx}
-                  className="macos-liquid-surface p-3 rounded-xl flex items-center justify-between text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{t.from}</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                    <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{t.to}</span>
-                  </div>
-                  <span className="font-extrabold text-rose-600 dark:text-rose-300">₹{t.amt}</span>
+              <div
+                className={`flex items-center justify-between pb-4 border-b mb-4 ${
+                  isLight ? 'border-slate-300/60' : 'border-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
+                  <h4 className={`font-bold text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Without Simplification (Debt Chaos)
+                  </h4>
                 </div>
-              ))}
-            </div>
-
-            <div
-              className={`mt-4 pt-3 border-t text-[11px] ${
-                isLight ? 'border-slate-300/60 text-slate-600' : 'border-slate-800/80 text-slate-400'
-              }`}
-            >
-              Total Cash Circulated:{' '}
-              <strong className={isLight ? 'text-slate-900' : 'text-slate-200'}>
-                ₹2,100 across 5 banking apps
-              </strong>
-            </div>
-          </div>
-
-          {/* Card 2: After FairShare Greedy Simplification */}
-          <div
-            className={`macos-glass-card p-6 rounded-3xl relative transition-all ${
-              simplificationActive
-                ? 'block ring-2 ring-emerald-500/40'
-                : 'hidden md:block opacity-70'
-            }`}
-          >
-            <div
-              className={`flex items-center justify-between pb-4 border-b mb-4 ${
-                isLight ? 'border-slate-300/60' : 'border-slate-800'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                <h4 className={`font-bold text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  FairShare Optimized
-                </h4>
-              </div>
-              <span className="macos-glass-pill px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                Only 2 Direct Payments (60% Savings)
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                { from: 'Shadow Ninja', to: 'Robo Mecha', amt: 400, note: 'Direct final settlement' },
-                { from: 'Pixel Mage', to: 'Robo Mecha', amt: 500, note: 'Direct final settlement' },
-              ].map((t, idx) => (
-                <div
-                  key={idx}
-                  className="macos-liquid-surface p-4 rounded-xl flex items-center justify-between text-sm"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{t.from}</span>
-                    <ArrowRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{t.to}</span>
-                  </div>
-                  <div className="text-right">
-                    <span
-                      className={`font-extrabold text-base block ${
-                        isLight ? 'text-emerald-750' : 'text-emerald-400'
-                      }`}
-                    >
-                      ₹{t.amt}
-                    </span>
-                    <span className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-emerald-300/80'}`}>
-                      {t.note}
-                    </span>
-                  </div>
-                </div>
-              ))}
-
-              <div className="macos-liquid-surface p-4 rounded-xl text-xs">
-                <div
-                  className={`flex items-center gap-2 font-bold mb-1 ${
-                    isLight ? 'text-emerald-750' : 'text-emerald-300'
-                  }`}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Mathematically Proven Balanced
-                </div>
-                <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>
-                  Everyone ends with the exact same net balance (+₹900 received, -₹900 paid), eliminating 3 redundant money transfers and UPI steps entirely.
+                <span className="macos-glass-pill px-2.5 py-0.5 text-xs font-bold text-rose-700 dark:text-rose-300">
+                  5 Separate Transfers
                 </span>
               </div>
-            </div>
 
+              <p className={`text-xs mb-3 font-medium ${isLight ? 'text-rose-800' : 'text-rose-300/90'}`}>
+                ⚠️ Circular transactions: Money travels in loops between friends, wasting time and payment attempts.
+              </p>
+
+              <div className="space-y-2.5">
+                {[
+                  { from: 'Shadow Ninja', to: 'Pixel Mage', amt: 600, reason: 'Beach Shack Lunch' },
+                  { from: 'Pixel Mage', to: 'Robo Mecha', amt: 600, reason: 'Cab Ride' },
+                  { from: 'Robo Mecha', to: 'Astro Pilot', amt: 400, reason: 'Groceries' },
+                  { from: 'Astro Pilot', to: 'Shadow Ninja', amt: 200, reason: 'Coffee' },
+                  { from: 'Pixel Mage', to: 'Astro Pilot', amt: 300, reason: 'Snacks' },
+                ].map((t, idx) => (
+                  <div
+                    key={idx}
+                    className="macos-liquid-surface p-3 rounded-xl flex items-center justify-between text-xs hover:border-rose-500/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{t.from}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-rose-400" />
+                      <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{t.to}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-extrabold text-rose-600 dark:text-rose-300">₹{t.amt}</span>
+                      <span className="block text-[10px] text-slate-400">{t.reason}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className={`mt-4 pt-3 border-t text-[11px] ${
+                  isLight ? 'border-slate-300/60 text-slate-600' : 'border-slate-800/80 text-slate-400'
+                }`}
+              >
+                Total Cash Circulated:{' '}
+                <strong className={isLight ? 'text-slate-900' : 'text-slate-200'}>
+                  ₹2,100 across 5 individual UPI payments
+                </strong>
+              </div>
+
+              {debtViewMode === 'unoptimized' && (
+                <div className="mt-5 pt-3 border-t border-rose-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <span className="text-xs text-rose-400 font-semibold">Want to see how FairShare fixes this?</span>
+                  <button
+                    type="button"
+                    onClick={() => setDebtViewMode('optimized')}
+                    className="w-full sm:w-auto py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/30 transition-all hover:scale-[1.02]"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    Run Greedy Reduction (Cut to 2 Transfers)
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Card 2: After FairShare Greedy Simplification */}
+          {(debtViewMode === 'optimized' || debtViewMode === 'compare') && (
             <div
-              className={`mt-4 pt-3 border-t text-[11px] font-semibold ${
-                isLight ? 'border-slate-300/60 text-emerald-800' : 'border-slate-800/80 text-emerald-400'
+              className={`macos-glass-card p-6 sm:p-7 rounded-3xl relative transition-all ring-2 ring-emerald-500/40 shadow-xl ${
+                debtViewMode === 'optimized' ? 'w-full animate-in fade-in zoom-in-95 duration-200' : ''
               }`}
             >
-              Included free in all FairShare groups (No premium paywalls).
+              <div
+                className={`flex items-center justify-between pb-4 border-b mb-4 ${
+                  isLight ? 'border-slate-300/60' : 'border-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                  <h4 className={`font-bold text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    FairShare Greedy Optimized
+                  </h4>
+                </div>
+                <span className="macos-glass-pill px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                  Only 2 Direct Payments (60% Savings)
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { from: 'Shadow Ninja', to: 'Robo Mecha', amt: 400, note: 'Direct final settlement' },
+                  { from: 'Pixel Mage', to: 'Robo Mecha', amt: 500, note: 'Direct final settlement' },
+                ].map((t, idx) => (
+                  <div
+                    key={idx}
+                    className="macos-liquid-surface p-4 rounded-xl flex items-center justify-between text-sm hover:border-emerald-500/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{t.from}</span>
+                      <ArrowRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{t.to}</span>
+                    </div>
+                    <div className="text-right">
+                      <span
+                        className={`font-extrabold text-base block ${
+                          isLight ? 'text-emerald-750' : 'text-emerald-400'
+                        }`}
+                      >
+                        ₹{t.amt}
+                      </span>
+                      <span className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-emerald-300/80'}`}>
+                        {t.note}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="macos-liquid-surface p-4 rounded-xl text-xs">
+                  <div
+                    className={`flex items-center gap-2 font-bold mb-1 ${
+                      isLight ? 'text-emerald-750' : 'text-emerald-300'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Mathematically Proven Balanced
+                  </div>
+                  <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>
+                    Everyone ends with the exact same net balance (+₹900 received, -₹900 paid), eliminating 3 redundant money transfers and UPI steps entirely.
+                  </span>
+                </div>
+              </div>
+
+              <div
+                className={`mt-4 pt-3 border-t text-[11px] font-semibold ${
+                  isLight ? 'border-slate-300/60 text-emerald-800' : 'border-slate-800/80 text-emerald-400'
+                }`}
+              >
+                Included free in all FairShare groups (No premium paywalls).
+              </div>
+
+              {debtViewMode === 'optimized' && (
+                <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs">
+                  <span className="text-emerald-500 font-semibold">✓ 3 redundant transactions eliminated</span>
+                  <button
+                    type="button"
+                    onClick={() => setDebtViewMode('compare')}
+                    className="text-cyan-400 hover:text-cyan-300 hover:underline font-bold text-[11px] transition-colors"
+                  >
+                    Compare side-by-side &rarr;
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </section>
 
