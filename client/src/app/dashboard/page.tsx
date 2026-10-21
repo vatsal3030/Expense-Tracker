@@ -124,7 +124,19 @@ export default function DashboardPage() {
     }
   }, [user?.id, profile?.id]);
 
-  useDataRefresh(React.useCallback(() => {
+  useDataRefresh(React.useCallback((detail?: any) => {
+    if (detail?.type === 'expense' && detail?.data) {
+      // Optimistically update dashboard total spend and recent activity instantly
+      setData((prev: any) => {
+        if (!prev) return prev;
+        const addedAmount = Number(detail.data.amount) || 0;
+        return {
+          ...prev,
+          totalSpend: (Number(prev.totalSpend) || 0) + addedAmount,
+          recentExpenses: [detail.data, ...(prev.recentExpenses || []).slice(0, 4)],
+        };
+      });
+    }
     fetchDashboard(false);
   }, []));
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -49,6 +49,7 @@ import {
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { groupApi } from '@/lib/api';
+import { useDataRefresh } from '@/lib/events';
 
 const CATEGORY_COLORS: Record<string, string> = {
   FOOD: '#0E6245',
@@ -98,42 +99,47 @@ export default function AnalyticsPage() {
       .catch((err) => console.error('Failed to load groups for analytics filter:', err));
   }, [session?.access_token]);
 
-  // Fetch telemetry data whenever filters change
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      if (!session?.access_token) return;
-      try {
-        setLoading(true);
-        const params = new URLSearchParams({
-          timeframe,
-          groupId,
-          category,
-          viewType,
-        });
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/dashboard/analytics?${params.toString()}`,
-          {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          }
-        );
-        const json = await res.json();
-        if (json.success && json.data) {
-          setData(json.data);
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem('fairshare_cached_analytics', JSON.stringify(json.data));
-            } catch {}
-          }
+  // Fetch telemetry data whenever filters change or an expense/settlement occurs
+  const fetchAnalytics = useCallback(async () => {
+    if (!session?.access_token) return;
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        timeframe,
+        groupId,
+        category,
+        viewType,
+      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/dashboard/analytics?${params.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
         }
-      } catch (err) {
-        console.error('Failed to load analytics:', err);
-      } finally {
-        setLoading(false);
+      );
+      const json = await res.json();
+      if (json.success && json.data) {
+        setData(json.data);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('fairshare_cached_analytics', JSON.stringify(json.data));
+          } catch {}
+        }
       }
-    };
-
-    fetchAnalytics();
+    } catch (err) {
+      console.error('Failed to load analytics:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [session?.access_token, timeframe, groupId, category, viewType]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  // Instantly re-fetch analytics on any expense, settlement, or group transaction
+  useDataRefresh(useCallback(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]));
 
   const handleExportCSV = () => {
     if (!data?.categoryBreakdown) return;
@@ -794,7 +800,7 @@ export default function AnalyticsPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.dayOfWeekData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.6)} vertical={false} />
-                      <XAxis dataKey="day" stroke={theme.palette.text.secondary} fontSize={11} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="shortDay" stroke={theme.palette.text.secondary} fontSize={11} tickLine={false} axisLine={false} />
                       <YAxis stroke={theme.palette.text.secondary} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
                       <Tooltip
                         contentStyle={{
@@ -806,7 +812,10 @@ export default function AnalyticsPage() {
                           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                           fontSize: '0.8rem',
                         }}
-                        formatter={(val: any) => [`₹${Number(val).toLocaleString()}`, 'Total Spend']}
+                        formatter={(val: any, _name: any, item: any) => [
+                          `₹${Number(val).toLocaleString()}`,
+                          item?.payload?.fullLabel || 'Total Spend'
+                        ]}
                       />
                       <Bar dataKey="amount" fill="#0EA5E9" radius={[4, 4, 0, 0]} />
                     </BarChart>

@@ -235,7 +235,16 @@ function ExpensesContent() {
     if (user?.id) fetchExpenses();
   }, [user?.id, fetchExpenses]);
 
-  useDataRefresh(useCallback(() => {
+  useDataRefresh(useCallback((detail?: any) => {
+    if (detail?.type === 'expense' && detail?.data) {
+      // Optimistically prepend to active expense list immediately for instant UI feedback
+      setExpenses((prev) => {
+        const item = detail.data;
+        const exists = prev.some((e) => e.id === item.id || (e.description === item.description && Number(e.amount) === Number(item.amount) && Math.abs(new Date(e.date || e.createdAt).getTime() - new Date(item.date).getTime()) < 5000));
+        if (exists) return prev;
+        return [item, ...prev];
+      });
+    }
     fetchExpenses();
   }, [fetchExpenses]));
 

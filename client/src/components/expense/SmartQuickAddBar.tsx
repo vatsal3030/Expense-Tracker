@@ -91,7 +91,7 @@ export default function SmartQuickAddBar({
 }: SmartQuickAddBarProps) {
   const theme = useTheme();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const isLight = theme.palette.mode === 'light';
 
   const [input, setInput] = useState('');
@@ -211,9 +211,33 @@ export default function SmartQuickAddBar({
     }
   };
 
-  // Natural Language Parser
+  // Levenshtein distance for fuzzy group/friend name matching
+  const getEditDistance = (a: string, b: string): number => {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix: number[][] = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    return matrix[b.length][a.length];
+  };
+
+  // Natural Language Parser with extensive edge-case handling
   const parsed = useMemo(() => {
-    const raw = input.trim();
+    // Normalize and collapse extra spaces
+    const raw = input.replace(/\s+/g, ' ').trim();
     if (!raw) {
       return {
         amount: 0,
@@ -221,19 +245,65 @@ export default function SmartQuickAddBar({
         description: '',
         targetGroup: manualGroup || null,
         targetFriend: null as any | null,
+        unmatchedGroupCandidate: null as string | null,
         isValid: false,
+        validationError: null as string | null,
       };
     }
 
-    // 1. Extract Amount: look for numbers like "1200", "₹1200", "1200.50", "450 rs", "$50"
+    // 1. EXTRACT AMOUNT ROBUSTLY
+    // Handles: "1200", "₹1200", "₹ 1200", "1,200", "15,000.50", "450 rs", "450rs", "$50", "1.5k", "2k", "1200/-"
+    // Also protects addresses/numbers like "Flat 402", "Room 12", "Table 4" from hijacking the bill amount!
     let detectedAmount = 0;
-    const amountRegex = /(?:₹|\$|rs\.?|inr)?\s*(\d+(?:\.\d{1,2})?)\s*(?:rs\.?|inr)?/i;
-    const match = raw.match(amountRegex);
-    if (match && match[1]) {
-      detectedAmount = parseFloat(match[1]);
+    let matchedAmountSubstring = '';
+
+    // Check for "k" notation multiplier: "1.5k" -> 1500, "2k" -> 2000
+    const kMultiplierRegex = /\b(\d+(?:\.\d+)?)\s*(?:k|kilo)\b/i;
+    const kMatch = raw.match(kMultiplierRegex);
+
+    if (kMatch) {
+      detectedAmount = Math.round(parseFloat(kMatch[1]) * 1000);
+      matchedAmountSubstring = kMatch[0];
+    } else {
+      // Clean commas inside numbers: "1,200" -> "1200", "15,000" -> "15000"
+      const normalizedWithCleanNumbers = raw.replace(/(\d+),(\d+)/g, '$1$2');
+
+      // Check explicit currency indicators: ₹500, rs 500, 500rs, 500/-, $50
+      const explicitCurrencyRegex = /(?:₹|\$|rs\.?|inr)\s*(\d+(?:\.\d{1,2})?)|\b(\d+(?:\.\d{1,2})?)\s*(?:rs\.?|inr|\/-)/i;
+      const explicitMatch = normalizedWithCleanNumbers.match(explicitCurrencyRegex);
+
+      if (explicitMatch) {
+        const numStr = explicitMatch[1] || explicitMatch[2];
+        detectedAmount = parseFloat(numStr);
+        matchedAmountSubstring = explicitMatch[0];
+      } else {
+        // Disambiguate standalone numbers, ignoring items like "flat 402", "room 12", "table 3"
+        const tokens = normalizedWithCleanNumbers.split(' ');
+        let candidateNumber = 0;
+        let candidateToken = '';
+
+        for (let i = 0; i < tokens.length; i++) {
+          const t = tokens[i].replace(/[₹$,/-]/g, '');
+          const prev = i > 0 ? tokens[i - 1].toLowerCase() : '';
+          const isPrefixWord = /^(flat|room|table|apt|apartment|sector|gate|no|item|phase|block)$/i.test(prev);
+
+          if (!isPrefixWord && /^\d+(?:\.\d{1,2})?$/.test(t)) {
+            const val = parseFloat(t);
+            if (val > 0) {
+              candidateNumber = val;
+              candidateToken = tokens[i];
+            }
+          }
+        }
+
+        if (candidateNumber > 0) {
+          detectedAmount = candidateNumber;
+          matchedAmountSubstring = candidateToken;
+        }
+      }
     }
 
-    // 2. Extract Category: tokenize and check lexicon
+    // 2. EXTRACT CATEGORY
     let detectedCategory = manualCategory || 'GENERAL';
     if (!manualCategory) {
       const words = raw.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/);
@@ -245,46 +315,101 @@ export default function SmartQuickAddBar({
       }
     }
 
-    // 3. Extract Target Group or Friend
+    // 3. EXTRACT TARGET GROUP OR FRIEND & HANDLE UNMATCHED GROUP EDGES
     let targetGroup = manualGroup || null;
     let targetFriend: any = null;
+    let unmatchedGroupCandidate: string | null = null;
 
     if (!targetGroup) {
       const lowerRaw = raw.toLowerCase();
-      // Match group name
-      const matchedGroup = groups.find((g: any) => {
-        const gName = (g.name || '').toLowerCase();
-        return gName.length > 2 && lowerRaw.includes(gName);
+
+      // Check for explicit group markers: "@Goa", "in Goa Trip", "group: Goa Trip", "to Goa"
+      const explicitGroupMarkerRegex = /(?:@|in\s+group\s+|group\s*:\s*|in\s+|to\s+|for\s+group\s+)([a-z0-9\s-_]+)$/i;
+      const markerMatch = raw.match(explicitGroupMarkerRegex);
+      const explicitGroupName = markerMatch ? markerMatch[1].trim() : null;
+
+      // Search all user groups
+      // A) Exact match
+      let matchedGroup = groups.find((g: any) => {
+        const gName = (g.name || '').toLowerCase().trim();
+        return gName.length > 1 && (lowerRaw === gName || lowerRaw.includes(gName));
       });
+
+      // B) Word token match
+      if (!matchedGroup) {
+        matchedGroup = groups.find((g: any) => {
+          const gName = (g.name || '').toLowerCase().trim();
+          if (gName.length < 3) return false;
+          const gWords = gName.split(/\s+/);
+          return gWords.some((gw: string) => gw.length >= 3 && lowerRaw.includes(gw));
+        });
+      }
+
+      // C) Typo tolerance / fuzzy distance
+      if (!matchedGroup && groups.length > 0) {
+        const candidateToTest = explicitGroupName || (raw.split(/\s+/).slice(-2).join(' '));
+        if (candidateToTest && candidateToTest.length >= 4) {
+          matchedGroup = groups.find((g: any) => {
+            const gName = (g.name || '').toLowerCase().trim();
+            return getEditDistance(candidateToTest.toLowerCase(), gName) <= 2;
+          });
+        }
+      }
+
       if (matchedGroup) {
         targetGroup = matchedGroup;
+      } else if (explicitGroupName && explicitGroupName.length > 1) {
+        // Explicit group declared by user does not exist
+        unmatchedGroupCandidate = explicitGroupName;
       } else {
-        // Match friend name
+        // Friend match
         const matchedFriend = friends.find((f: any) => {
-          const fName = (f.name || '').toLowerCase();
+          const fName = (f.name || '').toLowerCase().trim();
           return fName.length > 2 && lowerRaw.includes(fName);
         });
         if (matchedFriend) {
           targetFriend = matchedFriend;
+        } else if (matchedAmountSubstring) {
+          // Detect trailing text after amount that isn't a category
+          const amountIdx = raw.indexOf(matchedAmountSubstring);
+          const afterAmount = raw.slice(amountIdx + matchedAmountSubstring.length).trim();
+          const cleanAfter = afterAmount.replace(/\b(rs|inr|with|and|paid|by)\b/gi, '').trim();
+          if (cleanAfter.length >= 3 && !CATEGORY_LEXICON[cleanAfter.toLowerCase()]) {
+            unmatchedGroupCandidate = cleanAfter;
+          }
         }
       }
     }
 
-    // 4. Clean Description: remove numbers, currency symbols, and prepositions
-    let cleanDesc = raw
-      .replace(amountRegex, '')
-      .replace(/\b(with|for|at|in|paid|by|to|and|rs|inr)\b/gi, ' ')
+    // 4. CLEAN DESCRIPTION
+    let cleanDesc = raw;
+    if (matchedAmountSubstring) {
+      cleanDesc = cleanDesc.replace(matchedAmountSubstring, '');
+    }
+    if (targetGroup?.name) {
+      const gRegex = new RegExp(`\\b${targetGroup.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+      cleanDesc = cleanDesc.replace(gRegex, '');
+    }
+    cleanDesc = cleanDesc
+      .replace(/[@#]([a-z0-9_-]+)/gi, '')
+      .replace(/\b(with|for|at|in|paid|by|to|and|rs|inr|group)\b/gi, ' ')
+      .replace(/[^\w\s-]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
 
-    // If description became empty, fallback to category name
     if (!cleanDesc) {
       cleanDesc = detectedCategory === 'FOOD' ? 'Food / Dining' :
         detectedCategory === 'TRANSPORT' ? 'Cab / Ride' :
         detectedCategory === 'GROCERIES' ? 'Groceries' : 'Shared Expense';
     } else {
-      // Capitalize first letter
       cleanDesc = cleanDesc.charAt(0).toUpperCase() + cleanDesc.slice(1);
+    }
+
+    let validationError = null;
+    if (detectedAmount <= 0) {
+      validationError = 'Please specify an amount (e.g. 1200 or ₹500)';
+    } else if (cleanDesc.length === 0) {
+      validationError = 'Please enter an expense name';
     }
 
     return {
@@ -293,70 +418,102 @@ export default function SmartQuickAddBar({
       description: cleanDesc,
       targetGroup,
       targetFriend,
+      unmatchedGroupCandidate,
       isValid: detectedAmount > 0 && cleanDesc.length > 0,
+      validationError,
     };
   }, [input, manualCategory, manualGroup, groups, friends]);
 
-  // One-Tap Instant Log
-  const handleInstantSubmit = async () => {
-    if (!parsed.isValid || submitting || !user?.id) return;
+  // One-Tap Instant Log with Optimistic UI & Zero Lag
+  const handleInstantSubmit = async (overrideGroup?: any) => {
+    if (!parsed.isValid || submitting || !user?.id) {
+      if (parsed.validationError) {
+        setToastSeverity('warning');
+        setToastMessage(parsed.validationError);
+      }
+      return;
+    }
+
+    const finalGroup = overrideGroup || parsed.targetGroup;
+
+    // Edge case: User typed a group that doesn't exist and hasn't explicitly selected one
+    if (!finalGroup && parsed.unmatchedGroupCandidate && !overrideGroup) {
+      setToastSeverity('warning');
+      setToastMessage(`⚠️ Group "${parsed.unmatchedGroupCandidate}" not found. Tap the Group chip below to choose a group, or tap Quick Log again to log as Personal.`);
+      return;
+    }
+
     setSubmitting(true);
+    const savedInput = input;
 
-    try {
-      let splitsPayload: any[] = [];
-      let finalGroupId = parsed.targetGroup?.id || null;
-
-      if (finalGroupId) {
-        // Fetch group members to split equally
-        const groupRes = await groupApi.get(finalGroupId);
-        const groupData = groupRes.data?.data;
-        const members = groupData?.members || [];
-        if (members.length > 0) {
-          splitsPayload = members.map((m: any) => ({
-            userId: m.userId || m.user?.id,
-          }));
-        } else {
-          splitsPayload = [{ userId: user.id }];
-        }
-      } else if (parsed.targetFriend?.id) {
-        // 50/50 bilateral split with friend
-        splitsPayload = [
-          { userId: user.id },
-          { userId: parsed.targetFriend.id },
-        ];
+    // 1. Determine members instantly from cached group data (NO extra network round-trip!)
+    let splitsPayload: any[] = [];
+    if (finalGroup?.id) {
+      const cachedGrp = groups.find((g: any) => g.id === finalGroup.id);
+      const members = cachedGrp?.members || [];
+      if (members.length > 0) {
+        splitsPayload = members.map((m: any) => ({
+          userId: m.userId || m.user?.id || m.id,
+        }));
       } else {
-        // Personal expense
         splitsPayload = [{ userId: user.id }];
       }
+    } else if (parsed.targetFriend?.id) {
+      splitsPayload = [
+        { userId: user.id },
+        { userId: parsed.targetFriend.id },
+      ];
+    } else {
+      splitsPayload = [{ userId: user.id }];
+    }
 
-      await expenseApi.create({
-        description: parsed.description,
-        amount: parsed.amount,
-        currency: parsed.targetGroup?.currency || 'INR',
-        category: parsed.category,
-        splitType: 'EQUAL',
-        groupId: finalGroupId,
-        paidById: user.id,
-        splits: splitsPayload,
-        date: new Date().toISOString(),
-      }, {
+    const expensePayload = {
+      description: parsed.description,
+      amount: parsed.amount,
+      currency: finalGroup?.currency || 'INR',
+      category: parsed.category,
+      splitType: 'EQUAL' as const,
+      groupId: finalGroup?.id || null,
+      paidById: user.id,
+      splits: splitsPayload,
+      date: new Date().toISOString(),
+    };
+
+    // 2. OPTIMISTIC FEEDBACK: Clear input & notify UI instantly!
+    setInput('');
+    setToastSeverity('success');
+    setToastMessage(`⚡ Logged "${parsed.description}" (₹${parsed.amount.toLocaleString()})!`);
+
+    const optimisticExpense = {
+      ...expensePayload,
+      id: `temp_${Date.now()}`,
+      paidBy: { id: user.id, name: profile?.name || (user as any).user_metadata?.name || 'You', avatarUrl: profile?.avatarUrl || null },
+      shares: splitsPayload.map((s) => ({
+        userId: s.userId,
+        amount: Math.round((parsed.amount / splitsPayload.length) * 100) / 100,
+      })),
+      createdAt: new Date().toISOString(),
+    };
+
+    if (onExpenseCreated) {
+      onExpenseCreated();
+    }
+    triggerDataRefresh({ type: 'expense', data: optimisticExpense });
+
+    try {
+      await expenseApi.create(expensePayload, {
         headers: { 'idempotency-key': `quick_${user.id}_${Date.now()}` },
       });
 
-      setToastSeverity('success');
-      setToastMessage(`⚡ Logged "${parsed.description}" (₹${parsed.amount}) in 1 second!`);
-      setInput('');
       setManualCategory(null);
       if (!initialGroupId) setManualGroup(null);
-
-      if (onExpenseCreated) {
-        onExpenseCreated();
-      }
-      triggerDataRefresh({ type: 'expense' });
     } catch (err: any) {
       console.error('Instant quick add error:', err);
+      // Rollback on failure
+      setInput(savedInput);
       setToastSeverity('error');
-      setToastMessage(err.response?.data?.error || 'Failed to quickly log expense.');
+      setToastMessage(err.response?.data?.error || 'Failed to quickly log expense. Restored input.');
+      triggerDataRefresh({ type: 'expense' });
     } finally {
       setSubmitting(false);
     }
@@ -529,6 +686,7 @@ export default function SmartQuickAddBar({
                 label={
                   parsed.targetGroup ? `Group: ${parsed.targetGroup.name}` :
                   parsed.targetFriend ? `Friend: ${parsed.targetFriend.name}` :
+                  parsed.unmatchedGroupCandidate ? `⚠️ Group "${parsed.unmatchedGroupCandidate}" Not Found (Tap to Pick)` :
                   'Personal Expense'
                 }
                 size="small"
@@ -537,10 +695,17 @@ export default function SmartQuickAddBar({
                   fontWeight: 700,
                   fontSize: '0.725rem',
                   cursor: 'pointer',
-                  bgcolor: parsed.targetGroup || parsed.targetFriend
+                  bgcolor: parsed.unmatchedGroupCandidate && !parsed.targetGroup
+                    ? alpha(theme.palette.warning.main, 0.15)
+                    : parsed.targetGroup || parsed.targetFriend
                     ? alpha('#3B82F6', 0.12)
                     : isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.06)',
-                  color: parsed.targetGroup || parsed.targetFriend ? '#3B82F6' : 'text.secondary',
+                  color: parsed.unmatchedGroupCandidate && !parsed.targetGroup
+                    ? theme.palette.warning.main
+                    : parsed.targetGroup || parsed.targetFriend ? '#3B82F6' : 'text.secondary',
+                  border: parsed.unmatchedGroupCandidate && !parsed.targetGroup
+                    ? `1px solid ${alpha(theme.palette.warning.main, 0.4)}`
+                    : 'none',
                 }}
               />
             </Stack>

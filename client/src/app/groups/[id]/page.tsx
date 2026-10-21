@@ -208,9 +208,20 @@ function GroupDetailContent() {
     if (user?.id && params.id) fetchGroup();
   }, [user?.id, params.id]);
 
-  useDataRefresh(React.useCallback(() => {
+  useDataRefresh(React.useCallback((detail?: any) => {
+    if (detail?.type === 'expense' && detail?.data && detail.data.groupId === params.id) {
+      setGroup((prev: any) => {
+        if (!prev) return prev;
+        const exists = (prev.expenses || []).some((e: any) => e.id === detail.data.id);
+        if (exists) return prev;
+        return {
+          ...prev,
+          expenses: [detail.data, ...(prev.expenses || [])],
+        };
+      });
+    }
     fetchGroup();
-  }, []));
+  }, [params.id]));
 
   const fetchGroup = async () => {
     try {

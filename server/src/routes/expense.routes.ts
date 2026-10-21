@@ -186,14 +186,10 @@ expenseRouter.post(
         emitToGroup(groupId, 'expense:created', { expense, groupId });
       }
 
-      // Invalidate dashboard and group caches for all involved users
-      appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
-      appCache.invalidatePrefix(`dashboard:${resolvedPaidById}`);
-      for (const s of calculatedShares) {
-        appCache.invalidatePrefix(`dashboard:${s.userId}`);
-      }
+      // Invalidate dashboard, analytics, trends, and group caches for all involved users
+      appCache.invalidatePrefix('dashboard:');
+      appCache.invalidatePrefix('groups:list:');
       if (groupId) {
-        appCache.invalidatePrefix('groups:list:');
         appCache.invalidatePrefix(`group:${groupId}`);
       }
 

@@ -104,8 +104,7 @@ settlementRouter.post(
         },
       });
 
-      appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
-      appCache.invalidatePrefix(`dashboard:${payeeId}`);
+      appCache.invalidatePrefix('dashboard:');
       if (groupId) {
         appCache.invalidatePrefix(`group:${groupId}`);
         appCache.invalidatePrefix('groups:list');
@@ -330,8 +329,7 @@ settlementRouter.patch('/:id/confirm', async (req: AuthenticatedRequest, res: Re
       },
     });
 
-    appCache.invalidatePrefix(`dashboard:${settlement.payerId}`);
-    appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+    appCache.invalidatePrefix('dashboard:');
     if (settlement.groupId) {
       appCache.invalidatePrefix(`group:${settlement.groupId}`);
       appCache.invalidatePrefix('groups:list');
@@ -391,8 +389,7 @@ settlementRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response)
 
     await prisma.settlement.delete({ where: { id } });
 
-    appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
-    appCache.invalidatePrefix(`dashboard:${settlement.payeeId}`);
+    appCache.invalidatePrefix('dashboard:');
 
     res.json({ success: true, message: 'Settlement request cancelled successfully.' });
   } catch (error: any) {

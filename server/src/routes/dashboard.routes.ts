@@ -282,12 +282,8 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
       orderBy: { date: 'asc' },
     });
 
-    // 2. Generate daily timeline
+    // 2. Generate daily timeline & rolling 7-day chronological rhythm
     const dailySpendMap: Record<string, number> = {};
-    const dayOfWeekSpend: Record<string, number> = {
-      Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0,
-    };
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     recentExpenses.forEach((exp) => {
       const expDate = new Date(exp.date);
@@ -297,10 +293,12 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
         : (userShare ? Number(userShare.amount) : Number(exp.amount));
 
       if (expDate >= startDate) {
-        const dateKey = expDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        dailySpendMap[dateKey] = (dailySpendMap[dateKey] || 0) + amount;
-        const dayName = days[expDate.getDay()];
-        dayOfWeekSpend[dayName] = (dayOfWeekSpend[dayName] || 0) + amount;
+        // Normalize date key to YYYY-MM-DD to avoid time-of-day offsets
+        const year = expDate.getFullYear();
+        const month = String(expDate.getMonth() + 1).padStart(2, '0');
+        const day = String(expDate.getDate()).padStart(2, '0');
+        const isoDayKey = `${year}-${month}-${day}`;
+        dailySpendMap[isoDayKey] = (dailySpendMap[isoDayKey] || 0) + amount;
       }
     });
 
@@ -308,13 +306,18 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
     const dailyTrends = [];
     let cumulativeCurrent = 0;
     for (let i = daysCount - 1; i >= 0; i -= step) {
-      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const currentDaySpend = dailySpendMap[key] || 0;
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const isoDayKey = `${year}-${month}-${day}`;
+      const displayKey = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      const currentDaySpend = dailySpendMap[isoDayKey] || 0;
       cumulativeCurrent += currentDaySpend;
 
       dailyTrends.push({
-        date: key,
+        date: displayKey,
         amount: currentDaySpend,
         cumulative: cumulativeCurrent,
       });
@@ -406,15 +409,38 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
       });
     }
 
-    // 5. Day of week breakdown
-    const dayOfWeekData = Object.entries(dayOfWeekSpend).map(([day, amount]) => ({
-      day,
-      amount,
-    }));
+    // 5. Weekly Spending Rhythm — Strictly chronological 7-day window ending today
+    // Guarantees past days (e.g. Saturday 4 days ago) always appear BEFORE today (Wednesday),
+    // eliminating any misleading timeline confusion.
+    const dayOfWeekData = [];
+    let weekendSpend = 0;
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const isoDayKey = `${year}-${month}-${day}`;
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const dateFormatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const isToday = i === 0;
+
+      const amt = Math.round((dailySpendMap[isoDayKey] || 0) * 100) / 100;
+      if (d.getDay() === 0 || d.getDay() === 6) {
+        weekendSpend += amt;
+      }
+
+      dayOfWeekData.push({
+        day: isToday ? `${dayName}*` : dayName,
+        shortDay: dayName,
+        date: dateFormatted,
+        fullLabel: isToday ? `${dayName}, ${dateFormatted} (Today)` : `${dayName}, ${dateFormatted}`,
+        amount: amt,
+        isToday,
+      });
+    }
 
     // 6. Generate smart automated insights
     const topCategory = categoriesWithPercent[0];
-    const weekendSpend = (dayOfWeekSpend['Sat'] || 0) + (dayOfWeekSpend['Sun'] || 0);
     const weekendPercent = totalCategorySpend > 0 ? Math.round((weekendSpend / totalCategorySpend) * 100) : 0;
 
     const insights = [
