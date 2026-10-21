@@ -6,7 +6,7 @@ import {
   DialogContent, DialogActions, TextField, MenuItem, IconButton, Stack,
   LinearProgress, useTheme, alpha, Skeleton, Chip, Tooltip,
 } from '@mui/material';
-import { Add, Close, Delete, Edit, Savings } from '@mui/icons-material';
+import { Add, Close, Delete, Edit, Savings, TrendingDown, Speed, CalendarMonth } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { budgetApi } from '@/lib/api';
@@ -39,13 +39,18 @@ export default function BudgetsPage() {
   const [formError, setFormError] = useState('');
   const [editError, setEditError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [burnRates, setBurnRates] = useState<any[]>([]);
+  const [showBurnRate, setShowBurnRate] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
   useEffect(() => {
-    if (user?.id) fetchBudgets();
+    if (user?.id) {
+      fetchBudgets();
+      fetchBurnRate();
+    }
   }, [user?.id]);
 
   const fetchBudgets = async () => {
@@ -56,6 +61,15 @@ export default function BudgetsPage() {
       console.error('Fetch budgets error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBurnRate = async () => {
+    try {
+      const res = await budgetApi.getBurnRate();
+      setBurnRates(res.data.data || []);
+    } catch (error) {
+      console.error('Fetch burn rate error:', error);
     }
   };
 
@@ -231,6 +245,81 @@ export default function BudgetsPage() {
             Set Budget
           </Button>
         </Box>
+
+        {/* Burn Rate Insights */}
+        {!loading && burnRates.length > 0 && showBurnRate && (
+          <Card
+            className="glass-secondary glass-specular-top"
+            sx={{
+              borderRadius: 3.5, mb: 3,
+              boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+              border: `1px solid ${theme.palette.divider}`,
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Speed sx={{ color: isLight ? '#0E6245' : '#34D399', fontSize: 22 }} />
+                  <Typography variant="subtitle1" fontWeight={800}>Burn Rate Insights</Typography>
+                </Box>
+                <Chip label="Live" size="small" sx={{ height: 20, fontSize: '0.625rem', fontWeight: 700, bgcolor: 'rgba(16, 185, 129, 0.12)', color: '#10B981' }} />
+              </Box>
+              <Grid container spacing={2}>
+                {burnRates.filter(b => b.spent > 0).slice(0, 4).map((br) => {
+                  const pacingColor = br.pacingStatus === 'ahead' ? '#10B981' : br.pacingStatus === 'behind' ? '#EF4444' : br.pacingStatus === 'depleted' ? '#7C3AED' : '#3B82F6';
+                  return (
+                    <Grid size={{ xs: 12, sm: 6 }} key={br.budgetId}>
+                      <Box sx={{
+                        p: 2, borderRadius: 2.5,
+                        bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
+                        border: `1px solid ${theme.palette.divider}`,
+                      }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography fontSize="1rem">{CATEGORY_EMOJI[br.category] || '📋'}</Typography>
+                            <Typography variant="body2" fontWeight={700} sx={{ textTransform: 'capitalize' }}>
+                              {br.category.toLowerCase()}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={br.pacingStatus === 'ahead' ? 'Under budget' : br.pacingStatus === 'behind' ? 'Over pace' : br.pacingStatus === 'depleted' ? 'Depleted' : 'On track'}
+                            size="small"
+                            sx={{ height: 20, fontSize: '0.6rem', fontWeight: 700, bgcolor: alpha(pacingColor, 0.12), color: pacingColor, border: `1px solid ${alpha(pacingColor, 0.25)}` }}
+                          />
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>Daily Safe Spend</Typography>
+                            <Typography variant="body2" fontWeight={800} sx={{ color: isLight ? '#0E6245' : '#34D399' }}>
+                              {formatCurrency(br.dailySafeSpend)}/day
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>Current Rate</Typography>
+                            <Typography variant="body2" fontWeight={700} color="text.primary">
+                              {formatCurrency(br.dailySpendRate)}/day
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>Days Left</Typography>
+                            <Typography variant="body2" fontWeight={700} color="text.primary">
+                              {br.remainingDays}d
+                            </Typography>
+                          </Box>
+                        </Box>
+                        {br.alertMessage && (
+                          <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#EF4444', fontWeight: 600, fontSize: '0.7rem' }}>
+                            ⚠️ {br.alertMessage}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </CardContent>
+          </Card>
+        )}
 
         {loading ? (
           <Grid container spacing={{ xs: 1.5, sm: 2.5, md: 3 }}>

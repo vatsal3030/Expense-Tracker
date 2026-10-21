@@ -121,6 +121,7 @@ export const budgetApi = {
   create: (data: any) => api.post('/budgets', data),
   update: (id: string, data: any) => api.put(`/budgets/${id}`, data),
   delete: (id: string) => api.delete(`/budgets/${id}`),
+  getBurnRate: () => api.get('/budgets/burn-rate'),
 };
 
 // Activities
@@ -163,5 +164,33 @@ export const adminApi = {
   getUsers: (params?: Record<string, any>) => api.get('/admin/users', { params }),
   getActivity: () => api.get('/admin/activity'),
   toggleUserStatus: (id: string) => api.patch(`/admin/users/${id}/toggle-status`),
+};
+
+// Recurring Expenses
+export const recurringApi = {
+  list: () => api.get('/recurring'),
+  get: (id: string) => api.get(`/recurring/${id}`),
+  create: (data: any) => api.post('/recurring', data),
+  update: (id: string, data: any) => api.put(`/recurring/${id}`, data),
+  delete: (id: string) => api.delete(`/recurring/${id}`),
+  process: () => api.post('/recurring/process'),
+};
+
+// Exchange Rates & Currency
+export const fxApi = {
+  getRates: (base?: string) => api.get('/fx/rates', { params: { base } }),
+  convert: (from: string, to: string, amount: number) =>
+    api.get('/fx/convert', { params: { from, to, amount } }),
+  getCurrencies: () => api.get('/fx/currencies'),
+};
+
+// Export & Reports
+export const exportApi = {
+  groupCsv: (groupId: string) =>
+    api.get(`/export/group/${groupId}`, { responseType: 'blob' }),
+  personalCsv: (params?: { from?: string; to?: string }) =>
+    api.get('/export/personal', { params, responseType: 'blob' }),
+  report: (params?: { from?: string; to?: string; groupId?: string }) =>
+    api.get('/export/report', { params }),
 };
 

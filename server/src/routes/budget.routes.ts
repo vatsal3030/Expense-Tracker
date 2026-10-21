@@ -195,6 +195,111 @@ budgetRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): Pr
   }
 });
 
+// =============================================================================
+// GET /api/budgets/burn-rate — Predictive budget burn rate & daily safe-spend
+// =============================================================================
+budgetRouter.get('/burn-rate', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const budgets = await prisma.budget.findMany({
+      where: { userId: req.user!.id, isActive: true },
+      orderBy: { category: 'asc' },
+    });
+
+    const now = new Date();
+    const burnRates = [];
+
+    for (const budget of budgets) {
+      const { start, end } = getPeriodDateRange(budget.period);
+      const totalDays = Math.max(Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
+      const elapsedDays = Math.max(Math.ceil((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
+      const remainingDays = Math.max(Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)), 1);
+
+      // Get actual spending in this period
+      const spending = await prisma.expense.aggregate({
+        where: {
+          isDeleted: false,
+          category: budget.category,
+          date: { gte: start, lte: end },
+          OR: [
+            { paidById: req.user!.id },
+            { shares: { some: { userId: req.user!.id } } },
+          ],
+        },
+        _sum: { amount: true },
+      });
+
+      const spent = Number(spending._sum.amount || 0);
+      const budgetAmount = Number(budget.amount);
+      const remaining = Math.max(budgetAmount - spent, 0);
+      const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
+
+      // Burn rate calculations
+      const dailySpendRate = elapsedDays > 0 ? spent / elapsedDays : 0;
+      const dailySafeSpend = remainingDays > 0 ? remaining / remainingDays : 0;
+      const idealDailySpend = totalDays > 0 ? budgetAmount / totalDays : 0;
+
+      // Projected depletion
+      const projectedDepletionDays = dailySpendRate > 0 ? Math.ceil(remaining / dailySpendRate) : Infinity;
+      const projectedDepletionDate = projectedDepletionDays !== Infinity
+        ? new Date(now.getTime() + projectedDepletionDays * 24 * 60 * 60 * 1000)
+        : null;
+
+      // Pacing: how many days ahead or behind the ideal linear spend
+      const idealSpentByNow = idealDailySpend * elapsedDays;
+      const pacingDelta = idealSpentByNow - spent; // positive = under budget, negative = over
+      const pacingStatus: 'on_track' | 'ahead' | 'behind' | 'depleted' =
+        remaining <= 0 ? 'depleted' :
+        Math.abs(pacingDelta) < idealDailySpend * 0.5 ? 'on_track' :
+        pacingDelta > 0 ? 'ahead' : 'behind';
+
+      burnRates.push({
+        budgetId: budget.id,
+        category: budget.category,
+        period: budget.period,
+        budgetAmount,
+        spent,
+        remaining,
+        percentage,
+        totalDays,
+        elapsedDays,
+        remainingDays,
+        dailySpendRate: Math.round(dailySpendRate * 100) / 100,
+        dailySafeSpend: Math.round(dailySafeSpend * 100) / 100,
+        idealDailySpend: Math.round(idealDailySpend * 100) / 100,
+        projectedDepletionDays: projectedDepletionDays === Infinity ? null : projectedDepletionDays,
+        projectedDepletionDate,
+        pacingDelta: Math.round(pacingDelta * 100) / 100,
+        pacingStatus,
+        alertMessage: generateBurnRateAlert(budget.category, dailySpendRate, remaining, remainingDays, pacingStatus),
+        periodRange: { start, end },
+      });
+    }
+
+    res.json({ success: true, data: burnRates });
+  } catch (error: any) {
+    console.error('Burn rate error:', error);
+    res.status(500).json({ success: false, error: 'Failed to calculate burn rate.' });
+  }
+});
+
+function generateBurnRateAlert(
+  category: string,
+  dailyRate: number,
+  remaining: number,
+  remainingDays: number,
+  status: string,
+): string | null {
+  const cat = category.charAt(0) + category.slice(1).toLowerCase();
+  if (status === 'depleted') {
+    return `Your ${cat} budget is fully depleted.`;
+  }
+  if (status === 'behind' && dailyRate > 0) {
+    const daysUntilDepleted = Math.ceil(remaining / dailyRate);
+    return `At ₹${Math.round(dailyRate).toLocaleString('en-IN')}/day, your ${cat} budget will deplete in ${daysUntilDepleted} days.`;
+  }
+  return null;
+}
+
 /**
  * Get date range for a budget period.
  */

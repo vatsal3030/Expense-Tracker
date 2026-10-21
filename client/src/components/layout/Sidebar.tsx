@@ -32,6 +32,9 @@ import {
   Insights as AnalyticsIcon,
   EmojiEvents as FairScoreIcon,
   AdminPanelSettings as AdminIcon,
+  Repeat as RecurringIcon,
+  CurrencyExchange as CurrencyIcon,
+  Assessment as ReportsIcon,
 } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -69,6 +72,8 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Settlements', icon: <SettlementIcon sx={{ fontSize: 20 }} />, path: '/settlements' },
       { label: 'Budgets', icon: <BudgetIcon sx={{ fontSize: 20 }} />, path: '/budgets' },
+      { label: 'Recurring', icon: <RecurringIcon sx={{ fontSize: 20 }} />, path: '/recurring', badge: 'NEW' },
+      { label: 'Currency', icon: <CurrencyIcon sx={{ fontSize: 20 }} />, path: '/currency' },
     ],
   },
   {
@@ -76,6 +81,12 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Friends', icon: <FriendsIcon sx={{ fontSize: 20 }} />, path: '/friends' },
       { label: 'Activity', icon: <ActivityIcon sx={{ fontSize: 20 }} />, path: '/activity' },
+    ],
+  },
+  {
+    title: 'TOOLS',
+    items: [
+      { label: 'Reports', icon: <ReportsIcon sx={{ fontSize: 20 }} />, path: '/reports' },
     ],
   },
 ];
@@ -115,8 +126,11 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
       '/fairscore',
       '/settlements',
       '/budgets',
+      '/recurring',
+      '/currency',
       '/friends',
       '/activity',
+      '/reports',
       '/settings',
       '/admin',
     ];

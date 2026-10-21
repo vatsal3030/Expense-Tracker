@@ -19,6 +19,9 @@ import { friendRouter } from './routes/friend.routes';
 import { notificationRouter } from './routes/notification.routes';
 import { healthRouter } from './routes/health.routes';
 import { adminRouter } from './routes/admin.routes';
+import { recurringRouter } from './routes/recurring.routes';
+import { fxRouter } from './routes/fx.routes';
+import { exportRouter } from './routes/export.routes';
 
 dotenv.config();
 
@@ -97,6 +100,9 @@ app.use('/api/dashboard', dashboardRouter);
 app.use('/api/friends', friendRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/recurring', recurringRouter);
+app.use('/api/fx', fxRouter);
+app.use('/api/export', exportRouter);
 
 // =============================================================================
 // ERROR HANDLING
