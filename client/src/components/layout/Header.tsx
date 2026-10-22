@@ -311,7 +311,6 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(32, 42, 60, 0.65)',
               borderColor: isLight ? '#0E6245' : '#10B981',
               boxShadow: `0 0 0 2px ${isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(16, 185, 129, 0.20)'}`,
-              transform: 'translateY(-0.5px)',
             },
           }}
         >
@@ -375,7 +374,6 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                   borderColor: isLight ? '#0E6245' : '#10b981',
                   bgcolor: isLight ? 'rgba(14, 98, 69, 0.06)' : 'rgba(16, 185, 129, 0.08)',
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                  transform: 'translateY(-1px)',
                 },
               }}
             >
@@ -400,7 +398,6 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 '&:hover': {
                   bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(255, 255, 255, 0.10)',
                   borderColor: isLight ? '#0E6245' : 'rgba(255, 255, 255, 0.20)',
-                  transform: 'scale(1.05)',
                 },
               }}
             >
@@ -424,7 +421,6 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 '&:hover': {
                   bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(255, 255, 255, 0.10)',
                   borderColor: isLight ? '#0E6245' : 'rgba(255, 255, 255, 0.20)',
-                  transform: 'translateY(-1px)',
                 },
               }}
             >
@@ -459,7 +455,6 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 '&:hover': {
                   borderColor: isLight ? '#0E6245' : '#10b981',
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
-                  transform: 'scale(1.04)',
                 },
               }}
             >

@@ -247,7 +247,6 @@ export default function GroupsPage() {
               '&:hover': {
                 bgcolor: isLight ? '#0A4B35' : '#047857',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
-                transform: 'translateY(-1px)',
               },
             }}
           >
@@ -442,9 +441,6 @@ export default function GroupsPage() {
                     color: active ? '#FFFFFF' : 'text.primary',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                    },
                   }}
                 />
               );
@@ -527,7 +523,6 @@ export default function GroupsPage() {
                       '&:hover': {
                         borderColor: isLight ? 'rgba(0,0,0,0.14) !important' : 'rgba(255, 255, 255, 0.22) !important',
                         boxShadow: isLight ? '0 12px 32px rgba(15, 23, 42, 0.08)' : '0 16px 40px -8px rgba(0, 0, 0, 0.65)',
-                        transform: 'translateY(-2px)',
                       },
                     }}
                     onClick={() => router.push(`/groups/${group.id}`)}

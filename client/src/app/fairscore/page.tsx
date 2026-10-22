@@ -363,7 +363,6 @@ export default function FairScorePage() {
                   transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                   '&:hover': {
                     borderColor: 'rgba(16, 185, 129, 0.4) !important',
-                    transform: 'translateY(-2px)',
                   },
                 }}
               >
@@ -429,7 +428,6 @@ export default function FairScorePage() {
                   border: badge.unlocked ? undefined : `1px dashed ${theme.palette.divider}`,
                   '&:hover': {
                     borderColor: badge.unlocked ? 'rgba(16, 185, 129, 0.5) !important' : undefined,
-                    transform: badge.unlocked ? 'translateY(-3px)' : undefined,
                   },
                 }}
               >

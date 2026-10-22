@@ -502,7 +502,6 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
               '&:hover': {
                 borderColor: isLight ? '#0E6245' : 'rgba(16, 185, 129, 0.35)',
                 bgcolor: isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(26, 34, 48, 0.60)',
-                transform: 'translateY(-1px)',
               },
             }}
           >

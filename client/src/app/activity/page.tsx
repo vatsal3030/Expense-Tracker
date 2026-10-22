@@ -147,7 +147,6 @@ export default function ActivityPage() {
                   '&:hover': {
                     color: active ? '#FFFFFF' : '#34D399',
                     borderColor: 'rgba(16, 185, 129, 0.3)',
-                    transform: 'translateY(-1px)',
                   },
                 }}
               />

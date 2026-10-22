@@ -235,7 +235,6 @@ export default function DashboardPage() {
                 '&:hover': {
                   borderColor: isLight ? '#0E6245' : '#10b981',
                   bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-                  transform: 'translateY(-1px)',
                 },
               }}
             >
@@ -262,7 +261,6 @@ export default function DashboardPage() {
                   : '0 1px 3px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.25)',
                 '&:hover': {
                   bgcolor: isLight ? '#0A4B35' : '#047857',
-                  transform: 'translateY(-1px)',
                   boxShadow: isLight
                     ? '0 2px 8px rgba(0,0,0,0.20)'
                     : '0 2px 8px rgba(0,0,0,0.35)',
@@ -724,7 +722,6 @@ export default function DashboardPage() {
                 '&:hover': {
                   borderColor: isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.22)',
                   boxShadow: isLight ? '0 12px 32px rgba(15, 23, 42, 0.08)' : '0 16px 40px -8px rgba(0, 0, 0, 0.65)',
-                  transform: 'translateY(-2px)',
                 },
               }}
               onClick={() => router.push('/fairscore')}
@@ -816,7 +813,6 @@ export default function DashboardPage() {
                 '&:hover': {
                   borderColor: isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.22)',
                   boxShadow: isLight ? '0 12px 32px rgba(15, 23, 42, 0.08)' : '0 16px 40px -8px rgba(0, 0, 0, 0.65)',
-                  transform: 'translateY(-2px)',
                 },
               }}
               onClick={() => router.push('/analytics')}

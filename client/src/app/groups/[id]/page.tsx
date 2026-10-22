@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState, useMemo, useRef } from 'react';
+import React, { Suspense, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, Avatar, AvatarGroup, Chip,
   List, ListItem, ListItemAvatar, ListItemText, Divider, Button,
@@ -262,14 +262,40 @@ function GroupDetailContent() {
 
   const handleDirectInvite = async () => {
     if (!inviteContact.trim() || !group?.id) return;
+    const contact = inviteContact.trim();
+    const isEmail = contact.includes('@');
+    const tempMemberId = `temp-inv-${Date.now()}`;
+    const prevMembers = [...(group.members || [])];
+
+    // Optimistic UI: show new member immediately
+    setGroup((prev: any) => ({
+      ...prev,
+      members: [
+        ...(prev.members || []),
+        {
+          id: tempMemberId,
+          userId: tempMemberId,
+          role: 'MEMBER',
+          joinedAt: new Date().toISOString(),
+          user: {
+            id: tempMemberId,
+            name: isEmail ? contact.split('@')[0] : contact,
+            email: isEmail ? contact : null,
+            phone: isEmail ? null : contact,
+          },
+        },
+      ],
+    }));
+
+    setToastMessage(`Member invited: ${contact}! ✉️`);
+    setInviteContact('');
+
     try {
-      const isEmail = inviteContact.includes('@');
-      await groupApi.addMember(group.id, isEmail ? { email: inviteContact.trim() } : { phone: inviteContact.trim() });
-      setToastMessage(`Member added/invited: ${inviteContact}!`);
-      setInviteContact('');
+      await groupApi.addMember(group.id, isEmail ? { email: contact } : { phone: contact });
       fetchGroup();
     } catch (err: any) {
-      setToastMessage(err.response?.data?.error || 'Failed to add member.');
+      setGroup((prev: any) => ({ ...prev, members: prevMembers }));
+      setToastMessage(err.response?.data?.error || 'Failed to add member. Reverted.');
     }
   };
 
@@ -281,17 +307,37 @@ function GroupDetailContent() {
     return group.expenses.reduce((acc: number, exp: any) => acc + Number(exp.amount || 0), 0);
   }, [group]);
 
+  const isCurrentUser = useCallback((target: any): boolean => {
+    if (!target) return false;
+    const myId = profile?.id;
+    const mySupabaseId = user?.id || (profile as any)?.supabaseId;
+    const myEmail = user?.email?.toLowerCase() || profile?.email?.toLowerCase();
+
+    if (typeof target === 'string') {
+      return (Boolean(myId) && target === myId) || (Boolean(mySupabaseId) && target === mySupabaseId);
+    }
+    const targetId = target.userId || target.user?.id || target.id;
+    const targetSupabaseId = target.user?.supabaseId || target.supabaseId;
+    const targetEmail = (target.user?.email || target.email)?.toLowerCase();
+
+    if (myId && (targetId === myId || targetSupabaseId === myId)) return true;
+    if (mySupabaseId && (targetId === mySupabaseId || targetSupabaseId === mySupabaseId)) return true;
+    if (myEmail && targetEmail && targetEmail === myEmail) return true;
+    return false;
+  }, [user, profile]);
+
   const myBalance = useMemo(() => {
-    if (!balances?.balances || !user) return 0;
-    const currentMember = balances.balances.find((b: any) => b.user.id === user.id || b.user.supabase_id === user.id);
+    if (!balances?.balances) return 0;
+    const currentMember = balances.balances.find((b: any) => isCurrentUser(b.user) || isCurrentUser(b));
     return currentMember ? currentMember.balance : 0;
-  }, [balances, user]);
+  }, [balances, isCurrentUser]);
 
   const isGroupAdmin = useMemo(() => {
-    if (!group?.members || !user) return false;
-    const member = group.members.find((m: any) => m.userId === user.id || m.user?.id === user.id);
+    if ((profile as any)?.isAdmin) return true;
+    if (!group?.members) return false;
+    const member = group.members.find((m: any) => isCurrentUser(m));
     return member?.role === 'ADMIN';
-  }, [group, user]);
+  }, [group, isCurrentUser, profile]);
 
   const [memberMenuAnchor, setMemberMenuAnchor] = useState<{ el: HTMLElement; member: any } | null>(null);
 
@@ -385,7 +431,36 @@ function GroupDetailContent() {
     });
   };
 
-  const handleRecordSettlement = async (toUserId: string, amount: number) => {
+  const handleRecordSettlement = async (toUserId: string, amount: number, payeeName?: string) => {
+    if (!group?.id) return;
+    const prevBalances = balances ? JSON.parse(JSON.stringify(balances)) : null;
+
+    // Optimistic UI: update local debt and balance immediately
+    if (balances) {
+      setBalances((prev: any) => {
+        if (!prev) return prev;
+        const updatedDebts = (prev.simplifiedDebts || []).filter((d: any) => {
+          return !(isCurrentUser(d.from) && (d.to?.id === toUserId || d.to?.userId === toUserId));
+        });
+        const updatedBalances = (prev.balances || []).map((b: any) => {
+          if (isCurrentUser(b.user) || isCurrentUser(b)) {
+            return { ...b, balance: b.balance + amount };
+          }
+          if (b.user?.id === toUserId || b.userId === toUserId) {
+            return { ...b, balance: b.balance - amount };
+          }
+          return b;
+        });
+        return {
+          ...prev,
+          simplifiedDebts: updatedDebts,
+          balances: updatedBalances,
+        };
+      });
+    }
+
+    setToastMessage(`Settlement of ${formatCurrency(amount)} recorded! ⚡`);
+
     try {
       const idempotencyKey = `settle_${group.id}_${toUserId}_${Date.now()}`;
       await settlementApi.create({
@@ -396,11 +471,12 @@ function GroupDetailContent() {
       }, {
         headers: { 'idempotency-key': idempotencyKey },
       });
-      setToastMessage('Settlement recorded successfully!');
       fetchGroup();
       triggerDataRefresh({ type: 'settlement' });
     } catch (err: any) {
-      setToastMessage(err.response?.data?.error || 'Failed to record settlement.');
+      console.error('Record settlement error:', err);
+      if (prevBalances) setBalances(prevBalances);
+      setToastMessage(err.response?.data?.error || 'Failed to record settlement. Reverted.');
     }
   };
 
@@ -446,6 +522,22 @@ function GroupDetailContent() {
     setSavingGroup(true);
     setEditGroupError('');
 
+    const prevGroup = group ? { ...group } : null;
+    // Optimistic UI: apply changes immediately in state
+    setGroup((prev: any) => ({
+      ...prev,
+      name: editGroupForm.name.trim(),
+      description: editGroupForm.description.trim(),
+      type: editGroupForm.type,
+      currency: editGroupForm.currency,
+      requireAdminApproval: editGroupForm.requireAdminApproval,
+      onlyAdminInvite: editGroupForm.onlyAdminInvite,
+      onlyAdminEdit: editGroupForm.onlyAdminEdit,
+      simplifyDebts: editGroupForm.simplifyDebts,
+      requireSettlementConfirmation: editGroupForm.requireSettlementConfirmation,
+    }));
+    setToastMessage('Group settings updated successfully! ⚙️');
+
     try {
       const payload: any = {
         name: editGroupForm.name.trim(),
@@ -471,11 +563,11 @@ function GroupDetailContent() {
           ...res.data.data,
         }));
       }
-      setToastMessage('Group settings updated successfully!');
       setEditGroupOpen(false);
     } catch (err: any) {
       console.error('Update group error:', err);
-      const msg = err.response?.data?.error || 'Failed to update group settings.';
+      if (prevGroup) setGroup(prevGroup);
+      const msg = err.response?.data?.error || 'Failed to update group settings. Changes reverted.';
       setEditGroupError(msg);
       setToastMessage(msg);
     } finally {
@@ -930,114 +1022,379 @@ function GroupDetailContent() {
           </Tabs>
         </Box>
 
-        {/* TAB 0: EXPENSES */}
+        {/* TAB 0: EXPENSES & COMMAND HUB */}
         {activeTab === 0 && (
-          <Box sx={{ width: '100%' }}>
-            {/* Smart Quick-Add Bar scoped to this group */}
-            <SmartQuickAddBar
-              initialGroupId={group?.id}
-              onExpenseCreated={fetchGroup}
-              placeholder={`⚡ Quick Add in ${group?.name || 'this group'}: e.g. "Dinner 1200" or "Taxi 350"`}
-            />
+          <Grid container spacing={3}>
+            {/* Main Stream: Quick Add & Expenses List */}
+            <Grid size={{ xs: 12, lg: 7.5, xl: 8 }}>
+              {/* Smart Quick-Add Bar scoped to this group */}
+              <SmartQuickAddBar
+                initialGroupId={group?.id}
+                onExpenseCreated={fetchGroup}
+                placeholder={`⚡ Quick Add in ${group?.name || 'this group'}: e.g. "Dinner 1200" or "Taxi 350"`}
+              />
 
-            <Card
-              className="glass-secondary glass-specular-top"
-              sx={{
-                borderRadius: 3.5,
-                overflow: 'hidden',
-                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
-              }}
-            >
-              <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-                {group?.expenses && group.expenses.length > 0 ? (
-                  <Box sx={{ width: '100%' }}>
-                    {Object.entries(groupedGroupExpenses).map(([monthKey, monthItems]) => (
-                      <Box key={monthKey}>
-                        <Box
-                          sx={{
-                            px: { xs: 2, sm: 3 },
-                            py: 0.9,
-                            bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
-                            borderBottom: `1px solid ${theme.palette.divider}`,
-                            borderTop: `1px solid ${theme.palette.divider}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
+              {/* Expense Stream Card */}
+              <Card
+                className="glass-secondary glass-specular-top"
+                sx={{
+                  borderRadius: 3.5,
+                  overflow: 'hidden',
+                  boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                }}
+              >
+                <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
+                  {group?.expenses && group.expenses.length > 0 ? (
+                    <Box sx={{ width: '100%' }}>
+                      {Object.entries(groupedGroupExpenses).map(([monthKey, monthItems]) => (
+                        <Box key={monthKey}>
+                          <Box
                             sx={{
-                              fontWeight: 800,
-                              fontSize: '0.725rem',
-                              letterSpacing: '0.05em',
-                              textTransform: 'uppercase',
-                              color: isLight ? '#475569' : '#94A3B8',
+                              px: { xs: 2, sm: 3 },
+                              py: 0.9,
+                              bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
+                              borderBottom: `1px solid ${theme.palette.divider}`,
+                              borderTop: `1px solid ${theme.palette.divider}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
                             }}
                           >
-                            {monthKey}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
-                            {monthItems.length} {monthItems.length === 1 ? 'expense' : 'expenses'}
-                          </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontWeight: 800,
+                                fontSize: '0.725rem',
+                                letterSpacing: '0.05em',
+                                textTransform: 'uppercase',
+                                color: isLight ? '#475569' : '#94A3B8',
+                              }}
+                            >
+                              {monthKey}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
+                              {monthItems.length} {monthItems.length === 1 ? 'expense' : 'expenses'}
+                            </Typography>
+                          </Box>
+
+                          {monthItems.map((exp: any, idx: number) => {
+                            const canEdit = isGroupAdmin || (!group?.onlyAdminEdit && (isCurrentUser(exp.createdById) || isCurrentUser(exp.paidById)));
+                            const canDelete = isGroupAdmin || (!group?.onlyAdminEdit && isCurrentUser(exp.createdById));
+
+                            return (
+                              <React.Fragment key={exp.id}>
+                                <SplitwiseExpenseItem
+                                  expense={exp}
+                                  currentUserId={profile?.id || user?.id}
+                                  currentSupabaseId={user?.id}
+                                  currentUserEmail={user?.email || profile?.email}
+                                  currency={group.currency || 'INR'}
+                                  showGroupTag={false}
+                                  canEdit={canEdit}
+                                  canDelete={canDelete}
+                                  onClick={() => router.push(`/expenses?id=${exp.id}`)}
+                                  onEdit={() => router.push(`/expenses/new?edit=${exp.id}&groupId=${group.id}`)}
+                                  onDelete={() => handleDeleteGroupExpense(exp.id)}
+                                  onClone={() => router.push(`/expenses/new?clone=${exp.id}&groupId=${group.id}`)}
+                                />
+                                {idx < monthItems.length - 1 && (
+                                  <Divider sx={{ borderColor: theme.palette.divider, opacity: 0.6, ml: { xs: 7.5, sm: 9 } }} />
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
                         </Box>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
+                      <ReceiptLong sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
+                      <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', mb: 0.5 }}>
+                        No expenses yet
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Use the Quick-Add bar above or tap below to record your first bill.
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={() => router.push(`/expenses/new?groupId=${group?.id}`)}
+                        sx={{
+                          bgcolor: '#0E6245',
+                          color: '#FFFFFF',
+                          borderRadius: 2.5,
+                          fontWeight: 600,
+                          textTransform: 'none',
+                          '&:hover': { bgcolor: '#094A34' },
+                        }}
+                      >
+                        Add First Expense
+                      </Button>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
 
-                        {monthItems.map((exp: any, idx: number) => {
-                          const canEdit = isGroupAdmin || (!group?.onlyAdminEdit && (exp.createdById === user?.id || exp.paidById === user?.id));
-                          const canDelete = isGroupAdmin || (!group?.onlyAdminEdit && exp.createdById === user?.id);
-
-                          return (
-                            <React.Fragment key={exp.id}>
-                              <SplitwiseExpenseItem
-                                expense={exp}
-                                currentUserId={user?.id}
-                                currency={group.currency || 'INR'}
-                                showGroupTag={false}
-                                canEdit={canEdit}
-                                canDelete={canDelete}
-                                onClick={() => router.push(`/expenses?id=${exp.id}`)}
-                                onEdit={() => router.push(`/expenses/new?edit=${exp.id}&groupId=${group.id}`)}
-                                onDelete={() => handleDeleteGroupExpense(exp.id)}
-                                onClone={() => router.push(`/expenses/new?clone=${exp.id}&groupId=${group.id}`)}
-                              />
-                              {idx < monthItems.length - 1 && (
-                                <Divider sx={{ borderColor: theme.palette.divider, opacity: 0.6, ml: { xs: 7.5, sm: 9 } }} />
-                              )}
-                            </React.Fragment>
-                          );
-                        })}
-                      </Box>
-                    ))}
-                  </Box>
-                ) : (
-                  <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
-                    <ReceiptLong sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 1.5 }} />
-                    <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', mb: 0.5 }}>
-                      No expenses yet
+            {/* Desktop Side Action Panel (Persistent & Sticky on Desktop) */}
+            <Grid size={{ xs: 12, lg: 4.5, xl: 4 }}>
+              <Box sx={{ position: { xs: 'static', lg: 'sticky' }, top: 84, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                
+                {/* 1. Quick Settlement Hub */}
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3.5,
+                    boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                    border: myBalance > 0 ? '1px solid rgba(16, 185, 129, 0.35) !important' : myBalance < 0 ? '1px solid rgba(239, 68, 68, 0.35) !important' : undefined,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <Typography variant="caption" sx={{ color: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.secondary', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Your Standing
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                      Use the Quick-Add bar above or tap below to record your first bill.
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<Add />}
-                      onClick={() => router.push(`/expenses/new?groupId=${group?.id}`)}
+                    <Chip
+                      size="small"
+                      label={myBalance > 0 ? 'You are owed' : myBalance < 0 ? 'You owe' : 'Settled up'}
                       sx={{
-                        bgcolor: '#0E6245',
-                        color: '#FFFFFF',
-                        borderRadius: 2.5,
-                        fontWeight: 600,
+                        height: 20,
+                        fontSize: '0.675rem',
+                        fontWeight: 700,
+                        bgcolor: myBalance > 0 ? alpha('#10B981', 0.15) : myBalance < 0 ? alpha('#EF4444', 0.15) : alpha(theme.palette.text.secondary, 0.1),
+                        color: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.secondary',
+                      }}
+                    />
+                  </Box>
+
+                  <Typography variant="h4" fontWeight={850} sx={{ color: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.primary', letterSpacing: '-0.02em', mb: 1.5 }}>
+                    {myBalance > 0 ? '+' : ''}{formatCurrency(myBalance)}
+                  </Typography>
+
+                  {/* If you owe someone: list them with 1-click UPI / Settle */}
+                  {balances?.simplifiedDebts?.some((d: any) => isCurrentUser(d.from)) ? (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {balances.simplifiedDebts
+                        .filter((d: any) => isCurrentUser(d.from))
+                        .map((d: any, idx: number) => (
+                          <Paper
+                            key={idx}
+                            elevation={0}
+                            sx={{
+                              p: 1.5,
+                              borderRadius: 2.5,
+                              bgcolor: isLight ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 1,
+                            }}
+                          >
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="body2" fontWeight={700} noWrap>
+                                Pay {d.to?.name || 'Member'}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: '#EF4444', fontWeight: 800 }}>
+                                {formatCurrency(d.amount)}
+                              </Typography>
+                            </Box>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              onClick={() => handleSettleUpi(d.to?.name, d.amount, d.to?.id)}
+                              sx={{
+                                bgcolor: '#0E6245',
+                                color: '#FFFFFF',
+                                fontWeight: 700,
+                                fontSize: '0.75rem',
+                                borderRadius: 2,
+                                px: 1.5,
+                                textTransform: 'none',
+                                '&:hover': { bgcolor: '#094A34' },
+                              }}
+                            >
+                              ⚡ Settle
+                            </Button>
+                          </Paper>
+                        ))}
+                    </Box>
+                  ) : myBalance > 0 ? (
+                    <Typography variant="caption" color="text.secondary">
+                      You are in surplus! Group members will pay you according to the settlement rules.
+                    </Typography>
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">
+                      You have zero pending debts in this group. All settled up!
+                    </Typography>
+                  )}
+
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      onClick={() => setActiveTab(1)}
+                      sx={{
+                        borderRadius: 2,
                         textTransform: 'none',
-                        '&:hover': { bgcolor: '#094A34' },
+                        fontWeight: 700,
+                        fontSize: '0.775rem',
                       }}
                     >
-                      Add First Expense
+                      All Balances & UPI →
                     </Button>
                   </Box>
-                )}
-              </CardContent>
-            </Card>
-          </Box>
+                </Card>
+
+                {/* 2. Simplified Debts Preview */}
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3.5,
+                    boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'text.primary' }}>
+                      Simplified Debts
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label={`${balances?.simplifiedDebts?.length || 0} pending`}
+                      sx={{
+                        height: 20,
+                        fontSize: '0.675rem',
+                        fontWeight: 700,
+                        bgcolor: alpha('#10B981', 0.12),
+                        color: '#10B981',
+                      }}
+                    />
+                  </Box>
+
+                  {balances?.simplifiedDebts && balances.simplifiedDebts.length > 0 ? (
+                    <List disablePadding>
+                      {balances.simplifiedDebts.slice(0, 4).map((d: any, idx: number) => {
+                        const fromMe = isCurrentUser(d.from);
+                        const toMe = isCurrentUser(d.to);
+                        return (
+                          <ListItem key={idx} disablePadding sx={{ py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                              <Avatar sx={{ width: 26, height: 26, fontSize: '0.75rem', bgcolor: alpha(theme.palette.primary.main, 0.15), color: theme.palette.primary.main }}>
+                                {d.from?.name?.charAt(0) || '?'}
+                              </Avatar>
+                              <Typography variant="body2" sx={{ fontSize: '0.825rem' }} noWrap>
+                                <strong>{fromMe ? 'You' : d.from?.name}</strong> owes <strong>{toMe ? 'You' : d.to?.name}</strong>
+                              </Typography>
+                            </Box>
+                            <Typography variant="body2" fontWeight={800} sx={{ color: fromMe ? '#EF4444' : toMe ? '#10B981' : 'text.primary', ml: 1, flexShrink: 0 }}>
+                              {formatCurrency(d.amount)}
+                            </Typography>
+                          </ListItem>
+                        );
+                      })}
+                    </List>
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">
+                      No outstanding debts. Everyone is fully squared away!
+                    </Typography>
+                  )}
+                </Card>
+
+                {/* 3. Members Quick View & WhatsApp Admin Controls */}
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3.5,
+                    boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'text.primary' }}>
+                      Members ({group?.members?.length || 0})
+                    </Typography>
+                    {(!group?.onlyAdminInvite || isGroupAdmin) && (
+                      <Button
+                        size="small"
+                        startIcon={<PersonAdd sx={{ fontSize: 16 }} />}
+                        onClick={() => setInviteOpen(true)}
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                          p: 0,
+                          minWidth: 'auto',
+                          color: '#10B981',
+                        }}
+                      >
+                        + Add
+                      </Button>
+                    )}
+                  </Box>
+
+                  <List disablePadding>
+                    {(group?.members || []).slice(0, 5).map((m: any, idx: number) => {
+                      const isSelf = isCurrentUser(m);
+                      const memberName = m.user?.name || 'Member';
+                      return (
+                        <ListItem key={m.userId || idx} disablePadding sx={{ py: 0.75, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1 }}>
+                            <Avatar src={m.user?.avatarUrl} sx={{ width: 28, height: 28, fontSize: '0.8rem', bgcolor: 'rgba(16, 185, 129, 0.2)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                              {memberName.charAt(0)}
+                            </Avatar>
+                            <Typography variant="body2" sx={{ fontSize: '0.825rem', fontWeight: 650 }} noWrap>
+                              {memberName} {isSelf && '(You)'}
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            {m.role === 'ADMIN' && (
+                              <Chip
+                                label="👑 Admin"
+                                size="small"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.625rem',
+                                  fontWeight: 750,
+                                  bgcolor: alpha('#F59E0B', 0.15),
+                                  color: '#D97706',
+                                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                                }}
+                              />
+                            )}
+                            {isGroupAdmin && !isSelf && (
+                              <IconButton
+                                size="small"
+                                onClick={(e) => setMemberMenuAnchor({ el: e.currentTarget, member: m })}
+                                sx={{ p: 0.25 }}
+                              >
+                                <MoreVert sx={{ fontSize: 17 }} />
+                              </IconButton>
+                            )}
+                          </Box>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+
+                  {(group?.members?.length || 0) > 5 && (
+                    <Button
+                      fullWidth
+                      variant="text"
+                      size="small"
+                      onClick={() => setActiveTab(2)}
+                      sx={{ mt: 1, textTransform: 'none', fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary' }}
+                    >
+                      View all {group.members.length} members →
+                    </Button>
+                  )}
+                </Card>
+
+              </Box>
+            </Grid>
+          </Grid>
         )}
 
         {/* TAB 1: BALANCES & SETTLE UP */}
@@ -1281,7 +1638,7 @@ function GroupDetailContent() {
                 <List disablePadding>
                   {group?.members?.map((m: any, i: number) => {
                     const memberId = m.userId || m.user?.id;
-                    const isSelf = memberId === user?.id;
+                    const isSelf = isCurrentUser(m);
                     const memberName = m.user?.name || 'Member';
 
                     return (

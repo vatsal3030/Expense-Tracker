@@ -54,6 +54,8 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
 interface SplitwiseExpenseItemProps {
   expense: any;
   currentUserId?: string;
+  currentSupabaseId?: string;
+  currentUserEmail?: string;
   currency?: string;
   showGroupTag?: boolean;
   canEdit?: boolean;
@@ -67,6 +69,8 @@ interface SplitwiseExpenseItemProps {
 export default function SplitwiseExpenseItem({
   expense,
   currentUserId,
+  currentSupabaseId,
+  currentUserEmail,
   currency = 'INR',
   showGroupTag = true,
   canEdit = false,
@@ -95,16 +99,16 @@ export default function SplitwiseExpenseItem({
   // Splitwise Stance Calculation
   const totalAmount = Number(expense.amount || 0);
   const isPayer =
-    Boolean(currentUserId) &&
-    (expense.paidById === currentUserId ||
-      expense.paidBy?.id === currentUserId ||
-      expense.paidBy?.supabase_id === currentUserId);
+    Boolean(currentUserId || currentSupabaseId || currentUserEmail) &&
+    (Boolean(currentUserId && (expense.paidById === currentUserId || expense.paidBy?.id === currentUserId || expense.paidBy?.supabase_id === currentUserId || expense.paidBy?.supabaseId === currentUserId)) ||
+      Boolean(currentSupabaseId && (expense.paidById === currentSupabaseId || expense.paidBy?.id === currentSupabaseId || expense.paidBy?.supabaseId === currentSupabaseId)) ||
+      Boolean(currentUserEmail && expense.paidBy?.email && expense.paidBy.email.toLowerCase() === currentUserEmail.toLowerCase()));
 
   const myShare = expense.shares?.find(
     (s: any) =>
-      s.userId === currentUserId ||
-      s.user?.id === currentUserId ||
-      s.user?.supabase_id === currentUserId
+      Boolean(currentUserId && (s.userId === currentUserId || s.user?.id === currentUserId || s.user?.supabase_id === currentUserId || s.user?.supabaseId === currentUserId)) ||
+      Boolean(currentSupabaseId && (s.userId === currentSupabaseId || s.user?.id === currentSupabaseId || s.user?.supabaseId === currentSupabaseId)) ||
+      Boolean(currentUserEmail && s.user?.email && s.user.email.toLowerCase() === currentUserEmail.toLowerCase())
   );
   const myShareAmount = myShare ? Number(myShare.amount || 0) : 0;
 

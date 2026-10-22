@@ -238,7 +238,6 @@ export default function BudgetsPage() {
               '&:hover': {
                 bgcolor: isLight ? '#0A4B35' : '#047857',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
-                transform: 'translateY(-1px)',
               },
             }}
           >
@@ -365,7 +364,6 @@ export default function BudgetsPage() {
                       transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                       '&:hover': {
                         borderColor: 'rgba(16, 185, 129, 0.5) !important',
-                        transform: 'translateY(-3px)',
                       },
                       '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: progressColor },
                     }}

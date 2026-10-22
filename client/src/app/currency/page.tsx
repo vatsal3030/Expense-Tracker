@@ -236,7 +236,7 @@ export default function CurrencyPage() {
                       border: `1px solid ${theme.palette.divider}`,
                       boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.03)' : '0 4px 16px rgba(0,0,0,0.3)',
                       transition: 'all 0.2s ease',
-                      '&:hover': { borderColor: isLight ? '#0E6245' : '#34D399', transform: 'translateY(-2px)' },
+                      '&:hover': { borderColor: isLight ? '#0E6245' : '#34D399' },
                     }}
                     onClick={() => {
                       setFromCurrency(pair.from);

@@ -193,7 +193,7 @@ export default function RecurringPage() {
               width: { xs: '100%', sm: 'auto' },
               borderRadius: 2.5, px: 3, fontWeight: 600,
               bgcolor: isLight ? '#0E6245' : '#059669', color: '#ffffff', textTransform: 'none',
-              '&:hover': { bgcolor: isLight ? '#0A4B35' : '#047857', transform: 'translateY(-1px)' },
+              '&:hover': { bgcolor: isLight ? '#0A4B35' : '#047857' },
             }}
           >
             Add Rule
@@ -283,7 +283,7 @@ export default function RecurringPage() {
                       boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                       opacity: rule.isActive ? 1 : 0.6,
                       transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                      '&:hover': { borderColor: 'rgba(16, 185, 129, 0.5) !important', transform: 'translateY(-3px)' },
+                      '&:hover': { borderColor: 'rgba(16, 185, 129, 0.5) !important' },
                       '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: statusColor },
                     }}
                   >

@@ -38,6 +38,30 @@ function getGroupRules(type: string, isApprovalRequired: boolean, isPasswordProt
   return rules;
 }
 
+// Robust helper to check member & admin permissions for group operations
+async function getRequesterRole(groupId: string, reqUser: { id: string; email?: string; supabaseId?: string }): Promise<{ isMember: boolean; isAdmin: boolean; membership: any }> {
+  const userIds = [reqUser.id, reqUser.supabaseId].filter(Boolean) as string[];
+  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'rajkotgamer74@gmail.com,vatsalvadgama30@gmail.com,admin@fairshare.com')
+    .split(',')
+    .map((e) => e.trim().toLowerCase());
+  const isSysAdmin = Boolean(reqUser.email && ADMIN_EMAILS.includes(reqUser.email.toLowerCase()));
+
+  const membership = await prisma.groupMember.findFirst({
+    where: {
+      groupId,
+      OR: [
+        { userId: { in: userIds } },
+        ...(reqUser.email ? [{ user: { email: reqUser.email } }] : []),
+        ...(reqUser.supabaseId ? [{ user: { supabaseId: reqUser.supabaseId } }] : []),
+      ],
+    },
+    include: { user: true },
+  });
+
+  const isAdmin = isSysAdmin || membership?.role === 'ADMIN';
+  return { isMember: Boolean(membership) || isSysAdmin, isAdmin, membership };
+}
+
 // GET /api/groups/public/:id — Public info for invite link preview (open to unauthenticated & authenticated users)
 groupRouter.get('/public/:id', optionalAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -351,27 +375,35 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
       return;
     }
 
-    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean) as string[];
 
     const group = await prisma.group.findFirst({
       where: {
         id,
-        members: { some: { userId: { in: userIds } } },
+        members: {
+          some: {
+            OR: [
+              { userId: { in: userIds } },
+              ...(req.user!.email ? [{ user: { email: req.user!.email } }] : []),
+              ...(req.user!.supabaseId ? [{ user: { supabaseId: req.user!.supabaseId } }] : []),
+            ],
+          },
+        },
       },
       include: {
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true } },
+            user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true, supabaseId: true } },
           },
         },
         expenses: {
           where: { isDeleted: false },
           include: {
-            paidBy: { select: { id: true, name: true, avatarUrl: true, username: true } },
-            shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, username: true } } } },
+            paidBy: { select: { id: true, name: true, avatarUrl: true, username: true, supabaseId: true } },
+            shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, username: true, supabaseId: true } } } },
           },
           orderBy: { date: 'desc' },
-          take: 20,
+          take: 50,
         },
       },
     });
@@ -423,19 +455,14 @@ groupRouter.put(
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+      const { isMember, isAdmin } = await getRequesterRole(id, req.user!);
 
-      // Verify admin role for authenticity & accountability
-      const requesterMembership = await prisma.groupMember.findFirst({
-        where: { groupId: id, userId: { in: userIds } },
-      });
-
-      if (!requesterMembership) {
+      if (!isMember) {
         res.status(404).json({ success: false, error: 'Group not found or you are not a member.' });
         return;
       }
 
-      if (requesterMembership.role !== 'ADMIN') {
+      if (!isAdmin) {
         res.status(403).json({ success: false, error: 'Only group administrators can modify group settings.' });
         return;
       }
@@ -529,18 +556,14 @@ groupRouter.put(
 groupRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+    const { isMember, isAdmin } = await getRequesterRole(id, req.user!);
 
-    const requesterMembership = await prisma.groupMember.findFirst({
-      where: { groupId: id, userId: { in: userIds } },
-    });
-
-    if (!requesterMembership) {
+    if (!isMember) {
       res.status(404).json({ success: false, error: 'Group not found or you are not a member.' });
       return;
     }
 
-    if (requesterMembership.role !== 'ADMIN') {
+    if (!isAdmin) {
       res.status(403).json({ success: false, error: 'Only group administrators can delete or archive this group.' });
       return;
     }
@@ -873,12 +896,9 @@ groupRouter.post(
       const { userId, email, phone } = req.body;
 
       // Verify requester is group member
-      const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
-      const membership = await prisma.groupMember.findFirst({
-        where: { groupId: id, userId: { in: userIds } },
-      });
+      const { isMember, isAdmin, membership } = await getRequesterRole(id, req.user!);
 
-      if (!membership) {
+      if (!isMember) {
         res.status(403).json({ success: false, error: 'You are not a member of this group.' });
         return;
       }
@@ -886,11 +906,11 @@ groupRouter.post(
       // Check group policy: onlyAdminInvite
       const groupRecord = await prisma.group.findUnique({
         where: { id },
-        select: { description: true },
+        select: { name: true, description: true },
       });
       if (groupRecord) {
         const meta = parseGroupMeta(groupRecord.description);
-        if (meta.onlyAdminInvite && membership.role !== 'ADMIN') {
+        if (meta.onlyAdminInvite && !isAdmin) {
           res.status(403).json({
             success: false,
             error: 'Only group administrators are authorized to invite or add members to this group.',
@@ -987,27 +1007,33 @@ groupRouter.delete('/:id/members/:userId', async (req: AuthenticatedRequest, res
     const id = req.params.id as string;
     const userId = req.params.userId as string;
 
-    // Check admin or self-removal
-    const requesterMembership = await prisma.groupMember.findUnique({
-      where: { groupId_userId: { groupId: id, userId: req.user!.id } },
-    });
+    const { isMember, isAdmin, membership } = await getRequesterRole(id, req.user!);
 
-    if (!requesterMembership) {
+    if (!isMember) {
       res.status(403).json({ success: false, error: 'Not a member of this group.' });
       return;
     }
 
-    if (userId !== req.user!.id && requesterMembership.role !== 'ADMIN') {
+    const isSelf = (membership && (membership.userId === userId || membership.user?.id === userId)) || req.user!.id === userId || req.user!.supabaseId === userId;
+    if (!isSelf && !isAdmin) {
       res.status(403).json({ success: false, error: 'Only admins can remove other members.' });
       return;
     }
 
-    await prisma.groupMember.delete({
-      where: { groupId_userId: { groupId: id, userId } },
+    await prisma.groupMember.deleteMany({
+      where: {
+        groupId: id,
+        OR: [
+          { userId },
+          { user: { id: userId } },
+          { user: { supabaseId: userId } },
+        ],
+      },
     });
 
     appCache.invalidatePrefix(`groups:list:${userId}`);
     appCache.invalidatePrefix(`dashboard:${userId}`);
+    appCache.invalidatePrefix(`group:${id}`);
 
     res.json({ success: true, message: 'Member removed successfully.' });
   } catch (error: any) {
@@ -1031,17 +1057,22 @@ groupRouter.patch(
       }
 
       // Verify requester is group ADMIN
-      const requesterMembership = await prisma.groupMember.findUnique({
-        where: { groupId_userId: { groupId: id, userId: req.user!.id } },
-      });
+      const { isMember, isAdmin } = await getRequesterRole(id, req.user!);
 
-      if (!requesterMembership || requesterMembership.role !== 'ADMIN') {
+      if (!isMember || !isAdmin) {
         res.status(403).json({ success: false, error: 'Only group admins can manage member roles.' });
         return;
       }
 
-      const targetMembership = await prisma.groupMember.findUnique({
-        where: { groupId_userId: { groupId: id, userId: targetUserId } },
+      const targetMembership = await prisma.groupMember.findFirst({
+        where: {
+          groupId: id,
+          OR: [
+            { userId: targetUserId },
+            { user: { id: targetUserId } },
+            { user: { supabaseId: targetUserId } },
+          ],
+        },
         include: { user: { select: { id: true, name: true } } },
       });
 
@@ -1065,9 +1096,9 @@ groupRouter.patch(
       }
 
       const updated = await prisma.groupMember.update({
-        where: { groupId_userId: { groupId: id, userId: targetUserId } },
+        where: { id: targetMembership.id },
         data: { role },
-        include: { user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true } } },
+        include: { user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true, supabaseId: true } } },
       });
 
       // Activity log

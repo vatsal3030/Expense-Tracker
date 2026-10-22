@@ -845,7 +845,6 @@ export default function AnalyticsPage() {
                   '&:hover': {
                     borderColor: isLight ? 'rgba(0, 0, 0, 0.14) !important' : 'rgba(255, 255, 255, 0.22) !important',
                     boxShadow: isLight ? '0 12px 32px rgba(15, 23, 42, 0.08)' : '0 16px 40px -8px rgba(0, 0, 0, 0.65)',
-                    transform: 'translateY(-2px)',
                   },
                 }}
               >

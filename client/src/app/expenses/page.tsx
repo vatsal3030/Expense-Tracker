@@ -523,7 +523,6 @@ function ExpensesContent() {
                 '&:hover': {
                   borderColor: isLight ? '#0E6245' : '#10b981',
                   bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-                  transform: 'translateY(-1px)',
                 },
               }}
             >
@@ -591,7 +590,6 @@ function ExpensesContent() {
                 '&:hover': {
                   bgcolor: isLight ? '#0A4B35' : '#047857',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
-                  transform: 'translateY(-1px)',
                 },
               }}
             >

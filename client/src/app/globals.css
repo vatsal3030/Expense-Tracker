@@ -357,7 +357,6 @@ html {
 }
 
 .glass-secondary:hover {
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.95);
   border-top-color: #ffffff;
   box-shadow: 
@@ -367,7 +366,6 @@ html {
 }
 
 .dark .glass-secondary:hover {
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.18);
   border-top-color: rgba(255, 255, 255, 0.38);
   border-left-color: rgba(255, 255, 255, 0.22);
@@ -588,7 +586,6 @@ html {
 }
 
 .macos-glass-card:hover {
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.22) !important;
   border-top-color: rgba(255, 255, 255, 0.40) !important;
   box-shadow: 

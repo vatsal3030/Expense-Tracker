@@ -852,7 +852,6 @@ export default function FriendsPage() {
                                   '&:hover': {
                                     color: '#EF4444',
                                     bgcolor: 'rgba(239, 68, 68, 0.1)',
-                                    transform: 'scale(1.08)',
                                   },
                                 }}
                               >
