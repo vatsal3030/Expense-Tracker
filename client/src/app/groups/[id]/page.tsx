@@ -339,7 +339,21 @@ function GroupDetailContent() {
     return member?.role === 'ADMIN';
   }, [group, isCurrentUser, profile]);
 
-  const [memberMenuAnchor, setMemberMenuAnchor] = useState<{ el: HTMLElement; member: any } | null>(null);
+  const [memberMenuAnchorEl, setMemberMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [removeConfirmMember, setRemoveConfirmMember] = useState<any>(null);
+
+  const handleOpenMemberMenu = (e: React.MouseEvent<HTMLElement>, member: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMemberMenuAnchorEl(e.currentTarget);
+    setSelectedMember(member);
+  };
+
+  const handleCloseMemberMenu = () => {
+    setMemberMenuAnchorEl(null);
+    setSelectedMember(null);
+  };
 
   // Group expenses by Month & Year
   const groupedGroupExpenses = useMemo(() => {
@@ -363,7 +377,7 @@ function GroupDetailContent() {
     setGroup((prev: any) => ({
       ...prev,
       members: prev.members.map((m: any) =>
-        (m.userId === targetUserId || m.user?.id === targetUserId)
+        (m.userId === targetUserId || m.user?.id === targetUserId || m.id === targetUserId)
           ? { ...m, role: newRole }
           : m
       ),
@@ -383,11 +397,10 @@ function GroupDetailContent() {
   // Remove member from group
   const handleRemoveMember = async (targetUserId: string, targetName: string) => {
     if (!group?.id) return;
-    if (!confirm(`Are you sure you want to remove ${targetName} from the group?`)) return;
     const prevMembers = [...(group.members || [])];
     setGroup((prev: any) => ({
       ...prev,
-      members: prev.members.filter((m: any) => m.userId !== targetUserId && m.user?.id !== targetUserId),
+      members: prev.members.filter((m: any) => m.userId !== targetUserId && m.user?.id !== targetUserId && m.id !== targetUserId),
     }));
 
     try {
@@ -1367,7 +1380,8 @@ function GroupDetailContent() {
                             {isGroupAdmin && !isSelf && (
                               <IconButton
                                 size="small"
-                                onClick={(e) => setMemberMenuAnchor({ el: e.currentTarget, member: m })}
+                                onClick={(e) => handleOpenMemberMenu(e, m)}
+                                aria-label={`Options for ${memberName}`}
                                 sx={{ p: 0.25 }}
                               >
                                 <MoreVert sx={{ fontSize: 17 }} />
@@ -1714,7 +1728,8 @@ function GroupDetailContent() {
                             {isGroupAdmin && !isSelf && (
                               <IconButton
                                 size="small"
-                                onClick={(e) => setMemberMenuAnchor({ el: e.currentTarget, member: m })}
+                                onClick={(e) => handleOpenMemberMenu(e, m)}
+                                aria-label={`Options for ${memberName}`}
                                 sx={{
                                   color: 'text.secondary',
                                   '&:hover': { color: 'text.primary', bgcolor: alpha(theme.palette.text.primary, 0.08) },
@@ -1733,47 +1748,60 @@ function GroupDetailContent() {
                   })}
                 </List>
 
-                {/* WhatsApp-Style Member Management Menu */}
+                {/* WhatsApp-Style Member Management Menu — Perfectly Anchored */}
                 <Menu
-                  anchorEl={memberMenuAnchor?.el}
-                  open={Boolean(memberMenuAnchor)}
-                  onClose={() => setMemberMenuAnchor(null)}
+                  anchorEl={memberMenuAnchorEl}
+                  open={Boolean(memberMenuAnchorEl && selectedMember)}
+                  onClose={handleCloseMemberMenu}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  disableScrollLock
                   slotProps={{
                     paper: {
-                      className: 'glass-deep',
+                      elevation: 0,
                       sx: {
-                        minWidth: 195,
-                        borderRadius: 2.5,
-                        boxShadow: '0 8px 30px rgba(0,0,0,0.35)',
-                        border: `1px solid ${theme.palette.divider}`,
+                        minWidth: 200,
+                        borderRadius: 3,
+                        p: 0.75,
+                        bgcolor: isLight ? '#FFFFFF' : '#0E131F',
+                        border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'}`,
+                        boxShadow: isLight
+                          ? '0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.05)'
+                          : '0 24px 48px -6px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06)',
                       },
                     },
                   }}
                 >
-                  {memberMenuAnchor?.member?.role === 'ADMIN' ? (
+                  {selectedMember?.role === 'ADMIN' ? (
                     <MenuItem
-                      onClick={() => {
-                        const m = memberMenuAnchor?.member;
-                        if (m) {
-                          handleUpdateMemberRole(m.userId || m.user?.id, m.user?.name || 'Member', 'MEMBER');
+                      onClick={async () => {
+                        const target = selectedMember;
+                        handleCloseMemberMenu();
+                        if (target) {
+                          const targetId = target.userId || target.user?.id || target.id;
+                          const targetName = target.user?.name || target.name || 'Member';
+                          await handleUpdateMemberRole(targetId, targetName, 'MEMBER');
                         }
-                        setMemberMenuAnchor(null);
                       }}
+                      sx={{ borderRadius: 2, py: 1, fontSize: '0.85rem', fontWeight: 600 }}
                     >
                       <ListItemIcon>
-                        <Security fontSize="small" />
+                        <Security fontSize="small" sx={{ color: 'text.secondary' }} />
                       </ListItemIcon>
                       Dismiss as Admin
                     </MenuItem>
                   ) : (
                     <MenuItem
-                      onClick={() => {
-                        const m = memberMenuAnchor?.member;
-                        if (m) {
-                          handleUpdateMemberRole(m.userId || m.user?.id, m.user?.name || 'Member', 'ADMIN');
+                      onClick={async () => {
+                        const target = selectedMember;
+                        handleCloseMemberMenu();
+                        if (target) {
+                          const targetId = target.userId || target.user?.id || target.id;
+                          const targetName = target.user?.name || target.name || 'Member';
+                          await handleUpdateMemberRole(targetId, targetName, 'ADMIN');
                         }
-                        setMemberMenuAnchor(null);
                       }}
+                      sx={{ borderRadius: 2, py: 1, fontSize: '0.85rem', fontWeight: 600 }}
                     >
                       <ListItemIcon>
                         <SupervisorAccount fontSize="small" sx={{ color: '#F59E0B' }} />
@@ -1781,23 +1809,88 @@ function GroupDetailContent() {
                       Make Group Admin 👑
                     </MenuItem>
                   )}
-                  <Divider sx={{ my: 0.5 }} />
+                  <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
                   <MenuItem
                     onClick={() => {
-                      const m = memberMenuAnchor?.member;
-                      if (m) {
-                        handleRemoveMember(m.userId || m.user?.id, m.user?.name || 'Member');
+                      const target = selectedMember;
+                      handleCloseMemberMenu();
+                      if (target) {
+                        setRemoveConfirmMember(target);
                       }
-                      setMemberMenuAnchor(null);
                     }}
-                    sx={{ color: 'error.main' }}
+                    sx={{
+                      borderRadius: 2,
+                      py: 1,
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      color: '#EF4444',
+                      '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.08)' },
+                    }}
                   >
                     <ListItemIcon>
-                      <PersonRemove fontSize="small" sx={{ color: 'error.main' }} />
+                      <PersonRemove fontSize="small" sx={{ color: '#EF4444' }} />
                     </ListItemIcon>
                     Remove from Group
                   </MenuItem>
                 </Menu>
+
+                {/* Remove Member Confirmation Dialog */}
+                <Dialog
+                  open={Boolean(removeConfirmMember)}
+                  onClose={() => setRemoveConfirmMember(null)}
+                  slotProps={{
+                    paper: {
+                      elevation: 0,
+                      sx: {
+                        borderRadius: 3.5,
+                        p: 1,
+                        bgcolor: isLight ? '#FFFFFF' : '#0E131F',
+                        border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'}`,
+                        boxShadow: isLight
+                          ? '0 20px 48px rgba(15, 23, 42, 0.12)'
+                          : '0 28px 72px rgba(0, 0, 0, 0.85)',
+                        maxWidth: 420,
+                      },
+                    },
+                  }}
+                >
+                  <DialogTitle component="div" sx={{ pb: 1, pt: 2, px: 3 }}>
+                    <Typography variant="h6" fontWeight={800} color="text.primary">
+                      Remove Member?
+                    </Typography>
+                  </DialogTitle>
+                  <DialogContent sx={{ px: 3, py: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Are you sure you want to remove{' '}
+                      <strong>{removeConfirmMember?.user?.name || removeConfirmMember?.name || 'this member'}</strong> from the group?
+                      They will no longer have access to group expenses or balances.
+                    </Typography>
+                  </DialogContent>
+                  <DialogActions sx={{ px: 3, pb: 2.5, pt: 1.5, gap: 1 }}>
+                    <Button
+                      onClick={() => setRemoveConfirmMember(null)}
+                      sx={{ borderRadius: 2, textTransform: 'none', color: 'text.secondary' }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      onClick={async () => {
+                        const target = removeConfirmMember;
+                        setRemoveConfirmMember(null);
+                        if (target) {
+                          const targetId = target.userId || target.user?.id || target.id;
+                          const targetName = target.user?.name || target.name || 'Member';
+                          await handleRemoveMember(targetId, targetName);
+                        }
+                      }}
+                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+                    >
+                      Remove Member
+                    </Button>
+                  </DialogActions>
+                </Dialog>
               </Card>
             </Grid>
 

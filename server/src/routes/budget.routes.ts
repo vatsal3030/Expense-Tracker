@@ -58,7 +58,17 @@ budgetRouter.post(
         },
       });
 
-      res.status(201).json({ success: true, data: budget });
+      const budgetAmount = Number(budget.amount);
+      const budgetData = {
+        ...budget,
+        spent: 0,
+        remaining: budgetAmount,
+        percentage: 0,
+        isOverBudget: false,
+        isAlerted: false,
+      };
+
+      res.status(201).json({ success: true, data: budgetData });
     } catch (error: any) {
       console.error('Create budget error:', error);
       res.status(500).json({ success: false, error: 'Failed to create budget.' });

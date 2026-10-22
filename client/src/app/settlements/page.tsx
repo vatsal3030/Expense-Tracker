@@ -31,6 +31,7 @@ import {
   QrCode2,
   AutoAwesome,
   TrendingFlat,
+  WhatsApp,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -272,6 +273,35 @@ export default function SettlementsPage() {
                             }}
                           >
                             Pay UPI
+                          </Button>
+                        )}
+                        {isUserReceiving && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<WhatsApp fontSize="small" sx={{ color: '#25D366' }} />}
+                            onClick={() => {
+                              const shareText = encodeURIComponent(
+                                `Hi ${debt.from.name}, friendly reminder to settle the balance of ₹${debt.amount} on FairShare: ${typeof window !== 'undefined' ? window.location.origin : ''}/settlements`
+                              );
+                              window.open(`https://wa.me/?text=${shareText}`, '_blank');
+                            }}
+                            sx={{
+                              borderColor: 'rgba(37, 211, 102, 0.4)',
+                              color: '#25D366',
+                              textTransform: 'none',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              borderRadius: 2,
+                              py: 0.5,
+                              px: 1.5,
+                              '&:hover': {
+                                bgcolor: 'rgba(37, 211, 102, 0.1)',
+                                borderColor: '#25D366',
+                              },
+                            }}
+                          >
+                            Remind
                           </Button>
                         )}
                       </Box>

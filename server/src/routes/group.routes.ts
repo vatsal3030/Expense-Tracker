@@ -1027,6 +1027,7 @@ groupRouter.delete('/:id/members/:userId', async (req: AuthenticatedRequest, res
           { userId },
           { user: { id: userId } },
           { user: { supabaseId: userId } },
+          { id: userId },
         ],
       },
     });
@@ -1071,6 +1072,7 @@ groupRouter.patch(
             { userId: targetUserId },
             { user: { id: targetUserId } },
             { user: { supabaseId: targetUserId } },
+            { id: targetUserId },
           ],
         },
         include: { user: { select: { id: true, name: true } } },

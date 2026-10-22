@@ -113,7 +113,24 @@ export default function BudgetsPage() {
     try {
       const res = await budgetApi.create({ ...currentForm, amount: parsedAmount, alertAt: currentForm.alertAt });
       if (res.data?.data) {
-        setBudgets((prev) => prev.map((b) => (b.id === tempId ? res.data.data : b)));
+        const created = res.data.data;
+        const totalAmt = Number(created.amount || parsedAmount);
+        const spentAmt = Number(created.spent || 0);
+        setBudgets((prev) =>
+          prev.map((b) =>
+            b.id === tempId
+              ? {
+                  ...created,
+                  amount: totalAmt,
+                  spent: spentAmt,
+                  remaining: Number(created.remaining ?? Math.max(totalAmt - spentAmt, 0)),
+                  percentage: totalAmt > 0 ? Math.round((spentAmt / totalAmt) * 100) : 0,
+                  isOverBudget: spentAmt > totalAmt,
+                  isAlerted: totalAmt > 0 && Math.round((spentAmt / totalAmt) * 100) >= (created.alertAt || 80),
+                }
+              : b
+          )
+        );
         fetchBudgets();
       }
     } catch (error: any) {
@@ -203,8 +220,14 @@ export default function BudgetsPage() {
     }
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+  const formatCurrency = (amount: number | null | undefined) => {
+    const num = Number(amount);
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(isNaN(num) ? 0 : num);
+  };
 
   const getProgressColor = (percentage: number) => {
     if (percentage >= 100) return theme.palette.error.main;
@@ -351,7 +374,14 @@ export default function BudgetsPage() {
         ) : (
           <Grid container spacing={{ xs: 1.5, sm: 2.5, md: 3 }}>
             {budgets.map((budget) => {
-              const progressColor = getProgressColor(budget.percentage);
+              const spent = Number(budget.spent || 0);
+              const total = Number(budget.amount || 0);
+              const remaining = Number(budget.remaining ?? Math.max(total - spent, 0));
+              const percentage = total > 0 ? Math.round((spent / total) * 100) : Number(budget.percentage || 0);
+              const isOver = budget.isOverBudget || spent > total;
+              const isAlert = budget.isAlerted || (total > 0 && percentage >= (budget.alertAt || 80));
+              const progressColor = getProgressColor(percentage);
+
               return (
                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={budget.id}>
                   <Card
@@ -425,12 +455,12 @@ export default function BudgetsPage() {
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                           <Typography variant="body2" color="text.secondary">Spent</Typography>
                           <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
-                            {formatCurrency(budget.spent)} / {formatCurrency(Number(budget.amount))}
+                            {formatCurrency(spent)} / {formatCurrency(total)}
                           </Typography>
                         </Box>
                         <LinearProgress
                           variant="determinate"
-                          value={Math.min(budget.percentage, 100)}
+                          value={Math.min(percentage, 100)}
                           sx={{
                             height: 8,
                             borderRadius: 4,
@@ -442,14 +472,14 @@ export default function BudgetsPage() {
 
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="caption" color="text.secondary">
-                          {formatCurrency(budget.remaining)} remaining
+                          {formatCurrency(remaining)} remaining
                         </Typography>
-                        {budget.isOverBudget ? (
+                        {isOver ? (
                           <Chip label="Over budget!" size="small" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, bgcolor: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)' }} />
-                        ) : budget.isAlerted ? (
-                          <Chip label={`${budget.percentage}% used`} size="small" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, bgcolor: 'rgba(245, 158, 11, 0.15)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.3)' }} />
+                        ) : isAlert ? (
+                          <Chip label={`${percentage}% used`} size="small" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, bgcolor: 'rgba(245, 158, 11, 0.15)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.3)' }} />
                         ) : (
-                          <Chip label={`${budget.percentage}%`} size="small" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, bgcolor: alpha(progressColor, 0.15), color: progressColor, border: `1px solid ${alpha(progressColor, 0.3)}` }} />
+                          <Chip label={`${percentage}%`} size="small" sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, bgcolor: alpha(progressColor, 0.15), color: progressColor, border: `1px solid ${alpha(progressColor, 0.3)}` }} />
                         )}
                       </Box>
                     </CardContent>

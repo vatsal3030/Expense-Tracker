@@ -369,10 +369,14 @@ export default function RecurringPage() {
           fullWidth
           slotProps={{
             paper: {
-              className: 'glass-deep glass-specular-top',
+              elevation: 0,
               sx: {
                 borderRadius: { xs: 3, sm: 4 },
-                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                bgcolor: isLight ? '#FFFFFF' : '#0E131F',
+                border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'}`,
+                boxShadow: isLight
+                  ? '0 20px 48px rgba(15, 23, 42, 0.12)'
+                  : '0 28px 72px rgba(0,0,0,0.85), 0 0 0 1px rgba(255, 255, 255, 0.05)',
                 m: { xs: 1.5, sm: 3 },
                 width: { xs: 'calc(100% - 24px)', sm: '100%' },
                 maxWidth: { xs: 'calc(100% - 24px)', sm: '500px' },
@@ -423,6 +427,11 @@ export default function RecurringPage() {
                 value={form.startDate}
                 onChange={(e) => setForm({ ...form, startDate: e.target.value })}
                 slotProps={{ inputLabel: { shrink: true } }}
+                sx={{
+                  '& input[type="date"]': {
+                    colorScheme: isLight ? 'light' : 'dark',
+                  },
+                }}
               />
               <TextField
                 fullWidth label="End Date (optional)" type="date"
@@ -430,6 +439,11 @@ export default function RecurringPage() {
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
                 slotProps={{ inputLabel: { shrink: true } }}
                 helperText="Leave blank for indefinite"
+                sx={{
+                  '& input[type="date"]': {
+                    colorScheme: isLight ? 'light' : 'dark',
+                  },
+                }}
               />
             </Stack>
           </DialogContent>
