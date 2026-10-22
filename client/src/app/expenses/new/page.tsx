@@ -1020,7 +1020,7 @@ function NewExpenseContent() {
                                 {m.user?.name?.charAt(0) || '?'}
                               </Avatar>
                               <Typography variant="body2" fontWeight={isYou ? 700 : 500}>
-                                {m.user?.name} {isYou ? '(You)' : ''}
+                                {m.user?.name} {isYou ? '(You)' : m.user?.username ? `(@${m.user.username})` : m.user?.email ? `(${m.user.email.split('@')[0]})` : ''}
                               </Typography>
                             </Box>
                           </MenuItem>
@@ -1040,6 +1040,7 @@ function NewExpenseContent() {
                       const uid = m.user?.id || m.userId;
                       const isSelected = selectedMemberIds.includes(uid);
                       const isCurrentUser = uid === user?.id || uid === profile?.id;
+                      const handleTag = m.user?.username ? `@${m.user.username}` : m.user?.email ? m.user.email.split('@')[0] : '';
 
                       return (
                         <Chip
@@ -1058,7 +1059,7 @@ function NewExpenseContent() {
                               {m.user?.name?.charAt(0) || '?'}
                             </Avatar>
                           }
-                          label={isCurrentUser ? `${m.user?.name} (You)` : m.user?.name}
+                          label={isCurrentUser ? `${m.user?.name} (You)` : handleTag ? `${m.user?.name} (${handleTag})` : m.user?.name}
                           onClick={() => toggleMemberSelection(uid)}
                           variant={isSelected ? 'filled' : 'outlined'}
                           sx={{
@@ -1379,8 +1380,13 @@ function NewExpenseContent() {
                             <Typography variant="body2" fontWeight={650}>
                               {m.user?.name} {isCurrentUser ? '(You)' : ''}
                             </Typography>
+                            {(m.user?.username || m.user?.email) && (
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
+                                @{m.user?.username || m.user?.email?.split('@')[0]}
+                              </Typography>
+                            )}
                             {isPayer && (
-                              <Typography variant="caption" sx={{ color: '#0E6245', fontWeight: 700 }}>
+                              <Typography variant="caption" sx={{ color: '#0E6245', fontWeight: 700, display: 'block' }}>
                                 Paid for this bill
                               </Typography>
                             )}

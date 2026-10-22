@@ -17,7 +17,6 @@ import {
   Chip,
   Paper,
   Avatar,
-  AvatarGroup,
 } from '@mui/material';
 import {
   Visibility,
@@ -26,10 +25,10 @@ import {
   LockOutlined,
   CheckCircle,
   SecurityOutlined,
-  FlashOn,
-  TrendingUp,
-  ReceiptLong,
   ArrowForward,
+  FormatQuote,
+  ArrowBackIosNew,
+  ArrowForwardIos,
 } from '@mui/icons-material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
@@ -59,6 +58,45 @@ function GoogleIcon() {
   );
 }
 
+const REVIEWS = [
+  {
+    quote: "FairShare completely removed the awkwardness of chasing flatmates for rent and utilities. 1-click UPI QR settlements make it effortless.",
+    author: "Alex Rivera",
+    role: "Software Engineer",
+    location: "Mumbai • Flat 402",
+    rating: 5,
+    avatar: "AR",
+    color: "#059669",
+  },
+  {
+    quote: "We used FairShare for our 10-person Goa trip. The debt simplification is magic—it turned 45 messy transactions into just 3 clean settlements.",
+    author: "Priya Sharma",
+    role: "Product Designer",
+    location: "Bangalore",
+    rating: 5,
+    avatar: "PS",
+    color: "#3B82F6",
+  },
+  {
+    quote: "No ads, snappy UI, and dark mode looks incredible. Having unique usernames makes adding friends and splitting bills seamless.",
+    author: "Rohan Mehta",
+    role: "Startup Founder",
+    location: "Delhi",
+    rating: 5,
+    avatar: "RM",
+    color: "#8B5CF6",
+  },
+  {
+    quote: "The monthly PDF export and category breakdown saved our apartment hours at tax time. It's the most dependable financial utility we use.",
+    author: "Kavita Patel",
+    role: "Creative Director",
+    location: "Pune",
+    rating: 5,
+    avatar: "KP",
+    color: "#F59E0B",
+  },
+];
+
 function LoginForm() {
   const theme = useTheme();
   const router = useRouter();
@@ -73,8 +111,17 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [reviewIdx, setReviewIdx] = useState(0);
 
   const isLight = theme.palette.mode === 'light';
+
+  // Auto-rotate reviews every 4.5 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setReviewIdx((prev) => (prev + 1) % REVIEWS.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
 
   const getEffectiveRedirect = () => {
     if (redirectTarget && redirectTarget !== '/dashboard') return redirectTarget;
@@ -110,17 +157,20 @@ function LoginForm() {
     if (error) setError(error);
   };
 
+  const currentReview = REVIEWS[reviewIdx];
+
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100vh',
+        maxHeight: '100vh',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        bgcolor: isLight ? '#F8FAFC' : '#070B11',
+        bgcolor: isLight ? '#F8FAFC' : '#080C14',
         overflow: 'hidden',
       }}
     >
-      {/* LEFT FORM PANEL (Clean, High-Contrast SaaS Auth) */}
+      {/* LEFT FORM PANEL (Compact, Zero-Scroll on Standard Displays) */}
       <Box
         sx={{
           flex: { xs: '1 1 auto', md: '0 0 50%', lg: '0 0 46%' },
@@ -128,24 +178,26 @@ function LoginForm() {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          p: { xs: 3, sm: 5, md: 6, lg: 8 },
-          position: 'relative',
+          px: { xs: 2.5, sm: 4, md: 5 },
+          py: { xs: 2, sm: 2.5 },
+          height: '100%',
+          maxHeight: '100vh',
+          boxSizing: 'border-box',
           overflowY: 'auto',
           zIndex: 2,
         }}
       >
-        <Box sx={{ width: '100%', maxWidth: 420 }}>
+        <Box sx={{ width: '100%', maxWidth: 380 }}>
           {/* Header Brand Bar */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
-            <BrandLogo size="md" asLink={false} />
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <BrandLogo size="sm" asLink={false} />
             <Chip
-              label="v2.4 Production"
+              label="v2.4 Pro"
               size="small"
               sx={{
-                height: 22,
-                fontSize: '0.68rem',
+                height: 20,
+                fontSize: '0.65rem',
                 fontWeight: 700,
-                letterSpacing: '0.04em',
                 bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.1)',
                 color: isLight ? '#0E6245' : '#34D399',
                 border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
@@ -155,22 +207,22 @@ function LoginForm() {
           </Box>
 
           {/* Heading */}
-          <Box sx={{ mb: 3.5 }}>
+          <Box sx={{ mb: 2 }}>
             <Typography
-              variant="h4"
+              variant="h5"
               fontWeight={850}
               sx={{
-                fontSize: { xs: '1.65rem', sm: '1.95rem' },
-                letterSpacing: '-0.03em',
+                fontSize: { xs: '1.35rem', sm: '1.55rem' },
+                letterSpacing: '-0.025em',
                 color: 'text.primary',
                 lineHeight: 1.2,
-                mb: 1,
+                mb: 0.5,
               }}
             >
               Welcome back
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.88rem', lineHeight: 1.5 }}>
-              Sign in to manage groups, split expenses, and settle balances seamlessly with your circle.
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.82rem', lineHeight: 1.4 }}>
+              Sign in to manage groups, splits, and UPI settlements.
             </Typography>
           </Box>
 
@@ -179,9 +231,9 @@ function LoginForm() {
             <Alert
               icon={<CheckCircle fontSize="inherit" />}
               severity="success"
-              sx={{ mb: 2.5, borderRadius: 2.5, fontSize: '0.84rem' }}
+              sx={{ mb: 1.75, py: 0.25, px: 1.5, borderRadius: 2, fontSize: '0.78rem' }}
             >
-              Email verified successfully! You can now sign in to your workspace.
+              Email verified! You can now sign in.
             </Alert>
           )}
 
@@ -189,16 +241,16 @@ function LoginForm() {
             <Alert
               icon={<CheckCircle fontSize="inherit" />}
               severity="success"
-              sx={{ mb: 2.5, borderRadius: 2.5, fontSize: '0.84rem' }}
+              sx={{ mb: 1.75, py: 0.25, px: 1.5, borderRadius: 2, fontSize: '0.78rem' }}
             >
-              Password updated successfully! Please sign in with your new password.
+              Password updated! Please sign in with your new password.
             </Alert>
           )}
 
           {error && (
             <Alert
               severity="error"
-              sx={{ mb: 2.5, borderRadius: 2.5, fontSize: '0.84rem' }}
+              sx={{ mb: 1.75, py: 0.25, px: 1.5, borderRadius: 2, fontSize: '0.78rem' }}
             >
               {error}
             </Alert>
@@ -208,24 +260,22 @@ function LoginForm() {
           <Button
             fullWidth
             variant="outlined"
-            size="large"
+            size="small"
             startIcon={<GoogleIcon />}
             onClick={handleGoogleLogin}
             sx={{
-              py: 1.2,
-              borderRadius: 2.5,
-              borderColor: isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.14)',
-              bgcolor: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.03)',
+              py: 0.85,
+              borderRadius: 2,
+              borderColor: isLight ? 'rgba(0, 0, 0, 0.14)' : 'rgba(255, 255, 255, 0.15)',
+              bgcolor: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.02)',
               color: 'text.primary',
-              fontSize: '0.88rem',
+              fontSize: '0.84rem',
               fontWeight: 650,
               textTransform: 'none',
-              boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.04)' : 'none',
-              transition: 'all 0.2s ease',
+              transition: 'all 0.18s ease',
               '&:hover': {
                 borderColor: isLight ? '#0E6245' : '#10B981',
                 bgcolor: isLight ? 'rgba(14, 98, 69, 0.04)' : 'rgba(16, 185, 129, 0.08)',
-                transform: 'translateY(-1px)',
               },
             }}
           >
@@ -233,32 +283,33 @@ function LoginForm() {
           </Button>
 
           {/* Divider */}
-          <Box sx={{ display: 'flex', alignItems: 'center', my: 2.75 }}>
-            <Divider sx={{ flex: 1, borderColor: isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.09)' }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', my: 1.75 }}>
+            <Divider sx={{ flex: 1, borderColor: isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)' }} />
             <Typography
               variant="caption"
               sx={{
-                px: 2,
-                fontSize: '0.7rem',
+                px: 1.5,
+                fontSize: '0.68rem',
                 fontWeight: 700,
                 color: 'text.secondary',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.05em',
               }}
             >
-              OR CONTINUE WITH EMAIL
+              OR WITH EMAIL
             </Typography>
-            <Divider sx={{ flex: 1, borderColor: isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.09)' }} />
+            <Divider sx={{ flex: 1, borderColor: isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)' }} />
           </Box>
 
-          {/* Core Credentials Form */}
+          {/* Form */}
           <Box component="form" onSubmit={handleSubmit} noValidate>
-            <Stack spacing={2.25}>
+            <Stack spacing={1.5}>
               <Box>
-                <Typography variant="caption" fontWeight={650} color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+                <Typography variant="caption" fontWeight={650} color="text.secondary" sx={{ display: 'block', mb: 0.4, fontSize: '0.75rem' }}>
                   Email Address
                 </Typography>
                 <TextField
                   fullWidth
+                  size="small"
                   id="email"
                   name="email"
                   type="email"
@@ -271,23 +322,35 @@ function LoginForm() {
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
-                          <EmailOutlined fontSize="small" sx={{ color: 'text.secondary' }} />
+                          <EmailOutlined sx={{ fontSize: 17, color: 'text.secondary' }} />
                         </InputAdornment>
                       ),
                     },
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      borderRadius: 2.5,
-                      bgcolor: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.03)',
+                      borderRadius: 2,
+                      bgcolor: isLight ? '#FFFFFF' : '#0E1420',
+                      fontSize: '0.85rem',
+                      '& fieldset': {
+                        borderColor: isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)',
+                      },
+                    },
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: isLight
+                        ? '0 0 0 1000px #ffffff inset !important'
+                        : '0 0 0 1000px #0E1420 inset !important',
+                      WebkitTextFillColor: isLight ? '#0f172a !important' : '#ffffff !important',
+                      caretColor: isLight ? '#0f172a' : '#ffffff',
+                      borderRadius: 'inherit',
                     },
                   }}
                 />
               </Box>
 
               <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
-                  <Typography variant="caption" fontWeight={650} color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.4 }}>
+                  <Typography variant="caption" fontWeight={650} color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                     Password
                   </Typography>
                   <Typography
@@ -296,16 +359,17 @@ function LoginForm() {
                     sx={{
                       fontWeight: 700,
                       cursor: 'pointer',
-                      fontSize: '0.78rem',
+                      fontSize: '0.74rem',
                       '&:hover': { textDecoration: 'underline' },
                     }}
                     onClick={() => router.push('/auth/forgot-password')}
                   >
-                    Forgot password?
+                    Forgot?
                   </Typography>
                 </Box>
                 <TextField
                   fullWidth
+                  size="small"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   id="password"
@@ -317,7 +381,7 @@ function LoginForm() {
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockOutlined fontSize="small" sx={{ color: 'text.secondary' }} />
+                          <LockOutlined sx={{ fontSize: 17, color: 'text.secondary' }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
@@ -328,7 +392,7 @@ function LoginForm() {
                             size="small"
                             aria-label="toggle password visibility"
                           >
-                            {showPassword ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                            {showPassword ? <VisibilityOff sx={{ fontSize: 17 }} /> : <Visibility sx={{ fontSize: 17 }} />}
                           </IconButton>
                         </InputAdornment>
                       ),
@@ -336,8 +400,20 @@ function LoginForm() {
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      borderRadius: 2.5,
-                      bgcolor: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.03)',
+                      borderRadius: 2,
+                      bgcolor: isLight ? '#FFFFFF' : '#0E1420',
+                      fontSize: '0.85rem',
+                      '& fieldset': {
+                        borderColor: isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)',
+                      },
+                    },
+                    '& input:-webkit-autofill': {
+                      WebkitBoxShadow: isLight
+                        ? '0 0 0 1000px #ffffff inset !important'
+                        : '0 0 0 1000px #0E1420 inset !important',
+                      WebkitTextFillColor: isLight ? '#0f172a !important' : '#ffffff !important',
+                      caretColor: isLight ? '#0f172a' : '#ffffff',
+                      borderRadius: 'inherit',
                     },
                   }}
                 />
@@ -349,33 +425,32 @@ function LoginForm() {
                 type="submit"
                 variant="contained"
                 disabled={loading || !email || !password}
-                endIcon={!loading && <ArrowForward fontSize="small" />}
+                endIcon={!loading && <ArrowForward sx={{ fontSize: 17 }} />}
                 sx={{
-                  mt: 1,
-                  py: 1.35,
-                  borderRadius: 2.5,
-                  fontSize: '0.92rem',
+                  mt: 0.5,
+                  py: 1.05,
+                  borderRadius: 2,
+                  fontSize: '0.875rem',
                   fontWeight: 750,
                   textTransform: 'none',
                   background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                   color: '#FFFFFF',
-                  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)',
-                  transition: 'all 0.2s ease',
+                  boxShadow: '0 6px 20px rgba(16, 185, 129, 0.3)',
+                  transition: 'all 0.18s ease',
                   '&:hover': {
                     background: 'linear-gradient(135deg, #34D399 0%, #047857 100%)',
-                    boxShadow: '0 10px 28px rgba(16, 185, 129, 0.45)',
-                    transform: 'translateY(-1px)',
+                    boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
                   },
                 }}
               >
-                {loading ? <CircularProgress size={22} color="inherit" /> : 'Sign In to Workspace'}
+                {loading ? <CircularProgress size={20} color="inherit" /> : 'Sign In'}
               </Button>
             </Stack>
           </Box>
 
           {/* Switch to Signup */}
-          <Box sx={{ mt: 3.5, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+          <Box sx={{ mt: 2.25, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
               Don&apos;t have an account?{' '}
               <Typography
                 component="span"
@@ -391,32 +466,32 @@ function LoginForm() {
                   )
                 }
               >
-                Create one for free
+                Sign up free
               </Typography>
             </Typography>
           </Box>
 
-          {/* Compliance & Security Badge */}
+          {/* Security Note */}
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 1,
-              mt: 4,
-              pt: 3,
-              borderTop: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)'}`,
+              gap: 0.75,
+              mt: 2.5,
+              pt: 2,
+              borderTop: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)'}`,
             }}
           >
-            <SecurityOutlined sx={{ fontSize: 16, color: 'text.secondary', opacity: 0.7 }} />
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem', opacity: 0.8 }}>
-              256-bit encryption • Supabase Cloud Auth • ISO/SOC2 aligned
+            <SecurityOutlined sx={{ fontSize: 14, color: 'text.secondary', opacity: 0.7 }} />
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', opacity: 0.8 }}>
+              256-bit encryption • Supabase Cloud Auth
             </Typography>
           </Box>
         </Box>
       </Box>
 
-      {/* RIGHT SHOWCASE HERO PANEL (Desktop Big Tech SaaS Showcase) */}
+      {/* RIGHT HERO PANEL (Animated Rotating Customer Review Cards) */}
       <Box
         sx={{
           display: { xs: 'none', md: 'flex' },
@@ -425,7 +500,10 @@ function LoginForm() {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          p: { md: 6, lg: 8 },
+          p: { md: 5, lg: 7 },
+          height: '100%',
+          maxHeight: '100vh',
+          boxSizing: 'border-box',
           overflow: 'hidden',
           background: isLight
             ? 'linear-gradient(145deg, #F0FDF4 0%, #E2E8F0 50%, #ECFDF5 100%)'
@@ -433,163 +511,143 @@ function LoginForm() {
           borderLeft: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'}`,
         }}
       >
-        {/* Subtle Ambient Mesh Orbs */}
+        {/* Subtle Ambient Vignette */}
         <Box
           sx={{
             position: 'absolute',
-            width: 500,
-            height: 500,
+            width: 450,
+            height: 450,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
-            top: '-10%',
-            right: '-10%',
-            filter: 'blur(80px)',
-            pointerEvents: 'none',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            width: 400,
-            height: 400,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%)',
-            bottom: '-5%',
-            left: '-5%',
-            filter: 'blur(80px)',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)',
+            top: '-5%',
+            right: '-5%',
+            filter: 'blur(70px)',
             pointerEvents: 'none',
           }}
         />
 
-        {/* Content Container */}
-        <Box sx={{ width: '100%', maxWidth: 520, position: 'relative', zIndex: 1 }}>
-          {/* Live Product Card Mockup */}
+        {/* Carousel Container */}
+        <Box sx={{ width: '100%', maxWidth: 460, position: 'relative', zIndex: 1 }}>
+          {/* Active Review Card with Smooth CSS Transition */}
           <Paper
             elevation={0}
             sx={{
               p: 3.5,
-              borderRadius: 4,
-              bgcolor: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(14, 20, 32, 0.92)',
-              border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.1)'}`,
+              borderRadius: 3.5,
+              bgcolor: isLight ? '#FFFFFF' : '#0E1422',
+              border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.09)'}`,
               boxShadow: isLight
-                ? '0 24px 48px -12px rgba(15, 23, 42, 0.15)'
-                : '0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-              mb: 3.5,
+                ? '0 16px 36px -8px rgba(15, 23, 42, 0.1)'
+                : '0 24px 48px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+              minHeight: 220,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              position: 'relative',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            {/* Mockup Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 2.5,
-                    bgcolor: 'rgba(16, 185, 129, 0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.25rem',
-                  }}
-                >
-                  🌴
-                </Box>
-                <Box>
-                  <Typography variant="subtitle1" fontWeight={800} sx={{ lineHeight: 1.2 }}>
-                    Goa Beach Villa Retreat
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    4 members • Auto debt simplified
-                  </Typography>
-                </Box>
-              </Box>
-              <Chip
-                icon={<FlashOn sx={{ fontSize: '14px !important', color: '#10B981 !important' }} />}
-                label="UPI Settled"
-                size="small"
-                sx={{
-                  bgcolor: 'rgba(16, 185, 129, 0.12)',
-                  color: '#10B981',
-                  fontWeight: 750,
-                  fontSize: '0.72rem',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                }}
-              />
-            </Box>
-
-            {/* Split Metrics Row */}
-            <Box
+            <FormatQuote
               sx={{
-                p: 2,
-                borderRadius: 3,
-                bgcolor: isLight ? 'rgba(14, 98, 69, 0.04)' : 'rgba(255, 255, 255, 0.03)',
-                border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.12)' : 'rgba(255, 255, 255, 0.06)'}`,
-                mb: 2.5,
+                position: 'absolute',
+                top: 16,
+                right: 20,
+                fontSize: 36,
+                color: isLight ? 'rgba(14, 98, 69, 0.12)' : 'rgba(52, 211, 153, 0.15)',
               }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mb: 1 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                    Total Shared Spend
-                  </Typography>
-                  <Typography variant="h5" fontWeight={850} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
-                    ₹36,000
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 700 }}>
-                    You Get Back
-                  </Typography>
-                  <Typography variant="h6" fontWeight={850} sx={{ color: '#10B981' }}>
-                    +₹9,000
-                  </Typography>
-                </Box>
-              </Box>
+            />
 
-              {/* Progress Bar */}
-              <Box sx={{ width: '100%', height: 6, borderRadius: 3, bgcolor: 'rgba(16, 185, 129, 0.15)', overflow: 'hidden' }}>
-                <Box sx={{ width: '75%', height: '100%', bgcolor: '#10B981', borderRadius: 3 }} />
+            {/* Stars */}
+            <Box sx={{ mb: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#F59E0B' }}>
+                {'★★★★★'}
+                <Typography variant="caption" sx={{ ml: 1, fontWeight: 700, color: 'text.secondary', fontSize: '0.72rem' }}>
+                  5.0 Verified User
+                </Typography>
               </Box>
             </Box>
 
-            {/* Members Split Row */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 32, height: 32, fontSize: '0.75rem', fontWeight: 700 } }}>
-                <Avatar sx={{ bgcolor: '#0E6245' }}>VC</Avatar>
-                <Avatar sx={{ bgcolor: '#3B82F6' }}>PS</Avatar>
-                <Avatar sx={{ bgcolor: '#F59E0B' }}>AK</Avatar>
-                <Avatar sx={{ bgcolor: '#8B5CF6' }}>RM</Avatar>
-              </AvatarGroup>
-              <Typography variant="caption" color="text.secondary" fontWeight={650}>
-                3 of 4 debts cleared via QR
-              </Typography>
-            </Box>
-          </Paper>
-
-          {/* Social Proof & Testimonial */}
-          <Box sx={{ px: 1 }}>
-            <Box sx={{ display: 'flex', gap: 0.5, mb: 1.5, color: '#F59E0B' }}>
-              {'★★★★★'}
-              <Typography variant="caption" sx={{ ml: 1, fontWeight: 700, color: 'text.secondary' }}>
-                4.9/5 from 1,200+ groups
-              </Typography>
-            </Box>
+            {/* Quote Body */}
             <Typography
               variant="body1"
               sx={{
                 fontWeight: 600,
                 color: 'text.primary',
-                fontSize: '1rem',
-                lineHeight: 1.5,
-                mb: 1.5,
-                fontStyle: 'italic',
+                fontSize: '0.98rem',
+                lineHeight: 1.55,
+                mb: 2.5,
+                fontStyle: 'normal',
               }}
             >
-              &ldquo;FairShare completely eliminated our end-of-month roommate awkwardness. Settlements happen in 10 seconds through direct UPI.&rdquo;
+              &ldquo;{currentReview.quote}&rdquo;
             </Typography>
-            <Typography variant="caption" color="text.secondary" fontWeight={700}>
-              Alex Rivera • Lead Product Engineer
-            </Typography>
+
+            {/* Reviewer Details */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar
+                sx={{
+                  width: 38,
+                  height: 38,
+                  bgcolor: currentReview.color,
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                }}
+              >
+                {currentReview.avatar}
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle2" fontWeight={750} sx={{ fontSize: '0.88rem', lineHeight: 1.2 }}>
+                  {currentReview.author}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
+                  {currentReview.role} • {currentReview.location}
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+
+          {/* Carousel Pagination Controls */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2.5, px: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {REVIEWS.map((_, i) => (
+                <Box
+                  key={i}
+                  onClick={() => setReviewIdx(i)}
+                  sx={{
+                    width: i === reviewIdx ? 24 : 8,
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: i === reviewIdx ? '#10B981' : isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)',
+                    cursor: 'pointer',
+                    transition: 'all 0.25s ease',
+                  }}
+                />
+              ))}
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <IconButton
+                size="small"
+                onClick={() => setReviewIdx((prev) => (prev - 1 + REVIEWS.length) % REVIEWS.length)}
+                sx={{
+                  bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
+                  p: 0.75,
+                }}
+              >
+                <ArrowBackIosNew sx={{ fontSize: 13 }} />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => setReviewIdx((prev) => (prev + 1) % REVIEWS.length)}
+                sx={{
+                  bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
+                  p: 0.75,
+                }}
+              >
+                <ArrowForwardIos sx={{ fontSize: 13 }} />
+              </IconButton>
+            </Box>
           </Box>
         </Box>
       </Box>

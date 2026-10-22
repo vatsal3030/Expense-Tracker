@@ -125,16 +125,17 @@ export default function SplitwiseExpenseItem({
       stanceColor = isDark ? '#34D399' : '#059669';
       stanceDisplayAmount = `+${formatAmount(othersOwed)}`;
     } else {
+      // Personal expense: Outflow spent by the user, not a receivable
       stance = 'paid';
       stanceLabel = 'you paid';
-      stanceColor = isDark ? '#34D399' : '#0E6245';
-      stanceDisplayAmount = formatAmount(totalAmount);
+      stanceColor = isDark ? '#F87171' : '#DC2626';
+      stanceDisplayAmount = `-${formatAmount(totalAmount)}`;
     }
   } else if (myShareAmount > 0.01) {
     stance = 'borrowed';
-    stanceLabel = 'you borrowed';
-    stanceColor = '#EF4444';
-    stanceDisplayAmount = formatAmount(myShareAmount);
+    stanceLabel = 'you owe';
+    stanceColor = isDark ? '#F87171' : '#DC2626';
+    stanceDisplayAmount = `-${formatAmount(myShareAmount)}`;
   } else {
     stance = 'not_involved';
     stanceLabel = 'not involved';
