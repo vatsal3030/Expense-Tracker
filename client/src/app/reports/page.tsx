@@ -163,6 +163,13 @@ export default function ReportsPage() {
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{
+                    colorScheme: isLight ? 'light' : 'dark',
+                    '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                      filter: isLight ? 'none' : 'invert(1) brightness(1.2)',
+                      cursor: 'pointer',
+                    },
+                  }}
                 />
               </Grid>
               <Grid size={{ xs: 6, sm: 3 }}>
@@ -171,6 +178,13 @@ export default function ReportsPage() {
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{
+                    colorScheme: isLight ? 'light' : 'dark',
+                    '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                      filter: isLight ? 'none' : 'invert(1) brightness(1.2)',
+                      cursor: 'pointer',
+                    },
+                  }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
@@ -239,117 +253,143 @@ export default function ReportsPage() {
               ))}
             </Grid>
 
-            {/* Desktop Two-Column Layout: Breakdown + Details */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
-              {/* Category Breakdown */}
-              <Grid size={{ xs: 12, lg: 5 }}>
-                <Card
-                  className="glass-secondary glass-specular-top"
-                  sx={{
-                    borderRadius: 3.5,
-                    height: '100%',
-                    boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
-                  }}
-                >
-                  <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
-                    <Typography variant="h6" fontWeight={800} sx={{ mb: 2.5 }}>Category Breakdown</Typography>
-                    <Stack spacing={1.5}>
-                      {categoryEntries.map(([cat, amt]) => {
-                        const amount = amt as number;
-                        const pct = maxCategoryAmount > 0 ? (amount / summary.totalAmount) * 100 : 0;
-                        return (
-                          <Box key={cat}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography fontSize="1rem">{CATEGORY_EMOJI[cat] || '📋'}</Typography>
-                                <Typography variant="body2" fontWeight={600} sx={{ textTransform: 'capitalize' }}>
-                                  {cat.toLowerCase()}
-                                </Typography>
-                              </Box>
-                              <Typography variant="body2" fontWeight={700}>
-                                {formatCurrency(amount)} ({pct.toFixed(1)}%)
+            {/* Category Breakdown Card */}
+            <Card
+              className="glass-secondary glass-specular-top"
+              sx={{
+                borderRadius: 3.5,
+                mb: 3,
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+              }}
+            >
+              <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
+                  <Typography variant="h6" fontWeight={800}>Category Breakdown</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {categoryEntries.length} active {categoryEntries.length === 1 ? 'category' : 'categories'}
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={2.5}>
+                  {categoryEntries.map(([cat, amt]) => {
+                    const amount = amt as number;
+                    const pct = maxCategoryAmount > 0 ? (amount / summary.totalAmount) * 100 : 0;
+                    return (
+                      <Grid size={{ xs: 12, sm: 6, md: 4 }} key={cat}>
+                        <Box sx={{ p: 1.5, borderRadius: 2.5, bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)', border: `1px solid ${theme.palette.divider}` }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography fontSize="1.1rem">{CATEGORY_EMOJI[cat] || '📋'}</Typography>
+                              <Typography variant="body2" fontWeight={700} sx={{ textTransform: 'capitalize' }}>
+                                {cat.toLowerCase()}
                               </Typography>
                             </Box>
-                            <LinearProgress
-                              variant="determinate"
-                              value={maxCategoryAmount > 0 ? (amount / maxCategoryAmount) * 100 : 0}
+                            <Typography variant="body2" fontWeight={800} sx={{ color: isLight ? '#0E6245' : '#34D399' }}>
+                              {formatCurrency(amount)}
+                            </Typography>
+                          </Box>
+                          <LinearProgress
+                            variant="determinate"
+                            value={maxCategoryAmount > 0 ? (amount / maxCategoryAmount) * 100 : 0}
+                            sx={{
+                              height: 6, borderRadius: 3,
+                              bgcolor: alpha(isLight ? '#0E6245' : '#10B981', 0.1),
+                              '& .MuiLinearProgress-bar': {
+                                borderRadius: 3,
+                                bgcolor: isLight ? '#0E6245' : '#10B981',
+                              },
+                            }}
+                          />
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, textAlign: 'right', fontSize: '0.7rem' }}>
+                            {pct.toFixed(1)}% of total
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </CardContent>
+            </Card>
+
+            {/* Full-Width Spacious Expense Ledger */}
+            <Card
+              className="glass-secondary glass-specular-top"
+              sx={{
+                borderRadius: 3.5,
+                boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                overflow: 'hidden',
+              }}
+            >
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, flexWrap: 'wrap', gap: 1 }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight={800}>Expense Details Ledger</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Comprehensive transaction history across selected period
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={`${report.expenses.length} total entries`}
+                    size="small"
+                    sx={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(52, 211, 153, 0.12)',
+                      color: isLight ? '#0E6245' : '#34D399',
+                      border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
+                    }}
+                  />
+                </Box>
+
+                <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent', width: '100%' }}>
+                  <Table size="medium">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)' }}>
+                        <TableCell sx={{ fontWeight: 750, fontSize: '0.8rem', py: 1.5 }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: 750, fontSize: '0.8rem', py: 1.5 }}>Description</TableCell>
+                        <TableCell sx={{ fontWeight: 750, fontSize: '0.8rem', py: 1.5 }}>Category</TableCell>
+                        <TableCell sx={{ fontWeight: 750, fontSize: '0.8rem', py: 1.5, display: { xs: 'none', md: 'table-cell' } }}>Scope / Group</TableCell>
+                        <TableCell sx={{ fontWeight: 750, fontSize: '0.8rem', py: 1.5, display: { xs: 'none', sm: 'table-cell' } }}>Paid By</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 750, fontSize: '0.8rem', py: 1.5 }}>Amount</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {report.expenses.map((exp: any, idx: number) => (
+                        <TableRow key={idx} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                          <TableCell sx={{ fontSize: '0.85rem', fontWeight: 600, color: 'text.secondary' }}>
+                            {new Date(exp.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.88rem', fontWeight: 650, color: 'text.primary' }}>
+                            {exp.description}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.85rem' }}>
+                            <Chip
+                              size="small"
+                              label={`${CATEGORY_EMOJI[exp.category] || '📋'} ${exp.category?.toLowerCase()}`}
                               sx={{
-                                height: 6, borderRadius: 3,
-                                bgcolor: alpha(isLight ? '#0E6245' : '#10B981', 0.1),
-                                '& .MuiLinearProgress-bar': {
-                                  borderRadius: 3,
-                                  bgcolor: isLight ? '#0E6245' : '#10B981',
-                                },
+                                fontSize: '0.74rem',
+                                fontWeight: 600,
+                                textTransform: 'capitalize',
+                                bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
                               }}
                             />
-                          </Box>
-                        );
-                      })}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Expense Table */}
-              <Grid size={{ xs: 12, lg: 7 }}>
-                <Card
-                  className="glass-secondary glass-specular-top"
-                  sx={{
-                    borderRadius: 3.5,
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
-                  }}
-                >
-                  <CardContent sx={{ p: { xs: 1.5, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" fontWeight={800}>Expense Details</Typography>
-                      <Chip
-                        label={`${report.expenses.length} entries`}
-                        size="small"
-                        sx={{ fontSize: '0.7rem', fontWeight: 600 }}
-                      />
-                    </Box>
-                    <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent', flex: 1, maxHeight: 420 }}>
-                      <Table size="small" stickyHeader>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Date</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Description</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Category</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Amount</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', display: { xs: 'none', sm: 'table-cell' } }}>Paid By</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {report.expenses.slice(0, 50).map((exp: any, idx: number) => (
-                            <TableRow key={idx} hover>
-                              <TableCell sx={{ fontSize: '0.8rem' }}>
-                                {new Date(exp.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                              </TableCell>
-                              <TableCell sx={{ fontSize: '0.8rem', fontWeight: 500 }}>{exp.description}</TableCell>
-                              <TableCell sx={{ fontSize: '0.8rem' }}>
-                                {CATEGORY_EMOJI[exp.category]} {exp.category?.toLowerCase()}
-                              </TableCell>
-                              <TableCell align="right" sx={{ fontSize: '0.8rem', fontWeight: 700, color: isLight ? '#0E6245' : '#34D399' }}>
-                                {formatCurrency(exp.amount)}
-                              </TableCell>
-                              <TableCell sx={{ fontSize: '0.8rem', display: { xs: 'none', sm: 'table-cell' } }}>{exp.paidBy}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                    {report.expenses.length > 50 && (
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
-                        Showing first 50 of {report.expenses.length} entries. Download CSV for full data.
-                      </Typography>
-                    )}
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.85rem', color: 'text.secondary', display: { xs: 'none', md: 'table-cell' } }}>
+                            {exp.group || 'Personal'}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.85rem', fontWeight: 550, display: { xs: 'none', sm: 'table-cell' } }}>
+                            {exp.paidBy}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.92rem', fontWeight: 800, color: isLight ? '#0E6245' : '#34D399' }}>
+                            {formatCurrency(exp.amount)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
           </>
         ) : (
           <Card className="glass-secondary" sx={{ borderRadius: 3.5 }}>

@@ -53,11 +53,19 @@ export default function SettingsPage() {
   // Core Profile Form
   const [form, setForm] = useState({
     name: profile?.name || '',
+    username: profile?.username || '',
     phone: profile?.phone || '',
     defaultCurrency: profile?.defaultCurrency || 'INR',
     timezone: profile?.timezone || 'Asia/Kolkata',
     avatarUrl: profile?.avatarUrl || '',
   });
+
+  const [usernameStatus, setUsernameStatus] = useState<{
+    checking: boolean;
+    available?: boolean;
+    isCurrent?: boolean;
+    message?: string;
+  }>({ checking: false });
 
   // Extended User Preferences
   const [preferences, setPreferences] = useState({
@@ -150,6 +158,7 @@ export default function SettingsPage() {
       hasLoadedProfileRef.current = true;
       setForm({
         name: profile.name || '',
+        username: profile.username || '',
         phone: profile.phone || '',
         defaultCurrency: profile.defaultCurrency || 'INR',
         timezone: profile.timezone || 'Asia/Kolkata',
@@ -164,6 +173,46 @@ export default function SettingsPage() {
       }
     }
   }, [profile]);
+
+  // Debounced Username Availability Check
+  useEffect(() => {
+    const raw = form.username?.trim().toLowerCase();
+    if (!raw) {
+      setUsernameStatus({ checking: false, message: 'Username cannot be blank' });
+      return;
+    }
+    if (profile?.username && raw === profile.username.toLowerCase()) {
+      setUsernameStatus({ checking: false, available: true, isCurrent: true, message: 'Current handle' });
+      return;
+    }
+    if (raw.length < 3 || raw.length > 30) {
+      setUsernameStatus({ checking: false, available: false, message: 'Must be 3-30 characters' });
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(raw)) {
+      setUsernameStatus({ checking: false, available: false, message: 'Letters, numbers & underscore only' });
+      return;
+    }
+
+    setUsernameStatus({ checking: true });
+    const timer = setTimeout(async () => {
+      try {
+        const res = await userApi.checkUsername(raw);
+        if (res.data?.success && res.data?.data) {
+          setUsernameStatus({
+            checking: false,
+            available: res.data.data.available,
+            isCurrent: res.data.data.isCurrent,
+            message: res.data.data.message,
+          });
+        }
+      } catch (err: any) {
+        setUsernameStatus({ checking: false, available: false, message: 'Failed to verify availability' });
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [form.username, profile?.username]);
 
   // Resend OTP countdown
   useEffect(() => {
@@ -229,11 +278,17 @@ export default function SettingsPage() {
   };
 
   const handleSaveAll = async () => {
+    if (usernameStatus.available === false && !usernameStatus.isCurrent) {
+      alert(usernameStatus.message || 'Please choose a valid and available username.');
+      return;
+    }
+
     setSaving(true);
     try {
       // 1. Save core profile in backend Postgres
       await userApi.updateProfile({
         name: form.name,
+        username: form.username?.trim().toLowerCase() || undefined,
         phone: form.phone,
         defaultCurrency: form.defaultCurrency,
         timezone: form.timezone,
@@ -450,6 +505,21 @@ export default function SettingsPage() {
                   <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em', color: 'text.primary', fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>
                     {form.name || 'User'}
                   </Typography>
+                  {(form.username || profile?.username) && (
+                    <Chip
+                      label={`@${form.username || profile?.username}`}
+                      size="small"
+                      sx={{
+                        height: 22,
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        fontFamily: 'monospace',
+                        bgcolor: 'rgba(52, 211, 153, 0.1)',
+                        color: '#34D399',
+                        border: '1px solid rgba(52, 211, 153, 0.25)',
+                      }}
+                    />
+                  )}
                   {isPhoneVerified && (
                     <Tooltip title="Phone Number Verified via OTP">
                       <CheckCircle sx={{ color: '#34D399', fontSize: '1.1rem' }} />
@@ -587,6 +657,87 @@ export default function SettingsPage() {
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     slotProps={{ inputLabel: { shrink: true } }}
                   />
+
+                  {/* Unique Username Handle */}
+                  <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+                      <Typography variant="caption" fontWeight={650} color="text.secondary">
+                        Unique Username Handle
+                      </Typography>
+                      {usernameStatus.checking ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <CircularProgress size={12} color="inherit" />
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
+                            Checking...
+                          </Typography>
+                        </Box>
+                      ) : usernameStatus.isCurrent ? (
+                        <Chip
+                          label="Current handle ✓"
+                          size="small"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.7rem',
+                            bgcolor: 'rgba(52, 211, 153, 0.12)',
+                            color: '#34D399',
+                            borderRadius: 1.5,
+                            border: '1px solid rgba(52, 211, 153, 0.3)',
+                          }}
+                        />
+                      ) : usernameStatus.available ? (
+                        <Chip
+                          icon={<CheckCircle fontSize="small" sx={{ color: '#34D399 !important', fontSize: '14px !important' }} />}
+                          label="Available ✓"
+                          size="small"
+                          sx={{
+                            fontWeight: 750,
+                            fontSize: '0.7rem',
+                            bgcolor: 'rgba(16, 185, 129, 0.15)',
+                            color: '#34D399',
+                            borderRadius: 1.5,
+                            border: '1px solid rgba(52, 211, 153, 0.3)',
+                          }}
+                        />
+                      ) : (
+                        <Chip
+                          icon={<WarningAmber fontSize="small" sx={{ color: '#EF4444 !important', fontSize: '14px !important' }} />}
+                          label={usernameStatus.message || 'Unavailable'}
+                          size="small"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.7rem',
+                            bgcolor: 'rgba(239, 68, 68, 0.12)',
+                            color: '#EF4444',
+                            borderRadius: 1.5,
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                          }}
+                        />
+                      )}
+                    </Box>
+                    <TextField
+                      fullWidth
+                      placeholder="e.g. alex_chen"
+                      value={form.username}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
+                        })
+                      }
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Typography sx={{ fontWeight: 800, color: 'text.secondary', fontSize: '0.95rem' }}>
+                                @
+                              </Typography>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                      helperText="Your unique handle. Friends can search, mention, and split expenses with you using @username."
+                    />
+                  </Box>
 
                   <TextField
                     fullWidth

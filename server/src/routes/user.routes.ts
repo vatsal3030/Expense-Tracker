@@ -53,9 +53,115 @@ userRouter.get('/profile', async (req: AuthenticatedRequest, res: Response): Pro
   }
 });
 
+const RESERVED_USERNAMES = new Set([
+  'admin', 'administrator', 'root', 'support', 'help', 'fairshare',
+  'api', 'auth', 'system', 'null', 'undefined', 'mod', 'staff',
+  'official', 'team', 'security', 'billing', 'terms', 'privacy',
+  'settings', 'dashboard', 'expenses', 'groups', 'friends', 'reports', 'notifications'
+]);
+
+// GET /api/users/check-username?username=xyz — Check username format & availability
+userRouter.get('/check-username', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const raw = (req.query.username as string)?.trim().toLowerCase();
+
+    if (!raw) {
+      res.status(400).json({ success: false, error: 'Username query parameter is required.' });
+      return;
+    }
+
+    if (raw.length < 3 || raw.length > 30) {
+      res.json({
+        success: true,
+        data: {
+          available: false,
+          isCurrent: false,
+          message: 'Username must be between 3 and 30 characters.',
+        },
+      });
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(raw)) {
+      res.json({
+        success: true,
+        data: {
+          available: false,
+          isCurrent: false,
+          message: 'Username can only contain letters, numbers, and underscores.',
+        },
+      });
+      return;
+    }
+
+    if (RESERVED_USERNAMES.has(raw)) {
+      res.json({
+        success: true,
+        data: {
+          available: false,
+          isCurrent: false,
+          message: 'This username is reserved by the platform.',
+        },
+      });
+      return;
+    }
+
+    // Check if the current user already has this username
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { username: true },
+    });
+
+    if (currentUser?.username?.toLowerCase() === raw) {
+      res.json({
+        success: true,
+        data: {
+          available: true,
+          isCurrent: true,
+          message: 'This is your current username.',
+        },
+      });
+      return;
+    }
+
+    // Check if another user has this username
+    const existing = await prisma.user.findFirst({
+      where: {
+        username: { equals: raw, mode: 'insensitive' },
+        id: { not: req.user!.id },
+      },
+    });
+
+    if (existing) {
+      res.json({
+        success: true,
+        data: {
+          available: false,
+          isCurrent: false,
+          message: 'Username is already taken by another user.',
+        },
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        available: true,
+        isCurrent: false,
+        message: 'Username is available!',
+      },
+    });
+  } catch (error: any) {
+    console.error('Check username error:', error);
+    res.status(500).json({ success: false, error: 'Failed to verify username.' });
+  }
+});
+
 // PUT /api/users/profile — Update user profile
 const updateProfileSchema = z.object({
   name: z.string().min(2).max(100).optional(),
+  username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores').optional(),
   phone: z.string().max(20).nullable().optional(),
   defaultCurrency: z.string().length(3).optional(),
   timezone: z.string().optional(),
@@ -67,9 +173,33 @@ userRouter.put(
   validate({ body: updateProfileSchema }),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
+      const dataToUpdate: any = { ...req.body };
+
+      if (dataToUpdate.username) {
+        const normalized = dataToUpdate.username.trim().toLowerCase();
+        if (RESERVED_USERNAMES.has(normalized)) {
+          res.status(400).json({ success: false, error: 'This username is reserved.' });
+          return;
+        }
+
+        const existing = await prisma.user.findFirst({
+          where: {
+            username: { equals: normalized, mode: 'insensitive' },
+            id: { not: req.user!.id },
+          },
+        });
+
+        if (existing) {
+          res.status(409).json({ success: false, error: 'Username is already taken.' });
+          return;
+        }
+
+        dataToUpdate.username = normalized;
+      }
+
       const updated = await prisma.user.update({
         where: { id: req.user!.id },
-        data: req.body,
+        data: dataToUpdate,
       });
 
       res.json({

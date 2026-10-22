@@ -145,6 +145,7 @@ export const friendApi = {
 export const userApi = {
   getProfile: () => api.get('/users/profile'),
   updateProfile: (data: any) => api.put('/users/profile', data),
+  checkUsername: (username: string) => api.get('/users/check-username', { params: { username } }),
   search: (query: string) => api.get('/users/search', { params: { q: query } }),
   getPublicProfile: (id: string) => api.get(`/users/${id}/public-profile`),
 };

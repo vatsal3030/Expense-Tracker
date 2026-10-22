@@ -59,7 +59,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', position: 'relative', overflowX: 'hidden' }}>
       {/* Sophisticated Apple FinTech Atmospheric Canvas */}
       <Box
-        aria-hidden="true"
+        role="presentation"
         sx={{
           position: 'fixed',
           inset: 0,

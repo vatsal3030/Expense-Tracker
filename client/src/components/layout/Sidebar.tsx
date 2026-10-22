@@ -166,7 +166,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
     >
       {/* Specular Edge Line */}
       <Box
-        aria-hidden="true"
+        role="presentation"
         sx={{
           position: 'absolute',
           top: 0,
@@ -477,75 +477,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
           })}
         </List>
 
-        {/* User Card */}
-        {(!collapsed || isMobile) && (
-          <Box
-            component={Link}
-            href="/settings"
-            prefetch={true}
-            onClick={() => { if (isMobile) onClose(); }}
-            sx={{
-              mt: 1,
-              p: 1.25,
-              borderRadius: 3,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.25,
-              textDecoration: 'none',
-              bgcolor: isLight ? 'rgba(255, 255, 255, 0.65)' : 'rgba(20, 26, 38, 0.45)',
-              backdropFilter: 'blur(16px)',
-              border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.10)'}`,
-              boxShadow: isLight
-                ? 'inset 0 1px 1.5px rgba(255, 255, 255, 0.95), 0 2px 8px rgba(0, 0, 0, 0.03)'
-                : 'inset 0 1px 1.5px rgba(255, 255, 255, 0.14), 0 4px 16px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-              '&:hover': {
-                borderColor: isLight ? '#0E6245' : 'rgba(16, 185, 129, 0.35)',
-                bgcolor: isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(26, 34, 48, 0.60)',
-              },
-            }}
-          >
-            <Avatar
-              src={profile?.avatarUrl || undefined}
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: isLight ? '#0E6245' : '#10B981',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                border: `1.5px solid ${isLight ? 'rgba(255, 255, 255, 0.8)' : 'rgba(16, 185, 129, 0.4)'}`,
-              }}
-            >
-              {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </Avatar>
-            <Box sx={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 600,
-                  fontSize: '0.8rem',
-                  color: 'text.primary',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {profile?.name || 'User'}
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: isLight ? '#0E6245' : '#34D399',
-                  fontWeight: 600,
-                  fontSize: '0.675rem',
-                  display: 'block',
-                }}
-              >
-                Personal Account
-              </Typography>
-            </Box>
-          </Box>
-        )}
+
       </Box>
     </Box>
   );

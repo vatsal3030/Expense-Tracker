@@ -89,7 +89,11 @@ exportRouter.get('/personal', async (req: AuthenticatedRequest, res: Response): 
 
     const dateFilter: any = {};
     if (from) dateFilter.gte = new Date(from as string);
-    if (to) dateFilter.lte = new Date(to as string);
+    if (to) {
+      const toDate = new Date(to as string);
+      toDate.setHours(23, 59, 59, 999);
+      dateFilter.lte = toDate;
+    }
 
     const expenses = await prisma.expense.findMany({
       where: {
@@ -97,6 +101,7 @@ exportRouter.get('/personal', async (req: AuthenticatedRequest, res: Response): 
         OR: [
           { paidById: req.user!.id },
           { createdById: req.user!.id },
+          { shares: { some: { userId: req.user!.id } } },
         ],
         ...(Object.keys(dateFilter).length > 0 ? { date: dateFilter } : {}),
       },
@@ -145,7 +150,11 @@ exportRouter.get('/report', async (req: AuthenticatedRequest, res: Response): Pr
 
     const dateFilter: any = {};
     if (from) dateFilter.gte = new Date(from as string);
-    if (to) dateFilter.lte = new Date(to as string);
+    if (to) {
+      const toDate = new Date(to as string);
+      toDate.setHours(23, 59, 59, 999);
+      dateFilter.lte = toDate;
+    }
 
     const whereClause: any = {
       isDeleted: false,
@@ -158,6 +167,7 @@ exportRouter.get('/report', async (req: AuthenticatedRequest, res: Response): Pr
       whereClause.OR = [
         { paidById: req.user!.id },
         { createdById: req.user!.id },
+        { shares: { some: { userId: req.user!.id } } },
       ];
     }
 

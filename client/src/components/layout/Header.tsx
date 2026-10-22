@@ -34,6 +34,7 @@ import {
   Warning as WarningIcon,
   DoneAll as DoneAllIcon,
   AdminPanelSettings as AdminIcon,
+  Assessment as AssessmentIcon,
 } from '@mui/icons-material';
 import { Chip, Button } from '@mui/material';
 import { useAuth } from '@/providers/AuthProvider';
@@ -238,7 +239,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
     >
       {/* Hairline Specular Edge */}
       <Box
-        aria-hidden="true"
+        role="presentation"
         sx={{
           position: 'absolute',
           top: 0,
@@ -294,12 +295,13 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             display: { xs: 'none', sm: 'flex' },
             alignItems: 'center',
             bgcolor: isLight ? 'rgba(255, 255, 255, 0.65)' : 'rgba(26, 34, 48, 0.45)',
-            backdropFilter: 'blur(14px)',
+            backdropFilter: 'blur(10px)',
             borderRadius: 9999,
             px: 2,
             py: 0.7,
-            flex: 1,
-            maxWidth: 480,
+            flexShrink: 0,
+            width: { sm: 220, md: 320, lg: 380 },
+            maxWidth: 440,
             cursor: 'pointer',
             userSelect: 'none',
             border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.10)'}`,
@@ -314,9 +316,21 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             },
           }}
         >
-          <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
-          <Typography sx={{ flex: 1, fontSize: '0.85rem', color: 'text.secondary', fontWeight: 500 }}>
-            Search expenses, groups, friends...
+          <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 19, flexShrink: 0 }} />
+          <Typography
+            noWrap
+            sx={{
+              flex: 1,
+              fontSize: '0.85rem',
+              color: 'text.secondary',
+              fontWeight: 500,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              mr: 1,
+            }}
+          >
+            Search expenses, groups...
           </Typography>
           <Typography
             variant="caption"
@@ -329,13 +343,14 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               borderRadius: 1.5,
               fontSize: '0.7rem',
               fontWeight: 600,
+              flexShrink: 0,
             }}
           >
             ⌘K
           </Typography>
         </Box>
 
-        <Box sx={{ flex: 1 }} />
+        <Box sx={{ flex: 1, minWidth: 16 }} />
 
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
@@ -474,7 +489,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           </Tooltip>
         </Box>
 
-        {/* Profile Menu */}
+        {/* Redesigned Big Tech SaaS Profile Menu */}
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -483,60 +498,182 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           slotProps={{
             paper: {
-              className: 'glass-deep',
+              elevation: 0,
               sx: {
                 mt: 1.5,
-                minWidth: 230,
+                minWidth: 270,
                 borderRadius: 3.5,
-                p: 0.75,
-                border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.12)'}`,
+                p: 1,
+                bgcolor: isLight ? '#FFFFFF' : '#0E131F',
+                border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.09)'}`,
+                boxShadow: isLight
+                  ? '0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.05)'
+                  : '0 24px 48px -6px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06)',
+                overflow: 'hidden',
               },
             },
           }}
         >
-          <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography variant="subtitle2" fontWeight={700}>
-              {profile?.name || 'User'}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {profile?.email || ''}
-            </Typography>
+          {/* Account Profile Header */}
+          <Box sx={{ p: 1.5, pb: 1.25 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <Avatar
+                src={profile?.avatarUrl || undefined}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: isLight ? '#0E6245' : theme.palette.primary.main,
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  border: `2px solid ${isLight ? '#0E6245' : '#10b981'}`,
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                }}
+              >
+                {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </Avatar>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography variant="subtitle2" fontWeight={750} noWrap sx={{ fontSize: '0.9rem', color: 'text.primary', lineHeight: 1.2 }}>
+                  {profile?.name || 'User'}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  noWrap
+                  sx={{
+                    display: 'block',
+                    fontFamily: 'monospace',
+                    fontWeight: 700,
+                    fontSize: '0.72rem',
+                    color: isLight ? '#0E6245' : '#34D399',
+                    mt: 0.25,
+                  }}
+                >
+                  @{profile?.username || profile?.email?.split('@')[0] || 'member'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', fontSize: '0.72rem', opacity: 0.85 }}>
+                  {profile?.email || ''}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Plan / Workspace Status Chip */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                px: 1.25,
+                py: 0.6,
+                borderRadius: 2,
+                bgcolor: isLight ? 'rgba(14, 98, 69, 0.06)' : 'rgba(16, 185, 129, 0.08)',
+                border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(52, 211, 153, 0.2)'}`,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
+                <Typography variant="caption" fontWeight={700} sx={{ fontSize: '0.68rem', color: isLight ? '#0E6245' : '#34D399' }}>
+                  Personal Account
+                </Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', fontWeight: 600 }}>
+                FairShare Free
+              </Typography>
+            </Box>
           </Box>
+
           <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
+
           <MenuItem
             onClick={() => { handleMenuClose(); router.push('/settings'); }}
-            sx={{ borderRadius: 2, my: 0.25, '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' } }}
+            sx={{
+              borderRadius: 2,
+              my: 0.35,
+              py: 0.85,
+              px: 1.5,
+              '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+            }}
           >
             <ListItemIcon><PersonIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
-            <ListItemText primary="Profile" />
+            <ListItemText
+              primary="Profile & Identity"
+              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
+            />
           </MenuItem>
+
           <MenuItem
             onClick={() => { handleMenuClose(); router.push('/settings'); }}
-            sx={{ borderRadius: 2, my: 0.25, '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' } }}
+            sx={{
+              borderRadius: 2,
+              my: 0.35,
+              py: 0.85,
+              px: 1.5,
+              '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+            }}
           >
             <ListItemIcon><SettingsIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
-            <ListItemText primary="Settings" />
+            <ListItemText
+              primary="Account Settings"
+              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
+            />
           </MenuItem>
+
+          <MenuItem
+            onClick={() => { handleMenuClose(); router.push('/reports'); }}
+            sx={{
+              borderRadius: 2,
+              my: 0.35,
+              py: 0.85,
+              px: 1.5,
+              '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+            }}
+          >
+            <ListItemIcon><AssessmentIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
+            <ListItemText
+              primary="Reports & Exports"
+              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
+            />
+          </MenuItem>
+
           {(profile as any)?.isAdmin && (
             <MenuItem
               onClick={() => { handleMenuClose(); router.push('/admin'); }}
-              sx={{ borderRadius: 2, my: 0.25, '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' } }}
+              sx={{
+                borderRadius: 2,
+                my: 0.35,
+                py: 0.85,
+                px: 1.5,
+                '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+              }}
             >
               <ListItemIcon><AdminIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
-              <ListItemText primary="Admin Portal" />
+              <ListItemText
+                primary="Admin Console"
+                primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
+              />
             </MenuItem>
           )}
+
           <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
+
           <MenuItem
             onClick={handleLogout}
-            sx={{ borderRadius: 2, my: 0.25, color: 'error.main', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+            sx={{
+              borderRadius: 2,
+              my: 0.35,
+              py: 0.85,
+              px: 1.5,
+              color: 'error.main',
+              '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1) },
+            }}
           >
             <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
-            <ListItemText primary="Sign Out" />
+            <ListItemText
+              primary="Sign Out"
+              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 700 }}
+            />
           </MenuItem>
         </Menu>
 
-        {/* Notifications Dropdown (Deep Glass) */}
+        {/* Notifications Dropdown (Crisp Solid Surface - No Blur Distortion) */}
         <Menu
           anchorEl={notifAnchorEl}
           open={Boolean(notifAnchorEl)}
@@ -545,13 +682,17 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           slotProps={{
             paper: {
-              className: 'glass-deep',
+              elevation: 0,
               sx: {
                 mt: 1.5,
                 width: { xs: 320, sm: 380 },
                 maxHeight: 480,
                 borderRadius: 3.5,
-                border: `1px solid ${isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.12)'}`,
+                bgcolor: isLight ? '#FFFFFF' : '#0E131F',
+                border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.09)'}`,
+                boxShadow: isLight
+                  ? '0 16px 36px -4px rgba(15, 23, 42, 0.12)'
+                  : '0 24px 48px -6px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06)',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
