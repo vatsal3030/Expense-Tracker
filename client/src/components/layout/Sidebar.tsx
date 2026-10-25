@@ -221,7 +221,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
       </Box>
 
       {/* Navigation Groups */}
-      <Box sx={{ flex: 1, py: 1.5, overflowY: 'auto', overflowX: 'hidden' }}>
+      <Box data-tour="sidebar-nav" sx={{ flex: 1, py: 1.5, overflowY: 'auto', overflowX: 'hidden' }}>
         {navSections.map((section, sIdx) => (
           <Box key={section.title} sx={{ mb: 1.5 }}>
             {(!collapsed || isMobile) && (

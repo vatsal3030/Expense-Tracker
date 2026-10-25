@@ -221,6 +221,7 @@ export default function DashboardPage() {
               component={Link}
               href="/settlements"
               prefetch={true}
+              data-tour="settle-up-btn"
               startIcon={<CheckCircleOutlined fontSize="small" />}
               className="glass-tertiary"
               sx={{
@@ -341,7 +342,7 @@ export default function DashboardPage() {
 
         {/* Financial Metrics Cards (Apple visionOS Liquid Glass Panels) */}
         {(activeTab === 'overview' || activeTab === 'balances') && (
-        <Grid container spacing={{ xs: 1.5, sm: 2.5 }} sx={{ mb: 4 }}>
+        <Grid data-tour="financial-overview" container spacing={{ xs: 1.5, sm: 2.5 }} sx={{ mb: 4 }}>
           {/* Card 1: Net Balance (Primary Hero Metric with Ambient Emerald Reflection) */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card

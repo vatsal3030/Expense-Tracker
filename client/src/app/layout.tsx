@@ -3,9 +3,11 @@ import './globals.css';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { SocketProvider } from '@/providers/SocketProvider';
+import { OnboardingProvider } from '@/providers/OnboardingProvider';
+import GuidedTourOverlay from '@/components/onboarding/GuidedTourOverlay';
 
 export const metadata: Metadata = {
-  title: 'FairShare — Split Expenses Fairly',
+  title: 'FairShare | Split Expenses Fairly',
   description:
     'FairShare is a free, production-ready expense splitting and tracking platform with AI-powered insights, receipt scanning, multi-currency support, and advanced analytics.',
   keywords: [
@@ -57,7 +59,10 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <SocketProvider>
-              {children}
+              <OnboardingProvider>
+                {children}
+                <GuidedTourOverlay />
+              </OnboardingProvider>
             </SocketProvider>
           </AuthProvider>
         </ThemeProvider>

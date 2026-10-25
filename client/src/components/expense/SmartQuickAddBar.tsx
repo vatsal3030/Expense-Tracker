@@ -531,7 +531,7 @@ export default function SmartQuickAddBar({
   };
 
   return (
-    <Box sx={{ width: '100%', mb: 3 }}>
+    <Box data-tour="quick-add-bar" sx={{ width: '100%', mb: 3 }}>
       <Box
         className="glass-secondary glass-specular-top"
         sx={{

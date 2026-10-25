@@ -35,10 +35,12 @@ import {
   DoneAll as DoneAllIcon,
   AdminPanelSettings as AdminIcon,
   Assessment as AssessmentIcon,
+  SportsEsportsOutlined,
 } from '@mui/icons-material';
 import { Chip, Button } from '@mui/material';
 import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
+import { useOnboarding } from '@/providers/OnboardingProvider';
 import { useDataRefresh } from '@/lib/events';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '@/components/brand/BrandLogo';
@@ -54,6 +56,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
   const router = useRouter();
   const { profile, signOut } = useAuth();
   const { mode, toggleTheme } = useThemeMode();
+  const { startTour } = useOnboarding();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [notifAnchorEl, setNotifAnchorEl] = React.useState<null | HTMLElement>(null);
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -368,9 +371,50 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
             </IconButton>
           </Tooltip>
+
+          {/* Product Tour Launcher (Sleek Glass Pill) */}
+          <Tooltip title="Interactive Product Tour (with Auto-Play Walkthrough)">
+            <Box
+              onClick={() => startTour(0, true)}
+              sx={{
+                display: { xs: 'none', md: 'flex' },
+                alignItems: 'center',
+                gap: 1.1,
+                px: 1.6,
+                py: 0.65,
+                borderRadius: 9999,
+                border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.10)'}`,
+                bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
+                backdropFilter: 'blur(14px)',
+                cursor: 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                '&:hover': {
+                  borderColor: isLight ? '#0E6245' : '#10B981',
+                  bgcolor: isLight ? 'rgba(14, 98, 69, 0.06)' : 'rgba(16, 185, 129, 0.08)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                },
+              }}
+            >
+              <SportsEsportsOutlined sx={{ fontSize: 17, color: isLight ? '#0E6245' : '#34D399' }} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: isLight ? '#0E6245' : '#34D399' }}>
+                Product Tour
+              </Typography>
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  bgcolor: '#10B981',
+                  boxShadow: '0 0 6px #10B981',
+                }}
+              />
+            </Box>
+          </Tooltip>
+
           {/* FairScore & Streak Badge (Tertiary Glass Pill) */}
           <Tooltip title="FairScore: 880 (Diamond Tier) • 14-day streak">
             <Box
+              data-tour="fairscore-badge"
               onClick={() => router.push('/fairscore')}
               sx={{
                 display: { xs: 'none', sm: 'flex' },
@@ -651,6 +695,27 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               />
             </MenuItem>
           )}
+
+          <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
+
+          <MenuItem
+            onClick={() => { handleMenuClose(); startTour(0, true); }}
+            sx={{
+              borderRadius: 2,
+              my: 0.35,
+              py: 0.85,
+              px: 1.5,
+              '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+            }}
+          >
+            <ListItemIcon><SportsEsportsOutlined fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
+            <ListItemText
+              primary="Interactive Product Tour"
+              secondary="Auto-play walkthrough of real features"
+              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
+              secondaryTypographyProps={{ fontSize: '0.7rem' }}
+            />
+          </MenuItem>
 
           <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
 
