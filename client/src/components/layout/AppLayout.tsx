@@ -100,17 +100,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
           width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
           maxWidth: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          mt: { xs: '76px', sm: '86px' },
-          pt: { xs: 2, sm: 2.5, md: 3 },
-          px: { xs: 1.5, sm: 2.5, md: 3 },
-          pb: { xs: '120px', sm: '90px', md: 4 },
+          mt: { xs: '64px', sm: '74px', md: '80px' },
+          pt: { xs: 1.25, sm: 1.75, md: 2.25 },
+          px: { xs: 1.5, sm: 2.25, md: 2.75 },
+          pb: { xs: '100px', sm: '80px', md: 3 },
           boxSizing: 'border-box',
           overflowX: 'hidden',
           transition: theme.transitions.create(['width', 'margin'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),
-          minHeight: { xs: 'calc(100vh - 76px)', sm: 'calc(100vh - 86px)' },
+          minHeight: { xs: 'calc(100vh - 64px)', sm: 'calc(100vh - 74px)', md: 'calc(100vh - 80px)' },
         }}
       >
         {children}

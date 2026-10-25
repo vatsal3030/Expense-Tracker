@@ -5,6 +5,7 @@ import { AuthProvider } from '@/providers/AuthProvider';
 import { SocketProvider } from '@/providers/SocketProvider';
 import { OnboardingProvider } from '@/providers/OnboardingProvider';
 import GuidedTourOverlay from '@/components/onboarding/GuidedTourOverlay';
+import CookieConsentBanner from '@/components/common/CookieConsentBanner';
 
 export const metadata: Metadata = {
   title: 'FairShare | Split Expenses Fairly',
@@ -62,6 +63,7 @@ export default function RootLayout({
               <OnboardingProvider>
                 {children}
                 <GuidedTourOverlay />
+                <CookieConsentBanner />
               </OnboardingProvider>
             </SocketProvider>
           </AuthProvider>
