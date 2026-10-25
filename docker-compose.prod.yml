@@ -3,7 +3,12 @@ version: '3.8'
 services:
   # ===========================================================================
   # NGINX API GATEWAY & REVERSE PROXY
-  # Routes port 80 traffic: /api/* -> server:5000, /* -> client:3000
+  # Routes port 80 traffic:
+  #   - /api/auth, /api/users, /api/friends         -> identity-service:5001
+  #   - /api/groups, /api/expenses, /api/budgets     -> expense-service:5002
+  #   - /api/settlements, /api/dashboard, /api/export -> settlement-service:5003
+  #   - /api/notifications, /api/activities, /socket.io -> notification-service:5004
+  #   - /*                                           -> client:3000
   # ===========================================================================
   nginx:
     image: nginx:alpine
@@ -15,7 +20,10 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - client
-      - server
+      - identity-service
+      - expense-service
+      - settlement-service
+      - notification-service
     networks:
       - fairshare-network
 
@@ -33,19 +41,20 @@ services:
       - fairshare-network
 
   # ===========================================================================
-  # BACKEND MICROSERVICE (Express API)
+  # MICROSERVICE 1: IDENTITY & SOCIAL SERVICE (Port 5001)
   # ===========================================================================
-  server:
+  identity-service:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: fairshare-server
+    container_name: fairshare-identity-service
     restart: unless-stopped
+    command: ["node", "--max-old-space-size=128", "dist/services/identity.service.js"]
     depends_on:
       - redis
     environment:
       - NODE_ENV=production
-      - PORT=5000
+      - PORT=5001
       - CLIENT_URL=*
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=15&sslmode=require&connect_timeout=15&pool_timeout=15}
       - DIRECT_URL=${DIRECT_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres}
@@ -54,10 +63,8 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-sb_secret_CGoeZ1av7plW3k8Fgtcs8w_j0BS8r61}
       - JWT_SECRET=${JWT_SECRET:-fairshare-super-secret-jwt-key-2026-production}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
-      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL:-}
-      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN:-}
     healthcheck:
-      test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:5000/api/health',s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:5001/health',s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -66,7 +73,103 @@ services:
       - fairshare-network
 
   # ===========================================================================
-  # FRONTEND MICROSERVICE (Next.js Standalone)
+  # MICROSERVICE 2: EXPENSE & CORE DOMAIN SERVICE (Port 5002)
+  # ===========================================================================
+  expense-service:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: fairshare-expense-service
+    restart: unless-stopped
+    command: ["node", "--max-old-space-size=128", "dist/services/expense.service.js"]
+    depends_on:
+      - redis
+    environment:
+      - NODE_ENV=production
+      - PORT=5002
+      - CLIENT_URL=*
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=15&sslmode=require&connect_timeout=15&pool_timeout=15}
+      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres}
+      - SUPABASE_URL=${SUPABASE_URL:-https://eqtmygiizyehikodaxpe.supabase.co}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_YJzGFp2HW1qjOrnjGO618g_2CXVUTr3}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-sb_secret_CGoeZ1av7plW3k8Fgtcs8w_j0BS8r61}
+      - JWT_SECRET=${JWT_SECRET:-fairshare-super-secret-jwt-key-2026-production}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:5002/health',s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - fairshare-network
+
+  # ===========================================================================
+  # MICROSERVICE 3: SETTLEMENT & OPTIMIZATION GRAPH ENGINE (Port 5003)
+  # ===========================================================================
+  settlement-service:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: fairshare-settlement-service
+    restart: unless-stopped
+    command: ["node", "--max-old-space-size=128", "dist/services/settlement.service.js"]
+    depends_on:
+      - redis
+    environment:
+      - NODE_ENV=production
+      - PORT=5003
+      - CLIENT_URL=*
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=15&sslmode=require&connect_timeout=15&pool_timeout=15}
+      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres}
+      - SUPABASE_URL=${SUPABASE_URL:-https://eqtmygiizyehikodaxpe.supabase.co}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_YJzGFp2HW1qjOrnjGO618g_2CXVUTr3}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-sb_secret_CGoeZ1av7plW3k8Fgtcs8w_j0BS8r61}
+      - JWT_SECRET=${JWT_SECRET:-fairshare-super-secret-jwt-key-2026-production}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:5003/health',s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - fairshare-network
+
+  # ===========================================================================
+  # MICROSERVICE 4: REAL-TIME & NOTIFICATION SERVICE (Port 5004)
+  # ===========================================================================
+  notification-service:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: fairshare-notification-service
+    restart: unless-stopped
+    command: ["node", "--max-old-space-size=128", "dist/services/notification.service.js"]
+    depends_on:
+      - redis
+    environment:
+      - NODE_ENV=production
+      - PORT=5004
+      - CLIENT_URL=*
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=15&sslmode=require&connect_timeout=15&pool_timeout=15}
+      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres}
+      - SUPABASE_URL=${SUPABASE_URL:-https://eqtmygiizyehikodaxpe.supabase.co}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_YJzGFp2HW1qjOrnjGO618g_2CXVUTr3}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-sb_secret_CGoeZ1av7plW3k8Fgtcs8w_j0BS8r61}
+      - JWT_SECRET=${JWT_SECRET:-fairshare-super-secret-jwt-key-2026-production}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:5004/health',s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - fairshare-network
+
+  # ===========================================================================
+  # FRONTEND CLIENT (Next.js Standalone Port 3000)
   # ===========================================================================
   client:
     build:
@@ -82,7 +185,10 @@ services:
       - NODE_ENV=production
       - PORT=3000
     depends_on:
-      - server
+      - identity-service
+      - expense-service
+      - settlement-service
+      - notification-service
     networks:
       - fairshare-network
 

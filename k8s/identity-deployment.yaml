@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fairshare-identity
+  namespace: fairshare
+  labels:
+    app: fairshare-identity
+    tier: microservice
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: fairshare-identity
+  template:
+    metadata:
+      labels:
+        app: fairshare-identity
+        tier: microservice
+    spec:
+      containers:
+        - name: identity-service
+          image: vatsal3030/fairshare-server:latest
+          command: ["node", "--max-old-space-size=128", "dist/services/identity.service.js"]
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+              name: http
+          env:
+            - name: PORT
+              value: "5001"
+          envFrom:
+            - configMapRef:
+                name: fairshare-config
+            - secretRef:
+                name: fairshare-secrets
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 20
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fairshare-identity-svc
+  namespace: fairshare
+  labels:
+    app: fairshare-identity
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5001
+      targetPort: 5001
+      protocol: TCP
+      name: http
+  selector:
+    app: fairshare-identity

@@ -5,22 +5,127 @@ metadata:
   namespace: fairshare
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "25m"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   rules:
     - host: fairshare.local
       http:
         paths:
-          # Route /api traffic to Express backend service
-          - path: /api
+          # 1. Identity & Social Service
+          - path: /api/auth
             pathType: Prefix
             backend:
               service:
-                name: fairshare-server-svc
+                name: fairshare-identity-svc
                 port:
-                  number: 5000
-          # Route all other traffic to Next.js frontend
+                  number: 5001
+          - path: /api/users
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-identity-svc
+                port:
+                  number: 5001
+          - path: /api/friends
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-identity-svc
+                port:
+                  number: 5001
+
+          # 2. Expense & Core Domain Service
+          - path: /api/groups
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-expense-svc
+                port:
+                  number: 5002
+          - path: /api/expenses
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-expense-svc
+                port:
+                  number: 5002
+          - path: /api/budgets
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-expense-svc
+                port:
+                  number: 5002
+          - path: /api/recurring
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-expense-svc
+                port:
+                  number: 5002
+          - path: /api/fx
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-expense-svc
+                port:
+                  number: 5002
+
+          # 3. Settlement & Optimization Graph Engine
+          - path: /api/settlements
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-settlement-svc
+                port:
+                  number: 5003
+          - path: /api/dashboard
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-settlement-svc
+                port:
+                  number: 5003
+          - path: /api/export
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-settlement-svc
+                port:
+                  number: 5003
+
+          # 4. Real-time & Notification Service
+          - path: /api/notifications
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-notification-svc
+                port:
+                  number: 5004
+          - path: /api/activities
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-notification-svc
+                port:
+                  number: 5004
+          - path: /api/admin
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-notification-svc
+                port:
+                  number: 5004
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: fairshare-notification-svc
+                port:
+                  number: 5004
+
+          # 5. Frontend Client
           - path: /
             pathType: Prefix
             backend:

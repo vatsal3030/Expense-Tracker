@@ -1,13 +1,33 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: fairshare-server-hpa
+  name: fairshare-identity-hpa
   namespace: fairshare
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: fairshare-server
+    name: fairshare-identity
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fairshare-expense-hpa
+  namespace: fairshare
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fairshare-expense
   minReplicas: 2
   maxReplicas: 10
   metrics:
@@ -17,6 +37,46 @@ spec:
         target:
           type: Utilization
           averageUtilization: 70
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fairshare-settlement-hpa
+  namespace: fairshare
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fairshare-settlement
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 65
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fairshare-notification-hpa
+  namespace: fairshare
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fairshare-notification
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler

@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fairshare-notification
+  namespace: fairshare
+  labels:
+    app: fairshare-notification
+    tier: microservice
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: fairshare-notification
+  template:
+    metadata:
+      labels:
+        app: fairshare-notification
+        tier: microservice
+    spec:
+      containers:
+        - name: notification-service
+          image: vatsal3030/fairshare-server:latest
+          command: ["node", "--max-old-space-size=128", "dist/services/notification.service.js"]
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5004
+              name: http
+          env:
+            - name: PORT
+              value: "5004"
+          envFrom:
+            - configMapRef:
+                name: fairshare-config
+            - secretRef:
+                name: fairshare-secrets
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5004
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5004
+            initialDelaySeconds: 20
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fairshare-notification-svc
+  namespace: fairshare
+  labels:
+    app: fairshare-notification
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5004
+      targetPort: 5004
+      protocol: TCP
+      name: http
+  selector:
+    app: fairshare-notification

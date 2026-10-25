@@ -5,7 +5,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { Prisma } from '@prisma/client';
 import appCache from '../lib/cache';
-import { parseGroupMeta } from './group.routes';
+import { parseGroupMeta } from '../lib/groupMeta';
 import { emitToUser, emitToGroup } from '../lib/socket';
 
 export const settlementRouter = Router();
