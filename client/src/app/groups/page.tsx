@@ -207,7 +207,7 @@ export default function GroupsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: 6, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
+      <Box sx={{ pb: 4, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header Row */}
         <Box
           sx={{
@@ -215,15 +215,15 @@ export default function GroupsPage() {
             flexDirection: { xs: 'column', md: 'row' },
             justifyContent: 'space-between',
             alignItems: { xs: 'flex-start', md: 'center' },
-            mb: 3,
-            gap: 2,
+            mb: 1.75,
+            gap: 1.5,
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Expense Groups
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
               Split living costs, trips, and shared events with verified friends
             </Typography>
           </Box>
@@ -255,7 +255,7 @@ export default function GroupsPage() {
         </Box>
 
         {/* Top Summary Metrics Bar (Savexa FinTech style) */}
-        <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: 3.5 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: 2 }}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"

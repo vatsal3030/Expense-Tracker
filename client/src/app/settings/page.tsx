@@ -15,8 +15,9 @@ import {
   Payment, Notifications as NotificationsIcon, Palette, Tune,
   QrCode2, Shield, Download, Visibility, VisibilityOff, Devices,
   DeleteForever, Cached, ArrowForward, HelpOutlined, Language,
-  CurrencyExchange, Calculate, Speed, VolumeUp, Email, LockReset,
+  CurrencyExchange, Calculate, Speed, VolumeUp, Email, LockReset, Gavel,
 } from '@mui/icons-material';
+import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
@@ -1640,20 +1641,59 @@ export default function SettingsPage() {
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
-              <Card
-                className="glass-secondary glass-specular-top"
-                sx={{ borderRadius: 3.5, p: 3 }}
-              >
-                <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
-                  Security Guarantee
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                  FairShare utilizes Supabase secure JWT tokens with automatic session rotation. Passwords are never stored in plain text.
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  End-to-end mathematical precision ensures zero balance leaks.
-                </Typography>
-              </Card>
+              <Stack spacing={2}>
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{ borderRadius: 3.5, p: 2.5 }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Shield sx={{ color: '#10B981', fontSize: 22 }} />
+                    <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
+                      DPDP Act, 2023 Compliance
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.82rem', lineHeight: 1.6 }}>
+                    FairShare adheres to the Digital Personal Data Protection Act, 2023 (Govt. of India). Your personal and financial ledger data is encrypted, never sold, and processed with explicit consent.
+                  </Typography>
+                  <Stack spacing={1}>
+                    <Button
+                      component={Link}
+                      href="/privacy"
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Security sx={{ fontSize: 16 }} />}
+                      sx={{ textTransform: 'none', fontWeight: 650, borderRadius: 2, fontSize: '0.78rem', justifyContent: 'flex-start' }}
+                    >
+                      Privacy & Data Rights Notice
+                    </Button>
+                    <Button
+                      component={Link}
+                      href="/terms"
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Gavel sx={{ fontSize: 16 }} />}
+                      sx={{ textTransform: 'none', fontWeight: 650, borderRadius: 2, fontSize: '0.78rem', justifyContent: 'flex-start' }}
+                    >
+                      Terms of Service
+                    </Button>
+                  </Stack>
+                </Card>
+
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{ borderRadius: 3.5, p: 2.5 }}
+                >
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
+                    Security Guarantee
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.82rem' }}>
+                    FairShare utilizes Supabase secure JWT tokens with automatic session rotation. Passwords are never stored in plain text.
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    End-to-end mathematical precision ensures zero balance leaks.
+                  </Typography>
+                </Card>
+              </Stack>
             </Grid>
           </Grid>
         )}

@@ -395,7 +395,7 @@ export default function FriendsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 }, width: '100%', maxWidth: '100%', minWidth: 0 }}>
+      <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0 }}>
         {/* Header Row */}
         <Box
           sx={{
@@ -403,15 +403,15 @@ export default function FriendsPage() {
             flexDirection: { xs: 'column', md: 'row' },
             justifyContent: 'space-between',
             alignItems: { xs: 'flex-start', md: 'center' },
-            mb: 3,
-            gap: 2,
+            mb: 1.75,
+            gap: 1.5,
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Friends & Connections
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, letterSpacing: '-0.01em', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, letterSpacing: '-0.01em', fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
               Mutual friendship connections for direct 1-on-1 expenses and group splits
             </Typography>
           </Box>

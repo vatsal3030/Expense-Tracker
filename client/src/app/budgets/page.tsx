@@ -237,11 +237,11 @@ export default function BudgetsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.75, flexWrap: 'wrap', gap: 1.5 }}>
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>Budgets</Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}>Set and track spending limits</Typography>
+            <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>Budgets</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>Set and track spending limits</Typography>
           </Box>
           <Button
             variant="contained"

@@ -198,17 +198,17 @@ export default function DashboardPage() {
             flexDirection: { xs: 'column', md: 'row' },
             justifyContent: 'space-between',
             alignItems: { xs: 'flex-start', md: 'center' },
-            mb: 3,
-            gap: 2,
+            mb: 1.75,
+            gap: 1.5,
             width: '100%',
             maxWidth: '100%',
           }}
         >
           <Box sx={{ maxWidth: '100%' }}>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Financial Overview
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
               Track personal equity, shared group expenses, and settlements
             </Typography>
           </Box>
@@ -283,7 +283,7 @@ export default function DashboardPage() {
             display: { xs: 'flex', sm: 'inline-flex' },
             alignItems: 'center',
             p: 0.6,
-            mb: 3.5,
+            mb: 2,
             borderRadius: 9999,
             gap: 0.5,
             width: { xs: '100%', sm: 'auto' },

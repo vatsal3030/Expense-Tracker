@@ -83,14 +83,29 @@ export default function GuidedTourOverlay() {
       return;
     }
 
-    const targetEl = document.querySelector(currentTourStep.targetSelector) as HTMLElement | null;
+    let targetEl = document.querySelector(currentTourStep.targetSelector) as HTMLElement | null;
 
-    if (!targetEl) {
+    // Mobile fallback if element is hidden or different on mobile view
+    if (isMobile) {
+      if (currentTourStep.id === 'sidebar-nav') {
+        targetEl = (document.querySelector('[data-tour="mobile-nav"]') as HTMLElement | null) || targetEl;
+      } else if (currentTourStep.id === 'fairscore-badge') {
+        // On mobile, fairscore-badge is hidden in toolbar; treat as screen overview
+        targetEl = null;
+      }
+    }
+
+    // Check if element exists, is rendered in the DOM, and has non-zero size
+    if (!targetEl || targetEl.offsetParent === null) {
       setRect(null);
       return;
     }
 
     const clientRect = targetEl.getBoundingClientRect();
+    if (clientRect.width === 0 || clientRect.height === 0) {
+      setRect(null);
+      return;
+    }
 
     const targetMeasurements: TargetRect = {
       top: clientRect.top,
@@ -408,10 +423,12 @@ export default function GuidedTourOverlay() {
               position: 'fixed',
               ...(isMobile
                 ? {
-                    bottom: 16,
-                    left: 16,
-                    right: 16,
-                    maxWidth: 'calc(100vw - 32px)',
+                    ...(rect && rect.top > (typeof window !== 'undefined' ? window.innerHeight / 2 : 400)
+                      ? { top: 16 }
+                      : { bottom: 76 }),
+                    left: 14,
+                    right: 14,
+                    maxWidth: 'calc(100vw - 28px)',
                     mx: 'auto',
                   }
                 : {
@@ -428,7 +445,7 @@ export default function GuidedTourOverlay() {
                 ? '0 20px 48px -8px rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255, 255, 255, 1)'
                 : '0 24px 60px -10px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.20)',
               backdropFilter: 'blur(28px) saturate(200%)',
-              p: 2.75,
+              p: { xs: 2, sm: 2.75 },
               zIndex: 100000,
               pointerEvents: 'auto',
               overflow: 'hidden',

@@ -21,7 +21,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.23",
     "lucide-react": "^1.48.0",
-    "next": "16.4.0",
+    "next": "16.4.3",
     "notistack": "^3.0.2",
     "qrcode": "^1.5.4",
     "react": "19.3.0",
@@ -38,7 +38,7 @@
     "@types/react-dom": "^19",
     "autoprefixer": "^10.6.1",
     "eslint": "^9",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "16.4.3",
     "postcss": "^8.5.30",
     "tailwindcss": "^4.3.3",
     "typescript": "^5"

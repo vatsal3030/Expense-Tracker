@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   devIndicators: false,
   output: "standalone",
+  experimental: {
+    agentUpgrade: "security",
+  },
   turbopack: {
     root: path.resolve(__dirname),
   },

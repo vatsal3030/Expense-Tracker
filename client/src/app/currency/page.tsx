@@ -96,8 +96,12 @@ export default function CurrencyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromCurrency, toCurrency, amount]);
 
-  const currencies = rates?.currencies || [];
-  const symbols = rates?.symbols || {};
+  const currencies: string[] = rates?.currencies?.length
+    ? rates.currencies
+    : Object.keys(FLAG_EMOJI);
+  const symbols: Record<string, string> = rates?.symbols || {
+    USD: '$', INR: '₹', EUR: '€', GBP: '£', AED: 'د.إ', CAD: 'C$', JPY: '¥', AUD: 'A$', SGD: 'S$'
+  };
 
   const formatRate = (rate: number) => {
     if (rate >= 100) return rate.toFixed(2);
@@ -107,14 +111,14 @@ export default function CurrencyPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
+      <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.75, flexWrap: 'wrap', gap: 1.5 }}>
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Currency Exchange
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
               Real-time FX rates — powered by ECB
             </Typography>
           </Box>
@@ -129,7 +133,7 @@ export default function CurrencyPage() {
         <Card
           className="glass-secondary glass-specular-top"
           sx={{
-            borderRadius: 3.5, mb: 4,
+            borderRadius: 3, mb: 2,
             boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.04)' : '0 12px 30px rgba(0,0,0,0.35)',
           }}
         >

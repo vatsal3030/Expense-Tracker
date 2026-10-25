@@ -638,8 +638,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           >
             <ListItemIcon><PersonIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
             <ListItemText
-              primary="Profile & Identity"
-              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
+              primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Profile & Identity</Typography>}
             />
           </MenuItem>
 
@@ -655,8 +654,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           >
             <ListItemIcon><SettingsIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
             <ListItemText
-              primary="Account Settings"
-              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
+              primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Account Settings</Typography>}
             />
           </MenuItem>
 
@@ -672,8 +670,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           >
             <ListItemIcon><AssessmentIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
             <ListItemText
-              primary="Reports & Exports"
-              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
+              primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Reports & Exports</Typography>}
             />
           </MenuItem>
 
@@ -690,8 +687,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             >
               <ListItemIcon><AdminIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
               <ListItemText
-                primary="Admin Console"
-                primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
+                primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Admin Console</Typography>}
               />
             </MenuItem>
           )}
@@ -710,10 +706,8 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           >
             <ListItemIcon><SportsEsportsOutlined fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
             <ListItemText
-              primary="Interactive Product Tour"
-              secondary="Auto-play walkthrough of real features"
-              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 600 }}
-              secondaryTypographyProps={{ fontSize: '0.7rem' }}
+              primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Interactive Product Tour</Typography>}
+              secondary={<Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>Auto-play walkthrough of real features</Typography>}
             />
           </MenuItem>
 
@@ -732,8 +726,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           >
             <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
             <ListItemText
-              primary="Sign Out"
-              primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: 700 }}
+              primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 700, color: 'error.main' }}>Sign Out</Typography>}
             />
           </MenuItem>
         </Menu>

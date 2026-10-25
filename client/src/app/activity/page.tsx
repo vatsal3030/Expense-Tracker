@@ -15,15 +15,15 @@ import { activityApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 const ACTIVITY_TYPE_CONFIG: Record<string, { icon: React.ReactElement; color: string; category: string }> = {
-  EXPENSE_CREATED: { icon: <ReceiptLong fontSize="small" />, color: '#0E6245', category: 'EXPENSES' },
-  EXPENSE_UPDATED: { icon: <ReceiptLong fontSize="small" />, color: '#059669', category: 'EXPENSES' },
+  EXPENSE_CREATED: { icon: <ReceiptLong fontSize="small" />, color: '#EF4444', category: 'EXPENSES' },
+  EXPENSE_UPDATED: { icon: <ReceiptLong fontSize="small" />, color: '#F59E0B', category: 'EXPENSES' },
   EXPENSE_DELETED: { icon: <ReceiptLong fontSize="small" />, color: '#EF4444', category: 'EXPENSES' },
-  SETTLEMENT_CREATED: { icon: <Handshake fontSize="small" />, color: '#F59E0B', category: 'SETTLEMENTS' },
+  SETTLEMENT_CREATED: { icon: <Handshake fontSize="small" />, color: '#3B82F6', category: 'SETTLEMENTS' },
   SETTLEMENT_CONFIRMED: { icon: <CheckCircle fontSize="small" />, color: '#10B981', category: 'SETTLEMENTS' },
-  GROUP_CREATED: { icon: <Group fontSize="small" />, color: '#3B82F6', category: 'GROUPS' },
+  GROUP_CREATED: { icon: <Group fontSize="small" />, color: '#8B5CF6', category: 'GROUPS' },
   GROUP_MEMBER_ADDED: { icon: <Group fontSize="small" />, color: '#0EA5E9', category: 'GROUPS' },
   GROUP_MEMBER_REMOVED: { icon: <Group fontSize="small" />, color: '#64748B', category: 'GROUPS' },
-  BUDGET_CREATED: { icon: <Savings fontSize="small" />, color: '#8B5CF6', category: 'BUDGETS' },
+  BUDGET_CREATED: { icon: <Savings fontSize="small" />, color: '#10B981', category: 'BUDGETS' },
   BUDGET_ALERT: { icon: <Savings fontSize="small" />, color: '#DC2626', category: 'BUDGETS' },
 };
 
@@ -97,13 +97,13 @@ export default function ActivityPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
+      <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header */}
-        <Box sx={{ mb: 3, width: '100%', maxWidth: '100%' }}>
-          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
+        <Box sx={{ mb: 1.75, width: '100%', maxWidth: '100%' }}>
+          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
             Activity Feed
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, letterSpacing: '-0.01em', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, letterSpacing: '-0.01em', fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
             Real-time audit log of shared expenses, settlements, and member interactions
           </Typography>
         </Box>
@@ -112,14 +112,14 @@ export default function ActivityPage() {
         <Box
           sx={{
             display: 'flex',
-            gap: 1,
+            gap: 0.75,
             overflowX: 'auto',
             width: '100%',
             maxWidth: '100%',
             minWidth: 0,
             WebkitOverflowScrolling: 'touch',
-            mb: 3,
-            py: 0.5,
+            mb: 1.75,
+            py: 0.25,
             '&::-webkit-scrollbar': { display: 'none' },
           }}
         >
@@ -203,8 +203,8 @@ export default function ActivityPage() {
                     <React.Fragment key={activity.id || i}>
                       <ListItem
                         sx={{
-                          px: { xs: 2, sm: 3 },
-                          py: 2.2,
+                          px: { xs: 2, sm: 2.5 },
+                          py: 1.35,
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                           '&:hover': {
                             bgcolor: 'rgba(255, 255, 255, 0.04)',
@@ -214,8 +214,8 @@ export default function ActivityPage() {
                         <ListItemAvatar>
                           <Avatar
                             sx={{
-                              width: 40,
-                              height: 40,
+                              width: 36,
+                              height: 36,
                               bgcolor: alpha(cfg.color, 0.12),
                               color: cfg.color,
                               border: `1px solid ${alpha(cfg.color, 0.25)}`,
@@ -227,14 +227,14 @@ export default function ActivityPage() {
                         <ListItemText
                           disableTypography
                           primary={
-                            <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.875rem' }}>
+                            <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.865rem' }}>
                               <strong style={{ fontWeight: 650, color: '#FFFFFF' }}>{activity.user?.name || 'Someone'}</strong>{' '}
                               <span style={{ color: 'rgba(240, 246, 252, 0.75)' }}>{activity.message}</span>
                             </Typography>
                           }
                           secondary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>
                                 {formatDate(activity.createdAt)}
                               </Typography>
                               {activity.group && (
@@ -243,8 +243,8 @@ export default function ActivityPage() {
                                   size="small"
                                   className="glass-tertiary"
                                   sx={{
-                                    height: 20,
-                                    fontSize: '0.675rem',
+                                    height: 18,
+                                    fontSize: '0.65rem',
                                     fontWeight: 600,
                                     color: 'text.secondary',
                                     border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -259,14 +259,14 @@ export default function ActivityPage() {
                           <Typography
                             variant="body2"
                             sx={{
-                              color: '#10B981',
-                              fontWeight: 650,
+                              color: isLight ? '#DC2626' : '#F87171',
+                              fontWeight: 700,
                               letterSpacing: '-0.02em',
-                              fontSize: '0.925rem',
+                              fontSize: '0.9rem',
                               fontVariantNumeric: 'tabular-nums',
                             }}
                           >
-                            ₹{Number(activity.expense.amount).toLocaleString('en-IN')}
+                            -₹{Number(activity.expense.amount).toLocaleString('en-IN')}
                           </Typography>
                         )}
                       </ListItem>

@@ -48,6 +48,9 @@ server/prisma/migrations/**/migration_lock.toml
 # PWA
 client/public/sw.js
 client/public/workbox-*.js
+
+# Git worktrees
+.worktrees/
 client/public/sw.js.map
 client/public/workbox-*.js.map
 

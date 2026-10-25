@@ -491,12 +491,12 @@ function ExpensesContent() {
             justifyContent: 'space-between',
             alignItems: { xs: 'flex-start', sm: 'center' },
             flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2,
-            mb: 3,
+            gap: 1.5,
+            mb: 1.75,
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Expenses & Shared Transactions
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
@@ -605,11 +605,11 @@ function ExpensesContent() {
         <Card
           className="glass-filter-surface glass-specular-top"
           sx={{
-            mb: 3.5,
-            borderRadius: 4,
+            mb: 2,
+            borderRadius: 3.5,
           }}
         >
-          <CardContent sx={{ p: 2.5 }}>
+          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
             <Grid container spacing={2} sx={{ alignItems: 'center' }}>
               {/* Keyword Search */}
               <Grid size={{ xs: 12, md: 4 }}>

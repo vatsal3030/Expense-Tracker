@@ -115,9 +115,13 @@ exportRouter.get('/personal', async (req: AuthenticatedRequest, res: Response): 
       },
     });
 
-    const headers = ['Date', 'Description', 'Category', 'Amount', 'Currency', 'Paid By', 'Group', 'Your Share'];
+    const headers = ['Date', 'Description', 'Category', 'Total Bill', 'Currency', 'Paid By', 'Group', 'Your Outflow Share'];
     const rows = expenses.map((exp) => {
       const myShare = exp.shares.find((s) => s.userId === req.user!.id);
+      const userShareAmount = myShare
+        ? Number(myShare.amount)
+        : (exp.paidById === req.user!.id ? Number(exp.amount) : 0);
+
       return [
         new Date(exp.date).toLocaleDateString('en-IN'),
         `"${exp.description.replace(/"/g, '""')}"`,
@@ -126,7 +130,7 @@ exportRouter.get('/personal', async (req: AuthenticatedRequest, res: Response): 
         exp.currency,
         exp.paidBy.name,
         exp.group?.name || 'Personal',
-        myShare ? Number(myShare.amount).toFixed(2) : '0.00',
+        userShareAmount.toFixed(2),
       ].join(',');
     });
 
@@ -183,12 +187,21 @@ exportRouter.get('/report', async (req: AuthenticatedRequest, res: Response): Pr
       },
     });
 
+    const currentUserId = req.user!.id;
+    const isPersonalScope = !groupId;
+
     // Category breakdown
     const categoryBreakdown: Record<string, number> = {};
     let totalAmount = 0;
 
     expenses.forEach((exp) => {
-      const amt = Number(exp.amount);
+      const myShare = exp.shares.find((s) => s.userId === currentUserId);
+      const userShareAmount = myShare
+        ? Number(myShare.amount)
+        : (exp.paidById === currentUserId ? Number(exp.amount) : 0);
+
+      // In personal scope, the user's outflow is their own share of the bill
+      const amt = isPersonalScope ? userShareAmount : Number(exp.amount);
       totalAmount += amt;
       categoryBreakdown[exp.category] = (categoryBreakdown[exp.category] || 0) + amt;
     });
@@ -196,8 +209,13 @@ exportRouter.get('/report', async (req: AuthenticatedRequest, res: Response): Pr
     // Monthly breakdown
     const monthlyBreakdown: Record<string, number> = {};
     expenses.forEach((exp) => {
+      const myShare = exp.shares.find((s) => s.userId === currentUserId);
+      const userShareAmount = myShare
+        ? Number(myShare.amount)
+        : (exp.paidById === currentUserId ? Number(exp.amount) : 0);
+      const amt = isPersonalScope ? userShareAmount : Number(exp.amount);
       const month = new Date(exp.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short' });
-      monthlyBreakdown[month] = (monthlyBreakdown[month] || 0) + Number(exp.amount);
+      monthlyBreakdown[month] = (monthlyBreakdown[month] || 0) + amt;
     });
 
     const user = await prisma.user.findUnique({
@@ -221,19 +239,38 @@ exportRouter.get('/report', async (req: AuthenticatedRequest, res: Response): Pr
           categoryBreakdown,
           monthlyBreakdown,
         },
-        expenses: expenses.map((exp) => ({
-          date: exp.date,
-          description: exp.description,
-          category: exp.category,
-          amount: Number(exp.amount),
-          currency: exp.currency,
-          paidBy: exp.paidBy.name,
-          group: exp.group?.name || 'Personal',
-          shares: exp.shares.map((s) => ({
-            name: s.user.name,
-            amount: Number(s.amount),
-          })),
-        })),
+        expenses: expenses.map((exp) => {
+          const myShare = exp.shares.find((s) => s.userId === currentUserId);
+          const userShareAmount = myShare
+            ? Number(myShare.amount)
+            : (exp.paidById === currentUserId ? Number(exp.amount) : 0);
+          const totalBill = Number(exp.amount);
+          const isSplit = exp.shares.length > 1;
+
+          return {
+            id: exp.id,
+            date: exp.date,
+            description: exp.description,
+            category: exp.category,
+            // In personal report, the relevant outflow is the user's split share
+            amount: isPersonalScope ? userShareAmount : totalBill,
+            totalBill,
+            userShare: userShareAmount,
+            isSplit,
+            splitCount: exp.shares.length,
+            currency: exp.currency,
+            paidBy: exp.paidBy?.name || 'Unknown',
+            paidById: exp.paidById,
+            isPaidByMe: exp.paidById === currentUserId,
+            group: exp.group?.name || 'Personal',
+            groupId: exp.groupId,
+            shares: exp.shares.map((s) => ({
+              userId: s.userId,
+              name: s.user?.name || 'Unknown',
+              amount: Number(s.amount),
+            })),
+          };
+        }),
       },
     });
   } catch (error: any) {

@@ -51,7 +51,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       const win = window as any;
       if (win.document?.startViewTransition) {
-        win.document.startViewTransition(applyToggle);
+        win.document.documentElement.classList.add('theme-transitioning');
+        try {
+          const transition = win.document.startViewTransition(applyToggle);
+          if (transition?.finished) {
+            transition.finished.finally(() => {
+              win.document.documentElement.classList.remove('theme-transitioning');
+            });
+          } else {
+            setTimeout(() => {
+              win.document.documentElement.classList.remove('theme-transitioning');
+            }, 1100);
+          }
+        } catch {
+          win.document.documentElement.classList.remove('theme-transitioning');
+          applyToggle();
+        }
       } else {
         const wave = win.document?.createElement('div');
         if (wave && win.document?.body) {

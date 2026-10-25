@@ -163,23 +163,23 @@ export default function AnalyticsPage() {
 
   return (
     <AppLayout>
-      <Box className="animate-fade-in" sx={{ pb: { xs: 8, sm: 6 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
+      <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header */}
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            mb: 3,
+            mb: 1.75,
             flexWrap: 'wrap',
-            gap: 2,
+            gap: 1.5,
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Financial Telemetry
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
               Deep telemetry on your group expenses, cashflows, and spending habits
             </Typography>
           </Box>
@@ -213,7 +213,7 @@ export default function AnalyticsPage() {
           sx={{
             borderRadius: 3.5,
             p: { xs: 2, sm: 2.25 },
-            mb: 4,
+            mb: 2,
           }}
         >
           <Box

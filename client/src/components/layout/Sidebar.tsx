@@ -41,6 +41,9 @@ import Link from 'next/link';
 import { useAuth } from '@/providers/AuthProvider';
 import BrandLogo from '@/components/brand/BrandLogo';
 
+// Persistent scroll memory for the sidebar across route changes
+let globalSidebarScrollTop = 0;
+
 const DRAWER_WIDTH = 260;
 const DRAWER_COLLAPSED_WIDTH = 76;
 
@@ -109,42 +112,23 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
   const router = useRouter();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { profile } = useAuth();
-  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
-
-  // Clear optimistic path once route navigation completes
-  React.useEffect(() => {
-    setPendingPath(null);
-  }, [pathname]);
-
-  // Proactively prefetch all routes in background so page transitions are instantaneous
-  React.useEffect(() => {
-    const primaryRoutes = [
-      '/dashboard',
-      '/expenses',
-      '/groups',
-      '/analytics',
-      '/fairscore',
-      '/settlements',
-      '/budgets',
-      '/recurring',
-      '/currency',
-      '/friends',
-      '/activity',
-      '/reports',
-      '/settings',
-      '/admin',
-    ];
-    primaryRoutes.forEach((route) => {
-      try {
-        router.prefetch(route);
-      } catch {}
-    });
-  }, [router]);
-
   const isLight = theme.palette.mode === 'light';
   const drawerWidth = collapsed && !isMobile ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH;
 
-  const currentPath = pendingPath || pathname;
+  const currentPath = pathname;
+
+  const scrollContainerRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Restore scroll on navigation without jumping to top
+  React.useEffect(() => {
+    if (scrollContainerRef.current && globalSidebarScrollTop > 0) {
+      scrollContainerRef.current.scrollTop = globalSidebarScrollTop;
+    }
+  }, [pathname]);
+
+  const handleSidebarScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    globalSidebarScrollTop = e.currentTarget.scrollTop;
+  };
 
   const isActive = (path: string) => {
     if (!currentPath) return false;
@@ -221,7 +205,12 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
       </Box>
 
       {/* Navigation Groups */}
-      <Box data-tour="sidebar-nav" sx={{ flex: 1, py: 1.5, overflowY: 'auto', overflowX: 'hidden' }}>
+      <Box
+        ref={scrollContainerRef}
+        onScroll={handleSidebarScroll}
+        data-tour="sidebar-nav"
+        sx={{ flex: 1, py: 1.5, overflowY: 'auto', overflowX: 'hidden' }}
+      >
         {navSections.map((section, sIdx) => (
           <Box key={section.title} sx={{ mb: 1.5 }}>
             {(!collapsed || isMobile) && (
@@ -256,6 +245,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                     <ListItemButton
                       component={Link}
                       href={item.path}
+                      scroll={false}
                       prefetch={true}
                       onMouseEnter={() => {
                         try {
@@ -263,7 +253,6 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                         } catch {}
                       }}
                       onClick={() => {
-                        setPendingPath(item.path);
                         if (isMobile) onClose();
                       }}
                       sx={{
@@ -391,6 +380,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                 key={item.path}
                 component={Link}
                 href={item.path}
+                scroll={false}
                 prefetch={true}
                 onMouseEnter={() => {
                   try {
@@ -398,7 +388,6 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   } catch {}
                 }}
                 onClick={() => {
-                  setPendingPath(item.path);
                   if (isMobile) onClose();
                 }}
                 sx={{
@@ -476,8 +465,6 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
             );
           })}
         </List>
-
-
       </Box>
     </Box>
   );
