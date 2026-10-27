@@ -411,22 +411,24 @@ export default function FriendsPage() {
             <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Friends & Connections
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, letterSpacing: '-0.01em', fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, letterSpacing: '-0.01em', fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
               Mutual friendship connections for direct 1-on-1 expenses and group splits
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: { xs: '100%', sm: 'auto' } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="outlined"
+              size="small"
               className="glass-tertiary"
-              startIcon={<QrCode2 />}
+              startIcon={<QrCode2 fontSize="small" />}
               onClick={() => setQrModalOpen(true)}
               sx={{
                 flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
-                px: 2.5,
-                py: 1,
+                px: { xs: 1.5, sm: 2.5 },
+                py: { xs: 0.6, sm: 1 },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
                 fontWeight: 600,
                 color: 'text.primary',
                 textTransform: 'none',
@@ -437,12 +439,13 @@ export default function FriendsPage() {
                 },
               }}
             >
-              My QR Code
+              My QR
             </Button>
             <Button
               variant="contained"
+              size="small"
               className="glass-emerald-active"
-              startIcon={<PersonAdd />}
+              startIcon={<PersonAdd fontSize="small" />}
               onClick={() => {
                 setSearchOpen(true);
                 setSearchQuery('');
@@ -452,8 +455,9 @@ export default function FriendsPage() {
               sx={{
                 flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
-                px: 3,
-                py: 1,
+                px: { xs: 1.75, sm: 3 },
+                py: { xs: 0.6, sm: 1 },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
                 fontWeight: 650,
                 color: '#FFFFFF',
                 textTransform: 'none',
@@ -468,32 +472,33 @@ export default function FriendsPage() {
         <Card
           className="glass-secondary glass-specular-top glass-emerald-ambient"
           sx={{
-            mb: 3.5,
-            p: { xs: 2.5, sm: 3 },
-            borderRadius: 3.5,
+            mb: { xs: 2, sm: 3.5 },
+            p: { xs: 1.5, sm: 3 },
+            borderRadius: { xs: 2.5, sm: 3.5 },
             position: 'relative',
             overflow: 'hidden',
           }}
         >
-          <Grid container spacing={2.5} sx={{ alignItems: 'center' }}>
+          <Grid container spacing={{ xs: 1.5, sm: 2.5 }} sx={{ alignItems: 'center' }}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, sm: 2 } }}>
                 <Avatar
                   sx={{
-                    width: 48,
-                    height: 48,
+                    width: { xs: 36, sm: 48 },
+                    height: { xs: 36, sm: 48 },
                     bgcolor: 'rgba(16, 185, 129, 0.18)',
                     color: '#34D399',
                     border: '1px solid rgba(52, 211, 153, 0.35)',
+                    flexShrink: 0,
                   }}
                 >
-                  <Share />
+                  <Share fontSize="small" />
                 </Avatar>
                 <Box>
-                  <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary', letterSpacing: '-0.01em' }}>
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary', letterSpacing: '-0.01em', fontSize: { xs: '0.95rem', sm: '1.05rem' } }}>
                     Invite Friends to FairShare
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.72rem', sm: '0.75rem' }, display: { xs: 'none', sm: 'block' } }}>
                     Share your unique connection link to link balances instantly without manual searches
                   </Typography>
                 </Box>
@@ -574,13 +579,13 @@ export default function FriendsPage() {
         </Card>
 
         {/* Segmented Liquid Glass Tabs (Proper fitting capsule width) */}
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: { xs: 2, sm: 3 } }}>
           <Box
             className="glass-control-surface"
             sx={{
               display: { xs: 'flex', sm: 'inline-flex' },
-              p: 0.5,
-              borderRadius: 3,
+              p: 0.4,
+              borderRadius: { xs: 2.5, sm: 3 },
               width: { xs: '100%', sm: 'auto' },
               maxWidth: '100%',
               overflowX: 'auto',
@@ -590,12 +595,12 @@ export default function FriendsPage() {
               value={tab}
               onChange={(_, v) => setTab(v)}
               variant="scrollable"
-              scrollButtons="auto"
+              scrollButtons={false}
               sx={{
-                minHeight: 40,
+                minHeight: { xs: 34, sm: 40 },
                 '& .MuiTabs-indicator': {
                   height: '100%',
-                  borderRadius: 2.5,
+                  borderRadius: { xs: 2, sm: 2.5 },
                   bgcolor: 'rgba(16, 185, 129, 0.2)',
                   border: '1px solid rgba(52, 211, 153, 0.4)',
                   zIndex: 0,
@@ -604,10 +609,12 @@ export default function FriendsPage() {
                   zIndex: 1,
                   textTransform: 'none',
                   fontWeight: 650,
-                  fontSize: '0.85rem',
-                  minHeight: 38,
-                  px: 2.5,
-                  borderRadius: 2.5,
+                  fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                  minHeight: { xs: 34, sm: 38 },
+                  minWidth: { xs: 'auto', sm: 80 },
+                  px: { xs: 1.25, sm: 2.5 },
+                  py: { xs: 0.4, sm: 0.75 },
+                  borderRadius: { xs: 2, sm: 2.5 },
                   color: 'text.secondary',
                   transition: 'all 0.2s ease',
                   '&.Mui-selected': {

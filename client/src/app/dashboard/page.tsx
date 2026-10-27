@@ -294,10 +294,10 @@ function DashboardContent() {
           sx={{
             display: { xs: 'flex', sm: 'inline-flex' },
             alignItems: 'center',
-            p: 0.6,
-            mb: 2,
+            p: { xs: 0.4, sm: 0.6 },
+            mb: { xs: 1.5, sm: 2 },
             borderRadius: 9999,
-            gap: 0.5,
+            gap: { xs: 0.25, sm: 0.5 },
             width: { xs: '100%', sm: 'auto' },
             maxWidth: '100%',
             minWidth: 0,
@@ -315,10 +315,12 @@ function DashboardContent() {
                 size="small"
                 onClick={() => handleTabChange(tab)}
                 sx={{
+                  flex: { xs: 1, sm: 'none' },
+                  minWidth: 0,
                   borderRadius: 9999,
-                  px: { xs: 1.75, sm: 2.5 },
-                  py: { xs: 0.55, sm: 0.6 },
-                  fontSize: { xs: '0.78rem', sm: '0.825rem' },
+                  px: { xs: 1, sm: 2.5 },
+                  py: { xs: 0.45, sm: 0.6 },
+                  fontSize: { xs: '0.72rem', sm: '0.825rem' },
                   fontWeight: active ? 600 : 500,
                   textTransform: 'capitalize',
                   whiteSpace: 'nowrap',

@@ -172,9 +172,9 @@ export default function SplitwiseExpenseItem({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        px: { xs: 1.5, sm: 2.5 },
-        py: { xs: 1.1, sm: 1.25 },
-        gap: { xs: 1.25, sm: 2 },
+        px: { xs: 1.25, sm: 2.5 },
+        py: { xs: 0.85, sm: 1.25 },
+        gap: { xs: 1, sm: 2 },
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.18s ease-in-out',
         position: 'relative',
@@ -195,7 +195,7 @@ export default function SplitwiseExpenseItem({
       }}
     >
       {/* Left Group: Date Block + Category Icon + Title/Subtitle */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, sm: 1.75 }, minWidth: 0, flex: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.75 }, minWidth: 0, flex: 1 }}>
         {/* Date Block (Stacked Month + Day, Splitwise style) */}
         <Box
           sx={{
@@ -203,7 +203,7 @@ export default function SplitwiseExpenseItem({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            width: { xs: 32, sm: 38 },
+            width: { xs: 28, sm: 38 },
             flexShrink: 0,
             userSelect: 'none',
           }}
@@ -211,7 +211,7 @@ export default function SplitwiseExpenseItem({
           <Typography
             variant="caption"
             sx={{
-              fontSize: { xs: '0.6rem', sm: '0.65rem' },
+              fontSize: { xs: '0.55rem', sm: '0.65rem' },
               fontWeight: 700,
               letterSpacing: '0.04em',
               lineHeight: 1,
@@ -224,7 +224,7 @@ export default function SplitwiseExpenseItem({
           <Typography
             variant="body1"
             sx={{
-              fontSize: { xs: '0.95rem', sm: '1.05rem' },
+              fontSize: { xs: '0.85rem', sm: '1.05rem' },
               fontWeight: 800,
               lineHeight: 1.15,
               mt: 0.2,
@@ -239,15 +239,15 @@ export default function SplitwiseExpenseItem({
         <Box
           className="splitwise-category-icon"
           sx={{
-            width: { xs: 36, sm: 40 },
-            height: { xs: 36, sm: 40 },
+            width: { xs: 32, sm: 40 },
+            height: { xs: 32, sm: 40 },
             borderRadius: { xs: 2, sm: 2.5 },
             bgcolor: catTheme.bg,
             border: `1.5px solid ${catTheme.border}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: { xs: '1.25rem', sm: '1.35rem' },
+            fontSize: { xs: '1.1rem', sm: '1.35rem' },
             flexShrink: 0,
             boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
             transition: 'transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -264,7 +264,7 @@ export default function SplitwiseExpenseItem({
               noWrap
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: '0.925rem', sm: '1rem' },
+                fontSize: { xs: '0.85rem', sm: '1rem' },
                 color: 'text.primary',
                 letterSpacing: '-0.01em',
               }}
@@ -290,13 +290,13 @@ export default function SplitwiseExpenseItem({
             )}
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.3, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.2, flexWrap: 'wrap' }}>
             <Typography
               variant="caption"
               noWrap
               sx={{
                 color: 'text.secondary',
-                fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                fontSize: { xs: '0.72rem', sm: '0.8rem' },
                 fontWeight: 500,
               }}
             >
@@ -319,7 +319,7 @@ export default function SplitwiseExpenseItem({
       </Box>
 
       {/* Right Group: Stance Block + Actions + Chevron */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, flexShrink: 0 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, sm: 1.5 }, flexShrink: 0 }}>
         {/* Desktop Quick Actions (Edit / Delete) */}
         {(canEdit || canDelete) && (
           <Box
@@ -383,14 +383,14 @@ export default function SplitwiseExpenseItem({
         )}
 
         {/* Stance Block (Splitwise style: you lent / you borrowed) */}
-        <Box sx={{ textAlign: 'right', minWidth: { xs: 85, sm: 100 } }}>
+        <Box sx={{ textAlign: 'right', minWidth: { xs: 75, sm: 100 } }}>
           <Typography
             variant="caption"
             sx={{
               display: 'block',
               color: stanceColor,
               fontWeight: 700,
-              fontSize: { xs: '0.675rem', sm: '0.725rem' },
+              fontSize: { xs: '0.625rem', sm: '0.725rem' },
               lineHeight: 1.1,
               letterSpacing: '0.01em',
               textTransform: 'lowercase',
@@ -405,7 +405,7 @@ export default function SplitwiseExpenseItem({
               sx={{
                 color: stanceColor,
                 fontWeight: 800,
-                fontSize: { xs: '0.875rem', sm: '1rem' },
+                fontSize: { xs: '0.825rem', sm: '1rem' },
                 lineHeight: 1.25,
                 mt: 0.2,
                 fontVariantNumeric: 'tabular-nums',

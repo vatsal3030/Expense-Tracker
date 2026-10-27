@@ -499,12 +499,12 @@ function ExpensesContent() {
             <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Expenses & Shared Transactions
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' }, display: { xs: 'none', sm: 'block' } }}>
               Manage itemized bills, splits, and settlement statuses ({totalCount} total)
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               size="small"
@@ -518,15 +518,16 @@ function ExpensesContent() {
                 color: 'text.primary',
                 fontWeight: 600,
                 textTransform: 'none',
-                py: 0.85,
-                px: 2,
+                py: { xs: 0.6, sm: 0.85 },
+                px: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
                 '&:hover': {
                   borderColor: isLight ? '#059669' : '#10b981',
                   bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
                 },
               }}
             >
-              Export Data
+              Export
             </Button>
             <Menu
               anchorEl={exportAnchorEl}
@@ -578,8 +579,9 @@ function ExpensesContent() {
               onClick={() => setDialogOpen(true)}
               sx={{
                 borderRadius: 2.5,
-                px: 2.75,
-                py: 0.85,
+                px: { xs: 2, sm: 2.75 },
+                py: { xs: 0.6, sm: 0.85 },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
                 fontWeight: 600,
                 textTransform: 'none',
                 bgcolor: isLight ? '#059669' : '#10B981',
@@ -605,12 +607,12 @@ function ExpensesContent() {
         <Card
           className="glass-filter-surface glass-specular-top"
           sx={{
-            mb: 2,
-            borderRadius: 3.5,
+            mb: { xs: 1.5, sm: 2 },
+            borderRadius: { xs: 2.5, sm: 3.5 },
           }}
         >
-          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-            <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+          <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
+            <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ alignItems: 'center' }}>
               {/* Keyword Search */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
@@ -629,7 +631,7 @@ function ExpensesContent() {
                           <Search fontSize="small" sx={{ color: 'text.secondary' }} />
                         </InputAdornment>
                       ),
-                      sx: { borderRadius: 2.5, bgcolor: theme.palette.mode === 'light' ? '#F4F5F7' : 'rgba(255,255,255,0.04)' },
+                      sx: { borderRadius: 2.5, bgcolor: theme.palette.mode === 'light' ? '#F4F5F7' : 'rgba(255,255,255,0.04)', fontSize: { xs: '0.8rem', sm: '0.875rem' } },
                     },
                   }}
                 />
@@ -638,7 +640,7 @@ function ExpensesContent() {
               {/* Category Filter */}
               <Grid size={{ xs: 6, sm: 4, md: 2 }}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Category</InputLabel>
+                  <InputLabel sx={{ fontSize: { xs: '0.78rem', sm: '0.875rem' } }}>Category</InputLabel>
                   <Select
                     value={filterCategory}
                     label="Category"
@@ -646,7 +648,7 @@ function ExpensesContent() {
                       setFilterCategory(e.target.value);
                       setPage(1);
                     }}
-                    sx={{ borderRadius: 2.5 }}
+                    sx={{ borderRadius: 2.5, fontSize: { xs: '0.78rem', sm: '0.875rem' }, '& .MuiSelect-select': { py: { xs: 0.6, sm: 1 } } }}
                   >
                     <MenuItem value="">All Categories</MenuItem>
                     {CATEGORIES.map((cat) => (
@@ -661,7 +663,7 @@ function ExpensesContent() {
               {/* Group Filter */}
               <Grid size={{ xs: 6, sm: 4, md: 2 }}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Group</InputLabel>
+                  <InputLabel sx={{ fontSize: { xs: '0.78rem', sm: '0.875rem' } }}>Group</InputLabel>
                   <Select
                     value={filterGroup}
                     label="Group"
@@ -669,7 +671,7 @@ function ExpensesContent() {
                       setFilterGroup(e.target.value);
                       setPage(1);
                     }}
-                    sx={{ borderRadius: 2.5 }}
+                    sx={{ borderRadius: 2.5, fontSize: { xs: '0.78rem', sm: '0.875rem' }, '& .MuiSelect-select': { py: { xs: 0.6, sm: 1 } } }}
                   >
                     <MenuItem value="">All Groups</MenuItem>
                     {groups.map((g) => (
@@ -684,7 +686,7 @@ function ExpensesContent() {
               {/* Date Presets */}
               <Grid size={{ xs: 6, sm: 4, md: 2 }}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Date</InputLabel>
+                  <InputLabel sx={{ fontSize: { xs: '0.78rem', sm: '0.875rem' } }}>Date</InputLabel>
                   <Select
                     value={filterDatePreset}
                     label="Date"
@@ -692,7 +694,7 @@ function ExpensesContent() {
                       setFilterDatePreset(e.target.value as any);
                       setPage(1);
                     }}
-                    sx={{ borderRadius: 2.5 }}
+                    sx={{ borderRadius: 2.5, fontSize: { xs: '0.78rem', sm: '0.875rem' }, '& .MuiSelect-select': { py: { xs: 0.6, sm: 1 } } }}
                   >
                     <MenuItem value="all">All Time</MenuItem>
                     <MenuItem value="today">Today</MenuItem>
@@ -705,7 +707,7 @@ function ExpensesContent() {
               {/* Sorting */}
               <Grid size={{ xs: 6, sm: 4, md: 2 }}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Sort By</InputLabel>
+                  <InputLabel sx={{ fontSize: { xs: '0.78rem', sm: '0.875rem' } }}>Sort By</InputLabel>
                   <Select
                     value={sortBy}
                     label="Sort By"
@@ -713,7 +715,7 @@ function ExpensesContent() {
                       setSortBy(e.target.value);
                       setPage(1);
                     }}
-                    sx={{ borderRadius: 2.5 }}
+                    sx={{ borderRadius: 2.5, fontSize: { xs: '0.78rem', sm: '0.875rem' }, '& .MuiSelect-select': { py: { xs: 0.6, sm: 1 } } }}
                   >
                     <MenuItem value="date_desc">Newest First</MenuItem>
                     <MenuItem value="date_asc">Oldest First</MenuItem>
@@ -1201,36 +1203,36 @@ function ExpensesContent() {
             component="div"
             sx={{
               display: 'flex',
-              justifyContent: 'space-between',
               alignItems: 'center',
+              justifyContent: 'space-between',
+              p: { xs: 1.5, sm: 2 },
               px: { xs: 2, sm: 3 },
-              pt: { xs: 2, sm: 2.5 },
-              pb: 1,
               fontWeight: 700,
             }}
           >
-            <Typography variant="h6" component="span" fontWeight={700}>
+            <Typography variant="h6" component="span" fontWeight={700} sx={{ fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>
               Add Expense
             </Typography>
             <IconButton onClick={() => setDialogOpen(false)} size="small">
-              <Close />
+              <Close fontSize="small" />
             </IconButton>
           </DialogTitle>
 
-          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
-            <Stack spacing={2.5} sx={{ mt: 1 }}>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1, sm: 1.5 } }}>
+            <Stack spacing={{ xs: 1.25, sm: 2 }} sx={{ mt: 0.5 }}>
               <TextField
                 fullWidth
+                size="small"
                 label="Description"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="e.g. Dinner with team"
                 slotProps={{ htmlInput: { maxLength: 150 } }}
-                helperText="Max 150 characters"
                 required
               />
               <TextField
                 fullWidth
+                size="small"
                 label="Amount"
                 type="number"
                 value={form.amount}
@@ -1241,13 +1243,13 @@ function ExpensesContent() {
                     startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                   },
                 }}
-                helperText="Range: ₹0.01 to ₹10,000,000"
                 required
               />
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid container spacing={{ xs: 1.25, sm: 2 }}>
+                <Grid size={{ xs: 6, sm: 6 }}>
                   <TextField
                     fullWidth
+                    size="small"
                     select
                     label="Category"
                     value={form.category}
@@ -1260,9 +1262,10 @@ function ExpensesContent() {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 6, sm: 6 }}>
                   <TextField
                     fullWidth
+                    size="small"
                     type="date"
                     label="Date"
                     value={form.date}
@@ -1275,6 +1278,7 @@ function ExpensesContent() {
               </Grid>
               <TextField
                 fullWidth
+                size="small"
                 select
                 label="Group (optional)"
                 value={form.groupId}
@@ -1289,6 +1293,7 @@ function ExpensesContent() {
               </TextField>
               <TextField
                 fullWidth
+                size="small"
                 label="Notes (optional)"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -1299,8 +1304,8 @@ function ExpensesContent() {
             </Stack>
           </DialogContent>
 
-          <DialogActions sx={{ p: { xs: 2, sm: 2.5 } }}>
-            <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: 'none' }}>
+          <DialogActions sx={{ p: { xs: 1.5, sm: 2 }, px: { xs: 2, sm: 3 } }}>
+            <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: 'none', fontSize: { xs: '0.825rem', sm: '0.875rem' } }}>
               Cancel
             </Button>
             <Button
@@ -1313,7 +1318,9 @@ function ExpensesContent() {
                 fontWeight: 600,
                 textTransform: 'none',
                 borderRadius: 2.5,
-                px: 3,
+                px: { xs: 2, sm: 3 },
+                py: { xs: 0.6, sm: 0.85 },
+                fontSize: { xs: '0.825rem', sm: '0.875rem' },
                 boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
                 '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
               }}

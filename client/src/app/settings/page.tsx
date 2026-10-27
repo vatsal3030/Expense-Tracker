@@ -501,7 +501,7 @@ function SettingsContent() {
                 }}
               />
             </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' }, display: { xs: 'none', sm: 'block' } }}>
               Configure personal identity, payments, split defaults, privacy, and system security
             </Typography>
           </Box>
@@ -517,14 +517,15 @@ function SettingsContent() {
               sx={{
                 width: { xs: '100%', sm: 'auto' },
                 borderRadius: 2.5,
-                px: 3.5,
-                py: 1,
+                px: { xs: 2, sm: 3.5 },
+                py: { xs: 0.6, sm: 1 },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
                 fontWeight: 650,
                 color: '#ffffff',
                 textTransform: 'none',
               }}
             >
-              {saving ? 'Saving...' : 'Save All Preferences'}
+              {saving ? 'Saving...' : 'Save Preferences'}
             </Button>
           </Box>
         </Box>
@@ -533,9 +534,9 @@ function SettingsContent() {
         <Card
           className="glass-secondary glass-specular-top glass-emerald-ambient"
           sx={{
-            mb: 3.5,
-            borderRadius: 3.5,
-            p: { xs: 2, sm: 3 },
+            mb: { xs: 2, sm: 3.5 },
+            borderRadius: { xs: 2.5, sm: 3.5 },
+            p: { xs: 1.5, sm: 3 },
             position: 'relative',
             overflow: 'hidden',
             width: '100%',
@@ -550,21 +551,21 @@ function SettingsContent() {
               justifyContent: 'space-between',
               flexDirection: { xs: 'column', sm: 'row' },
               flexWrap: 'wrap',
-              gap: 2.5,
+              gap: { xs: 1.5, sm: 2.5 },
               width: '100%',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, maxWidth: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, sm: 2 }, maxWidth: '100%' }}>
               <Avatar
                 src={form.avatarUrl || profile?.avatarUrl || googleAvatar || undefined}
                 slotProps={{ img: { referrerPolicy: 'no-referrer' } }}
                 sx={{
-                  width: { xs: 54, sm: 68 },
-                  height: { xs: 54, sm: 68 },
+                  width: { xs: 46, sm: 68 },
+                  height: { xs: 46, sm: 68 },
                   bgcolor: 'rgba(16, 185, 129, 0.15)',
                   color: '#10B981',
                   border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: { xs: '1.4rem', sm: '1.75rem' },
+                  fontSize: { xs: '1.2rem', sm: '1.75rem' },
                   fontWeight: 700,
                   flexShrink: 0,
                 }}
@@ -572,8 +573,8 @@ function SettingsContent() {
                 {form.name?.charAt(0)?.toUpperCase() || 'U'}
               </Avatar>
               <Box sx={{ minWidth: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
-                  <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em', color: 'text.primary', fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em', color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' } }}>
                     {form.name || 'User'}
                   </Typography>
                   {(form.username || profile?.username) && (
@@ -581,8 +582,8 @@ function SettingsContent() {
                       label={`@${form.username || profile?.username}`}
                       size="small"
                       sx={{
-                        height: 22,
-                        fontSize: '0.72rem',
+                        height: 20,
+                        fontSize: '0.675rem',
                         fontWeight: 700,
                         fontFamily: 'monospace',
                         bgcolor: 'rgba(52, 211, 153, 0.1)',
@@ -593,33 +594,35 @@ function SettingsContent() {
                   )}
                   {isPhoneVerified && (
                     <Tooltip title="Phone Number Verified via OTP">
-                      <CheckCircle sx={{ color: '#34D399', fontSize: '1.1rem' }} />
+                      <CheckCircle sx={{ color: '#34D399', fontSize: '1rem' }} />
                     </Tooltip>
                   )}
                 </Box>
-                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.8rem', sm: '0.875rem' }, wordBreak: 'break-all' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '0.75rem', sm: '0.875rem' }, wordBreak: 'break-all' }}>
                   {user?.email}
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.2, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
                   {preferences.bioTagline}
                 </Typography>
               </Box>
             </Box>
 
             {/* Quick Actions */}
-            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
               <Tooltip title="Click to copy unique UUID">
                 <Button
                   size="small"
                   variant="outlined"
                   className="glass-tertiary"
                   onClick={handleCopyAccountId}
-                  startIcon={<ContentCopy fontSize="small" />}
+                  startIcon={<ContentCopy fontSize="small" sx={{ fontSize: { xs: 14, sm: 16 } }} />}
                   sx={{
                     borderRadius: 2,
                     textTransform: 'none',
                     fontWeight: 600,
-                    fontSize: '0.75rem',
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                    py: { xs: 0.35, sm: 0.5 },
+                    px: { xs: 1, sm: 1.5 },
                     color: 'text.secondary',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     '&:hover': {
@@ -639,7 +642,8 @@ function SettingsContent() {
                   bgcolor: 'rgba(16, 185, 129, 0.15)',
                   color: '#34D399',
                   fontWeight: 700,
-                  fontSize: '0.72rem',
+                  fontSize: { xs: '0.675rem', sm: '0.72rem' },
+                  height: { xs: 24, sm: 28 },
                   borderRadius: 2,
                   border: '1px solid rgba(52, 211, 153, 0.25)',
                 }}
@@ -649,13 +653,13 @@ function SettingsContent() {
         </Card>
 
         {/* Segmented Liquid Glass Tabs */}
-        <Box sx={{ mb: 3, width: '100%', maxWidth: '100%', minWidth: 0 }}>
+        <Box sx={{ mb: { xs: 2, sm: 3 }, width: '100%', maxWidth: '100%', minWidth: 0 }}>
           <Box
             className="glass-tertiary"
             sx={{
               display: 'flex',
-              p: 0.5,
-              borderRadius: 3,
+              p: 0.4,
+              borderRadius: { xs: 2.5, sm: 3 },
               border: '1px solid rgba(255, 255, 255, 0.08)',
               width: '100%',
               maxWidth: '100%',
@@ -667,10 +671,10 @@ function SettingsContent() {
               value={activeTab}
               onChange={handleTabChange}
               variant="scrollable"
-              scrollButtons="auto"
+              scrollButtons={false}
               allowScrollButtonsMobile
               sx={{
-                minHeight: 40,
+                minHeight: { xs: 34, sm: 40 },
                 width: '100%',
                 maxWidth: '100%',
                 minWidth: 0,
@@ -679,7 +683,7 @@ function SettingsContent() {
                 },
                 '& .MuiTabs-indicator': {
                   height: '100%',
-                  borderRadius: 2.5,
+                  borderRadius: { xs: 2, sm: 2.5 },
                   bgcolor: 'rgba(16, 185, 129, 0.2)',
                   border: '1px solid rgba(52, 211, 153, 0.4)',
                   zIndex: 0,
@@ -688,10 +692,12 @@ function SettingsContent() {
                   zIndex: 1,
                   textTransform: 'none',
                   fontWeight: 650,
-                  fontSize: '0.85rem',
-                  minHeight: 38,
-                  px: 2.5,
-                  borderRadius: 2.5,
+                  fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                  minHeight: { xs: 34, sm: 38 },
+                  minWidth: { xs: 'auto', sm: 90 },
+                  px: { xs: 1.25, sm: 2.5 },
+                  py: { xs: 0.4, sm: 0.75 },
+                  borderRadius: { xs: 2, sm: 2.5 },
                   color: 'text.secondary',
                   transition: 'all 0.2s ease',
                   '&.Mui-selected': {
@@ -700,11 +706,56 @@ function SettingsContent() {
                 },
               }}
             >
-              <Tab icon={<Person fontSize="small" />} iconPosition="start" label="Profile & Identity" />
-              <Tab icon={<Payment fontSize="small" />} iconPosition="start" label="Payments & Splits" />
-              <Tab icon={<NotificationsIcon fontSize="small" />} iconPosition="start" label="Alerts & Rules" />
-              <Tab icon={<Palette fontSize="small" />} iconPosition="start" label="Appearance & UI" />
-              <Tab icon={<Security fontSize="small" />} iconPosition="start" label="Security & Data" />
+              <Tab
+                icon={<Person sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                iconPosition="start"
+                label={
+                  <>
+                    <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Profile</Box>
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Profile & Identity</Box>
+                  </>
+                }
+              />
+              <Tab
+                icon={<Payment sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                iconPosition="start"
+                label={
+                  <>
+                    <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Payments</Box>
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Payments & Splits</Box>
+                  </>
+                }
+              />
+              <Tab
+                icon={<NotificationsIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                iconPosition="start"
+                label={
+                  <>
+                    <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Alerts</Box>
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Alerts & Rules</Box>
+                  </>
+                }
+              />
+              <Tab
+                icon={<Palette sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                iconPosition="start"
+                label={
+                  <>
+                    <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Appearance</Box>
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Appearance & UI</Box>
+                  </>
+                }
+              />
+              <Tab
+                icon={<Security sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                iconPosition="start"
+                label={
+                  <>
+                    <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Security</Box>
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Security & Data</Box>
+                  </>
+                }
+              />
             </Tabs>
           </Box>
         </Box>
@@ -715,7 +766,7 @@ function SettingsContent() {
             <Grid size={{ xs: 12, md: 8 }}>
               <Card
                 className="glass-secondary glass-specular-top"
-                sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                sx={{ borderRadius: { xs: 2.5, sm: 3.5 }, p: { xs: 1.5, sm: 3.5 } }}
               >
                 <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                   Personal Identity
@@ -1061,7 +1112,7 @@ function SettingsContent() {
             <Grid size={{ xs: 12, md: 8 }}>
               <Card
                 className="glass-secondary glass-specular-top"
-                sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                sx={{ borderRadius: { xs: 2.5, sm: 3.5 }, p: { xs: 1.5, sm: 3.5 } }}
               >
                 <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                   Settlement & UPI Configuration
@@ -1271,7 +1322,7 @@ function SettingsContent() {
             <Grid size={{ xs: 12, md: 8 }}>
               <Card
                 className="glass-secondary glass-specular-top"
-                sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                sx={{ borderRadius: { xs: 2.5, sm: 3.5 }, p: { xs: 1.5, sm: 3.5 } }}
               >
                 <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                   Notification Rules & Channels
@@ -1403,7 +1454,7 @@ function SettingsContent() {
             <Grid size={{ xs: 12, md: 8 }}>
               <Card
                 className="glass-secondary glass-specular-top"
-                sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                sx={{ borderRadius: { xs: 2.5, sm: 3.5 }, p: { xs: 1.5, sm: 3.5 } }}
               >
                 <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                   Display & Workspace Density
@@ -1529,7 +1580,7 @@ function SettingsContent() {
                 {/* Account Security & Authentication Card */}
                 <Card
                   className="glass-secondary glass-specular-top"
-                  sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                  sx={{ borderRadius: { xs: 2.5, sm: 3.5 }, p: { xs: 1.5, sm: 3.5 } }}
                 >
                   <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 2, color: 'text.primary', letterSpacing: '-0.01em' }}>
                     Account Security & Authentication
@@ -1589,7 +1640,7 @@ function SettingsContent() {
                 {/* Password & Security Card */}
                 <Card
                   className="glass-secondary glass-specular-top"
-                  sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                  sx={{ borderRadius: { xs: 2.5, sm: 3.5 }, p: { xs: 1.5, sm: 3.5 } }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
                     <LockReset sx={{ color: '#34D399' }} />
@@ -1669,8 +1720,8 @@ function SettingsContent() {
                 {/* Danger Zone */}
                 <Card
                   sx={{
-                    borderRadius: 3.5,
-                    p: { xs: 2.5, sm: 3.5 },
+                    borderRadius: { xs: 2.5, sm: 3.5 },
+                    p: { xs: 1.5, sm: 3.5 },
                     border: '1px solid rgba(239, 68, 68, 0.25)',
                     bgcolor: 'rgba(239, 68, 68, 0.04)',
                     backdropFilter: 'blur(20px)',
@@ -1898,7 +1949,7 @@ function SettingsContent() {
                 {/* Data Export Archive */}
                 <Card
                   className="glass-secondary glass-specular-top"
-                  sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                  sx={{ borderRadius: { xs: 2.5, sm: 3.5 }, p: { xs: 1.5, sm: 3.5 } }}
                 >
                   <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
                     Data Portability & Full Backup

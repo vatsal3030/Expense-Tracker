@@ -113,18 +113,18 @@ export default function CurrencyPage() {
     <AppLayout>
       <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.75, flexWrap: 'wrap', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 1.25, sm: 1.75 }, flexWrap: 'wrap', gap: 1.5 }}>
           <Box>
             <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Currency Exchange
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
               Real-time FX rates — powered by ECB
             </Typography>
           </Box>
           <Tooltip title="Refresh Rates">
-            <IconButton onClick={fetchRates} sx={{ bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', border: `1px solid ${theme.palette.divider}` }}>
-              <Refresh />
+            <IconButton onClick={fetchRates} size="small" sx={{ bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', border: `1px solid ${theme.palette.divider}` }}>
+              <Refresh fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
@@ -133,20 +133,20 @@ export default function CurrencyPage() {
         <Card
           className="glass-secondary glass-specular-top"
           sx={{
-            borderRadius: 3, mb: 2,
+            borderRadius: { xs: 2.5, sm: 3 }, mb: { xs: 1.5, sm: 2 },
             boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.04)' : '0 12px 30px rgba(0,0,0,0.35)',
           }}
         >
-          <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-              <CurrencyExchange sx={{ color: isLight ? '#059669' : '#34D399', fontSize: 28 }} />
-              <Typography variant="h6" fontWeight={800}>Convert Currency</Typography>
+          <CardContent sx={{ p: { xs: 1.5, sm: 4 }, '&:last-child': { pb: { xs: 1.5, sm: 4 } } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: { xs: 1.5, sm: 3 } }}>
+              <CurrencyExchange sx={{ color: isLight ? '#059669' : '#34D399', fontSize: { xs: 22, sm: 28 } }} />
+              <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>Convert Currency</Typography>
             </Box>
 
-            <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+            <Grid container spacing={{ xs: 1.25, sm: 2 }} sx={{ alignItems: 'center' }}>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField
-                  fullWidth label="Amount" type="number"
+                  fullWidth size="small" label="Amount" type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   slotProps={{ htmlInput: { min: 0, step: 'any' } }}
@@ -154,7 +154,7 @@ export default function CurrencyPage() {
               </Grid>
               <Grid size={{ xs: 5, sm: 3 }}>
                 <TextField
-                  fullWidth select label="From"
+                  fullWidth size="small" select label="From"
                   value={fromCurrency}
                   onChange={(e) => setFromCurrency(e.target.value)}
                 >
@@ -165,6 +165,7 @@ export default function CurrencyPage() {
               </Grid>
               <Grid size={{ xs: 2, sm: 1 }} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <IconButton
+                  size="small"
                   onClick={handleSwap}
                   sx={{
                     bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
@@ -172,12 +173,12 @@ export default function CurrencyPage() {
                     '&:hover': { bgcolor: isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(16, 185, 129, 0.2)' },
                   }}
                 >
-                  <SwapHoriz sx={{ color: isLight ? '#059669' : '#34D399' }} />
+                  <SwapHoriz fontSize="small" sx={{ color: isLight ? '#059669' : '#34D399' }} />
                 </IconButton>
               </Grid>
               <Grid size={{ xs: 5, sm: 3 }}>
                 <TextField
-                  fullWidth select label="To"
+                  fullWidth size="small" select label="To"
                   value={toCurrency}
                   onChange={(e) => setToCurrency(e.target.value)}
                 >
@@ -191,20 +192,20 @@ export default function CurrencyPage() {
             {/* Result */}
             {result && (
               <Box sx={{
-                mt: 3, p: 2.5, borderRadius: 3,
+                mt: { xs: 1.5, sm: 3 }, p: { xs: 1.5, sm: 2.5 }, borderRadius: { xs: 2, sm: 3 },
                 bgcolor: isLight ? 'rgba(5, 150, 105, 0.04)' : 'rgba(16, 185, 129, 0.06)',
                 border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.15)'}`,
               }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.8rem' }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.25, fontSize: { xs: '0.75rem', sm: '0.8rem' } }}>
                   {FLAG_EMOJI[result.from]} {result.fromSymbol}{Number(result.amount).toLocaleString('en-IN')} {result.from}
                 </Typography>
-                <Typography variant="h4" fontWeight={900} sx={{ color: isLight ? '#059669' : '#34D399', lineHeight: 1.2 }}>
+                <Typography variant="h4" fontWeight={900} sx={{ color: isLight ? '#059669' : '#34D399', lineHeight: 1.2, fontSize: { xs: '1.45rem', sm: '2.125rem' } }}>
                   {FLAG_EMOJI[result.to]} {result.toSymbol}{Number(result.converted).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                  <Typography component="span" variant="body1" fontWeight={600} sx={{ ml: 1, color: 'text.secondary' }}>
+                  <Typography component="span" variant="body1" fontWeight={600} sx={{ ml: 1, color: 'text.secondary', fontSize: { xs: '0.85rem', sm: '1rem' } }}>
                     {result.to}
                   </Typography>
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', fontSize: { xs: '0.72rem', sm: '0.75rem' } }}>
                   Rate: 1 {result.from} = {formatRate(result.rate)} {result.to}
                 </Typography>
               </Box>
@@ -213,12 +214,12 @@ export default function CurrencyPage() {
         </Card>
 
         {/* Popular Rates Grid */}
-        <Typography variant="h6" fontWeight={800} sx={{ mb: 2 }}>Popular Rates</Typography>
+        <Typography variant="h6" fontWeight={800} sx={{ mb: { xs: 1.25, sm: 2 }, fontSize: { xs: '1rem', sm: '1.25rem' } }}>Popular Rates</Typography>
         {loading ? (
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.25, sm: 2 }}>
             {[1, 2, 3, 4].map((i) => (
               <Grid size={{ xs: 6, sm: 3 }} key={i}>
-                <Card className="glass-secondary" sx={{ borderRadius: 3, p: 2 }}>
+                <Card className="glass-secondary" sx={{ borderRadius: { xs: 2.5, sm: 3 }, p: { xs: 1.25, sm: 2 } }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <Skeleton variant="circular" width={22} height={22} animation="wave" />
                     <Skeleton variant="text" width={14} animation="wave" />
@@ -231,7 +232,7 @@ export default function CurrencyPage() {
             ))}
           </Grid>
         ) : rates ? (
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.25, sm: 2 }}>
             {POPULAR_PAIRS.map((pair) => {
               const ratesMap = rates.rates || {};
               // Calculate cross rate via USD base
@@ -244,7 +245,7 @@ export default function CurrencyPage() {
                   <Card
                     className="glass-secondary"
                     sx={{
-                      borderRadius: 3, cursor: 'pointer',
+                      borderRadius: { xs: 2.5, sm: 3 }, cursor: 'pointer',
                       border: `1px solid ${theme.palette.divider}`,
                       boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.03)' : '0 4px 16px rgba(0,0,0,0.3)',
                       transition: 'all 0.2s ease',
@@ -255,16 +256,16 @@ export default function CurrencyPage() {
                       setToCurrency(pair.to);
                     }}
                   >
-                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
-                        <Typography fontSize="1.1rem">{FLAG_EMOJI[pair.from]}</Typography>
+                    <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                        <Typography sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>{FLAG_EMOJI[pair.from]}</Typography>
                         <Typography variant="caption" fontWeight={700} color="text.secondary">→</Typography>
-                        <Typography fontSize="1.1rem">{FLAG_EMOJI[pair.to]}</Typography>
+                        <Typography sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>{FLAG_EMOJI[pair.to]}</Typography>
                       </Box>
-                      <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+                      <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' }, color: 'text.secondary' }}>
                         {pair.from}/{pair.to}
                       </Typography>
-                      <Typography variant="body1" fontWeight={800} sx={{ color: isLight ? '#059669' : '#34D399' }}>
+                      <Typography variant="body1" fontWeight={800} sx={{ color: isLight ? '#059669' : '#34D399', fontSize: { xs: '0.925rem', sm: '1rem' } }}>
                         {crossRate ? formatRate(crossRate) : '—'}
                       </Typography>
                     </CardContent>

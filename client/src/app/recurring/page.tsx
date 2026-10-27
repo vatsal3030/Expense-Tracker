@@ -181,17 +181,19 @@ export default function RecurringPage() {
             <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Recurring Expenses
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
               Set and forget — auto-logged on schedule
             </Typography>
           </Box>
           <Button
             variant="contained"
-            startIcon={<Add />}
+            startIcon={<Add fontSize="small" />}
             onClick={() => setDialogOpen(true)}
             sx={{
               width: { xs: '100%', sm: 'auto' },
-              borderRadius: 2.5, px: 3, fontWeight: 700,
+              borderRadius: 2.5, px: { xs: 2, sm: 3 }, py: { xs: 0.6, sm: 0.85 },
+              fontSize: { xs: '0.8rem', sm: '0.875rem' },
+              fontWeight: 700,
               bgcolor: isLight ? '#059669' : '#10B981', color: '#ffffff', textTransform: 'none',
               boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
               '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
@@ -203,33 +205,33 @@ export default function RecurringPage() {
 
         {/* Summary Cards */}
         {!loading && rules.length > 0 && (
-          <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: { xs: 2, sm: 3 } }}>
             {[
-              { label: 'Active Rules', value: activeRules.length, icon: <Repeat sx={{ fontSize: 20 }} />, color: isLight ? '#059669' : '#10B981' },
-              { label: 'Est. Monthly', value: formatCurrency(totalMonthly), icon: <TrendingUp sx={{ fontSize: 20 }} />, color: '#3B82F6' },
-              { label: 'Due Soon', value: rules.filter((r) => r.isDueSoon).length, icon: <NotificationsActive sx={{ fontSize: 20 }} />, color: '#F59E0B' },
+              { label: 'Active Rules', value: activeRules.length, icon: <Repeat sx={{ fontSize: { xs: 15, sm: 20 } }} />, color: isLight ? '#059669' : '#10B981' },
+              { label: 'Est. Monthly', value: formatCurrency(totalMonthly), icon: <TrendingUp sx={{ fontSize: { xs: 15, sm: 20 } }} />, color: '#3B82F6' },
+              { label: 'Due Soon', value: rules.filter((r) => r.isDueSoon).length, icon: <NotificationsActive sx={{ fontSize: { xs: 15, sm: 20 } }} />, color: '#F59E0B' },
             ].map((stat) => (
-              <Grid size={{ xs: 12, sm: 4 }} key={stat.label}>
+              <Grid size={{ xs: 4, sm: 4 }} key={stat.label}>
                 <Card
                   className="glass-secondary"
                   sx={{
-                    borderRadius: 3, border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: { xs: 2, sm: 3 }, border: `1px solid ${theme.palette.divider}`,
                     boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.03)' : '0 4px 16px rgba(0,0,0,0.3)',
                   }}
                 >
-                  <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <CardContent sx={{ p: { xs: 1, sm: 2.5 }, '&:last-child': { pb: { xs: 1, sm: 2.5 } } }}>
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, gap: { xs: 0.75, sm: 1.5 } }}>
                       <Box sx={{
-                        width: 40, height: 40, borderRadius: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        bgcolor: alpha(stat.color, 0.1), color: stat.color,
+                        width: { xs: 26, sm: 40 }, height: { xs: 26, sm: 40 }, borderRadius: { xs: 1.5, sm: 2.5 }, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        bgcolor: alpha(stat.color, 0.1), color: stat.color, flexShrink: 0,
                       }}>
                         {stat.icon}
                       </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: '0.7rem' }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" noWrap color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: { xs: '0.625rem', sm: '0.7rem' } }}>
                           {stat.label}
                         </Typography>
-                        <Typography variant="h6" fontWeight={800} sx={{ lineHeight: 1.2, fontSize: '1.15rem' }}>
+                        <Typography variant="h6" noWrap fontWeight={800} sx={{ lineHeight: 1.2, fontSize: { xs: '0.85rem', sm: '1.15rem' } }}>
                           {stat.value}
                         </Typography>
                       </Box>

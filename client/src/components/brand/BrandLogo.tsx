@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/providers/AuthProvider';
 
 interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -10,6 +11,7 @@ interface BrandLogoProps {
   className?: string;
   asLink?: boolean;
   textColor?: string;
+  href?: string;
 }
 
 export default function BrandLogo({
@@ -18,7 +20,10 @@ export default function BrandLogo({
   className,
   asLink = true,
   textColor,
+  href,
 }: BrandLogoProps) {
+  const { user } = useAuth();
+  const targetHref = href || (user ? '/dashboard' : '/');
   const iconDimensions = {
     sm: { width: 28, height: 28, stroke: 2.2 },
     md: { width: 36, height: 36, stroke: 2.5 },
@@ -123,7 +128,7 @@ export default function BrandLogo({
 
   if (asLink) {
     return (
-      <Link href="/" className="inline-flex items-center no-underline outline-none">
+      <Link href={targetHref} className="inline-flex items-center no-underline outline-none">
         {content}
       </Link>
     );

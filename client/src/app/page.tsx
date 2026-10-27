@@ -107,12 +107,7 @@ export default function LandingPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const isLight = mode === 'light';
 
-  // Automatically redirect authenticated users straight to the main dashboard
-  useEffect(() => {
-    if (!authLoading && user) {
-      router.replace('/dashboard');
-    }
-  }, [user, authLoading, router]);
+  // Do NOT forcefully redirect authenticated users to /dashboard so they can view the landing page features & simulator freely
 
   // --- Live Bill Simulator State ---
   const [billAmount, setBillAmount] = useState<number>(4800);

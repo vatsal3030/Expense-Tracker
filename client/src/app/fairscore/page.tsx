@@ -99,11 +99,11 @@ export default function FairScorePage() {
     <AppLayout>
       <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header */}
-        <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ mb: { xs: 1.5, sm: 2 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
             <Box
               sx={{
-                p: 1,
+                p: { xs: 0.75, sm: 1 },
                 borderRadius: 2.5,
                 bgcolor: isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.15)',
                 color: isLight ? '#059669' : '#34D399',
@@ -112,36 +112,36 @@ export default function FairScorePage() {
                 flexShrink: 0,
               }}
             >
-              <EmojiEvents />
+              <EmojiEvents fontSize="small" />
             </Box>
             <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em', fontSize: { xs: '1.25rem', sm: '1.85rem', md: '2.125rem' } }}>
-              FairScore & Financial Karma
+              FairScore & Karma
             </Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, ml: { xs: 0, sm: 5.5 }, fontSize: { xs: '0.78rem', sm: '0.875rem' } }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, ml: { xs: 0, sm: 5.5 }, fontSize: { xs: '0.78rem', sm: '0.875rem' }, display: { xs: 'none', sm: 'block' } }}>
             Earn reliability reputation, build streak momentum, and unlock FinTech achievements with your group
           </Typography>
         </Box>
 
         {/* Hero Score Gauge & Streak Row */}
-        <Grid container spacing={{ xs: 1.5, sm: 2.5, md: 3 }} sx={{ mb: 4 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2.5, sm: 4 } }}>
           {/* Main FairScore Gauge */}
           <Grid size={{ xs: 12, md: 7 }}>
             <Card
               className="glass-secondary glass-specular-top glass-emerald-ambient"
               sx={{
-                borderRadius: 3.5,
+                borderRadius: { xs: 2.5, sm: 3.5 },
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
-                p: { xs: 2.5, sm: 3.5, md: 4 },
+                p: { xs: 1.5, sm: 3.5, md: 4 },
                 position: 'relative',
                 overflow: 'hidden',
               }}
             >
-              <Grid container spacing={3} sx={{ alignItems: 'center' }}>
+              <Grid container spacing={{ xs: 1.5, sm: 3 }} sx={{ alignItems: 'center' }}>
                 <Grid size={{ xs: 12, sm: 5 }} sx={{ textAlign: 'center' }}>
                   {/* Circular SVG Gauge with liquid glow */}
-                  <Box sx={{ position: 'relative', width: 170, height: 170, mx: 'auto' }}>
-                    <svg width="170" height="170" viewBox="0 0 160 160" style={{ transform: 'rotate(-90deg)' }}>
+                  <Box sx={{ position: 'relative', width: { xs: 130, sm: 170 }, height: { xs: 130, sm: 170 }, mx: 'auto' }}>
+                    <svg width="100%" height="100%" viewBox="0 0 160 160" style={{ transform: 'rotate(-90deg)' }}>
                       <circle
                         cx="80"
                         cy="80"
@@ -180,7 +180,7 @@ export default function FairScorePage() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : 'text.primary', lineHeight: 1 }}>
+                      <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : 'text.primary', lineHeight: 1, fontSize: { xs: '1.75rem', sm: '3rem' } }}>
                         {loading ? <Skeleton width={60} /> : score}
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mt: 0.5 }}>

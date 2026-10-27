@@ -99,11 +99,11 @@ export default function ActivityPage() {
     <AppLayout>
       <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header */}
-        <Box sx={{ mb: 1.75, width: '100%', maxWidth: '100%' }}>
+        <Box sx={{ mb: { xs: 1.25, sm: 1.75 }, width: '100%', maxWidth: '100%' }}>
           <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
             Activity Feed
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, letterSpacing: '-0.01em', fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, letterSpacing: '-0.01em', fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
             Real-time audit log of shared expenses, settlements, and member interactions
           </Typography>
         </Box>
@@ -112,13 +112,13 @@ export default function ActivityPage() {
         <Box
           sx={{
             display: 'flex',
-            gap: 0.75,
+            gap: { xs: 0.5, sm: 0.75 },
             overflowX: 'auto',
             width: '100%',
             maxWidth: '100%',
             minWidth: 0,
             WebkitOverflowScrolling: 'touch',
-            mb: 1.75,
+            mb: { xs: 1.25, sm: 1.75 },
             py: 0.25,
             '&::-webkit-scrollbar': { display: 'none' },
           }}
@@ -128,15 +128,15 @@ export default function ActivityPage() {
             return (
               <Chip
                 key={cat}
-                label={cat === 'ALL' ? 'All Activity' : cat.charAt(0) + cat.slice(1).toLowerCase()}
+                label={cat === 'ALL' ? 'All' : cat.charAt(0) + cat.slice(1).toLowerCase()}
                 size="small"
                 onClick={() => setSelectedCategory(cat)}
                 className={active ? 'glass-emerald-active' : 'glass-tertiary'}
                 sx={{
                   flexShrink: 0,
-                  px: 1.25,
-                  py: 1.8,
-                  fontSize: '0.785rem',
+                  px: { xs: 0.75, sm: 1.25 },
+                  height: { xs: 26, sm: 30 },
+                  fontSize: { xs: '0.72rem', sm: '0.785rem' },
                   fontWeight: active ? 700 : 550,
                   color: active ? '#FFFFFF' : 'text.secondary',
                   border: active

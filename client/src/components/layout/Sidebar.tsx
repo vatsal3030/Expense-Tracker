@@ -168,12 +168,12 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
       {/* Brand Header */}
       <Box
         sx={{
-          px: collapsed && !isMobile ? 1.5 : 2.5,
-          py: 2,
+          px: collapsed && !isMobile ? 1.5 : { xs: 2, sm: 2.5 },
+          py: { xs: 1.25, sm: 2 },
           display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed && !isMobile ? 'center' : 'space-between',
-          minHeight: 68,
+          minHeight: collapsed && !isMobile ? 68 : { xs: 54, sm: 68 },
           borderBottom: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.07)'}`,
         }}
       >
@@ -209,19 +209,19 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
         ref={scrollContainerRef}
         onScroll={handleSidebarScroll}
         data-tour="sidebar-nav"
-        sx={{ flex: 1, py: 1.5, overflowY: 'auto', overflowX: 'hidden' }}
+        sx={{ flex: 1, py: { xs: 0.75, sm: 1.5 }, overflowY: 'auto', overflowX: 'hidden' }}
       >
         {navSections.map((section, sIdx) => (
-          <Box key={section.title} sx={{ mb: 1.5 }}>
+          <Box key={section.title} sx={{ mb: { xs: 0.75, sm: 1.5 } }}>
             {(!collapsed || isMobile) && (
               <Typography
                 variant="caption"
                 sx={{
-                  px: 2.5,
-                  pt: sIdx === 0 ? 0.5 : 1.5,
-                  pb: 0.5,
+                  px: { xs: 2, sm: 2.5 },
+                  pt: sIdx === 0 ? 0.25 : { xs: 0.75, sm: 1.5 },
+                  pb: 0.25,
                   display: 'block',
-                  fontSize: '0.675rem',
+                  fontSize: { xs: '0.625rem', sm: '0.675rem' },
                   fontWeight: 700,
                   letterSpacing: '0.08em',
                   color: isLight ? '#9CA3AF' : '#6B7280',
@@ -232,7 +232,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
               </Typography>
             )}
 
-            <List disablePadding sx={{ px: collapsed && !isMobile ? 1 : 1.5 }}>
+            <List disablePadding sx={{ px: collapsed && !isMobile ? 1 : { xs: 1, sm: 1.5 } }}>
               {section.items.map((item) => {
                 const active = isActive(item.path);
                 return (
@@ -256,9 +256,10 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                         if (isMobile) onClose();
                       }}
                       sx={{
-                        minHeight: 42,
-                        px: collapsed && !isMobile ? 1.5 : 1.75,
-                        my: 0.25,
+                        minHeight: { xs: 36, sm: 42 },
+                        px: collapsed && !isMobile ? 1.5 : { xs: 1.25, sm: 1.75 },
+                        py: { xs: 0.35, sm: 0.75 },
+                        my: { xs: 0.15, sm: 0.25 },
                         borderRadius: 2.5,
                         position: 'relative',
                         justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
@@ -318,9 +319,10 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                     >
                       <ListItemIcon
                         sx={{
-                          minWidth: collapsed && !isMobile ? 0 : 36,
+                          minWidth: collapsed && !isMobile ? 0 : { xs: 30, sm: 36 },
                           justifyContent: 'center',
                           color: active ? (isLight ? '#059669' : '#34D399') : 'inherit',
+                          '& .MuiSvgIcon-root': { fontSize: { xs: 18, sm: 20 } },
                         }}
                       >
                         {item.icon}
@@ -333,7 +335,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                               <Typography
                                 sx={{
                                   fontWeight: active ? 600 : 500,
-                                  fontSize: '0.85rem',
+                                  fontSize: { xs: '0.78rem', sm: '0.85rem' },
                                   color: 'inherit',
                                   letterSpacing: '-0.01em',
                                   fontVariantNumeric: 'tabular-nums',
@@ -346,8 +348,8 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                                   label={item.badge}
                                   size="small"
                                   sx={{
-                                    height: 18,
-                                    fontSize: '0.625rem',
+                                    height: { xs: 16, sm: 18 },
+                                    fontSize: { xs: '0.575rem', sm: '0.625rem' },
                                     fontWeight: 700,
                                     bgcolor: isLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.15)',
                                     color: isLight ? '#059669' : '#10B981',
@@ -370,7 +372,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
       </Box>
 
       {/* Settings & Bottom Items */}
-      <Box sx={{ p: collapsed && !isMobile ? 1 : 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
+      <Box sx={{ p: collapsed && !isMobile ? 1 : { xs: 1, sm: 1.5 }, borderTop: `1px solid ${theme.palette.divider}` }}>
         <List disablePadding>
           {bottomNavItems
             .filter((item) => item.path !== '/admin' || (profile as any)?.isAdmin)
@@ -392,8 +394,9 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   if (isMobile) onClose();
                 }}
                 sx={{
-                  minHeight: 40,
-                  px: collapsed && !isMobile ? 1.5 : 1.75,
+                  minHeight: { xs: 36, sm: 40 },
+                  px: collapsed && !isMobile ? 1.5 : { xs: 1.25, sm: 1.75 },
+                  py: { xs: 0.35, sm: 0.75 },
                   borderRadius: 2.5,
                   position: 'relative',
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
@@ -446,7 +449,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
               >
                 <ListItemIcon
                   sx={{
-                    minWidth: collapsed && !isMobile ? 0 : 36,
+                    minWidth: collapsed && !isMobile ? 0 : { xs: 30, sm: 36 },
                     justifyContent: 'center',
                     color: active ? (isLight ? '#059669' : '#34D399') : 'inherit',
                   }}

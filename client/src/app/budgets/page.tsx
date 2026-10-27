@@ -274,26 +274,26 @@ export default function BudgetsPage() {
           <Card
             className="glass-secondary glass-specular-top"
             sx={{
-              borderRadius: 3.5, mb: 3,
+              borderRadius: { xs: 2.5, sm: 3.5 }, mb: { xs: 2, sm: 3 },
               boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
               border: `1px solid ${theme.palette.divider}`,
             }}
           >
-            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Speed sx={{ color: isLight ? '#059669' : '#34D399', fontSize: 22 }} />
-                  <Typography variant="subtitle1" fontWeight={800}>Burn Rate Insights</Typography>
+            <CardContent sx={{ p: { xs: 1.5, sm: 3 }, '&:last-child': { pb: { xs: 1.5, sm: 3 } } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                  <Speed sx={{ color: isLight ? '#059669' : '#34D399', fontSize: { xs: 20, sm: 22 } }} />
+                  <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: { xs: '0.95rem', sm: '1.05rem' } }}>Burn Rate Insights</Typography>
                 </Box>
                 <Chip label="Live" size="small" sx={{ height: 20, fontSize: '0.625rem', fontWeight: 700, bgcolor: 'rgba(16, 185, 129, 0.12)', color: '#10B981' }} />
               </Box>
-              <Grid container spacing={2}>
+              <Grid container spacing={{ xs: 1, sm: 2 }}>
                 {burnRates.filter(b => b.spent > 0).slice(0, 4).map((br) => {
                   const pacingColor = br.pacingStatus === 'ahead' ? '#10B981' : br.pacingStatus === 'behind' ? '#EF4444' : br.pacingStatus === 'depleted' ? '#7C3AED' : '#3B82F6';
                   return (
                     <Grid size={{ xs: 12, sm: 6 }} key={br.budgetId}>
                       <Box sx={{
-                        p: 2, borderRadius: 2.5,
+                        p: { xs: 1.25, sm: 2 }, borderRadius: 2.5,
                         bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
                         border: `1px solid ${theme.palette.divider}`,
                       }}>
@@ -423,20 +423,20 @@ export default function BudgetsPage() {
                       '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: progressColor },
                     }}
                   >
-                    <CardContent sx={{ p: 3 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>
+                    <CardContent sx={{ p: { xs: 1.5, sm: 3 }, '&:last-child': { pb: { xs: 1.5, sm: 3 } } }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                           <Box
                             sx={{
-                              width: 48,
-                              height: 48,
-                              borderRadius: 2.75,
+                              width: { xs: 38, sm: 48 },
+                              height: { xs: 38, sm: 48 },
+                              borderRadius: { xs: 2, sm: 2.75 },
                               bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
                               border: `1.5px solid ${theme.palette.divider}`,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '1.75rem',
+                              fontSize: { xs: '1.35rem', sm: '1.75rem' },
                               flexShrink: 0,
                               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                             }}
