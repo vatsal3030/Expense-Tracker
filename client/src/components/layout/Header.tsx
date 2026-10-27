@@ -58,7 +58,14 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
   const { mode, toggleTheme } = useThemeMode();
   const { startTour } = useOnboarding();
 
-  const displayAvatar = profile?.avatarUrl || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || undefined;
+  const googleIdentity = (user as any)?.identities?.find((i: any) => i.provider === 'google')?.identity_data;
+  const displayAvatar =
+    profile?.avatarUrl ||
+    user?.user_metadata?.avatar_url ||
+    user?.user_metadata?.picture ||
+    googleIdentity?.avatar_url ||
+    googleIdentity?.picture ||
+    undefined;
   const displayName = profile?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
   const displayHandle = profile?.username || user?.user_metadata?.user_name || user?.email?.split('@')[0] || 'member';
   const displayEmail = profile?.email || user?.email || '';
@@ -524,6 +531,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             >
               <Avatar
                 src={displayAvatar}
+                slotProps={{ img: { referrerPolicy: 'no-referrer' } }}
                 sx={{
                   width: 32,
                   height: 32,
@@ -568,6 +576,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
               <Avatar
                 src={displayAvatar}
+                slotProps={{ img: { referrerPolicy: 'no-referrer' } }}
                 sx={{
                   width: 40,
                   height: 40,

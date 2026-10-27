@@ -43,6 +43,19 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    const backendUrl = process.env.BACKEND_PROXY_URL || 'http://localhost:5000';
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
+      },
+      {
+        source: '/socket.io/:path*',
+        destination: `${backendUrl}/socket.io/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

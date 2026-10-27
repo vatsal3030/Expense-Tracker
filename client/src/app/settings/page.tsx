@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, TextField, Button, Avatar,
   Divider, useTheme, alpha, Stack, Switch, FormControlLabel, MenuItem,
@@ -23,7 +23,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
 import { userApi, expenseApi, groupApi } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import QRCode from 'qrcode';
 
 const PRESET_AVATARS = [
@@ -43,18 +43,61 @@ const PRESET_AVATARS = [
 
 const PREFERENCES_STORAGE_KEY = 'owino_user_preferences';
 
-export default function SettingsPage() {
+const TAB_NAMES = ['profile', 'payments', 'alerts', 'appearance', 'security'] as const;
+const TAB_MAP: Record<string, number> = {
+  profile: 0,
+  payments: 1,
+  alerts: 2,
+  appearance: 3,
+  security: 4,
+};
+
+function SettingsContent() {
   const theme = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isLight = theme.palette.mode === 'light';
   const { profile, signOut, refreshProfile, loading: authLoading, user, updatePassword } = useAuth();
   const { mode, toggleTheme, setMode } = useThemeMode();
 
-  const [activeTab, setActiveTab] = useState(0);
+  const tabQuery = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<number>(() => {
+    if (tabQuery && TAB_MAP[tabQuery] !== undefined) {
+      return TAB_MAP[tabQuery];
+    }
+    return 0;
+  });
 
-  // Core Profile Form
-  const googleAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
-  const googleName = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
+  useEffect(() => {
+    if (tabQuery && TAB_MAP[tabQuery] !== undefined && TAB_MAP[tabQuery] !== activeTab) {
+      setActiveTab(TAB_MAP[tabQuery]);
+    }
+  }, [tabQuery, activeTab]);
+
+  const handleTabChange = (_: React.SyntheticEvent, newTab: number) => {
+    setActiveTab(newTab);
+    const tabKey = TAB_NAMES[newTab] || 'profile';
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tabKey);
+      window.history.replaceState({ ...window.history.state, as: url.toString(), url: url.toString() }, '', url.toString());
+    }
+  };
+
+  // Google Profile Data
+  const googleIdentity = (user as any)?.identities?.find((i: any) => i.provider === 'google')?.identity_data;
+  const googleAvatar =
+    user?.user_metadata?.avatar_url ||
+    user?.user_metadata?.picture ||
+    googleIdentity?.avatar_url ||
+    googleIdentity?.picture ||
+    '';
+  const googleName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    googleIdentity?.full_name ||
+    googleIdentity?.name ||
+    '';
 
   const [form, setForm] = useState({
     name: profile?.name || googleName || '',
@@ -162,15 +205,13 @@ export default function SettingsPage() {
   useEffect(() => {
     if (profile && !hasLoadedProfileRef.current) {
       hasLoadedProfileRef.current = true;
-      const gAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
-      const gName = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
       setForm({
-        name: profile.name || gName || '',
-        username: profile.username || '',
+        name: profile.name || googleName || '',
+        username: profile.username || (user as any)?.user_metadata?.user_name || '',
         phone: profile.phone || '',
         defaultCurrency: profile.defaultCurrency || 'INR',
         timezone: profile.timezone || 'Asia/Kolkata',
-        avatarUrl: profile.avatarUrl || gAvatar || '',
+        avatarUrl: profile.avatarUrl || googleAvatar || '',
       });
 
       if (profile.phone) {
@@ -179,8 +220,14 @@ export default function SettingsPage() {
           setIsPhoneVerified(true);
         }
       }
+    } else if (!profile && user && !hasLoadedProfileRef.current && (googleAvatar || googleName)) {
+      setForm((prev) => ({
+        ...prev,
+        name: prev.name || googleName || user.email?.split('@')[0] || '',
+        avatarUrl: prev.avatarUrl || googleAvatar || '',
+      }));
     }
-  }, [profile, user]);
+  }, [profile, user, googleAvatar, googleName]);
 
   // Debounced Username Availability Check
   useEffect(() => {
@@ -293,6 +340,12 @@ export default function SettingsPage() {
 
     setSaving(true);
     setSaveErrorToast(null);
+
+    // Sanitize avatar URL
+    const rawAvatar = form.avatarUrl?.trim();
+    const cleanAvatar = rawAvatar && (rawAvatar.startsWith('http://') || rawAvatar.startsWith('https://')) ? rawAvatar : null;
+
+    let profileUpdated = false;
     try {
       // 1. Save core profile in backend Postgres
       await userApi.updateProfile({
@@ -301,24 +354,28 @@ export default function SettingsPage() {
         phone: form.phone?.trim() || null,
         defaultCurrency: form.defaultCurrency,
         timezone: form.timezone,
-        avatarUrl: form.avatarUrl?.trim() || null,
+        avatarUrl: cleanAvatar,
       });
-
-      // 2. Save extended preferences in localStorage
-      localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
-
-      await refreshProfile();
-      setSavedToast(true);
+      profileUpdated = true;
     } catch (error: any) {
       console.error('Save profile error:', error);
       const msg =
         error?.response?.data?.error ||
         error?.message ||
-        'Failed to save settings. Please ensure your connection is active and try again.';
+        'Server profile update failed. Local preferences were saved.';
       setSaveErrorToast(msg);
-    } finally {
-      setSaving(false);
     }
+
+    // 2. Always persist extended preferences in localStorage so UI settings are never lost!
+    try {
+      localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+    } catch {}
+
+    if (profileUpdated) {
+      await refreshProfile();
+      setSavedToast(true);
+    }
+    setSaving(false);
   };
 
   const handleExportFullArchive = async () => {
@@ -499,7 +556,8 @@ export default function SettingsPage() {
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, maxWidth: '100%' }}>
               <Avatar
-                src={form.avatarUrl || profile?.avatarUrl || undefined}
+                src={form.avatarUrl || profile?.avatarUrl || googleAvatar || undefined}
+                slotProps={{ img: { referrerPolicy: 'no-referrer' } }}
                 sx={{
                   width: { xs: 54, sm: 68 },
                   height: { xs: 54, sm: 68 },
@@ -607,7 +665,7 @@ export default function SettingsPage() {
           >
             <Tabs
               value={activeTab}
-              onChange={(_, val) => setActiveTab(val)}
+              onChange={handleTabChange}
               variant="scrollable"
               scrollButtons="auto"
               allowScrollButtonsMobile
@@ -900,6 +958,44 @@ export default function SettingsPage() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Pick from curated presets or provide a custom image URL
                 </Typography>
+
+                {googleAvatar && (
+                  <Box
+                    onClick={() => setForm({ ...form, avatarUrl: googleAvatar })}
+                    sx={{
+                      mb: 2,
+                      p: 1.25,
+                      borderRadius: 2.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      cursor: 'pointer',
+                      bgcolor: form.avatarUrl === googleAvatar ? 'rgba(16, 185, 129, 0.12)' : isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)',
+                      border: `1.5px solid ${form.avatarUrl === googleAvatar ? '#10B981' : isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        borderColor: '#10B981',
+                      },
+                    }}
+                  >
+                    <Avatar
+                      src={googleAvatar}
+                      slotProps={{ img: { referrerPolicy: 'no-referrer' } }}
+                      sx={{ width: 36, height: 36, border: '1px solid rgba(255,255,255,0.2)' }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={750} sx={{ fontSize: '0.82rem', color: 'text.primary' }}>
+                        Google Account Photo
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                        {form.avatarUrl === googleAvatar ? 'Active Avatar ✓' : 'Click to use your Google photo'}
+                      </Typography>
+                    </Box>
+                    {form.avatarUrl === googleAvatar && (
+                      <CheckCircle sx={{ color: '#10B981', fontSize: 18 }} />
+                    )}
+                  </Box>
+                )}
 
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 3 }}>
                   {PRESET_AVATARS.map((item, idx) => {
@@ -1426,9 +1522,11 @@ export default function SettingsPage() {
 
         {/* TAB 4: Security & Data Privacy */}
         {activeTab === 4 && (
-          <Grid container spacing={{ xs: 2, sm: 3 }}>
-            <Grid size={{ xs: 12, md: 8 }}>
+          <Grid container spacing={{ xs: 2.5, sm: 3 }}>
+            {/* Column 1: Account Access, Credentials & Cache */}
+            <Grid size={{ xs: 12, md: 6 }}>
               <Stack spacing={3}>
+                {/* Account Security & Authentication Card */}
                 <Card
                   className="glass-secondary glass-specular-top"
                   sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
@@ -1568,38 +1666,6 @@ export default function SettingsPage() {
                   </Box>
                 </Card>
 
-                {/* Data Export Archive */}
-                <Card
-                  className="glass-secondary glass-specular-top"
-                  sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
-                >
-                  <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
-                    Data Portability & Full Backup
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                    Download a full JSON archive containing your complete profile, expenses, group memberships, and settlement history.
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    className="glass-tertiary"
-                    onClick={handleExportFullArchive}
-                    disabled={exporting}
-                    startIcon={exporting ? <CircularProgress size={16} color="inherit" /> : <Download />}
-                    sx={{
-                      borderRadius: 2.5,
-                      textTransform: 'none',
-                      fontWeight: 700,
-                      color: '#34D399',
-                      border: '1px solid rgba(52, 211, 153, 0.3)',
-                      '&:hover': {
-                        bgcolor: 'rgba(16, 185, 129, 0.1)',
-                      },
-                    }}
-                  >
-                    {exporting ? 'Generating Archive...' : 'Download Complete Data Backup (.json)'}
-                  </Button>
-                </Card>
-
                 {/* Danger Zone */}
                 <Card
                   sx={{
@@ -1652,8 +1718,9 @@ export default function SettingsPage() {
               </Stack>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 5 }}>
-              <Stack spacing={2.5}>
+            {/* Column 2: Legal, Compliance, Data Sovereignty & Architecture */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Stack spacing={3}>
                 {/* Legal & Regulatory Compliance Center */}
                 <Card
                   className="glass-secondary glass-specular-top"
@@ -1826,6 +1893,38 @@ export default function SettingsPage() {
                       Statutory SLA: 30-day response under DPDP Rules. Escalation: Data Protection Board of India.
                     </Typography>
                   </Box>
+                </Card>
+
+                {/* Data Export Archive */}
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{ borderRadius: 3.5, p: { xs: 2.5, sm: 3.5 } }}
+                >
+                  <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
+                    Data Portability & Full Backup
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                    Download a full JSON archive containing your complete profile, expenses, group memberships, and settlement history.
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    className="glass-tertiary"
+                    onClick={handleExportFullArchive}
+                    disabled={exporting}
+                    startIcon={exporting ? <CircularProgress size={16} color="inherit" /> : <Download />}
+                    sx={{
+                      borderRadius: 2.5,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      color: '#34D399',
+                      border: '1px solid rgba(52, 211, 153, 0.3)',
+                      '&:hover': {
+                        bgcolor: 'rgba(16, 185, 129, 0.1)',
+                      },
+                    }}
+                  >
+                    {exporting ? 'Generating Archive...' : 'Download Complete Data Backup (.json)'}
+                  </Button>
                 </Card>
 
                 {/* Security Architecture Card */}
@@ -2174,5 +2273,13 @@ export default function SettingsPage() {
         </Snackbar>
       </Box>
     </AppLayout>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }} />}>
+      <SettingsContent />
+    </Suspense>
   );
 }

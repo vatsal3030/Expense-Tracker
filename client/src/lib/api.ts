@@ -4,14 +4,11 @@ import { supabase } from './supabase';
 export const getApiBaseUrl = (): string => {
   if (typeof window !== 'undefined') {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    // If running locally in split-port dev (Next:3000, Monolith:5000)
+    // If running locally in development (Next:3000), connect directly to local Monolith backend (:5000)
     if (isLocal && window.location.port === '3000') {
-      return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      return 'http://localhost:5000/api';
     }
     // In production or behind NGINX gateway, always route through relative /api
-    if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost:5000')) {
-      return process.env.NEXT_PUBLIC_API_URL;
-    }
     return '/api';
   }
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
