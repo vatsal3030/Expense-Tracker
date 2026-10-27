@@ -492,12 +492,12 @@ function SettingsContent() {
                 label="Personal Account"
                 size="small"
                 sx={{
-                  bgcolor: alpha('#0E6245', 0.12),
-                  color: '#0E6245',
+                  bgcolor: isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.15)',
+                  color: isLight ? '#059669' : '#34D399',
                   fontWeight: 800,
                   fontSize: '0.7rem',
                   borderRadius: 1.5,
-                  border: '1px solid rgba(14,98,69,0.2)',
+                  border: isLight ? '1px solid rgba(5, 150, 105, 0.25)' : '1px solid rgba(16, 185, 129, 0.3)',
                 }}
               />
             </Box>

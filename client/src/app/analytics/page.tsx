@@ -52,11 +52,11 @@ import api, { groupApi } from '@/lib/api';
 import { useDataRefresh } from '@/lib/events';
 
 const CATEGORY_COLORS: Record<string, string> = {
-  FOOD: '#0E6245',
+  FOOD: '#F59E0B',
   TRANSPORT: '#3B82F6',
-  ENTERTAINMENT: '#F59E0B',
+  ENTERTAINMENT: '#8B5CF6',
   SHOPPING: '#EC4899',
-  UTILITIES: '#10B981',
+  UTILITIES: '#EAB308',
   RENT: '#6366F1',
   TRAVEL: '#06B6D4',
   GROCERIES: '#22C55E',

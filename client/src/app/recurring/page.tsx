@@ -147,7 +147,7 @@ export default function RecurringPage() {
     if (!rule.isActive) return theme.palette.text.disabled;
     if (rule.isOverdue) return '#EF4444';
     if (rule.isDueSoon) return '#F59E0B';
-    return '#0E6245';
+    return isLight ? '#059669' : '#10B981';
   };
 
   const getStatusLabel = (rule: any) => {
@@ -191,9 +191,10 @@ export default function RecurringPage() {
             onClick={() => setDialogOpen(true)}
             sx={{
               width: { xs: '100%', sm: 'auto' },
-              borderRadius: 2.5, px: 3, fontWeight: 600,
-              bgcolor: isLight ? '#0E6245' : '#059669', color: '#ffffff', textTransform: 'none',
-              '&:hover': { bgcolor: isLight ? '#0A4B35' : '#047857' },
+              borderRadius: 2.5, px: 3, fontWeight: 700,
+              bgcolor: isLight ? '#059669' : '#10B981', color: '#ffffff', textTransform: 'none',
+              boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+              '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
             }}
           >
             Add Rule
@@ -204,7 +205,7 @@ export default function RecurringPage() {
         {!loading && rules.length > 0 && (
           <Grid container spacing={2} sx={{ mb: 3 }}>
             {[
-              { label: 'Active Rules', value: activeRules.length, icon: <Repeat sx={{ fontSize: 20 }} />, color: '#0E6245' },
+              { label: 'Active Rules', value: activeRules.length, icon: <Repeat sx={{ fontSize: 20 }} />, color: isLight ? '#059669' : '#10B981' },
               { label: 'Est. Monthly', value: formatCurrency(totalMonthly), icon: <TrendingUp sx={{ fontSize: 20 }} />, color: '#3B82F6' },
               { label: 'Due Soon', value: rules.filter((r) => r.isDueSoon).length, icon: <NotificationsActive sx={{ fontSize: 20 }} />, color: '#F59E0B' },
             ].map((stat) => (
@@ -264,7 +265,7 @@ export default function RecurringPage() {
                 variant="contained"
                 startIcon={<Add />}
                 onClick={() => setDialogOpen(true)}
-                sx={{ bgcolor: '#0E6245', color: '#fff', textTransform: 'none', borderRadius: 2.5, fontWeight: 700 }}
+                sx={{ bgcolor: isLight ? '#059669' : '#10B981', color: '#fff', textTransform: 'none', borderRadius: 2.5, fontWeight: 700, boxShadow: '0 4px 14px rgba(16,185,129,0.3)', '&:hover': { bgcolor: isLight ? '#047857' : '#059669' } }}
               >
                 Add Recurring Rule
               </Button>
@@ -455,7 +456,9 @@ export default function RecurringPage() {
               disabled={submitting || !form.description || !form.amount}
               sx={{
                 borderRadius: 2.5, px: 3.5, fontWeight: 700, textTransform: 'none',
-                bgcolor: '#0E6245', color: '#ffffff', '&:hover': { bgcolor: '#094A34' },
+                bgcolor: isLight ? '#059669' : '#10B981', color: '#ffffff',
+                boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
               }}
             >
               {submitting ? 'Creating...' : 'Add Rule'}

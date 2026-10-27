@@ -693,13 +693,29 @@ export default function FriendsPage() {
             >
               <CardContent sx={{ p: 0 }}>
                 {loading ? (
-                  <Box sx={{ p: 3 }}>
-                    {[1, 2, 3].map((i) => (
-                      <Box key={i} sx={{ display: 'flex', gap: 2, py: 2 }}>
-                        <Skeleton variant="circular" width={44} height={44} sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
-                        <Box sx={{ flex: 1 }}>
-                          <Skeleton width="40%" height={24} sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
-                          <Skeleton width="25%" height={18} sx={{ mt: 0.5, bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
+                  <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Box
+                        key={i}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          py: 2,
+                          px: 1,
+                          borderBottom: `1px solid ${theme.palette.divider}`,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                          <Skeleton variant="circular" width={44} height={44} animation="wave" />
+                          <Box sx={{ flex: 1 }}>
+                            <Skeleton width="45%" height={22} animation="wave" />
+                            <Skeleton width="30%" height={16} sx={{ mt: 0.5 }} animation="wave" />
+                          </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Skeleton variant="rounded" width={80} height={28} sx={{ borderRadius: 2 }} animation="wave" />
+                          <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: 2 }} animation="wave" />
                         </Box>
                       </Box>
                     ))}

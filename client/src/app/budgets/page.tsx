@@ -251,16 +251,14 @@ export default function BudgetsPage() {
               width: { xs: '100%', sm: 'auto' },
               borderRadius: 2.5,
               px: 3,
-              fontWeight: 600,
-              bgcolor: isLight ? '#0E6245' : '#059669',
+              fontWeight: 700,
+              bgcolor: isLight ? '#059669' : '#10B981',
               color: '#ffffff',
-              boxShadow: isLight
-                ? '0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
-                : '0 1px 3px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.25)',
+              boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
               textTransform: 'none',
               '&:hover': {
-                bgcolor: isLight ? '#0A4B35' : '#047857',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
+                bgcolor: isLight ? '#047857' : '#059669',
+                boxShadow: '0 6px 20px rgba(16,185,129,0.4)',
               },
             }}
           >
@@ -345,9 +343,33 @@ export default function BudgetsPage() {
 
         {loading ? (
           <Grid container spacing={{ xs: 1.5, sm: 2.5, md: 3 }}>
-            {[1, 2, 3].map(i => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
-                <Card className="glass-secondary"><CardContent><Skeleton height={120} /></CardContent></Card>
+                <Card
+                  className="glass-secondary"
+                  sx={{
+                    borderRadius: 3.5,
+                    p: 2.75,
+                    border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)'}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: 2 }} animation="wave" />
+                      <Box>
+                        <Skeleton width={90} height={22} animation="wave" />
+                        <Skeleton width={55} height={14} sx={{ mt: 0.3 }} animation="wave" />
+                      </Box>
+                    </Box>
+                    <Skeleton variant="rounded" width={28} height={28} sx={{ borderRadius: 1.5 }} animation="wave" />
+                  </Box>
+                  <Skeleton width="55%" height={34} sx={{ mb: 1.5 }} animation="wave" />
+                  <Skeleton variant="rounded" width="100%" height={8} sx={{ borderRadius: 4, mb: 1.5 }} animation="wave" />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Skeleton width={80} height={18} animation="wave" />
+                    <Skeleton width={70} height={18} animation="wave" />
+                  </Box>
+                </Card>
               </Grid>
             ))}
           </Grid>
@@ -365,7 +387,7 @@ export default function BudgetsPage() {
                 startIcon={<Add />}
                 onClick={() => setDialogOpen(true)}
                 className="glass-emerald-active"
-                sx={{ bgcolor: '#0E6245', color: '#ffffff', textTransform: 'none', borderRadius: 2.5, fontWeight: 700 }}
+                sx={{ bgcolor: isLight ? '#059669' : '#10B981', color: '#ffffff', textTransform: 'none', borderRadius: 2.5, fontWeight: 700, boxShadow: '0 4px 14px rgba(16,185,129,0.3)', '&:hover': { bgcolor: isLight ? '#047857' : '#059669' } }}
               >
                 Set Budget
               </Button>
@@ -579,9 +601,10 @@ export default function BudgetsPage() {
                 px: 3.5,
                 fontWeight: 700,
                 textTransform: 'none',
-                bgcolor: '#0E6245',
+                bgcolor: isLight ? '#059669' : '#10B981',
                 color: '#ffffff',
-                '&:hover': { bgcolor: '#094A34' },
+                boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
               }}
             >
               {submitting ? 'Creating...' : 'Set Budget'}
@@ -678,9 +701,10 @@ export default function BudgetsPage() {
                 px: 3.5,
                 fontWeight: 700,
                 textTransform: 'none',
-                bgcolor: '#0E6245',
+                bgcolor: isLight ? '#059669' : '#10B981',
                 color: '#ffffff',
-                '&:hover': { bgcolor: '#094A34' },
+                boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
               }}
             >
               {submitting ? 'Saving...' : 'Update Budget'}

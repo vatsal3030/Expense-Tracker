@@ -861,13 +861,14 @@ function GroupDetailContent() {
               className="glass-emerald-active"
               sx={{
                 borderRadius: 2.5,
-                fontWeight: 650,
+                fontWeight: 700,
                 textTransform: 'none',
-                bgcolor: '#0E6245',
+                bgcolor: isLight ? '#059669' : '#10B981',
                 color: '#FFFFFF',
                 px: 2.5,
                 py: 0.75,
-                '&:hover': { bgcolor: '#094A34' },
+                boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
               }}
             >
               Add Expense
@@ -877,6 +878,7 @@ function GroupDetailContent() {
 
         {/* Financial Summary Cards for this Group */}
         <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
+          {/* 1. Total Group Spend (Neutral Slate / Cyan) */}
           <Grid size={{ xs: 12, sm: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"
@@ -884,11 +886,16 @@ function GroupDetailContent() {
                 p: 2.5,
                 borderRadius: 3.5,
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
+                bgcolor: isLight ? 'rgba(255, 255, 255, 0.8)' : 'rgba(30, 41, 59, 0.35)',
+                border: isLight ? undefined : '1px solid rgba(255, 255, 255, 0.10)',
               }}
             >
-              <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#34D399' : 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Total Group Spend
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#38BDF8' }} />
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Total Group Spend
+                </Typography>
+              </Box>
               <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', mt: 0.5, letterSpacing: '-0.02em' }}>
                 {formatCurrency(totalSpent)}
               </Typography>
@@ -898,6 +905,7 @@ function GroupDetailContent() {
             </Card>
           </Grid>
 
+          {/* 2. Your Group Balance (Emerald for Owed, Rose for You Owe) */}
           <Grid size={{ xs: 12, sm: 4 }}>
             <Card
               className={myBalance > 0 ? "glass-secondary glass-specular-top glass-emerald-ambient" : "glass-secondary glass-specular-top"}
@@ -905,12 +913,24 @@ function GroupDetailContent() {
                 p: 2.5,
                 borderRadius: 3.5,
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
-                borderColor: myBalance > 0 ? 'rgba(16, 185, 129, 0.35) !important' : myBalance < 0 ? 'rgba(239, 68, 68, 0.35) !important' : undefined,
+                bgcolor: myBalance > 0
+                  ? isLight ? 'rgba(16, 185, 129, 0.08)' : 'rgba(6, 78, 59, 0.28)'
+                  : myBalance < 0
+                  ? isLight ? 'rgba(239, 68, 68, 0.08)' : 'rgba(136, 19, 55, 0.28)'
+                  : undefined,
+                borderColor: myBalance > 0
+                  ? 'rgba(16, 185, 129, 0.35) !important'
+                  : myBalance < 0
+                  ? 'rgba(244, 63, 94, 0.35) !important'
+                  : undefined,
               }}
             >
-              <Typography variant="caption" sx={{ color: myBalance > 0 ? '#34D399' : myBalance < 0 ? '#F87171' : 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Your Group Balance
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.secondary' }} />
+                <Typography variant="caption" sx={{ color: myBalance > 0 ? '#34D399' : myBalance < 0 ? '#FB7185' : 'text.secondary', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Your Group Balance
+                </Typography>
+              </Box>
               <Typography
                 variant="h4"
                 fontWeight={800}
@@ -934,6 +954,7 @@ function GroupDetailContent() {
             </Card>
           </Grid>
 
+          {/* 3. Debt Simplification (Algorithmic Violet / Purple) */}
           <Grid size={{ xs: 12, sm: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"
@@ -944,13 +965,18 @@ function GroupDetailContent() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
+                bgcolor: isLight ? 'rgba(168, 85, 247, 0.06)' : 'rgba(88, 28, 135, 0.18)',
+                borderColor: isLight ? 'rgba(168, 85, 247, 0.25) !important' : 'rgba(168, 85, 247, 0.30) !important',
               }}
             >
-              <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#34D399' : 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Debt Simplification
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#A855F7' }} />
+                <Typography variant="caption" sx={{ color: isLight ? '#7E22CE' : '#C084FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Debt Simplification
+                </Typography>
+              </Box>
               <Box sx={{ mt: 0.5 }}>
-                <Typography variant="h6" fontWeight={800} sx={{ color: '#10B981' }}>
+                <Typography variant="h6" fontWeight={800} sx={{ color: isLight ? '#7E22CE' : '#C084FC' }}>
                   {balances?.simplifiedDebts?.length || 0} Pending Debts
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -962,13 +988,13 @@ function GroupDetailContent() {
                 variant="text"
                 onClick={() => setActiveTab(1)}
                 sx={{
-                  color: '#10B981',
+                  color: isLight ? '#7E22CE' : '#C084FC',
                   p: 0,
                   justifyContent: 'flex-start',
                   fontWeight: 700,
                   fontSize: '0.775rem',
                   textTransform: 'none',
-                  '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+                  '&:hover': { bgcolor: 'transparent', textDecoration: 'underline', color: isLight ? '#581C87' : '#E9D5FF' },
                 }}
               >
                 Review Settlements →
@@ -1134,12 +1160,13 @@ function GroupDetailContent() {
                         startIcon={<Add />}
                         onClick={() => router.push(`/expenses/new?groupId=${group?.id}`)}
                         sx={{
-                          bgcolor: '#0E6245',
+                          bgcolor: isLight ? '#059669' : '#10B981',
                           color: '#FFFFFF',
                           borderRadius: 2.5,
-                          fontWeight: 600,
+                          fontWeight: 700,
                           textTransform: 'none',
-                          '&:hover': { bgcolor: '#094A34' },
+                          boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                          '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
                         }}
                       >
                         Add First Expense
@@ -1218,14 +1245,15 @@ function GroupDetailContent() {
                               variant="contained"
                               onClick={() => handleSettleUpi(d.to?.name, d.amount, d.to?.id)}
                               sx={{
-                                bgcolor: '#0E6245',
+                                bgcolor: isLight ? '#059669' : '#10B981',
                                 color: '#FFFFFF',
                                 fontWeight: 700,
                                 fontSize: '0.75rem',
                                 borderRadius: 2,
                                 px: 1.5,
                                 textTransform: 'none',
-                                '&:hover': { bgcolor: '#094A34' },
+                                boxShadow: '0 2px 10px rgba(16,185,129,0.3)',
+                                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
                               }}
                             >
                               ⚡ Settle
@@ -1576,11 +1604,12 @@ function GroupDetailContent() {
                                 borderRadius: 2,
                                 fontWeight: 700,
                                 fontSize: '0.775rem',
-                                bgcolor: '#0E6245',
+                                bgcolor: isLight ? '#059669' : '#10B981',
                                 color: '#FFFFFF',
                                 textTransform: 'none',
                                 px: 2,
-                                '&:hover': { bgcolor: '#094A34' },
+                                boxShadow: '0 2px 10px rgba(16,185,129,0.3)',
+                                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
                               }}
                             >
                               Pay UPI
@@ -1949,9 +1978,10 @@ function GroupDetailContent() {
                       px: 2,
                       fontWeight: 700,
                       flexShrink: 0,
-                      bgcolor: copied ? 'success.main' : '#0E6245',
+                      bgcolor: copied ? 'success.main' : isLight ? '#059669' : '#10B981',
                       color: '#FFFFFF',
                       textTransform: 'none',
+                      '&:hover': { bgcolor: copied ? 'success.dark' : isLight ? '#047857' : '#059669' },
                     }}
                   >
                     {copied ? 'Copied' : 'Copy'}
@@ -2041,12 +2071,13 @@ function GroupDetailContent() {
                     sx={{
                       borderRadius: 2.5,
                       fontWeight: 700,
-                      bgcolor: '#0E6245',
+                      bgcolor: isLight ? '#059669' : '#10B981',
                       color: '#ffffff',
                       textTransform: 'none',
                       px: 3,
                       py: 1,
-                      '&:hover': { bgcolor: '#094A34' },
+                      boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                      '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
                     }}
                   >
                     {savingGroup ? 'Saving...' : 'Save Settings'}
@@ -2484,7 +2515,7 @@ function GroupDetailContent() {
                     variant="contained"
                     onClick={handleCopyLink}
                     startIcon={copied ? <Check /> : <ContentCopy />}
-                    sx={{ px: 2.5, py: { xs: 1, sm: 'auto' }, fontWeight: 700, bgcolor: copied ? 'success.main' : '#0E6245', color: '#FFFFFF', textTransform: 'none', flexShrink: 0 }}
+                    sx={{ px: 2.5, py: { xs: 1, sm: 'auto' }, fontWeight: 700, bgcolor: copied ? 'success.main' : isLight ? '#059669' : '#10B981', color: '#FFFFFF', textTransform: 'none', flexShrink: 0, '&:hover': { bgcolor: copied ? 'success.dark' : isLight ? '#047857' : '#059669' } }}
                   >
                     {copied ? 'Copied' : 'Copy'}
                   </Button>
@@ -2530,7 +2561,7 @@ function GroupDetailContent() {
                     onClick={handleDirectInvite}
                     disabled={!inviteContact.trim()}
                     startIcon={<PersonAdd />}
-                    sx={{ px: 2.5, py: { xs: 1, sm: 'auto' }, fontWeight: 700, bgcolor: '#0E6245', color: '#FFFFFF', textTransform: 'none', flexShrink: 0 }}
+                    sx={{ px: 2.5, py: { xs: 1, sm: 'auto' }, fontWeight: 700, bgcolor: isLight ? '#059669' : '#10B981', color: '#FFFFFF', textTransform: 'none', flexShrink: 0, '&:hover': { bgcolor: isLight ? '#047857' : '#059669' } }}
                   >
                     Add
                   </Button>
@@ -2722,9 +2753,10 @@ function GroupDetailContent() {
                 px: 3.5,
                 fontWeight: 700,
                 textTransform: 'none',
-                bgcolor: '#0E6245',
+                bgcolor: isLight ? '#059669' : '#10B981',
                 color: '#ffffff',
-                '&:hover': { bgcolor: '#094A34' },
+                boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
               }}
             >
               {savingGroup ? 'Saving...' : 'Save Changes'}

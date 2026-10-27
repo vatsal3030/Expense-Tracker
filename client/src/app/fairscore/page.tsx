@@ -46,8 +46,8 @@ const BADGE_ICONS: Record<string, React.ReactNode> = {
 };
 
 const TIER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Diamond: { bg: 'rgba(14, 98, 69, 0.12)', text: '#0E6245', border: '#0E6245' },
-  Platinum: { bg: 'rgba(16, 185, 129, 0.12)', text: '#10B981', border: '#059669' },
+  Diamond: { bg: 'rgba(6, 182, 212, 0.15)', text: '#06B6D4', border: '#06B6D4' },
+  Platinum: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', border: '#10B981' },
   Gold: { bg: 'rgba(245, 158, 11, 0.12)', text: '#D97706', border: '#D97706' },
   Silver: { bg: 'rgba(59, 130, 246, 0.12)', text: '#3B82F6', border: '#3B82F6' },
   Bronze: { bg: 'rgba(100, 116, 139, 0.12)', text: '#64748B', border: '#64748B' },
@@ -105,8 +105,9 @@ export default function FairScorePage() {
               sx={{
                 p: 1,
                 borderRadius: 2.5,
-                bgcolor: alpha('#0E6245', 0.1),
-                color: '#0E6245',
+                bgcolor: isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.15)',
+                color: isLight ? '#059669' : '#34D399',
+                border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.25)' : 'rgba(16, 185, 129, 0.3)'}`,
                 display: 'flex',
                 flexShrink: 0,
               }}
@@ -296,7 +297,7 @@ export default function FairScorePage() {
                         flex: 1,
                         py: 1,
                         borderRadius: 2,
-                        bgcolor: idx < 6 ? '#0E6245' : isLight ? '#E9ECEF' : 'rgba(255, 255, 255, 0.08)',
+                        bgcolor: idx < 6 ? (isLight ? '#059669' : '#10B981') : isLight ? '#E9ECEF' : 'rgba(255, 255, 255, 0.08)',
                         color: idx < 6 ? '#FFFFFF' : 'text.secondary',
                         textAlign: 'center',
                         fontWeight: 700,
@@ -324,7 +325,7 @@ export default function FairScorePage() {
               score: data?.scoreBreakdown?.settlementDiscipline || 260,
               max: 300,
               desc: 'How quickly you confirm payments when requested',
-              color: '#0E6245',
+              color: isLight ? '#059669' : '#10B981',
             },
             {
               title: 'Expense Transparency',

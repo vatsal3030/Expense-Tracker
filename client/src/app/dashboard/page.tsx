@@ -52,11 +52,11 @@ import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
 import { useDataRefresh } from '@/lib/events';
 
 const CATEGORY_COLORS: Record<string, string> = {
-  FOOD: '#0E6245',
+  FOOD: '#F59E0B',
   TRANSPORT: '#3B82F6',
   ENTERTAINMENT: '#8B5CF6',
   SHOPPING: '#EC4899',
-  UTILITIES: '#10B981',
+  UTILITIES: '#EAB308',
   RENT: '#6366F1',
   HEALTH: '#EF4444',
   EDUCATION: '#14B8A6',
@@ -251,20 +251,16 @@ export default function DashboardPage() {
               sx={{
                 flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
-                bgcolor: isLight ? '#0E6245' : '#059669',
+                bgcolor: isLight ? '#059669' : '#10B981',
                 color: '#FFFFFF',
-                fontWeight: 600,
+                fontWeight: 700,
                 textTransform: 'none',
                 px: 2.5,
                 py: 0.8,
-                boxShadow: isLight
-                  ? '0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
-                  : '0 1px 3px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.25)',
+                boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
                 '&:hover': {
-                  bgcolor: isLight ? '#0A4B35' : '#047857',
-                  boxShadow: isLight
-                    ? '0 2px 8px rgba(0,0,0,0.20)'
-                    : '0 2px 8px rgba(0,0,0,0.35)',
+                  bgcolor: isLight ? '#047857' : '#059669',
+                  boxShadow: '0 6px 20px rgba(16,185,129,0.4)',
                 },
               }}
             >
@@ -507,9 +503,9 @@ export default function DashboardPage() {
                     width: 36,
                     height: 36,
                     borderRadius: 2.5,
-                    bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-                    color: isLight ? '#0E6245' : '#34D399',
-                    border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.18)' : 'rgba(16, 185, 129, 0.25)'}`,
+                    bgcolor: isLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.14)',
+                    color: isLight ? '#059669' : '#34D399',
+                    border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.25)' : 'rgba(16, 185, 129, 0.3)'}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -520,7 +516,7 @@ export default function DashboardPage() {
               </Box>
 
               {loading ? (
-                <Skeleton width="60%" height={40} />
+                <Skeleton width="60%" height={40} animation="wave" />
               ) : (
                 <Typography
                   variant="h4"
@@ -529,7 +525,7 @@ export default function DashboardPage() {
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
-                    color: isLight ? '#0E6245' : '#34D399',
+                    color: isLight ? '#059669' : '#34D399',
                     mb: 0.5,
                   }}
                 >
@@ -545,9 +541,9 @@ export default function DashboardPage() {
                     height: 22,
                     fontSize: '0.7rem',
                     fontWeight: 700,
-                    bgcolor: isLight ? 'rgba(14, 98, 69, 0.10)' : 'rgba(16, 185, 129, 0.14)',
-                    color: isLight ? '#0E6245' : '#34D399',
-                    border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.28)'}`,
+                    bgcolor: isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.14)',
+                    color: isLight ? '#059669' : '#34D399',
+                    border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(16, 185, 129, 0.28)'}`,
                   }}
                 />
               </Box>
@@ -619,9 +615,9 @@ export default function DashboardPage() {
                       height: 22,
                       fontSize: '0.7rem',
                       fontWeight: 700,
-                      bgcolor: data.thisMonth.change > 0 ? 'rgba(239, 68, 68, 0.10)' : (isLight ? 'rgba(14, 98, 69, 0.10)' : 'rgba(16, 185, 129, 0.14)'),
-                      color: data.thisMonth.change > 0 ? '#EF4444' : (isLight ? '#0E6245' : '#34D399'),
-                      border: `1px solid ${data.thisMonth.change > 0 ? 'rgba(239, 68, 68, 0.22)' : (isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.28)')}`,
+                      bgcolor: data.thisMonth.change > 0 ? 'rgba(239, 68, 68, 0.10)' : (isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.14)'),
+                      color: data.thisMonth.change > 0 ? '#EF4444' : (isLight ? '#059669' : '#34D399'),
+                      border: `1px solid ${data.thisMonth.change > 0 ? 'rgba(239, 68, 68, 0.22)' : (isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(16, 185, 129, 0.28)')}`,
                     }}
                   />
                 ) : (
@@ -684,17 +680,15 @@ export default function DashboardPage() {
                 startIcon={<CheckCircleOutlined fontSize="small" />}
                 sx={{
                   borderRadius: 2.5,
-                  fontWeight: 600,
-                  bgcolor: isLight ? '#0E6245' : '#059669',
+                  fontWeight: 700,
+                  bgcolor: isLight ? '#059669' : '#10B981',
                   color: '#FFFFFF',
                   textTransform: 'none',
                   px: 3,
-                  boxShadow: isLight
-                    ? '0 1px 3px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
-                    : '0 1px 3px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
+                  boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
                   '&:hover': {
-                    bgcolor: isLight ? '#0A4B35' : '#047857',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.30)',
+                    bgcolor: isLight ? '#047857' : '#059669',
+                    boxShadow: '0 6px 20px rgba(16,185,129,0.4)',
                   },
                 }}
               >
@@ -825,7 +819,7 @@ export default function DashboardPage() {
                 <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary', mt: 0.25 }}>
                   94.2% Settlement Rate
                 </Typography>
-                <Typography variant="caption" sx={{ color: isLight ? '#0E6245' : '#34D399', fontWeight: 700 }}>
+                <Typography variant="caption" sx={{ color: isLight ? '#059669' : '#34D399', fontWeight: 700 }}>
                   2.4x faster debt resolution
                 </Typography>
               </Box>
@@ -833,9 +827,9 @@ export default function DashboardPage() {
                 sx={{
                   p: 1.5,
                   borderRadius: 2.5,
-                  bgcolor: isLight ? 'rgba(14, 98, 69, 0.10)' : 'rgba(16, 185, 129, 0.15)',
-                  color: isLight ? '#0E6245' : '#34D399',
-                  border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
+                  bgcolor: isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.15)',
+                  color: isLight ? '#059669' : '#34D399',
+                  border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.25)' : 'rgba(16, 185, 129, 0.3)'}`,
                   display: 'flex',
                 }}
               >
@@ -875,14 +869,14 @@ export default function DashboardPage() {
                     href="/analytics"
                     prefetch={true}
                     endIcon={<ArrowForward fontSize="small" />}
-                    sx={{ color: isLight ? '#0E6245' : '#34D399', fontWeight: 600, fontSize: '0.8rem', textTransform: 'none' }}
+                    sx={{ color: isLight ? '#059669' : '#34D399', fontWeight: 600, fontSize: '0.8rem', textTransform: 'none' }}
                   >
                     Deep Analytics
                   </Button>
                 </Box>
 
                 {loading ? (
-                  <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 3 }} />
+                  <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 3 }} animation="wave" />
                 ) : trendData.length === 0 ? (
                   <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
                     <Receipt sx={{ fontSize: 48, opacity: 0.3, mb: 1 }} />
@@ -893,8 +887,8 @@ export default function DashboardPage() {
                     <AreaChart data={trendData}>
                       <defs>
                         <linearGradient id="spendingCurve" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={isLight ? '#0E6245' : '#10B981'} stopOpacity={0.28} />
-                          <stop offset="95%" stopColor={isLight ? '#0E6245' : '#10B981'} stopOpacity={0.0} />
+                          <stop offset="5%" stopColor={isLight ? '#059669' : '#10B981'} stopOpacity={0.28} />
+                          <stop offset="95%" stopColor={isLight ? '#059669' : '#10B981'} stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.06)'} vertical={false} />
@@ -1111,7 +1105,7 @@ export default function DashboardPage() {
                     href="/activity"
                     prefetch={true}
                     endIcon={<ArrowForward fontSize="small" />}
-                    sx={{ color: isLight ? '#0E6245' : '#34D399', fontWeight: 600, fontSize: '0.8rem', textTransform: 'none' }}
+                    sx={{ color: isLight ? '#059669' : '#34D399', fontWeight: 600, fontSize: '0.8rem', textTransform: 'none' }}
                   >
                     View All
                   </Button>
@@ -1119,13 +1113,14 @@ export default function DashboardPage() {
 
                 {loading ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {[1, 2, 3].map((i) => (
-                      <Box key={i} sx={{ display: 'flex', gap: 2, py: 1 }}>
-                        <Skeleton variant="circular" width={38} height={38} />
+                    {[1, 2, 3, 4].map((i) => (
+                      <Box key={i} sx={{ display: 'flex', gap: 2, py: 1, alignItems: 'center' }}>
+                        <Skeleton variant="circular" width={38} height={38} animation="wave" />
                         <Box sx={{ flex: 1 }}>
-                          <Skeleton width="60%" />
-                          <Skeleton width="30%" />
+                          <Skeleton width="55%" height={20} animation="wave" />
+                          <Skeleton width="28%" height={14} sx={{ mt: 0.5 }} animation="wave" />
                         </Box>
+                        <Skeleton width={50} height={18} animation="wave" />
                       </Box>
                     ))}
                   </Box>
@@ -1140,9 +1135,9 @@ export default function DashboardPage() {
                               sx={{
                                 width: 36,
                                 height: 36,
-                                bgcolor: isLight ? 'rgba(14, 98, 69, 0.12)' : 'rgba(16, 185, 129, 0.15)',
-                                color: isLight ? '#0E6245' : '#34D399',
-                                border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
+                                bgcolor: isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.15)',
+                                color: isLight ? '#059669' : '#34D399',
+                                border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.25)' : 'rgba(16, 185, 129, 0.3)'}`,
                                 fontSize: '0.8rem',
                                 fontWeight: 700,
                               }}

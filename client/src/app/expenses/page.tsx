@@ -582,14 +582,14 @@ function ExpensesContent() {
                 py: 0.85,
                 fontWeight: 600,
                 textTransform: 'none',
-                bgcolor: isLight ? '#0E6245' : '#059669',
+                bgcolor: isLight ? '#059669' : '#10B981',
                 color: '#ffffff',
                 boxShadow: isLight
                   ? '0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
-                  : '0 1px 3px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.25)',
+                  : '0 4px 14px rgba(16,185,129,0.3)',
                 '&:hover': {
-                  bgcolor: isLight ? '#0A4B35' : '#047857',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
+                  bgcolor: isLight ? '#047857' : '#059669',
+                  boxShadow: '0 6px 20px rgba(16,185,129,0.4)',
                 },
               }}
             >
@@ -787,15 +787,34 @@ function ExpensesContent() {
         >
           <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
             {loading && expenses.length === 0 ? (
-              <Box sx={{ p: 3 }}>
+              <Box sx={{ p: { xs: 2, sm: 3 } }}>
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Box key={i} sx={{ display: 'flex', gap: 2, py: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                    <Skeleton variant="circular" width={44} height={44} />
-                    <Box sx={{ flex: 1 }}>
-                      <Skeleton width="40%" height={24} />
-                      <Skeleton width="25%" height={16} />
+                  <Box
+                    key={i}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      py: 2,
+                      px: 1,
+                      borderBottom: `1px solid ${theme.palette.divider}`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 40 }}>
+                        <Skeleton width={28} height={14} animation="wave" />
+                        <Skeleton width={20} height={22} animation="wave" />
+                      </Box>
+                      <Skeleton variant="rounded" width={48} height={48} sx={{ borderRadius: 3 }} animation="wave" />
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Skeleton width="45%" height={22} animation="wave" />
+                        <Skeleton width="28%" height={16} sx={{ mt: 0.5 }} animation="wave" />
+                      </Box>
                     </Box>
-                    <Skeleton width={80} height={32} />
+                    <Box sx={{ textAlign: 'right', minWidth: 90 }}>
+                      <Skeleton width={50} height={14} sx={{ ml: 'auto' }} animation="wave" />
+                      <Skeleton width={70} height={22} sx={{ ml: 'auto', mt: 0.5 }} animation="wave" />
+                    </Box>
                   </Box>
                 ))}
               </Box>
@@ -818,13 +837,13 @@ function ExpensesContent() {
                     startIcon={<Add />}
                     onClick={() => setDialogOpen(true)}
                     sx={{
-                      bgcolor: isLight ? '#0E6245' : '#059669',
+                      bgcolor: isLight ? '#059669' : '#10B981',
                       color: '#ffffff',
                       textTransform: 'none',
                       borderRadius: 2.5,
                       fontWeight: 600,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.20)',
-                      '&:hover': { bgcolor: isLight ? '#0A4B35' : '#047857' },
+                      boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                      '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
                     }}
                   >
                     Add Expense

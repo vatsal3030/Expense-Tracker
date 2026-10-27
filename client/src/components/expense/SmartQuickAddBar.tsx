@@ -611,11 +611,12 @@ export default function SmartQuickAddBar({
               textTransform: 'none',
               px: { xs: 2, sm: 2.75 },
               py: 0.95,
-              bgcolor: '#0E6245',
+              bgcolor: isLight ? '#059669' : '#10B981',
               color: '#ffffff',
               flexShrink: 0,
               minWidth: { xs: 'auto', sm: 110 },
-              '&:hover': { bgcolor: '#094A34' },
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+              '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
             }}
           >
             {submitting ? (

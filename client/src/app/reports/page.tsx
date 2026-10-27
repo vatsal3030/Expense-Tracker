@@ -257,9 +257,10 @@ const getCategoryColorScale = (pct: number) => {
               disabled={downloading}
               sx={{
                 flex: { xs: 1, sm: 'initial' },
-                borderRadius: 2, px: 2.5, py: 0.75, fontWeight: 600,
-                bgcolor: isLight ? '#0E6245' : '#059669', color: '#ffffff', textTransform: 'none',
-                '&:hover': { bgcolor: isLight ? '#0A4B35' : '#047857' },
+                borderRadius: 2, px: 2.5, py: 0.75, fontWeight: 700,
+                bgcolor: isLight ? '#059669' : '#10B981', color: '#ffffff', textTransform: 'none',
+                boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
+                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
               }}
             >
               {downloading ? 'Downloading...' : 'Export CSV'}
@@ -297,8 +298,8 @@ const getCategoryColorScale = (pct: number) => {
                     bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)',
                     border: `1px solid ${theme.palette.divider}`,
                     '&:hover': {
-                      bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-                      borderColor: isLight ? '#0E6245' : '#10B981',
+                      bgcolor: isLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.14)',
+                      borderColor: isLight ? '#059669' : '#10B981',
                     },
                   }}
                 />
@@ -354,10 +355,13 @@ const getCategoryColorScale = (pct: number) => {
                   startIcon={<Assessment />}
                   sx={{
                     height: 40,
-                    borderRadius: 2, textTransform: 'none', fontWeight: 600,
-                    borderColor: isLight ? '#0E6245' : '#34D399',
-                    color: isLight ? '#0E6245' : '#34D399',
-                    '&:hover': { bgcolor: alpha(isLight ? '#0E6245' : '#34D399', 0.08) },
+                    borderRadius: 2, textTransform: 'none', fontWeight: 700,
+                    borderColor: isLight ? '#059669' : '#10B981',
+                    color: isLight ? '#059669' : '#34D399',
+                    '&:hover': {
+                      borderColor: isLight ? '#047857' : '#34D399',
+                      bgcolor: alpha(isLight ? '#059669' : '#10B981', 0.1),
+                    },
                   }}
                 >
                   Generate
@@ -371,7 +375,22 @@ const getCategoryColorScale = (pct: number) => {
           <Grid container spacing={1.5}>
             {[1, 2, 3, 4].map((i) => (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-                <Card className="glass-secondary"><CardContent><Skeleton height={80} /></CardContent></Card>
+                <Card
+                  className="glass-secondary"
+                  sx={{
+                    borderRadius: 2.75,
+                    p: 2,
+                    border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)'}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Skeleton variant="rounded" width={38} height={38} sx={{ borderRadius: 2 }} animation="wave" />
+                    <Box sx={{ flex: 1 }}>
+                      <Skeleton width="65%" height={16} animation="wave" />
+                      <Skeleton width="85%" height={26} sx={{ mt: 0.5 }} animation="wave" />
+                    </Box>
+                  </Box>
+                </Card>
               </Grid>
             ))}
           </Grid>
@@ -525,9 +544,9 @@ const getCategoryColorScale = (pct: number) => {
                         fontSize: '0.72rem',
                         fontWeight: 650,
                         textTransform: 'capitalize',
-                        bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(52, 211, 153, 0.12)',
-                        color: isLight ? '#0E6245' : '#34D399',
-                        border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
+                        bgcolor: isLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(52, 211, 153, 0.12)',
+                        color: isLight ? '#059669' : '#34D399',
+                        border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.25)' : 'rgba(52, 211, 153, 0.25)'}`,
                       }}
                     />
                   )}

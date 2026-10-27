@@ -261,15 +261,16 @@ export default function SettlementsPage() {
                             }
                             className="glass-emerald-active"
                             sx={{
-                              bgcolor: '#0E6245',
+                              bgcolor: isLight ? '#059669' : '#10B981',
                               color: '#FFFFFF',
                               textTransform: 'none',
                               fontSize: '0.75rem',
-                              fontWeight: 600,
+                              fontWeight: 700,
                               borderRadius: 2,
-                              py: 0.5,
-                              px: 1.5,
-                              '&:hover': { bgcolor: '#094A34' },
+                              py: 0.6,
+                              px: 1.75,
+                              boxShadow: '0 2px 10px rgba(16,185,129,0.3)',
+                              '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
                             }}
                           >
                             Pay UPI
@@ -383,13 +384,29 @@ export default function SettlementsPage() {
         >
           <CardContent sx={{ p: 0 }}>
             {loading && settlements.length === 0 ? (
-              <Box sx={{ p: 3 }}>
-                {[1, 2, 3].map((i) => (
-                  <Box key={i} sx={{ display: 'flex', gap: 2, py: 2 }}>
-                    <Skeleton variant="circular" width={44} height={44} />
-                    <Box sx={{ flex: 1 }}>
-                      <Skeleton width="50%" />
-                      <Skeleton width="30%" />
+              <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                {[1, 2, 3, 4].map((i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      py: 2,
+                      px: 1,
+                      borderBottom: `1px solid ${theme.palette.divider}`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                      <Skeleton variant="circular" width={44} height={44} animation="wave" />
+                      <Box sx={{ flex: 1 }}>
+                        <Skeleton width="45%" height={22} animation="wave" />
+                        <Skeleton width="30%" height={16} sx={{ mt: 0.5 }} animation="wave" />
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Skeleton variant="rounded" width={80} height={26} sx={{ borderRadius: 2 }} animation="wave" />
+                      <Skeleton variant="rounded" width={90} height={32} sx={{ borderRadius: 2 }} animation="wave" />
                     </Box>
                   </Box>
                 ))}

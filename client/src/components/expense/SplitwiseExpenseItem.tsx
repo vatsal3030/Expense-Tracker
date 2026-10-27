@@ -48,7 +48,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
   RENT: { bg: 'rgba(14, 165, 233, 0.12)', text: '#0EA5E9', border: 'rgba(14, 165, 233, 0.25)' },
   HEALTH: { bg: 'rgba(239, 68, 68, 0.12)', text: '#EF4444', border: 'rgba(239, 68, 68, 0.25)' },
   GROCERIES: { bg: 'rgba(34, 197, 94, 0.12)', text: '#22C55E', border: 'rgba(34, 197, 94, 0.25)' },
-  TRAVEL: { bg: 'rgba(14, 98, 69, 0.15)', text: '#10B981', border: 'rgba(16, 185, 129, 0.3)' },
+  TRAVEL: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10B981', border: 'rgba(16, 185, 129, 0.3)' },
 };
 
 interface SplitwiseExpenseItemProps {
@@ -277,9 +277,9 @@ export default function SplitwiseExpenseItem({
                   height: 20,
                   fontSize: '0.675rem',
                   fontWeight: 600,
-                  bgcolor: alpha('#0E6245', 0.1),
-                  color: isDark ? '#34D399' : '#0E6245',
-                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  bgcolor: alpha(isDark ? '#10B981' : '#059669', 0.12),
+                  color: isDark ? '#34D399' : '#059669',
+                  border: `1px solid ${alpha(isDark ? '#10B981' : '#059669', 0.25)}`,
                 }}
               />
             )}
