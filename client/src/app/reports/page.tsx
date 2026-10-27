@@ -136,10 +136,11 @@ export default function ReportsPage() {
   const summary = report?.summary;
   const expensesList: any[] = report?.expenses || [];
 
+  const categoryBreakdown = summary?.categoryBreakdown;
   const categoryEntries = useMemo(() => {
-    if (!summary?.categoryBreakdown) return [];
-    return Object.entries(summary.categoryBreakdown).sort(([, a], [, b]) => (b as number) - (a as number));
-  }, [summary?.categoryBreakdown]);
+    if (!categoryBreakdown) return [];
+    return Object.entries(categoryBreakdown).sort(([, a], [, b]) => (b as number) - (a as number));
+  }, [categoryBreakdown]);
 
   const maxCategoryAmount = categoryEntries.length > 0 ? (categoryEntries[0][1] as number) : 1;
 

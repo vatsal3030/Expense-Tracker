@@ -356,10 +356,11 @@ function GroupDetailContent() {
   };
 
   // Group expenses by Month & Year
+  const groupExpenses = group?.expenses;
   const groupedGroupExpenses = useMemo(() => {
-    if (!group?.expenses) return {};
+    if (!groupExpenses) return {};
     const groups: Record<string, any[]> = {};
-    group.expenses.forEach((exp: any) => {
+    groupExpenses.forEach((exp: any) => {
       const d = exp.date ? new Date(exp.date) : new Date();
       const monthKey = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       if (!groups[monthKey]) {
@@ -368,7 +369,7 @@ function GroupDetailContent() {
       groups[monthKey].push(exp);
     });
     return groups;
-  }, [group?.expenses]);
+  }, [groupExpenses]);
 
   // WhatsApp-style Multiple Admin Role Toggle
   const handleUpdateMemberRole = async (targetUserId: string, targetName: string, newRole: 'ADMIN' | 'MEMBER') => {

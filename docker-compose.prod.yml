@@ -4,11 +4,11 @@ services:
   # ===========================================================================
   # NGINX API GATEWAY & REVERSE PROXY
   # Routes port 80 traffic:
-  #   - /api/auth, /api/users, /api/friends         -> identity-service:5001
-  #   - /api/groups, /api/expenses, /api/budgets     -> expense-service:5002
-  #   - /api/settlements, /api/dashboard, /api/export -> settlement-service:5003
-  #   - /api/notifications, /api/activities, /socket.io -> notification-service:5004
-  #   - /*                                           -> client:3000
+  #   - /api/auth, /api/users, /api/friends              -> identity-service:5001
+  #   - /api/groups, /api/expenses, /api/budgets, /api/recurring, /api/fx -> expense-service:5002
+  #   - /api/settlements, /api/dashboard, /api/export    -> settlement-service:5003
+  #   - /api/notifications, /api/activities, /api/admin, /socket.io -> notification-service:5004
+  #   - /*                                                -> client:3000
   # ===========================================================================
   nginx:
     image: nginx:alpine
@@ -56,12 +56,12 @@ services:
       - NODE_ENV=production
       - PORT=5001
       - CLIENT_URL=*
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=15&sslmode=require&connect_timeout=15&pool_timeout=15}
-      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres}
-      - SUPABASE_URL=${SUPABASE_URL:-https://eqtmygiizyehikodaxpe.supabase.co}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_YJzGFp2HW1qjOrnjGO618g_2CXVUTr3}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-sb_secret_CGoeZ1av7plW3k8Fgtcs8w_j0BS8r61}
-      - JWT_SECRET=${JWT_SECRET:-fairshare-super-secret-jwt-key-2026-production}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL must be set in environment}
+      - DIRECT_URL=${DIRECT_URL:?DIRECT_URL must be set in environment}
+      - SUPABASE_URL=${SUPABASE_URL:?SUPABASE_URL must be set in environment}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:?SUPABASE_ANON_KEY must be set in environment}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY must be set in environment}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in environment}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     healthcheck:
       test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:5001/health',s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
@@ -88,12 +88,12 @@ services:
       - NODE_ENV=production
       - PORT=5002
       - CLIENT_URL=*
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=15&sslmode=require&connect_timeout=15&pool_timeout=15}
-      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres}
-      - SUPABASE_URL=${SUPABASE_URL:-https://eqtmygiizyehikodaxpe.supabase.co}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_YJzGFp2HW1qjOrnjGO618g_2CXVUTr3}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-sb_secret_CGoeZ1av7plW3k8Fgtcs8w_j0BS8r61}
-      - JWT_SECRET=${JWT_SECRET:-fairshare-super-secret-jwt-key-2026-production}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL must be set in environment}
+      - DIRECT_URL=${DIRECT_URL:?DIRECT_URL must be set in environment}
+      - SUPABASE_URL=${SUPABASE_URL:?SUPABASE_URL must be set in environment}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:?SUPABASE_ANON_KEY must be set in environment}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY must be set in environment}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in environment}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     healthcheck:
       test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:5002/health',s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
@@ -120,12 +120,12 @@ services:
       - NODE_ENV=production
       - PORT=5003
       - CLIENT_URL=*
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=15&sslmode=require&connect_timeout=15&pool_timeout=15}
-      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres}
-      - SUPABASE_URL=${SUPABASE_URL:-https://eqtmygiizyehikodaxpe.supabase.co}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_YJzGFp2HW1qjOrnjGO618g_2CXVUTr3}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-sb_secret_CGoeZ1av7plW3k8Fgtcs8w_j0BS8r61}
-      - JWT_SECRET=${JWT_SECRET:-fairshare-super-secret-jwt-key-2026-production}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL must be set in environment}
+      - DIRECT_URL=${DIRECT_URL:?DIRECT_URL must be set in environment}
+      - SUPABASE_URL=${SUPABASE_URL:?SUPABASE_URL must be set in environment}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:?SUPABASE_ANON_KEY must be set in environment}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY must be set in environment}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in environment}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     healthcheck:
       test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:5003/health',s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
@@ -152,12 +152,12 @@ services:
       - NODE_ENV=production
       - PORT=5004
       - CLIENT_URL=*
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=15&sslmode=require&connect_timeout=15&pool_timeout=15}
-      - DIRECT_URL=${DIRECT_URL:-postgresql://postgres.eqtmygiizyehikodaxpe:i4o22ge4nWiou6By@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres}
-      - SUPABASE_URL=${SUPABASE_URL:-https://eqtmygiizyehikodaxpe.supabase.co}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_YJzGFp2HW1qjOrnjGO618g_2CXVUTr3}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-sb_secret_CGoeZ1av7plW3k8Fgtcs8w_j0BS8r61}
-      - JWT_SECRET=${JWT_SECRET:-fairshare-super-secret-jwt-key-2026-production}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL must be set in environment}
+      - DIRECT_URL=${DIRECT_URL:?DIRECT_URL must be set in environment}
+      - SUPABASE_URL=${SUPABASE_URL:?SUPABASE_URL must be set in environment}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:?SUPABASE_ANON_KEY must be set in environment}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY must be set in environment}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in environment}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     healthcheck:
       test: ["CMD", "node", "-e", "const http=require('http');const r=http.get('http://localhost:5004/health',s=>{process.exit(s.statusCode===200?0:1)});r.on('error',()=>process.exit(1));r.setTimeout(5000,()=>process.exit(1))"]
@@ -176,8 +176,8 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://eqtmygiizyehikodaxpe.supabase.co}
-        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-sb_publishable_YJzGFp2HW1qjOrnjGO618g_2CXVUTr3}
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?NEXT_PUBLIC_SUPABASE_URL must be set}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:?NEXT_PUBLIC_SUPABASE_ANON_KEY must be set}
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-/api}
     container_name: fairshare-client
     restart: unless-stopped

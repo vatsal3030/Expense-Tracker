@@ -589,7 +589,7 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
     const hasYesterday = activeDatesSet.has(yesterdayStr);
 
     if (hasToday || hasYesterday) {
-      let checkDate = hasToday ? new Date(today) : new Date(yesterday);
+      const checkDate = hasToday ? new Date(today) : new Date(yesterday);
       while (true) {
         const checkStr = checkDate.toISOString().split('T')[0];
         if (activeDatesSet.has(checkStr)) {

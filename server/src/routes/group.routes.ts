@@ -93,7 +93,7 @@ groupRouter.get('/public/:id', optionalAuth, async (req: AuthenticatedRequest, r
     const isMember = req.user?.id ? group.members.some((m) => m.userId === req.user?.id) : false;
 
     // Detect mutual friends (Instagram-style) if viewer is authenticated
-    let mutualFriends: { id: string; name: string; avatarUrl: string | null }[] = [];
+    const mutualFriends: { id: string; name: string; avatarUrl: string | null }[] = [];
     if (req.user?.id) {
       const friendships = await prisma.friendship.findMany({
         where: {

@@ -1,3 +1,183 @@
+# 🌟 Owino / FairShare — Antigravity Agent Engineering Guide
+
+Welcome to **Owino (FairShare)**, a cloud-native, microservices-based expense sharing and debt minimization SaaS platform.
+Every AI agent operating in this repository is expected to act like a disciplined senior engineer: **understand first, plan properly, implement minimally, test thoroughly, review critically, and never compromise production quality.**
+
+---
+
+## 1. Domain & Business Model Overview
+
+Owino solves the multi-party group expense problem. When roommates, travel groups, or project teams incur shared costs, bilateral debts multiply into an overwhelming web of payments.
+
+### The Algorithmic Core: Greedy Debt Simplification
+- Debts are modeled as a **Directed Acyclic Graph (DAG)**.
+- Owino computes the net financial balance of each participant (`Credits - Debits`).
+- A greedy graph minimization loop in `server/src/routes/group.routes.ts` (mounted in `expense.service.ts` on port 5002) matches the largest debtor with the largest creditor, slashing overall transactions by up to **70%**.
+- Settlements are finalized with real-time dynamic UPI payment QR codes (`qrcode`).
+- **Mathematical Invariant:** Net balance across any group must conserve zero (`sum(netBalances) === 0`).
+
+---
+
+## 2. Repository Blueprint & Folder Architecture
+
+```text
+e:\Expense_tracker/
+├── AGENTS.md                          # Master project rules and agent guidelines
+├── package.json                       # Monorepo root scripts (dev, build, lint, db:*)
+├── docker-compose.yml                 # Local development Docker setup (Monolith :5000 + Client :3000)
+├── docker-compose.prod.yml            # Production setup (NGINX + Redis + 4 Microservices + Client)
+├── client/                            # Next.js 16 App Router frontend
+│   ├── src/
+│   │   ├── app/                       # 18 page routes (dashboard, expenses, groups, settlements, etc.)
+│   │   ├── components/                # Reusable UI components & modals
+│   │   ├── lib/                       # api.ts (Axios), supabase.ts, utils.ts
+│   │   └── theme/                     # Material UI and styling theme definitions
+│   └── package.json                   # Client dependencies (React 19, Tailwind v4, MUI v9, Recharts)
+├── server/                            # Node.js + Express + TypeScript backend
+│   ├── src/
+│   │   ├── index.ts                   # Monolithic Express entry point (:5000)
+│   │   ├── lib/                       # prisma.ts, cache.ts (L1/L2), socket.ts, supabase.ts
+│   │   ├── middleware/                # auth.ts (L1 token cache + JWT), validate.ts (Zod), errorHandler.ts
+│   │   ├── routes/                    # 15 Express route modules
+│   │   └── services/                  # 4 decoupled microservices for production
+│   │       ├── identity.service.ts    # Port 5001: Auth, Users, Friends
+│   │       ├── expense.service.ts     # Port 5002: Expenses, Groups, Budgets
+│   │       ├── settlement.service.ts  # Port 5003: Settlements, DAG Engine, Dashboard, Export
+│   │       └── notification.service.ts# Port 5004: WebSockets, Notifications, Activities
+│   └── prisma/schema.prisma           # Relational schema (PostgreSQL on Supabase Sydney)
+├── nginx/                             # API Gateway configuration (port 80 reverse proxy)
+├── k8s/                               # Kubernetes manifests (Deployments, HPA, Ingress, ConfigMaps)
+├── terraform/                         # Infrastructure as Code (Kubernetes namespace & secrets)
+├── .github/workflows/                 # CI/CD (lint, typecheck, GitLeaks, Trivy, build, deploy)
+└── .agents/                           # Antigravity AI-Native Engineering Toolkit
+    ├── rules/                         # Enforced rules (security, architecture, quality gates, boundaries)
+    ├── skills/                        # Reusable skills (debugging, TDD, security, design system, minimalism)
+    └── workflows/                     # 12 standardized engineering workflows
+```
+
+---
+
+## 3. Dual-Mode Runtime Parity
+
+Owino operates in two runtime paradigms. Any backend change MUST be compatible with both:
+1. **Development Monolith (`npm run dev:server`):** Single Express server (`server/src/index.ts`) listening on port 5000 mounting all 15 routers under `/api/*`.
+2. **Production Decoupled Microservices (`docker-compose.prod.yml`):**
+   - **Port 5001:** `identity.service.ts` -> `/api/auth`, `/api/users`, `/api/friends`
+   - **Port 5002:** `expense.service.ts` -> `/api/groups`, `/api/expenses`, `/api/budgets`
+   - **Port 5003:** `settlement.service.ts` -> `/api/settlements`, `/api/dashboard`, `/api/export`
+   - **Port 5004:** `notification.service.ts` -> `/api/notifications`, `/api/activities`, `/socket.io`
+   - **Port 80 (NGINX Gateway):** Routes path prefixes to the respective service container and `/*` to Next.js Client (:3000).
+
+---
+
+## 4. Database & Relational Data Model
+
+- **Database Engine:** PostgreSQL hosted on Supabase (`ap-southeast-2` Sydney).
+- **ORM:** Prisma ORM 6.1.0 (`server/prisma/schema.prisma`).
+- **Connection Strategy:**
+  - `DATABASE_URL`: PgBouncer connection pooler on port 6543 (used by application runtime).
+  - `DIRECT_URL`: Direct PostgreSQL connection on port 5432 (used by Prisma migrations).
+- **Core Models:**
+  - `User`: Accounts, auth bindings (`supabaseId`), currency preferences.
+  - `Friendship`: Bilateral friendship states (`PENDING`, `ACCEPTED`, `BLOCKED`).
+  - `Group` & `GroupMember`: Shared expense containers with role-based permissions (`ADMIN`, `MEMBER`).
+  - `Expense` & `ExpenseShare`: Expenses with amounts (`Decimal(12, 2)`), split types (`EQUAL`, `EXACT`, `PERCENTAGE`, `SHARES`), and per-user share tracking.
+  - `Settlement`: Bilateral payment records with statuses (`PENDING`, `CONFIRMED`, `REJECTED`).
+  - `RecurringExpense` & `Budget`: Automated rules and category spending limits with threshold alerts.
+  - `Notification` & `Activity`: Real-time audit trails and user notification logs.
+
+---
+
+## 5. Authentication, Authorization & Caching
+
+1. **Token Lifecycle:**
+   - Client authenticates via Supabase Auth and passes Bearer JWT in the `Authorization` header.
+   - `server/src/middleware/auth.ts` intercepts requests with high-speed performance:
+     - **L1 In-Memory Token Cache:** Checks in-memory cache first (0.00ms).
+     - **In-Flight Request Deduplication:** Prevents 5-7 parallel frontend requests from spamming remote auth verification.
+     - **Fast Local JWT Decode:** Decodes and checks claims before falling back to remote Supabase verification.
+     - **L2 Redis Cache:** Stores resolved DB user objects to eliminate latency to the Sydney database.
+2. **Authorization Invariants (Anti-IDOR):**
+   - Every route querying or modifying private entities (groups, expenses, settlements) MUST verify that `req.user.id` is an active member or owner.
+   - Admin actions require `GroupMember.role === 'ADMIN'`.
+
+---
+
+## 6. Frontend Conventions & FinTech Design System
+
+- **Stack:** Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + Material UI v9.
+- **Client Components:** Default to React Server Components; use `'use client'` only for interactive state, browser hooks, or event listeners.
+- **Visual Design:**
+  - Follow the **Owino FinTech Design System** (`ui-ux-design-system` skill).
+  - Backgrounds: Neutral slate `#0A0D14` with card elevation `#121620` and borders `#1A202E`.
+  - Financial Status: Emerald `#10B981` (You are owed), Rose `#F43F5E` (You owe), Slate `#94A3B8` (Settled).
+  - Contrast: Minimum 4.5:1 text contrast (WCAG AA).
+  - Numbers: Use tabular numbers (`font-mono` or `font-feature-settings: 'tnum'`).
+  - Icons: Use `lucide-react` exclusively. No emoji icons in UI.
+
+---
+
+## 7. DevSecOps & Security Requirements
+
+1. **Zero Secret Exposure:** Never commit `.pem`, `.key`, or `.env*` files. Never hardcode passwords or API keys as default fallbacks in Docker Compose or Terraform.
+2. **Parameterized Queries:** All DB operations must use Prisma ORM parameterized queries. Never use unescaped string concatenation in `$queryRaw`.
+3. **Idempotency:** Payment and expense creation endpoints MUST respect the `Idempotency-Key` header.
+4. **Input Validation:** All controller payloads MUST be validated using Zod schemas via `validate` middleware.
+
+---
+
+## 8. Development & Testing Commands
+
+```bash
+# Install all dependencies across monorepo
+npm run postinstall
+
+# Run local development (Monolith server :5000 + Client :3000)
+npm run dev
+
+# Run individual services
+npm run dev:client         # Next.js frontend
+npm run dev:server         # Monolith Express server
+npm run dev:identity       # Microservice 1 (Identity :5001)
+npm run dev:expense        # Microservice 2 (Expense :5002)
+npm run dev:settlement     # Microservice 3 (Settlement :5003)
+npm run dev:notification   # Microservice 4 (Notification :5004)
+
+# Database operations
+npm run db:generate        # Regenerate Prisma Client
+npm run db:migrate         # Run Prisma migrations in dev
+npm run db:studio          # Launch Prisma Studio GUI
+
+# Linting & Type Checking
+npm run lint               # Lint both client and server
+cd client && npx tsc --noEmit # Typecheck frontend
+cd server && npx tsc --noEmit # Typecheck backend
+
+# Testing
+cd client && npx playwright test # Run Playwright E2E test suite
+```
+
+---
+
+## 9. Protected Boundaries: What Must NEVER Be Changed Without Approval
+
+1. **Greedy Debt Simplification DAG Logic** in `server/src/routes/group.routes.ts`.
+2. **Prisma Schema Destructive Changes** (`prisma db push --force` or dropping existing columns).
+3. **Port & Reverse Proxy Mappings** in `nginx/nginx.conf` and `docker-compose.prod.yml`.
+4. **Production Cloud Infrastructure** in `terraform/` and `k8s/` (no automated applies without diff approval).
+
+---
+
+## 10. Behavioral Directives for Agents
+
+1. **Inspect Before Creating (Ponytail Rule):** Always check `client/src/lib/`, `client/src/components/`, and `server/src/lib/` before writing a new helper, component, or utility. Reuse existing code first.
+2. **Keep Diffs Minimal:** Prefer a surgical 10-line change over a 200-line rewrite.
+3. **Red/Green TDD for Financial Math:** Any change touching balance calculations or splits MUST have a corresponding automated test.
+4. **Evidence-Based Reviews:** Support all code review feedback with file paths, line numbers, reproduction payloads, and concrete remediation diffs.
+5. **No Hallucinated Test Results:** Never report that tests or builds succeeded without actually executing them and inspecting the terminal output.
+
+---
+
 <!-- BEGIN AWS Agent Toolkit rules -->
 # AWS Guidance for the new AWS experience
 
@@ -47,30 +227,6 @@ Where this guidance conflicts with the project's own instructions, the project's
 
 ### Help level
 
-- help_level (required): LOW, MEDIUM, or HIGH. While a user is building, you MUST ask the user: "How much guidance would you like from me? Low (I only flag security risks), medium (I ask a couple of clarifying questions if something seems off), or high (I explain what I'm doing, suggest alternatives, and flag best practices)."
+- help_level (required): HIGH. I explain what I'm doing, suggest alternatives, and flag best practices.
 
-You CAN update this rule file to save a user's help_level.
-
-Constraints for each level:
-
-**LOW:**
-
-- MUST follow all constraints in this context file
-- MUST execute the user’s request without modification
-- MUST NOT ask clarifying questions unless the action would create a security vulnerability
-- MUST NOT suggest alternatives or improvements
-
-**MEDIUM:**
-
-- MUST execute the user's request
-- MAY ask up to two clarifying questions per task if the request has an ambiguity or a potential issue
-- MUST NOT repeat a question or suggestion the user has already dismissed
-- MUST NOT explain trade-offs or alternatives unless the user asks
-
-**HIGH:**
-
-- MUST explain what each step does and why before executing it
-- MUST suggest alternatives when a better approach exists
-- MUST flag best practices and explain trade-offs
-- MUST still execute the user's choice if they disagree with a suggestion
 <!-- END AWS Agent Toolkit rules -->

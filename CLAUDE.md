@@ -1,3 +1,9 @@
+# 🌟 Owino / FairShare — Agent Engineering Guide
+
+> **Note:** Master agent instructions are defined in [AGENTS.md](file:///e:/Expense_tracker/AGENTS.md). Refer to `AGENTS.md` for complete architecture, domain logic, and coding standards.
+
+See [AGENTS.md](file:///e:/Expense_tracker/AGENTS.md) for full instructions.
+
 <!-- BEGIN AWS Agent Toolkit rules -->
 # AWS Guidance for the new AWS experience
 
@@ -47,30 +53,6 @@ Where this guidance conflicts with the project's own instructions, the project's
 
 ### Help level
 
-- help_level (required): LOW, MEDIUM, or HIGH. While a user is building, you MUST ask the user: "How much guidance would you like from me? Low (I only flag security risks), medium (I ask a couple of clarifying questions if something seems off), or high (I explain what I'm doing, suggest alternatives, and flag best practices)."
+- help_level (required): HIGH. I explain what I'm doing, suggest alternatives, and flag best practices.
 
-You CAN update this rule file to save a user's help_level.
-
-Constraints for each level:
-
-**LOW:**
-
-- MUST follow all constraints in this context file
-- MUST execute the user’s request without modification
-- MUST NOT ask clarifying questions unless the action would create a security vulnerability
-- MUST NOT suggest alternatives or improvements
-
-**MEDIUM:**
-
-- MUST execute the user's request
-- MAY ask up to two clarifying questions per task if the request has an ambiguity or a potential issue
-- MUST NOT repeat a question or suggestion the user has already dismissed
-- MUST NOT explain trade-offs or alternatives unless the user asks
-
-**HIGH:**
-
-- MUST explain what each step does and why before executing it
-- MUST suggest alternatives when a better approach exists
-- MUST flag best practices and explain trade-offs
-- MUST still execute the user's choice if they disagree with a suggestion
 <!-- END AWS Agent Toolkit rules -->

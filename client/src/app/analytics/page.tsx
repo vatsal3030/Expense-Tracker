@@ -100,8 +100,9 @@ export default function AnalyticsPage() {
   }, [session?.access_token]);
 
   // Fetch telemetry data whenever filters change or an expense/settlement occurs
+  const accessToken = session?.access_token;
   const fetchAnalytics = useCallback(async () => {
-    if (!session?.access_token) return;
+    if (!accessToken) return;
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -113,7 +114,7 @@ export default function AnalyticsPage() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/dashboard/analytics?${params.toString()}`,
         {
-          headers: { Authorization: `Bearer ${session.access_token}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
       const json = await res.json();
@@ -130,7 +131,7 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [session?.access_token, timeframe, groupId, category, viewType]);
+  }, [accessToken, timeframe, groupId, category, viewType]);
 
   useEffect(() => {
     fetchAnalytics();

@@ -137,3 +137,53 @@ terraform init
 terraform plan
 terraform apply
 ```
+
+---
+
+## ☁️ Option D: Production Decoupled Microservices on AWS EC2 (`docker-compose.prod.yml`)
+
+This mode deploys the full decoupled 7-container topology:
+- **Port 80 (NGINX Reverse Proxy):** API gateway routing path prefixes to internal microservices
+- **Port 6379 (Redis Alpine):** Distributed L2 caching layer with LRU eviction
+- **Port 5001 (`identity-service`):** Auth, Users, Friends
+- **Port 5002 (`expense-service`):** Groups, Expenses, Splits, Budgets, Recurring Expenses, FX Conversion
+- **Port 5003 (`settlement-service`):** DAG Debt Minimization Engine, Settlements, Dashboard, Export
+- **Port 5004 (`notification-service`):** Real-time WebSockets, In-App Notifications, Activity Stream, Admin Ops
+- **Port 3000 (`client`):** Next.js 16 Standalone SSR Client
+
+### Step-by-Step EC2 Deployment:
+
+1. **Connect to your EC2 instance:**
+   ```bash
+   ssh -i ~/.ssh/fairshare-key.pem ubuntu@<YOUR_EC2_PUBLIC_IP>
+   ```
+
+2. **Clone the repository:**
+   ```bash
+   git clone https://github.com/vatsal3030/Expense-Tracker.git
+   cd Expense-Tracker
+   ```
+
+3. **Configure Environment Secrets:**
+   ```bash
+   cp .env.production.example .env
+   nano .env
+   # Fill in your live Supabase credentials, DB pooler URLs, and JWT secret
+   ```
+
+4. **Launch Automated Deployment:**
+   ```bash
+   chmod +x deploy-aws.sh
+   ./deploy-aws.sh
+   ```
+   *Alternatively, run directly:*
+   ```bash
+   docker compose -f docker-compose.prod.yml up --build -d
+   ```
+
+5. **Verify Gateway Health & Route Integrity:**
+   ```bash
+   curl http://localhost/api/health
+   # Expected response: {"status":"healthy","gateway":"nginx-api-gateway","architecture":"microservices",...}
+   ```
+
