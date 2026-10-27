@@ -184,6 +184,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - NEXT_PUBLIC_API_URL=/api
     depends_on:
       - identity-service
       - expense-service

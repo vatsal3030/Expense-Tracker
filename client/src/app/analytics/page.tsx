@@ -48,7 +48,7 @@ import {
 } from 'recharts';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
-import { groupApi } from '@/lib/api';
+import api, { groupApi } from '@/lib/api';
 import { useDataRefresh } from '@/lib/events';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -105,24 +105,14 @@ export default function AnalyticsPage() {
     if (!accessToken) return;
     try {
       setLoading(true);
-      const params = new URLSearchParams({
-        timeframe,
-        groupId,
-        category,
-        viewType,
+      const res = await api.get('/dashboard/analytics', {
+        params: { timeframe, groupId, category, viewType },
       });
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/dashboard/analytics?${params.toString()}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-      const json = await res.json();
-      if (json.success && json.data) {
-        setData(json.data);
+      if (res.data?.success && res.data?.data) {
+        setData(res.data.data);
         if (typeof window !== 'undefined') {
           try {
-            localStorage.setItem('fairshare_cached_analytics', JSON.stringify(json.data));
+            localStorage.setItem('fairshare_cached_analytics', JSON.stringify(res.data.data));
           } catch {}
         }
       }

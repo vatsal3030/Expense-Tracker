@@ -1,10 +1,24 @@
 import axios from 'axios';
 import { supabase } from './supabase';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+export const getApiBaseUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // If running locally in split-port dev (Next:3000, Monolith:5000)
+    if (isLocal && window.location.port === '3000') {
+      return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    }
+    // In production or behind NGINX gateway, always route through relative /api
+    if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost:5000')) {
+      return process.env.NEXT_PUBLIC_API_URL;
+    }
+    return '/api';
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+};
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getApiBaseUrl(),
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -14,6 +28,9 @@ const api = axios.create({
 // Request interceptor — attach auth token
 api.interceptors.request.use(
   async (config) => {
+    if (typeof window !== 'undefined') {
+      config.baseURL = getApiBaseUrl();
+    }
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session?.access_token) {

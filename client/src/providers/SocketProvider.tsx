@@ -52,17 +52,16 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     }
 
     let socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
-    if (!socketUrl) {
-      if (typeof window !== 'undefined') {
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        if (isLocal && window.location.port === '3000') {
-          socketUrl = 'http://localhost:5000';
-        } else {
-          socketUrl = window.location.origin;
-        }
+    if (typeof window !== 'undefined') {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocal && window.location.port === '3000') {
+        socketUrl = socketUrl || 'http://localhost:5000';
       } else {
-        socketUrl = 'http://localhost:5000';
+        // On remote hosts or behind gateway, connect through current origin /socket.io
+        socketUrl = window.location.origin;
       }
+    } else if (!socketUrl) {
+      socketUrl = 'http://localhost:5000';
     }
 
     const s = io(socketUrl, {

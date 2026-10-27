@@ -16,6 +16,7 @@ import {
   QrCode2, Shield, Download, Visibility, VisibilityOff, Devices,
   DeleteForever, Cached, ArrowForward, HelpOutlined, Language,
   CurrencyExchange, Calculate, Speed, VolumeUp, Email, LockReset, Gavel,
+  OpenInNew, ContactMail, VerifiedUser,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
@@ -52,13 +53,16 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(0);
 
   // Core Profile Form
+  const googleAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
+  const googleName = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
+
   const [form, setForm] = useState({
-    name: profile?.name || '',
+    name: profile?.name || googleName || '',
     username: profile?.username || '',
     phone: profile?.phone || '',
     defaultCurrency: profile?.defaultCurrency || 'INR',
     timezone: profile?.timezone || 'Asia/Kolkata',
-    avatarUrl: profile?.avatarUrl || '',
+    avatarUrl: profile?.avatarUrl || googleAvatar || '',
   });
 
   const [usernameStatus, setUsernameStatus] = useState<{
@@ -85,6 +89,7 @@ export default function SettingsPage() {
 
   const [saving, setSaving] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
+  const [saveErrorToast, setSaveErrorToast] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState(false);
 
   // Phone OTP Verification State (Free Simulator Mode)
@@ -157,13 +162,15 @@ export default function SettingsPage() {
   useEffect(() => {
     if (profile && !hasLoadedProfileRef.current) {
       hasLoadedProfileRef.current = true;
+      const gAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
+      const gName = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
       setForm({
-        name: profile.name || '',
+        name: profile.name || gName || '',
         username: profile.username || '',
         phone: profile.phone || '',
         defaultCurrency: profile.defaultCurrency || 'INR',
         timezone: profile.timezone || 'Asia/Kolkata',
-        avatarUrl: profile.avatarUrl || '',
+        avatarUrl: profile.avatarUrl || gAvatar || '',
       });
 
       if (profile.phone) {
@@ -173,7 +180,7 @@ export default function SettingsPage() {
         }
       }
     }
-  }, [profile]);
+  }, [profile, user]);
 
   // Debounced Username Availability Check
   useEffect(() => {
@@ -280,20 +287,21 @@ export default function SettingsPage() {
 
   const handleSaveAll = async () => {
     if (usernameStatus.available === false && !usernameStatus.isCurrent) {
-      alert(usernameStatus.message || 'Please choose a valid and available username.');
+      setSaveErrorToast(usernameStatus.message || 'Please choose a valid and available username.');
       return;
     }
 
     setSaving(true);
+    setSaveErrorToast(null);
     try {
       // 1. Save core profile in backend Postgres
       await userApi.updateProfile({
-        name: form.name,
+        name: form.name?.trim() || undefined,
         username: form.username?.trim().toLowerCase() || undefined,
-        phone: form.phone,
+        phone: form.phone?.trim() || null,
         defaultCurrency: form.defaultCurrency,
         timezone: form.timezone,
-        avatarUrl: form.avatarUrl || null,
+        avatarUrl: form.avatarUrl?.trim() || null,
       });
 
       // 2. Save extended preferences in localStorage
@@ -301,9 +309,13 @@ export default function SettingsPage() {
 
       await refreshProfile();
       setSavedToast(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save profile error:', error);
-      alert('Failed to save settings. Please try again.');
+      const msg =
+        error?.response?.data?.error ||
+        error?.message ||
+        'Failed to save settings. Please ensure your connection is active and try again.';
+      setSaveErrorToast(msg);
     } finally {
       setSaving(false);
     }
@@ -1640,57 +1652,198 @@ export default function SettingsPage() {
               </Stack>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Stack spacing={2}>
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Stack spacing={2.5}>
+                {/* Legal & Regulatory Compliance Center */}
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{
+                    borderRadius: 3.5,
+                    p: 2.75,
+                    border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Subtle top indicator bar */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      background: 'linear-gradient(90deg, #10B981, #3B82F6, #8B5CF6)',
+                    }}
+                  />
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <VerifiedUser sx={{ color: '#10B981', fontSize: 22 }} />
+                      <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.01em' }}>
+                        Legal & Compliance Center
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label="Statutory Consent Active"
+                      size="small"
+                      icon={<CheckCircle sx={{ fontSize: '13px !important', color: '#10B981 !important' }} />}
+                      sx={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                        color: isLight ? '#0E6245' : '#34D399',
+                        border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
+                      }}
+                    />
+                  </Box>
+
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.82rem', lineHeight: 1.6 }}>
+                    FairShare is governed under the <strong>Digital Personal Data Protection Act, 2023</strong> and the <strong>Information Technology Act, 2000</strong> (Republic of India). Review binding legal policies below:
+                  </Typography>
+
+                  <Stack spacing={1.5}>
+                    {/* Terms of Service Nav Card */}
+                    <Box
+                      component={Link}
+                      href="/terms"
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1.5,
+                        borderRadius: 2.5,
+                        bgcolor: isLight ? 'rgba(0, 0, 0, 0.025)' : 'rgba(255, 255, 255, 0.03)',
+                        border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'}`,
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: isLight ? '#0E6245' : '#10B981',
+                          bgcolor: isLight ? 'rgba(14, 98, 69, 0.05)' : 'rgba(16, 185, 129, 0.08)',
+                          transform: 'translateY(-1px)',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                        <Box
+                          sx={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: isLight ? 'rgba(14, 98, 69, 0.1)' : 'rgba(16, 185, 129, 0.15)',
+                            color: isLight ? '#0E6245' : '#34D399',
+                          }}
+                        >
+                          <Gavel sx={{ fontSize: 18 }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" fontWeight={750} sx={{ fontSize: '0.84rem' }}>
+                            Terms of Service
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block' }}>
+                            P2P ledger, UPI disclaimers & jurisdiction
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <OpenInNew sx={{ fontSize: 15, color: 'text.secondary', opacity: 0.7 }} />
+                    </Box>
+
+                    {/* Privacy & DPDP Act Nav Card */}
+                    <Box
+                      component={Link}
+                      href="/privacy"
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1.5,
+                        borderRadius: 2.5,
+                        bgcolor: isLight ? 'rgba(0, 0, 0, 0.025)' : 'rgba(255, 255, 255, 0.03)',
+                        border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'}`,
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: isLight ? '#1D4ED8' : '#60A5FA',
+                          bgcolor: isLight ? 'rgba(59, 130, 246, 0.05)' : 'rgba(59, 130, 246, 0.08)',
+                          transform: 'translateY(-1px)',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                        <Box
+                          sx={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: isLight ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.15)',
+                            color: isLight ? '#1D4ED8' : '#60A5FA',
+                          }}
+                        >
+                          <Security sx={{ fontSize: 18 }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" fontWeight={750} sx={{ fontSize: '0.84rem' }}>
+                            Privacy & DPDP Notice
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block' }}>
+                            Data Principal rights (Sec 11-14) & zero-ad policy
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <OpenInNew sx={{ fontSize: 15, color: 'text.secondary', opacity: 0.7 }} />
+                    </Box>
+                  </Stack>
+
+                  <Divider sx={{ my: 2, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
+
+                  {/* Statutory Grievance Redressal Officer Info */}
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 2,
+                      bgcolor: isLight ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.02)',
+                      border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)'}`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <ContactMail sx={{ fontSize: 16, color: '#34D399' }} />
+                      <Typography variant="caption" fontWeight={750} sx={{ fontSize: '0.74rem', color: 'text.primary' }}>
+                        Data Protection & Grievance Officer
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem', lineHeight: 1.5 }}>
+                      Maintainer: Vatsal Vadgama • <a href="mailto:vatsalvadgama04@gmail.com" style={{ color: '#10B981', textDecoration: 'none', fontWeight: 600 }}>vatsalvadgama04@gmail.com</a>
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25, fontSize: '0.67rem', opacity: 0.8 }}>
+                      Statutory SLA: 30-day response under DPDP Rules. Escalation: Data Protection Board of India.
+                    </Typography>
+                  </Box>
+                </Card>
+
+                {/* Security Architecture Card */}
                 <Card
                   className="glass-secondary glass-specular-top"
                   sx={{ borderRadius: 3.5, p: 2.5 }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Shield sx={{ color: '#10B981', fontSize: 22 }} />
-                    <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
-                      DPDP Act, 2023 Compliance
+                    <Shield sx={{ fontSize: 20, color: '#10B981' }} />
+                    <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.primary' }}>
+                      Security Architecture
                     </Typography>
                   </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.82rem', lineHeight: 1.6 }}>
-                    FairShare adheres to the Digital Personal Data Protection Act, 2023 (Govt. of India). Your personal and financial ledger data is encrypted, never sold, and processed with explicit consent.
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.78rem', lineHeight: 1.55 }}>
+                    Protected by Supabase JWT cryptographic session verification, TLS 1.3 in transit, and AES-256 encrypted storage. Passwords and credentials never touch plain-text database tables.
                   </Typography>
-                  <Stack spacing={1}>
-                    <Button
-                      component={Link}
-                      href="/privacy"
-                      variant="outlined"
-                      size="small"
-                      startIcon={<Security sx={{ fontSize: 16 }} />}
-                      sx={{ textTransform: 'none', fontWeight: 650, borderRadius: 2, fontSize: '0.78rem', justifyContent: 'flex-start' }}
-                    >
-                      Privacy & Data Rights Notice
-                    </Button>
-                    <Button
-                      component={Link}
-                      href="/terms"
-                      variant="outlined"
-                      size="small"
-                      startIcon={<Gavel sx={{ fontSize: 16 }} />}
-                      sx={{ textTransform: 'none', fontWeight: 650, borderRadius: 2, fontSize: '0.78rem', justifyContent: 'flex-start' }}
-                    >
-                      Terms of Service
-                    </Button>
-                  </Stack>
-                </Card>
-
-                <Card
-                  className="glass-secondary glass-specular-top"
-                  sx={{ borderRadius: 3.5, p: 2.5 }}
-                >
-                  <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1, color: 'text.primary' }}>
-                    Security Guarantee
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.82rem' }}>
-                    FairShare utilizes Supabase secure JWT tokens with automatic session rotation. Passwords are never stored in plain text.
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    End-to-end mathematical precision ensures zero balance leaks.
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block', opacity: 0.85 }}>
+                    Zero balance leakage guaranteed by greedy DAG net cash flow minimization.
                   </Typography>
                 </Card>
               </Stack>
@@ -2007,6 +2160,18 @@ export default function SettingsPage() {
           onClose={() => setOtpSuccessToast(false)}
           message="Phone number successfully verified and linked to your profile! ✓"
         />
+
+        {/* Error Feedback Snackbar */}
+        <Snackbar
+          open={Boolean(saveErrorToast)}
+          autoHideDuration={6000}
+          onClose={() => setSaveErrorToast(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert severity="error" onClose={() => setSaveErrorToast(null)} sx={{ borderRadius: 2, width: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+            {saveErrorToast}
+          </Alert>
+        </Snackbar>
       </Box>
     </AppLayout>
   );

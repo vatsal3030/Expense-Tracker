@@ -17,7 +17,10 @@ import {
   Chip,
   Paper,
   Avatar,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
+import Link from 'next/link';
 import {
   Visibility,
   VisibilityOff,
@@ -114,6 +117,7 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [reviewIdx, setReviewIdx] = useState(1);
 
   const isLight = theme.palette.mode === 'light';
@@ -158,12 +162,29 @@ function SignupForm() {
       return;
     }
 
+    if (!agreedToTerms) {
+      setError('You must read and agree to the Terms of Service and Privacy Policy to create an account.');
+      return;
+    }
+
     setLoading(true);
-    const result = await signUp(email, password, name);
+    const result = await signUp(email, password, name, { agreedToTerms: true });
 
     if (result.error) {
       setError(result.error);
     } else {
+      // Record explicit user consent audit log locally
+      try {
+        localStorage.setItem(
+          'fairshare_terms_consent',
+          JSON.stringify({
+            agreed: true,
+            version: '2026.1',
+            agreedAt: new Date().toISOString(),
+            email: email.trim().toLowerCase(),
+          })
+        );
+      } catch {}
       setSuccess(true);
     }
     setLoading(false);
@@ -171,6 +192,21 @@ function SignupForm() {
 
   const handleGoogleSignup = async () => {
     setError('');
+    if (!agreedToTerms) {
+      setError('Please accept the Terms of Service and Privacy Policy before continuing with Google.');
+      return;
+    }
+    try {
+      localStorage.setItem(
+        'fairshare_terms_consent',
+        JSON.stringify({
+          agreed: true,
+          version: '2026.1',
+          agreedAt: new Date().toISOString(),
+          provider: 'google',
+        })
+      );
+    } catch {}
     const res = await signInWithGoogle();
     if (res.error) setError(res.error);
   };
@@ -295,6 +331,77 @@ function SignupForm() {
                   {error}
                 </Alert>
               )}
+
+              {/* Terms & Privacy Consent Checkbox (Explicit DPDP 2023 Statutory Consent) */}
+              <Box
+                sx={{
+                  p: 1.1,
+                  mb: 1.5,
+                  borderRadius: 2,
+                  bgcolor: isLight ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.02)',
+                  border: `1px solid ${
+                    !agreedToTerms && error.includes('Terms')
+                      ? '#EF4444'
+                      : isLight
+                      ? 'rgba(0, 0, 0, 0.08)'
+                      : 'rgba(255, 255, 255, 0.08)'
+                  }`,
+                  transition: 'border-color 0.2s ease',
+                }}
+              >
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={agreedToTerms}
+                      onChange={(e) => {
+                        setAgreedToTerms(e.target.checked);
+                        if (error.includes('Terms')) setError('');
+                      }}
+                      size="small"
+                      sx={{
+                        p: 0.4,
+                        mr: 0.5,
+                        color: isLight ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.35)',
+                        '&.Mui-checked': {
+                          color: isLight ? '#0E6245' : '#10B981',
+                        },
+                      }}
+                    />
+                  }
+                  label={
+                    <Typography variant="caption" sx={{ fontSize: '0.74rem', color: 'text.secondary', lineHeight: 1.4 }}>
+                      I have read and agree to the{' '}
+                      <Link
+                        href="/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: isLight ? '#0E6245' : '#34D399',
+                          fontWeight: 700,
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        Terms of Service
+                      </Link>{' '}
+                      and{' '}
+                      <Link
+                        href="/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: isLight ? '#0E6245' : '#34D399',
+                          fontWeight: 700,
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        Privacy Policy
+                      </Link>
+                      .
+                    </Typography>
+                  }
+                  sx={{ alignItems: 'flex-start', m: 0 }}
+                />
+              </Box>
 
               {/* Google OAuth Button */}
               <Button
@@ -510,12 +617,13 @@ function SignupForm() {
                     </Box>
                   </Box>
 
+
                   {/* Submit CTA */}
                   <Button
                     fullWidth
                     type="submit"
                     variant="contained"
-                    disabled={loading || !name || !email || !password || !confirmPassword}
+                    disabled={loading || !name || !email || !password || !confirmPassword || !agreedToTerms}
                     endIcon={!loading && <ArrowForward sx={{ fontSize: 17 }} />}
                     sx={{
                       mt: 0.5,
@@ -531,6 +639,10 @@ function SignupForm() {
                       '&:hover': {
                         background: 'linear-gradient(135deg, #34D399 0%, #047857 100%)',
                         boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
+                      },
+                      '&.Mui-disabled': {
+                        background: isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)',
+                        color: isLight ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.35)',
                       },
                     }}
                   >

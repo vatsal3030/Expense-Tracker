@@ -54,9 +54,14 @@ interface HeaderProps {
 export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
   const theme = useTheme();
   const router = useRouter();
-  const { profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { mode, toggleTheme } = useThemeMode();
   const { startTour } = useOnboarding();
+
+  const displayAvatar = profile?.avatarUrl || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || undefined;
+  const displayName = profile?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
+  const displayHandle = profile?.username || user?.user_metadata?.user_name || user?.email?.split('@')[0] || 'member';
+  const displayEmail = profile?.email || user?.email || '';
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [notifAnchorEl, setNotifAnchorEl] = React.useState<null | HTMLElement>(null);
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -518,7 +523,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               }}
             >
               <Avatar
-                src={profile?.avatarUrl || undefined}
+                src={displayAvatar}
                 sx={{
                   width: 32,
                   height: 32,
@@ -527,7 +532,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                   fontWeight: 700,
                 }}
               >
-                {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+                {displayName.charAt(0)?.toUpperCase()}
               </Avatar>
             </IconButton>
           </Tooltip>
@@ -562,7 +567,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           <Box sx={{ p: 1.5, pb: 1.25 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
               <Avatar
-                src={profile?.avatarUrl || undefined}
+                src={displayAvatar}
                 sx={{
                   width: 40,
                   height: 40,
@@ -573,11 +578,11 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                 }}
               >
-                {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+                {displayName.charAt(0)?.toUpperCase()}
               </Avatar>
               <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography variant="subtitle2" fontWeight={750} noWrap sx={{ fontSize: '0.9rem', color: 'text.primary', lineHeight: 1.2 }}>
-                  {profile?.name || 'User'}
+                  {displayName}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -591,10 +596,10 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                     mt: 0.25,
                   }}
                 >
-                  @{profile?.username || profile?.email?.split('@')[0] || 'member'}
+                  @{displayHandle}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', fontSize: '0.72rem', opacity: 0.85 }}>
-                  {profile?.email || ''}
+                  {displayEmail}
                 </Typography>
               </Box>
             </Box>

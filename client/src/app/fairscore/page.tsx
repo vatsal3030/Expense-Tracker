@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
+import api from '@/lib/api';
 
 const BADGE_ICONS: Record<string, React.ReactNode> = {
   Zap: <Bolt />,
@@ -68,15 +69,9 @@ export default function FairScorePage() {
       try {
         setLoading(true);
         hasLoadedGamificationRef.current = true;
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/dashboard/gamification`,
-          {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          }
-        );
-        const json = await res.json();
-        if (json.success) {
-          setData(json.data);
+        const res = await api.get('/dashboard/gamification');
+        if (res.data?.success) {
+          setData(res.data.data);
         }
       } catch (err) {
         console.error('Failed to load gamification data:', err);

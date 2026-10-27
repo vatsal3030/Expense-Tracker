@@ -1,0 +1,11 @@
+node_modules
+client/node_modules
+server/node_modules
+client/.next
+server/dist
+.git
+*.pem
+*.key
+client/.env.local
+client/.env*.local
+.env.local

@@ -79,6 +79,8 @@ async function verifyAndResolveUser(token: string): Promise<{ id: string; email:
     }
   }
 
+  let userMeta: any = decoded?.user_metadata || {};
+
   // 4. If not locally verified, verify with Supabase
   if (!isSignatureVerified) {
     const { data: { user: supabaseUser }, error } = await supabaseAdmin.auth.getUser(token);
@@ -88,6 +90,9 @@ async function verifyAndResolveUser(token: string): Promise<{ id: string; email:
     }
     supabaseId = supabaseUser.id;
     email = supabaseUser.email || email;
+    if (supabaseUser.user_metadata) {
+      userMeta = { ...userMeta, ...supabaseUser.user_metadata };
+    }
   }
 
   if (!supabaseId) {
@@ -101,31 +106,64 @@ async function verifyAndResolveUser(token: string): Promise<{ id: string; email:
   if (!dbUser) {
     let found = await prisma.user.findUnique({
       where: { supabaseId },
-      select: { id: true, email: true, supabaseId: true, lastLoginAt: true, username: true, name: true },
+      select: { id: true, email: true, supabaseId: true, lastLoginAt: true, username: true, name: true, avatarUrl: true },
     });
 
     if (!found) {
       const base = (email ? email.split('@')[0] : 'user').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
       const genUsername = `${base}_${Math.floor(100 + Math.random() * 900)}`;
+      const googleAvatar = userMeta.avatar_url || userMeta.picture || null;
+      const displayName = userMeta.full_name || userMeta.name || (email ? email.split('@')[0] : 'User');
+
       // Auto-create user on first authenticated request
       found = await prisma.user.create({
         data: {
           supabaseId,
           email: email || `${supabaseId}@fairshare.local`,
-          name: email ? email.split('@')[0] : 'User',
+          name: displayName,
           username: genUsername,
+          avatarUrl: googleAvatar,
           lastLoginAt: new Date(),
         },
-        select: { id: true, email: true, supabaseId: true, lastLoginAt: true, username: true, name: true },
+        select: { id: true, email: true, supabaseId: true, lastLoginAt: true, username: true, name: true, avatarUrl: true },
       });
+
+      // Record explicit statutory consent in Notification audit ledger
+      if (userMeta.agreed_to_terms) {
+        prisma.notification.create({
+          data: {
+            userId: found.id,
+            type: 'SYSTEM',
+            title: 'Terms of Service & Privacy Policy Accepted',
+            message: `User agreed to Terms of Service & DPDP Act 2023 Privacy Policy (v${userMeta.terms_version || '2026.1'}) on registration`,
+            data: {
+              agreedToTerms: true,
+              termsVersion: userMeta.terms_version || '2026.1',
+              acceptedAt: userMeta.terms_accepted_at || new Date().toISOString(),
+            },
+          },
+        }).catch(() => {});
+      }
     } else {
-      // Auto-backfill username if missing
+      // Auto-backfill Google avatar and name if missing
+      const googleAvatar = userMeta.avatar_url || userMeta.picture;
+      const googleName = userMeta.full_name || userMeta.name;
+      const updates: any = {};
+      if (!found.avatarUrl && googleAvatar) {
+        updates.avatarUrl = googleAvatar;
+      }
+      if ((!found.name || found.name === 'User') && googleName) {
+        updates.name = googleName;
+      }
       if (!found.username) {
         const base = (found.name || found.email || 'user').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
         const genUsername = `${base.slice(0, 15)}_${Math.floor(100 + Math.random() * 900)}`;
+        updates.username = genUsername;
+      }
+      if (Object.keys(updates).length > 0) {
         prisma.user.update({
           where: { id: found.id },
-          data: { username: genUsername },
+          data: updates,
         }).catch(() => {});
       }
 

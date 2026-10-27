@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   CheckCircle2,
@@ -101,9 +102,17 @@ const PRESET_BILLS = [
 ];
 
 export default function LandingPage() {
+  const router = useRouter();
   const { mode, toggleTheme } = useThemeMode();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const isLight = mode === 'light';
+
+  // Automatically redirect authenticated users straight to the main dashboard
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, authLoading, router]);
 
   // --- Live Bill Simulator State ---
   const [billAmount, setBillAmount] = useState<number>(4800);
