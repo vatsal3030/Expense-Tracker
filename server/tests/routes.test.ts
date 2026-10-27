@@ -5,6 +5,7 @@ import express from 'express';
 import { recurringRouter } from '../src/routes/recurring.routes';
 import { fxRouter } from '../src/routes/fx.routes';
 import { adminRouter } from '../src/routes/admin.routes';
+import { exportRouter } from '../src/routes/export.routes';
 import { healthRouter } from '../src/routes/health.routes';
 import { notFoundHandler, errorHandler } from '../src/middleware/errorHandler';
 
@@ -21,6 +22,7 @@ describe('Regression Tests: Previously Missing NGINX Route Prefixes', () => {
     app.use('/api/recurring', recurringRouter);
     app.use('/api/fx', fxRouter);
     app.use('/api/admin', adminRouter);
+    app.use('/api/export', exportRouter);
 
     // Error handlers
     app.use(notFoundHandler);
@@ -70,7 +72,18 @@ describe('Regression Tests: Previously Missing NGINX Route Prefixes', () => {
     assert.ok(json.error || json.message, 'Expected error response payload');
   });
 
-  it('5. Unregistered /api/* route should return 404 JSON', async () => {
+  it('5. /api/export/import-splitwise should be registered and return 401 without auth token', async () => {
+    const res = await fetch(`${baseUrl}/api/export/import-splitwise`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    assert.equal(res.status, 401);
+    const json = await res.json() as { error?: string; message?: string };
+    assert.ok(json.error || json.message, 'Expected error response payload');
+  });
+
+  it('6. Unregistered /api/* route should return 404 JSON', async () => {
     const res = await fetch(`${baseUrl}/api/non_existent_endpoint`);
     assert.equal(res.status, 404);
     const json = await res.json() as { error: string };

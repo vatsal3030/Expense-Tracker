@@ -207,5 +207,7 @@ export const exportApi = {
     api.get('/export/personal', { params, responseType: 'blob' }),
   report: (params?: { from?: string; to?: string; groupId?: string }) =>
     api.get('/export/report', { params }),
+  importSplitwise: (payload: any) =>
+    api.post('/export/import-splitwise', payload),
 };
 

@@ -10,12 +10,13 @@ import {
 import {
   Add, Close, Home, Flight, Favorite, Business, People, FamilyRestroom,
   Work, MoreHoriz, ArrowForward, Lock, Security, Search, ContentCopy,
-  Check, ReceiptLong, GroupAdd,
+  Check, ReceiptLong, GroupAdd, AutoAwesome, SwapHoriz,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { groupApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import SplitwiseImportModal from '@/components/groups/SplitwiseImportModal';
 
 const GROUP_TYPE_CONFIG: Record<string, { icon: React.ReactElement; color: string; label: string }> = {
   HOME: { icon: <Home fontSize="small" />, color: '#0E6245', label: 'Home' },
@@ -43,6 +44,7 @@ export default function GroupsPage() {
     } catch {}
   }, []);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [splitwiseModalOpen, setSplitwiseModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('ALL');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -228,30 +230,55 @@ export default function GroupsPage() {
             </Typography>
           </Box>
 
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setDialogOpen(true)}
-            sx={{
-              width: { xs: '100%', sm: 'auto' },
-              borderRadius: 2.5,
-              px: 3,
-              py: 1,
-              fontWeight: 600,
-              bgcolor: isLight ? '#0E6245' : '#059669',
-              color: '#FFFFFF',
-              boxShadow: isLight
-                ? '0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
-                : '0 1px 3px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.25)',
-              textTransform: 'none',
-              '&:hover': {
-                bgcolor: isLight ? '#0A4B35' : '#047857',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
-              },
-            }}
-          >
-            Create New Group
-          </Button>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Button
+              variant="outlined"
+              startIcon={<AutoAwesome sx={{ color: '#10B981' }} />}
+              onClick={() => setSplitwiseModalOpen(true)}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 2.5,
+                px: 2.5,
+                py: 1,
+                fontWeight: 700,
+                color: '#10B981',
+                borderColor: 'rgba(16, 185, 129, 0.4)',
+                bgcolor: 'rgba(16, 185, 129, 0.08)',
+                textTransform: 'none',
+                '&:hover': {
+                  bgcolor: 'rgba(16, 185, 129, 0.16)',
+                  borderColor: '#10B981',
+                },
+              }}
+            >
+              Import from Splitwise
+            </Button>
+
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setDialogOpen(true)}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                borderRadius: 2.5,
+                px: 3,
+                py: 1,
+                fontWeight: 600,
+                bgcolor: isLight ? '#0E6245' : '#059669',
+                color: '#FFFFFF',
+                boxShadow: isLight
+                  ? '0 1px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)'
+                  : '0 1px 3px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.25)',
+                textTransform: 'none',
+                '&:hover': {
+                  bgcolor: isLight ? '#0A4B35' : '#047857',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.30)',
+                },
+              }}
+            >
+              Create New Group
+            </Button>
+          </Stack>
         </Box>
 
         {/* Top Summary Metrics Bar (Savexa FinTech style) */}
@@ -892,6 +919,14 @@ export default function GroupsPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Splitwise 1-Click Migration Modal */}
+        <SplitwiseImportModal
+          open={splitwiseModalOpen}
+          onClose={() => setSplitwiseModalOpen(false)}
+          onSuccess={() => fetchGroups()}
+          currentUserName={profile?.name || user?.user_metadata?.full_name || 'You'}
+        />
 
         {/* Global Feedback Toast */}
         <Snackbar

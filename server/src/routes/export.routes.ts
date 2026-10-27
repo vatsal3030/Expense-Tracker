@@ -1,5 +1,8 @@
 import { Router, Response } from 'express';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { Prisma, ExpenseCategory, GroupType } from '@prisma/client';
+import { z } from 'zod';
 import prisma from '../lib/prisma';
 
 export const exportRouter = Router();
@@ -278,3 +281,275 @@ exportRouter.get('/report', async (req: AuthenticatedRequest, res: Response): Pr
     res.status(500).json({ success: false, error: 'Failed to generate report.' });
   }
 });
+
+// =============================================================================
+// POST /api/export/import-splitwise — 1-Click Splitwise CSV Migration Engine
+// =============================================================================
+const importSplitwiseSchema = z.object({
+  groupName: z.string().min(1, 'Group name is required').max(100),
+  groupType: z.enum(['HOME', 'TRIP', 'COUPLE', 'OFFICE', 'FRIENDS', 'FAMILY', 'PROJECT', 'OTHER']).optional(),
+  currency: z.string().min(3).max(3).optional(),
+  membersMapping: z.array(
+    z.object({
+      columnName: z.string().min(1),
+      isCurrentUser: z.boolean(),
+      existingUserId: z.string().uuid().optional(),
+      guestEmail: z.string().email().optional(),
+    })
+  ).min(2, 'At least 2 members are required to split expenses.'),
+  expenses: z.array(
+    z.object({
+      date: z.string().optional(),
+      description: z.string().default('Expense'),
+      category: z.string().optional(),
+      cost: z.number().min(0),
+      currency: z.string().optional(),
+      shares: z.record(z.string(), z.number()),
+    })
+  ),
+});
+
+function mapSplitwiseCategory(cat?: string): ExpenseCategory {
+  if (!cat) return 'GENERAL';
+  const c = cat.toLowerCase();
+  if (c.includes('food') || c.includes('dining') || c.includes('restaurant') || c.includes('drink') || c.includes('lunch') || c.includes('dinner')) return 'FOOD';
+  if (c.includes('grocer') || c.includes('supermarket') || c.includes('market')) return 'GROCERIES';
+  if (c.includes('transport') || c.includes('taxi') || c.includes('cab') || c.includes('uber') || c.includes('fuel') || c.includes('gas') || c.includes('flight') || c.includes('plane') || c.includes('bus') || c.includes('train')) return 'TRANSPORT';
+  if (c.includes('entertain') || c.includes('movie') || c.includes('ticket') || c.includes('game') || c.includes('music')) return 'ENTERTAINMENT';
+  if (c.includes('rent') || c.includes('housing') || c.includes('hotel') || c.includes('stay') || c.includes('airbnb')) return 'RENT';
+  if (c.includes('utilit') || c.includes('electric') || c.includes('water') || c.includes('internet') || c.includes('wifi') || c.includes('phone') || c.includes('bill')) return 'UTILITIES';
+  if (c.includes('shop') || c.includes('cloth') || c.includes('mall') || c.includes('electronic')) return 'SHOPPING';
+  if (c.includes('health') || c.includes('medic') || c.includes('doctor') || c.includes('pharmacy')) return 'HEALTH';
+  if (c.includes('subscript') || c.includes('netflix') || c.includes('spotify') || c.includes('cloud')) return 'SUBSCRIPTIONS';
+  if (c.includes('gift')) return 'GIFTS';
+  if (c.includes('travel') || c.includes('tour') || c.includes('trip')) return 'TRAVEL';
+  return 'GENERAL';
+}
+
+exportRouter.post(
+  '/import-splitwise',
+  validate({ body: importSplitwiseSchema }),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const { groupName, groupType, currency, membersMapping, expenses } = req.body;
+      const currentUserId = req.user!.id;
+
+      // 1. Validate that exactly one column is marked as the current logged-in user
+      const currentUserMapping = membersMapping.find((m: any) => m.isCurrentUser);
+      if (!currentUserMapping) {
+        res.status(400).json({ success: false, error: 'One member must be designated as your account ("You").' });
+        return;
+      }
+
+      // 2. Execute migration inside an atomic database transaction
+      const result = await prisma.$transaction(async (tx) => {
+        const columnNameToUserId: Record<string, string> = {};
+
+        // Resolve each member in the CSV to a FairShare user ID
+        for (const member of membersMapping) {
+          if (member.isCurrentUser) {
+            columnNameToUserId[member.columnName] = currentUserId;
+          } else if (member.existingUserId) {
+            const existing = await tx.user.findUnique({ where: { id: member.existingUserId } });
+            if (existing) {
+              columnNameToUserId[member.columnName] = existing.id;
+            } else {
+              throw new Error(`Specified user with ID ${member.existingUserId} not found.`);
+            }
+          } else {
+            // Find or create guest placeholder user
+            const guestEmail =
+              member.guestEmail ||
+              `guest_${member.columnName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}@fairshare.local`;
+
+            let guestUser = await tx.user.findFirst({
+              where: {
+                OR: [
+                  { email: guestEmail },
+                  { name: member.columnName.trim(), supabaseId: null },
+                ],
+              },
+            });
+
+            if (!guestUser) {
+              guestUser = await tx.user.create({
+                data: {
+                  name: member.columnName.trim(),
+                  email: guestEmail,
+                  defaultCurrency: currency || 'INR',
+                  isActive: true,
+                },
+              });
+            }
+
+            columnNameToUserId[member.columnName] = guestUser.id;
+          }
+        }
+
+        const uniqueUserIds = Array.from(new Set(Object.values(columnNameToUserId)));
+
+        // Create the Group
+        const group = await tx.group.create({
+          data: {
+            name: groupName.trim(),
+            type: (groupType as GroupType) || 'TRIP',
+            currency: currency || 'INR',
+            members: {
+              create: uniqueUserIds.map((userId) => ({
+                userId,
+                role: userId === currentUserId ? 'ADMIN' : 'MEMBER',
+              })),
+            },
+          },
+        });
+
+        let expensesCreated = 0;
+        let settlementsCreated = 0;
+
+        // Process each expense / settlement row
+        for (const row of expenses) {
+          const cost = Number(row.cost) || 0;
+          const desc = (row.description || '').trim();
+          const isSettlement =
+            /settle|payment|repay/i.test(desc) ||
+            (row.category && row.category.toLowerCase() === 'payment');
+
+          if (isSettlement && cost > 0) {
+            // Settlement row in Splitwise: one person has positive delta (payer), one has negative delta (payee)
+            let payerCol: string | null = null;
+            let payeeCol: string | null = null;
+
+            for (const [col, rawDelta] of Object.entries(row.shares)) {
+              const delta = Number(rawDelta) || 0;
+              if (delta > 0 && !payerCol) payerCol = col;
+              if (delta < 0 && !payeeCol) payeeCol = col;
+            }
+
+            if (payerCol && payeeCol && columnNameToUserId[payerCol] && columnNameToUserId[payeeCol]) {
+              await tx.settlement.create({
+                data: {
+                  groupId: group.id,
+                  payerId: columnNameToUserId[payerCol],
+                  payeeId: columnNameToUserId[payeeCol],
+                  amount: new Prisma.Decimal(cost),
+                  currency: row.currency || currency || 'INR',
+                  status: 'CONFIRMED',
+                  notes: desc || 'Imported Splitwise Settlement',
+                },
+              });
+              settlementsCreated++;
+              continue;
+            }
+          }
+
+          // Standard Expense row
+          if (cost > 0) {
+            // Determine primary payer: member with maximum positive delta
+            let maxDelta = -Infinity;
+            let payerCol: string | null = null;
+
+            for (const [col, rawDelta] of Object.entries(row.shares)) {
+              const delta = Number(rawDelta) || 0;
+              if (delta > maxDelta) {
+                maxDelta = delta;
+                payerCol = col;
+              }
+            }
+
+            // Fallback to current user if payer not identified
+            const paidById = payerCol && columnNameToUserId[payerCol]
+              ? columnNameToUserId[payerCol]
+              : currentUserId;
+
+            // Calculate each member's owed share:
+            // For member i != payer: owed = |delta|
+            // For payer: owed = cost - maxDelta (or remaining portion)
+            const rawShares: Array<{ userId: string; amount: number }> = [];
+
+            for (const [col, rawDelta] of Object.entries(row.shares)) {
+              const delta = Number(rawDelta) || 0;
+              const uId = columnNameToUserId[col];
+              if (!uId) continue;
+
+              let shareAmt = 0;
+              if (col === payerCol) {
+                shareAmt = Math.max(0, cost - maxDelta);
+              } else {
+                shareAmt = Math.abs(delta);
+              }
+
+              if (shareAmt > 0) {
+                rawShares.push({ userId: uId, amount: shareAmt });
+              }
+            }
+
+            // If rawShares is empty or zero, split equally among all group members
+            let finalShares = rawShares;
+            if (finalShares.length === 0) {
+              const equalShare = Number((cost / uniqueUserIds.length).toFixed(2));
+              finalShares = uniqueUserIds.map((uId) => ({ userId: uId, amount: equalShare }));
+            }
+
+            // Normalize shares to guarantee sum(shares) === cost
+            const totalSplitSum = finalShares.reduce((s, item) => s + item.amount, 0);
+            const diff = Number((cost - totalSplitSum).toFixed(2));
+            if (diff !== 0 && finalShares.length > 0) {
+              finalShares[0].amount = Number((finalShares[0].amount + diff).toFixed(2));
+            }
+
+            const expDate = row.date ? new Date(row.date) : new Date();
+
+            await tx.expense.create({
+              data: {
+                groupId: group.id,
+                paidById,
+                createdById: currentUserId,
+                description: desc || 'Imported Expense',
+                amount: new Prisma.Decimal(cost),
+                currency: row.currency || currency || 'INR',
+                category: mapSplitwiseCategory(row.category),
+                splitType: 'EXACT',
+                date: isNaN(expDate.getTime()) ? new Date() : expDate,
+                notes: 'Imported from Splitwise',
+                shares: {
+                  create: finalShares.map((s) => ({
+                    userId: s.userId,
+                    amount: new Prisma.Decimal(s.amount),
+                  })),
+                },
+              },
+            });
+            expensesCreated++;
+          }
+        }
+
+        // Record Activity
+        await tx.activity.create({
+          data: {
+            userId: currentUserId,
+            groupId: group.id,
+            type: 'GROUP_CREATED',
+            message: `created group "${group.name}" with ${expensesCreated} expenses and ${settlementsCreated} settlements imported from Splitwise`,
+          },
+        });
+
+        return {
+          groupId: group.id,
+          groupName: group.name,
+          expensesCreated,
+          settlementsCreated,
+          membersCount: uniqueUserIds.length,
+        };
+      });
+
+      res.status(201).json({
+        success: true,
+        message: `Successfully migrated "${result.groupName}" to FairShare!`,
+        data: result,
+      });
+    } catch (error: any) {
+      console.error('Import Splitwise error:', error);
+      res.status(500).json({ success: false, error: error.message || 'Failed to import Splitwise data.' });
+    }
+  }
+);
