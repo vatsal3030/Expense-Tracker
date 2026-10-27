@@ -749,11 +749,22 @@ function GroupDetailContent() {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: { xs: 0.75, sm: 1.25 },
+              width: { xs: '100%', md: 'auto' },
+              overflowX: { xs: 'auto', md: 'visible' },
+              pb: { xs: 0.5, md: 0 },
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': { display: 'none' },
+            }}
+          >
             {isGroupAdmin ? (
               <Button
                 variant="outlined"
-                startIcon={<Settings fontSize="small" />}
+                startIcon={<Settings sx={{ fontSize: { xs: '16px !important', sm: '20px !important' } }} />}
                 onClick={() => setActiveTab(3)}
                 className="glass-tertiary"
                 sx={{
@@ -761,8 +772,10 @@ function GroupDetailContent() {
                   color: 'text.primary',
                   fontWeight: 600,
                   textTransform: 'none',
-                  px: 2,
-                  py: 0.75,
+                  px: { xs: 1.25, sm: 2 },
+                  py: { xs: 0.55, sm: 0.75 },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  whiteSpace: 'nowrap',
                   '&:hover': {
                     borderColor: '#10B981',
                     bgcolor: alpha('#10B981', 0.08),
@@ -775,15 +788,17 @@ function GroupDetailContent() {
               <Button
                 variant="outlined"
                 color="inherit"
-                startIcon={<Logout fontSize="small" />}
+                startIcon={<Logout sx={{ fontSize: { xs: '16px !important', sm: '20px !important' } }} />}
                 onClick={() => setLeaveGroupOpen(true)}
                 className="glass-tertiary"
                 sx={{
                   borderRadius: 2.5,
                   fontWeight: 600,
                   textTransform: 'none',
-                  px: 2,
-                  py: 0.75,
+                  px: { xs: 1.25, sm: 2 },
+                  py: { xs: 0.55, sm: 0.75 },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  whiteSpace: 'nowrap',
                   color: 'text.secondary',
                   '&:hover': { color: 'error.main', borderColor: 'error.main' },
                 }}
@@ -793,7 +808,7 @@ function GroupDetailContent() {
             )}
             <Button
               variant="outlined"
-              startIcon={<QrCode2 fontSize="small" />}
+              startIcon={<QrCode2 sx={{ fontSize: { xs: '16px !important', sm: '20px !important' } }} />}
               onClick={() => setQrModalOpen(true)}
               className="glass-tertiary"
               sx={{
@@ -801,8 +816,10 @@ function GroupDetailContent() {
                 color: 'text.primary',
                 fontWeight: 600,
                 textTransform: 'none',
-                px: 2,
-                py: 0.75,
+                px: { xs: 1.25, sm: 2 },
+                py: { xs: 0.55, sm: 0.75 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                whiteSpace: 'nowrap',
                 '&:hover': {
                   borderColor: '#10B981',
                   bgcolor: alpha('#10B981', 0.08),
@@ -814,7 +831,7 @@ function GroupDetailContent() {
             {(!group?.onlyAdminInvite || isGroupAdmin) ? (
               <Button
                 variant="outlined"
-                startIcon={<Share fontSize="small" />}
+                startIcon={<Share sx={{ fontSize: { xs: '16px !important', sm: '20px !important' } }} />}
                 onClick={() => setInviteOpen(true)}
                 className="glass-tertiary"
                 sx={{
@@ -822,30 +839,34 @@ function GroupDetailContent() {
                   color: 'text.primary',
                   fontWeight: 600,
                   textTransform: 'none',
-                  px: 2,
-                  py: 0.75,
+                  px: { xs: 1.25, sm: 2 },
+                  py: { xs: 0.55, sm: 0.75 },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  whiteSpace: 'nowrap',
                   '&:hover': {
                     borderColor: '#10B981',
                     bgcolor: alpha('#10B981', 0.08),
                   },
                 }}
               >
-                Invite People
+                Invite<Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}> People</Box>
               </Button>
             ) : (
               <Tooltip title="Only group administrators can invite new members">
                 <span>
                   <Button
                     variant="outlined"
-                    startIcon={<Share fontSize="small" />}
+                    startIcon={<Share sx={{ fontSize: { xs: '16px !important', sm: '20px !important' } }} />}
                     disabled
                     className="glass-tertiary"
                     sx={{
                       borderRadius: 2.5,
                       fontWeight: 600,
                       textTransform: 'none',
-                      px: 2,
-                      py: 0.75,
+                      px: { xs: 1.25, sm: 2 },
+                      py: { xs: 0.55, sm: 0.75 },
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      whiteSpace: 'nowrap',
                       opacity: 0.6,
                     }}
                   >
@@ -856,7 +877,7 @@ function GroupDetailContent() {
             )}
             <Button
               variant="contained"
-              startIcon={<Add fontSize="small" />}
+              startIcon={<Add sx={{ fontSize: { xs: '16px !important', sm: '20px !important' } }} />}
               onClick={() => router.push(`/expenses/new?groupId=${group?.id}`)}
               className="glass-emerald-active"
               sx={{
@@ -865,8 +886,11 @@ function GroupDetailContent() {
                 textTransform: 'none',
                 bgcolor: isLight ? '#059669' : '#10B981',
                 color: '#FFFFFF',
-                px: 2.5,
-                py: 0.75,
+                px: { xs: 1.75, sm: 2.5 },
+                py: { xs: 0.55, sm: 0.75 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
                 '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
               }}
@@ -877,41 +901,47 @@ function GroupDetailContent() {
         </Box>
 
         {/* Financial Summary Cards for this Group */}
-        <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
+        <Grid container spacing={{ xs: 1, sm: 2.5 }} sx={{ mb: { xs: 2, sm: 3.5 } }}>
           {/* 1. Total Group Spend (Neutral Slate / Cyan) */}
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 4, sm: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: 2.5,
-                borderRadius: 3.5,
+                p: { xs: 1.1, sm: 2.5 },
+                borderRadius: { xs: 2.5, sm: 3.5 },
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 bgcolor: isLight ? 'rgba(255, 255, 255, 0.8)' : 'rgba(30, 41, 59, 0.35)',
                 border: isLight ? undefined : '1px solid rgba(255, 255, 255, 0.10)',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#38BDF8' }} />
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Group Spend
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
+                  <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#38BDF8' }} />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    Group Spend
+                  </Typography>
+                </Box>
+                <Typography fontWeight={800} sx={{ color: 'text.primary', mt: { xs: 0.25, sm: 0.5 }, letterSpacing: '-0.02em', fontSize: { xs: '0.95rem', sm: '1.5rem', md: '1.85rem' }, lineHeight: 1.2 }}>
+                  {formatCurrency(totalSpent)}
                 </Typography>
               </Box>
-              <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', mt: 0.5, letterSpacing: '-0.02em' }}>
-                {formatCurrency(totalSpent)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                {group?.expenses?.length || 0} bills across {group?.members?.length || 0} members
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', fontSize: { xs: '0.625rem', sm: '0.75rem' } }}>
+                {group?.expenses?.length || 0} bills<Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}> across {group?.members?.length || 0} members</Box>
               </Typography>
             </Card>
           </Grid>
 
           {/* 2. Your Group Balance (Emerald for Owed, Rose for You Owe) */}
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 4, sm: 4 }}>
             <Card
               className={myBalance > 0 ? "glass-secondary glass-specular-top glass-emerald-ambient" : "glass-secondary glass-specular-top"}
               sx={{
-                p: 2.5,
-                borderRadius: 3.5,
+                p: { xs: 1.1, sm: 2.5 },
+                borderRadius: { xs: 2.5, sm: 3.5 },
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 bgcolor: myBalance > 0
                   ? isLight ? 'rgba(16, 185, 129, 0.08)' : 'rgba(6, 78, 59, 0.28)'
@@ -923,63 +953,71 @@ function GroupDetailContent() {
                   : myBalance < 0
                   ? 'rgba(244, 63, 94, 0.35) !important'
                   : undefined,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.secondary' }} />
-                <Typography variant="caption" sx={{ color: myBalance > 0 ? '#34D399' : myBalance < 0 ? '#FB7185' : 'text.secondary', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Your Group Balance
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
+                  <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.secondary' }} />
+                  <Typography variant="caption" sx={{ color: myBalance > 0 ? '#34D399' : myBalance < 0 ? '#FB7185' : 'text.secondary', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    Your Balance
+                  </Typography>
+                </Box>
+                <Typography
+                  fontWeight={800}
+                  sx={{
+                    color: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.primary',
+                    mt: { xs: 0.25, sm: 0.5 },
+                    letterSpacing: '-0.02em',
+                    fontSize: { xs: '0.95rem', sm: '1.5rem', md: '1.85rem' },
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {myBalance > 0 ? '+' : ''}{formatCurrency(myBalance)}
                 </Typography>
               </Box>
-              <Typography
-                variant="h4"
-                fontWeight={800}
-                sx={{
-                  color: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.primary',
-                  mt: 0.5,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {myBalance > 0 ? '+' : ''}{formatCurrency(myBalance)}
-              </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                 {myBalance > 0 ? (
-                  <Chip label="You are owed" size="small" sx={{ height: 20, fontSize: '0.675rem', fontWeight: 700, bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.3)' }} />
+                  <Chip label="Owed" size="small" sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: '0.6rem', sm: '0.675rem' }, fontWeight: 700, bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.3)' }} />
                 ) : myBalance < 0 ? (
-                  <Chip label="You owe" size="small" sx={{ height: 20, fontSize: '0.675rem', fontWeight: 700, bgcolor: 'rgba(239, 68, 68, 0.15)', color: '#F87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} />
+                  <Chip label="You owe" size="small" sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: '0.6rem', sm: '0.675rem' }, fontWeight: 700, bgcolor: 'rgba(239, 68, 68, 0.15)', color: '#F87171', border: '1px solid rgba(239, 68, 68, 0.3)' }} />
                 ) : (
-                  <Chip label="Settled up" size="small" sx={{ height: 20, fontSize: '0.675rem', fontWeight: 700, bgcolor: alpha(theme.palette.text.secondary, 0.1), color: 'text.secondary' }} />
+                  <Chip label="Settled" size="small" sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: '0.6rem', sm: '0.675rem' }, fontWeight: 700, bgcolor: alpha(theme.palette.text.secondary, 0.1), color: 'text.secondary' }} />
                 )}
               </Box>
             </Card>
           </Grid>
 
           {/* 3. Debt Simplification (Algorithmic Violet / Purple) */}
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 4, sm: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: 2.5,
-                borderRadius: 3.5,
+                p: { xs: 1.1, sm: 2.5 },
+                borderRadius: { xs: 2.5, sm: 3.5 },
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 bgcolor: isLight ? 'rgba(168, 85, 247, 0.06)' : 'rgba(88, 28, 135, 0.18)',
                 borderColor: isLight ? 'rgba(168, 85, 247, 0.25) !important' : 'rgba(168, 85, 247, 0.30) !important',
+                height: '100%',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#A855F7' }} />
-                <Typography variant="caption" sx={{ color: isLight ? '#7E22CE' : '#C084FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Debt Simplification
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
+                  <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#A855F7' }} />
+                  <Typography variant="caption" sx={{ color: isLight ? '#7E22CE' : '#C084FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    Debts
+                  </Typography>
+                </Box>
+                <Typography fontWeight={800} sx={{ color: isLight ? '#7E22CE' : '#C084FC', mt: { xs: 0.25, sm: 0.5 }, fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
+                  {balances?.simplifiedDebts?.length || 0} Pending
                 </Typography>
-              </Box>
-              <Box sx={{ mt: 0.5 }}>
-                <Typography variant="h6" fontWeight={800} sx={{ color: isLight ? '#7E22CE' : '#C084FC' }}>
-                  {balances?.simplifiedDebts?.length || 0} Pending Debts
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' }, mt: 0.25 }}>
                   Greedy cash-flow algorithm active
                 </Typography>
               </Box>
@@ -992,12 +1030,14 @@ function GroupDetailContent() {
                   p: 0,
                   justifyContent: 'flex-start',
                   fontWeight: 700,
-                  fontSize: '0.775rem',
+                  fontSize: { xs: '0.65rem', sm: '0.775rem' },
                   textTransform: 'none',
+                  mt: 0.5,
+                  minWidth: 0,
                   '&:hover': { bgcolor: 'transparent', textDecoration: 'underline', color: isLight ? '#581C87' : '#E9D5FF' },
                 }}
               >
-                Review Settlements →
+                Review →
               </Button>
             </Card>
           </Grid>

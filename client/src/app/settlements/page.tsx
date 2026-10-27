@@ -154,11 +154,11 @@ export default function SettlementsPage() {
     <AppLayout>
       <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Page Header */}
-        <Box sx={{ mb: 1.75 }}>
+        <Box sx={{ mb: { xs: 1.25, sm: 1.75 } }}>
           <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
             Settlements & Debt Simplification
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
             Verify completed UPI payments and eliminate redundant group transfers
           </Typography>
         </Box>
@@ -167,19 +167,20 @@ export default function SettlementsPage() {
         <Card
           className="glass-secondary glass-specular-top glass-emerald-ambient"
           sx={{
-            mb: 2,
-            borderRadius: 3,
-            p: { xs: 2, sm: 2.5 },
+            mb: { xs: 1.5, sm: 2 },
+            borderRadius: { xs: 2.5, sm: 3 },
+            p: { xs: 1.5, sm: 2.5 },
+            display: (simplifiedData?.simplifiedDebts && simplifiedData.simplifiedDebts.length > 0) ? 'block' : { xs: 'none', md: 'block' },
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 1, sm: 2 }, flexWrap: 'wrap', gap: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
               <Box
                 className="glass-tertiary"
                 sx={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 2.5,
+                  width: { xs: 32, sm: 38 },
+                  height: { xs: 32, sm: 38 },
+                  borderRadius: 2,
                   bgcolor: 'rgba(16, 185, 129, 0.15)',
                   border: '1px solid rgba(16, 185, 129, 0.3)',
                   color: '#10B981',
@@ -189,21 +190,21 @@ export default function SettlementsPage() {
                   flexShrink: 0,
                 }}
               >
-                <AutoAwesome fontSize="small" />
+                <AutoAwesome sx={{ fontSize: { xs: 18, sm: 20 } }} />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1rem' } }}>
-                  Splitwise Min-Cash-Flow Simplification
+                <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' } }}>
+                  Debt Simplification
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>
                   If A owes B ₹100 and B owes C ₹100, Owino routes A → C directly.
                 </Typography>
               </Box>
             </Box>
             <Chip
-              label={`${simplifiedData?.savingsCount || 0} Redundant Transfers Eliminated`}
+              label={`${simplifiedData?.savingsCount || 0} Transfers Eliminated`}
               size="small"
-              sx={{ bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 700, fontSize: '0.7rem' }}
+              sx={{ bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 700, fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
             />
           </Box>
 
@@ -322,8 +323,8 @@ export default function SettlementsPage() {
         <Box
           className="glass-control-surface"
           sx={{
-            mb: 3,
-            borderRadius: 3,
+            mb: { xs: 1.5, sm: 3 },
+            borderRadius: { xs: 2.5, sm: 3 },
             p: 0.5,
             display: { xs: 'flex', sm: 'inline-flex' },
             width: { xs: '100%', sm: 'auto' },

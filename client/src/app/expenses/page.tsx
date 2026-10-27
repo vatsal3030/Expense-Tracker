@@ -787,7 +787,7 @@ function ExpensesContent() {
         >
           <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
             {loading && expenses.length === 0 ? (
-              <Box sx={{ p: { xs: 2, sm: 3 } }}>
+              <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
                 {[1, 2, 3, 4, 5].map((i) => (
                   <Box
                     key={i}
@@ -795,25 +795,25 @@ function ExpensesContent() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      py: 2,
-                      px: 1,
+                      py: 1.15,
+                      px: { xs: 0.5, sm: 1 },
                       borderBottom: `1px solid ${theme.palette.divider}`,
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 40 }}>
-                        <Skeleton width={28} height={14} animation="wave" />
-                        <Skeleton width={20} height={22} animation="wave" />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, sm: 1.75 }, flex: 1 }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 36 }}>
+                        <Skeleton width={26} height={12} animation="wave" />
+                        <Skeleton width={18} height={18} animation="wave" />
                       </Box>
-                      <Skeleton variant="rounded" width={48} height={48} sx={{ borderRadius: 3 }} animation="wave" />
+                      <Skeleton variant="rounded" width={38} height={38} sx={{ borderRadius: 2.25 }} animation="wave" />
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Skeleton width="45%" height={22} animation="wave" />
-                        <Skeleton width="28%" height={16} sx={{ mt: 0.5 }} animation="wave" />
+                        <Skeleton width="45%" height={18} animation="wave" />
+                        <Skeleton width="28%" height={14} sx={{ mt: 0.3 }} animation="wave" />
                       </Box>
                     </Box>
                     <Box sx={{ textAlign: 'right', minWidth: 90 }}>
-                      <Skeleton width={50} height={14} sx={{ ml: 'auto' }} animation="wave" />
-                      <Skeleton width={70} height={22} sx={{ ml: 'auto', mt: 0.5 }} animation="wave" />
+                      <Skeleton width={45} height={12} sx={{ ml: 'auto' }} animation="wave" />
+                      <Skeleton width={65} height={18} sx={{ ml: 'auto', mt: 0.3 }} animation="wave" />
                     </Box>
                   </Box>
                 ))}

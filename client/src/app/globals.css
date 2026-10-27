@@ -629,8 +629,8 @@ html.theme-transitioning::view-transition-new(root) {
     0 2px 8px rgba(0, 0, 0, 0.20) !important;
 }
 
-/* Mobile-specific Responsive Safeguards (Strictly max-width: 600px, preserves 100% desktop presentation) */
-@media (max-width: 600px) {
+/* Mobile-specific Performance and Layout Optimizations (Eliminates mobile GPU composite lag) */
+@media (max-width: 768px) {
   body {
     overflow-x: hidden;
     width: 100%;
@@ -650,7 +650,36 @@ html.theme-transitioning::view-transition-new(root) {
   button {
     touch-action: manipulation;
   }
+
+  /* High-performance mobile rendering: reduce costly GPU backdrop-filter compositing to eliminate lag */
+  .glass-primary,
+  .glass-secondary,
+  .glass-tertiary,
+  .glass-nav-island,
+  .glass-control-surface,
+  .glass-filter-surface,
+  .glass-deep {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  .dark .glass-secondary {
+    background: rgba(18, 22, 32, 0.92) !important;
+  }
+  .dark .glass-primary {
+    background: rgba(14, 18, 27, 0.95) !important;
+  }
+  .dark .glass-tertiary {
+    background: rgba(22, 28, 40, 0.90) !important;
+  }
+  .dark .glass-filter-surface {
+    background: rgba(18, 22, 32, 0.92) !important;
+  }
+  .dark .glass-nav-island {
+    background: rgba(14, 18, 27, 0.96) !important;
+  }
 }
+
 
 /* Fix Chrome ugly bright blue background on autofill across dark and light modes */
 input:-webkit-autofill,

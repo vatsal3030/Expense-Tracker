@@ -172,14 +172,17 @@ export default function SplitwiseExpenseItem({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        px: { xs: 2, sm: 3 },
-        py: { xs: 1.5, sm: 2 },
-        gap: { xs: 1.5, sm: 2 },
+        px: { xs: 1.5, sm: 2.5 },
+        py: { xs: 1.1, sm: 1.25 },
+        gap: { xs: 1.25, sm: 2 },
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.18s ease-in-out',
         position: 'relative',
         '&:hover': {
           bgcolor: isDark ? 'rgba(255, 255, 255, 0.035)' : 'rgba(0, 0, 0, 0.02)',
+          '& .splitwise-category-icon': {
+            transform: 'scale(1.08)',
+          },
           '& .splitwise-actions': {
             opacity: 1,
             pointerEvents: 'auto',
@@ -192,7 +195,7 @@ export default function SplitwiseExpenseItem({
       }}
     >
       {/* Left Group: Date Block + Category Icon + Title/Subtitle */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 }, minWidth: 0, flex: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.25, sm: 1.75 }, minWidth: 0, flex: 1 }}>
         {/* Date Block (Stacked Month + Day, Splitwise style) */}
         <Box
           sx={{
@@ -200,7 +203,7 @@ export default function SplitwiseExpenseItem({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            width: { xs: 36, sm: 42 },
+            width: { xs: 32, sm: 38 },
             flexShrink: 0,
             userSelect: 'none',
           }}
@@ -208,7 +211,7 @@ export default function SplitwiseExpenseItem({
           <Typography
             variant="caption"
             sx={{
-              fontSize: { xs: '0.625rem', sm: '0.68rem' },
+              fontSize: { xs: '0.6rem', sm: '0.65rem' },
               fontWeight: 700,
               letterSpacing: '0.04em',
               lineHeight: 1,
@@ -221,10 +224,10 @@ export default function SplitwiseExpenseItem({
           <Typography
             variant="body1"
             sx={{
-              fontSize: { xs: '1.05rem', sm: '1.2rem' },
+              fontSize: { xs: '0.95rem', sm: '1.05rem' },
               fontWeight: 800,
               lineHeight: 1.15,
-              mt: 0.3,
+              mt: 0.2,
               color: 'text.primary',
             }}
           >
@@ -232,20 +235,22 @@ export default function SplitwiseExpenseItem({
           </Typography>
         </Box>
 
-        {/* Category Icon Container (Enlarged & Prominent) */}
+        {/* Category Icon Container (Compact & Interactive) */}
         <Box
+          className="splitwise-category-icon"
           sx={{
-            width: { xs: 46, sm: 50 },
-            height: { xs: 46, sm: 50 },
-            borderRadius: { xs: 2.75, sm: 3 },
+            width: { xs: 36, sm: 40 },
+            height: { xs: 36, sm: 40 },
+            borderRadius: { xs: 2, sm: 2.5 },
             bgcolor: catTheme.bg,
             border: `1.5px solid ${catTheme.border}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: { xs: '1.55rem', sm: '1.75rem' },
+            fontSize: { xs: '1.25rem', sm: '1.35rem' },
             flexShrink: 0,
-            boxShadow: '0 3px 10px rgba(0,0,0,0.08)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+            transition: 'transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
           {CATEGORY_EMOJI[expense.category] || '📋'}

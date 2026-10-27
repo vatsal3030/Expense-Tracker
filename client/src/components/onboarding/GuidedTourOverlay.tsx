@@ -98,6 +98,14 @@ export default function GuidedTourOverlay() {
     // Check if element exists, is rendered in the DOM, and has non-zero size
     if (!targetEl || targetEl.offsetParent === null) {
       setRect(null);
+      if (typeof window !== 'undefined') {
+        const tooltipW = 410;
+        const tooltipH = 260;
+        setTooltipPos({
+          top: Math.max(20, Math.floor((window.innerHeight - tooltipH) / 2)),
+          left: Math.max(16, Math.floor((window.innerWidth - tooltipW) / 2)),
+        });
+      }
       return;
     }
 
@@ -423,9 +431,11 @@ export default function GuidedTourOverlay() {
               position: 'fixed',
               ...(isMobile
                 ? {
-                    ...(rect && rect.top > (typeof window !== 'undefined' ? window.innerHeight / 2 : 400)
-                      ? { top: 16 }
-                      : { bottom: 76 }),
+                    ...(rect
+                      ? rect.top > (typeof window !== 'undefined' ? window.innerHeight / 2 : 400)
+                        ? { top: 16 }
+                        : { bottom: 76 }
+                      : { bottom: 84 }),
                     left: 14,
                     right: 14,
                     maxWidth: 'calc(100vw - 28px)',

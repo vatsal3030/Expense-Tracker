@@ -324,12 +324,24 @@ const getCategoryColorScale = (pct: number) => {
                   fullWidth label="From Date" type="date" size="small"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{
+                    inputLabel: { shrink: true, sx: { color: isLight ? undefined : '#94A3B8' } },
+                    htmlInput: {
+                      sx: {
+                        color: isLight ? '#0F172A' : '#F8FAFC !important',
+                        colorScheme: isLight ? 'light' : 'dark',
+                      },
+                    },
+                  }}
                   sx={{
                     colorScheme: isLight ? 'light' : 'dark',
+                    '& .MuiInputBase-input': {
+                      color: isLight ? '#0F172A' : '#F8FAFC !important',
+                    },
                     '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                      filter: isLight ? 'none' : 'invert(1) brightness(1.2)',
+                      filter: isLight ? 'none' : 'invert(1) brightness(2) !important',
                       cursor: 'pointer',
+                      opacity: 1,
                     },
                   }}
                 />
@@ -339,12 +351,24 @@ const getCategoryColorScale = (pct: number) => {
                   fullWidth label="To Date" type="date" size="small"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{
+                    inputLabel: { shrink: true, sx: { color: isLight ? undefined : '#94A3B8' } },
+                    htmlInput: {
+                      sx: {
+                        color: isLight ? '#0F172A' : '#F8FAFC !important',
+                        colorScheme: isLight ? 'light' : 'dark',
+                      },
+                    },
+                  }}
                   sx={{
                     colorScheme: isLight ? 'light' : 'dark',
+                    '& .MuiInputBase-input': {
+                      color: isLight ? '#0F172A' : '#F8FAFC !important',
+                    },
                     '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                      filter: isLight ? 'none' : 'invert(1) brightness(1.2)',
+                      filter: isLight ? 'none' : 'invert(1) brightness(2) !important',
                       cursor: 'pointer',
+                      opacity: 1,
                     },
                   }}
                 />

@@ -42,7 +42,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
 import { useOnboarding } from '@/providers/OnboardingProvider';
 import { useDataRefresh } from '@/lib/events';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import BrandLogo from '@/components/brand/BrandLogo';
 import GlobalSearchModal from '@/components/search/GlobalSearchModal';
 
@@ -54,9 +54,21 @@ interface HeaderProps {
 export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
   const theme = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
   const { user, profile, signOut } = useAuth();
   const { mode, toggleTheme } = useThemeMode();
   const { startTour } = useOnboarding();
+
+  const handleLaunchTour = () => {
+    if (pathname !== '/dashboard') {
+      router.push('/dashboard');
+      setTimeout(() => {
+        startTour(0, true);
+      }, 350);
+    } else {
+      startTour(0, true);
+    }
+  };
 
   const googleIdentity = (user as any)?.identities?.find((i: any) => i.provider === 'google')?.identity_data;
   const displayAvatar =
@@ -387,7 +399,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           {/* Product Tour Launcher (Sleek Glass Pill) */}
           <Tooltip title="Interactive Product Tour (with Auto-Play Walkthrough)">
             <Box
-              onClick={() => startTour(0, true)}
+              onClick={handleLaunchTour}
               sx={{
                 display: { xs: 'none', md: 'flex' },
                 alignItems: 'center',
@@ -709,7 +721,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           <Divider sx={{ my: 0.5, borderColor: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.08)' }} />
 
           <MenuItem
-            onClick={() => { handleMenuClose(); startTour(0, true); }}
+            onClick={() => { handleMenuClose(); handleLaunchTour(); }}
             sx={{
               borderRadius: 2,
               my: 0.35,

@@ -235,177 +235,189 @@ export default function GroupsPage() {
             <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Expense Groups
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
               Split living costs, trips, and shared events with verified friends
             </Typography>
           </Box>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+          <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="outlined"
-              startIcon={<AutoAwesome sx={{ color: '#10B981' }} />}
+              size="small"
+              startIcon={<AutoAwesome sx={{ color: '#10B981', fontSize: { xs: 16, sm: 20 } }} />}
               onClick={() => setSplitwiseModalOpen(true)}
               sx={{
-                width: { xs: '100%', sm: 'auto' },
+                flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
-                px: 2.5,
-                py: 1,
+                px: { xs: 1.25, sm: 2.5 },
+                py: { xs: 0.65, sm: 0.9 },
+                fontSize: { xs: '0.76rem', sm: '0.85rem' },
                 fontWeight: 700,
                 color: '#10B981',
                 borderColor: 'rgba(16, 185, 129, 0.4)',
                 bgcolor: 'rgba(16, 185, 129, 0.08)',
                 textTransform: 'none',
+                whiteSpace: 'nowrap',
                 '&:hover': {
                   bgcolor: 'rgba(16, 185, 129, 0.16)',
                   borderColor: '#10B981',
                 },
               }}
             >
-              Import from Splitwise
+              Import Splitwise
             </Button>
 
             <Button
               variant="contained"
-              startIcon={<Add />}
+              size="small"
+              startIcon={<Add sx={{ fontSize: { xs: 17, sm: 20 } }} />}
               onClick={() => setDialogOpen(true)}
               sx={{
-                width: { xs: '100%', sm: 'auto' },
+                flex: { xs: 1, sm: 'none' },
                 borderRadius: 2.5,
-                px: 3,
-                py: 1,
+                px: { xs: 1.5, sm: 3 },
+                py: { xs: 0.65, sm: 0.9 },
+                fontSize: { xs: '0.76rem', sm: '0.85rem' },
                 fontWeight: 700,
                 bgcolor: isLight ? '#059669' : '#10B981',
                 color: '#FFFFFF',
                 boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
                 textTransform: 'none',
+                whiteSpace: 'nowrap',
                 '&:hover': {
                   bgcolor: isLight ? '#047857' : '#059669',
                   boxShadow: '0 6px 20px rgba(16,185,129,0.4)',
                 },
               }}
             >
-              Create New Group
+              Create Group
             </Button>
           </Stack>
         </Box>
 
         {/* Top Summary Metrics Bar (Savexa FinTech style with Semantic Color Grading) */}
-        <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: 2.5 }}>
+        <Grid container spacing={{ xs: 1, sm: 2 }} sx={{ mb: { xs: 1.75, sm: 2.5 } }}>
           {/* Card 1: Total Groups (Emerald / Mint) */}
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 4, sm: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: 2,
+                p: { xs: 1.1, sm: 2 },
                 borderRadius: 3,
                 display: 'flex',
-                alignItems: 'center',
-                gap: 2,
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                gap: { xs: 0.75, sm: 2 },
                 bgcolor: isLight ? 'rgba(16, 185, 129, 0.08)' : 'rgba(6, 78, 59, 0.24)',
                 border: isLight ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(16, 185, 129, 0.32)',
               }}
             >
               <Box
                 sx={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 2.5,
+                  width: { xs: 28, sm: 42 },
+                  height: { xs: 28, sm: 42 },
+                  borderRadius: { xs: 2, sm: 2.5 },
                   bgcolor: isLight ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.18)',
                   border: '1px solid rgba(16, 185, 129, 0.35)',
                   color: isLight ? '#059669' : '#10B981',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
-                <People sx={{ fontSize: 22 }} />
+                <People sx={{ fontSize: { xs: 16, sm: 22 } }} />
               </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: isLight ? '#047857' : '#34D399', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Groups
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" noWrap sx={{ color: isLight ? '#047857' : '#34D399', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.58rem', sm: '0.75rem' }, display: 'block' }}>
+                  Groups
                 </Typography>
-                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
-                  {loading ? <Skeleton width={40} /> : groups.length}
+                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
+                  {loading ? <Skeleton width={30} /> : groups.length}
                 </Typography>
               </Box>
             </Card>
           </Grid>
 
           {/* Card 2: Connected Members (Sky / Blue) */}
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 4, sm: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: 2,
+                p: { xs: 1.1, sm: 2 },
                 borderRadius: 3,
                 display: 'flex',
-                alignItems: 'center',
-                gap: 2,
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                gap: { xs: 0.75, sm: 2 },
                 bgcolor: isLight ? 'rgba(56, 189, 248, 0.08)' : 'rgba(12, 74, 110, 0.24)',
                 border: isLight ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid rgba(56, 189, 248, 0.32)',
               }}
             >
               <Box
                 sx={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 2.5,
+                  width: { xs: 28, sm: 42 },
+                  height: { xs: 28, sm: 42 },
+                  borderRadius: { xs: 2, sm: 2.5 },
                   bgcolor: isLight ? 'rgba(56, 189, 248, 0.15)' : 'rgba(56, 189, 248, 0.18)',
                   border: '1px solid rgba(56, 189, 248, 0.35)',
                   color: isLight ? '#0284C7' : '#38BDF8',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
-                <GroupAdd sx={{ fontSize: 22 }} />
+                <GroupAdd sx={{ fontSize: { xs: 16, sm: 22 } }} />
               </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: isLight ? '#0284C7' : '#7DD3FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Connected Members
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" noWrap sx={{ color: isLight ? '#0284C7' : '#7DD3FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.58rem', sm: '0.75rem' }, display: 'block' }}>
+                  Members
                 </Typography>
-                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
-                  {loading ? <Skeleton width={40} /> : totalMembers}
+                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
+                  {loading ? <Skeleton width={30} /> : totalMembers}
                 </Typography>
               </Box>
             </Card>
           </Grid>
 
           {/* Card 3: Shared Expenses (Violet / Purple) */}
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 4, sm: 4 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: 2,
+                p: { xs: 1.1, sm: 2 },
                 borderRadius: 3,
                 display: 'flex',
-                alignItems: 'center',
-                gap: 2,
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                gap: { xs: 0.75, sm: 2 },
                 bgcolor: isLight ? 'rgba(168, 85, 247, 0.08)' : 'rgba(88, 28, 135, 0.22)',
                 border: isLight ? '1px solid rgba(168, 85, 247, 0.25)' : '1px solid rgba(168, 85, 247, 0.32)',
               }}
             >
               <Box
                 sx={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 2.5,
+                  width: { xs: 28, sm: 42 },
+                  height: { xs: 28, sm: 42 },
+                  borderRadius: { xs: 2, sm: 2.5 },
                   bgcolor: isLight ? 'rgba(168, 85, 247, 0.15)' : 'rgba(168, 85, 247, 0.18)',
                   border: '1px solid rgba(168, 85, 247, 0.35)',
                   color: isLight ? '#7E22CE' : '#C084FC',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
-                <ReceiptLong sx={{ fontSize: 22 }} />
+                <ReceiptLong sx={{ fontSize: { xs: 16, sm: 22 } }} />
               </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: isLight ? '#7E22CE' : '#C084FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Shared Expenses
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" noWrap sx={{ color: isLight ? '#7E22CE' : '#C084FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.58rem', sm: '0.75rem' }, display: 'block' }}>
+                  Expenses
                 </Typography>
-                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
-                  {loading ? <Skeleton width={40} /> : `${totalExpensesCount} recorded`}
+                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
+                  {loading ? <Skeleton width={30} /> : totalExpensesCount}
                 </Typography>
               </Box>
             </Card>

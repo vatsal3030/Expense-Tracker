@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import {
   Box,
   Grid,
@@ -45,7 +45,7 @@ import {
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
 import { dashboardApi } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import CoinSplitLoader from '@/components/common/CoinSplitLoader';
 import Link from 'next/link';
 import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
@@ -84,15 +84,29 @@ interface DashboardData {
   recentActivities: Array<any>;
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const theme = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, profile, loading: authLoading } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [trendData, setTrendData] = useState<Array<{ month: string; amount: number }>>([]);
   const [loading, setLoading] = useState(true);
+
+  const tabParam = searchParams.get('tab') as 'overview' | 'breakdown' | 'balances' | 'activity' | null;
   const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'balances' | 'activity'>('overview');
   const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (tabParam && ['overview', 'breakdown', 'balances', 'activity'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (tab: 'overview' | 'breakdown' | 'balances' | 'activity') => {
+    setActiveTab(tab);
+    router.replace(`/dashboard?tab=${tab}`, { scroll: false });
+  };
 
   const isLight = theme.palette.mode === 'light';
 
@@ -208,13 +222,13 @@ export default function DashboardPage() {
             <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
               Financial Overview
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
               Track personal equity, shared group expenses, and settlements
             </Typography>
           </Box>
 
           {/* Quick Action CTAs */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="outlined"
               size="small"
@@ -231,8 +245,9 @@ export default function DashboardPage() {
                 color: 'text.primary',
                 fontWeight: 600,
                 textTransform: 'none',
-                px: 2,
-                py: 0.8,
+                px: { xs: 1.5, sm: 2 },
+                py: { xs: 0.6, sm: 0.8 },
+                fontSize: { xs: '0.78rem', sm: '0.85rem' },
                 '&:hover': {
                   borderColor: isLight ? '#059669' : '#10b981',
                   bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
@@ -255,8 +270,9 @@ export default function DashboardPage() {
                 color: '#FFFFFF',
                 fontWeight: 700,
                 textTransform: 'none',
-                px: 2.5,
-                py: 0.8,
+                px: { xs: 1.75, sm: 2.5 },
+                py: { xs: 0.6, sm: 0.8 },
+                fontSize: { xs: '0.78rem', sm: '0.85rem' },
                 boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
                 '&:hover': {
                   bgcolor: isLight ? '#047857' : '#059669',
@@ -297,7 +313,7 @@ export default function DashboardPage() {
               <Button
                 key={tab}
                 size="small"
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 sx={{
                   borderRadius: 9999,
                   px: { xs: 1.75, sm: 2.5 },
@@ -338,29 +354,29 @@ export default function DashboardPage() {
 
         {/* Financial Metrics Cards (Apple visionOS Liquid Glass Panels) */}
         {(activeTab === 'overview' || activeTab === 'balances') && (
-        <Grid data-tour="financial-overview" container spacing={{ xs: 1.5, sm: 2.5 }} sx={{ mb: 4 }}>
+        <Grid data-tour="financial-overview" container spacing={{ xs: 1.25, sm: 2.5 }} sx={{ mb: { xs: 2.5, sm: 4 } }}>
           {/* Card 1: Net Balance (Primary Hero Metric with Ambient Emerald Reflection) */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 2, sm: 2.75 },
+                p: { xs: 1.25, sm: 2.5 },
                 height: '100%',
-                borderRadius: 4,
+                borderRadius: { xs: 3, sm: 4 },
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.06em', color: 'text.secondary', textTransform: 'uppercase' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.75, sm: 1.5 } }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.75rem' } }}>
                   Net Balance
                 </Typography>
                 <Box
                   sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2.5,
+                    width: { xs: 26, sm: 36 },
+                    height: { xs: 26, sm: 36 },
+                    borderRadius: { xs: 2, sm: 2.5 },
                     bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
                     color: isLight ? '#059669' : '#34D399',
                     border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(16, 185, 129, 0.25)'}`,
@@ -369,12 +385,12 @@ export default function DashboardPage() {
                     justifyContent: 'center',
                   }}
                 >
-                  <AccountBalanceWallet sx={{ fontSize: 19 }} />
+                  <AccountBalanceWallet sx={{ fontSize: { xs: 15, sm: 19 } }} />
                 </Box>
               </Box>
 
               {loading ? (
-                <Skeleton width="70%" height={40} />
+                <Skeleton width="70%" height={32} />
               ) : (
                 <Typography
                   variant="h4"
@@ -383,21 +399,23 @@ export default function DashboardPage() {
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
+                    fontSize: { xs: '1.15rem', sm: '1.45rem', md: '1.75rem' },
                     color: (data?.totalBalance ?? 0) >= 0 ? (isLight ? '#059669' : '#34D399') : '#EF4444',
-                    mb: 0.5,
+                    mb: 0.25,
                   }}
                 >
                   {formatCurrency(data?.totalBalance ?? 0)}
                 </Typography>
               )}
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: { xs: 0.5, sm: 1 } }}>
                 <Chip
                   size="small"
-                  label={(data?.totalBalance ?? 0) >= 0 ? 'Positive Equity' : 'Settlement Required'}
+                  label={(data?.totalBalance ?? 0) >= 0 ? 'Positive Equity' : 'Settlement Req'}
                   sx={{
-                    height: 22,
-                    fontSize: '0.7rem',
+                    height: { xs: 18, sm: 22 },
+                    fontSize: { xs: '0.62rem', sm: '0.7rem' },
+                    px: { xs: 0.5, sm: 1 },
                     fontWeight: 700,
                     bgcolor: (data?.totalBalance ?? 0) >= 0
                       ? isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.14)'
@@ -413,27 +431,27 @@ export default function DashboardPage() {
           </Grid>
 
           {/* Card 2: You Owe (Subtle Crimson Liquid Glass Reflection) */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 2, sm: 2.75 },
+                p: { xs: 1.25, sm: 2.5 },
                 height: '100%',
-                borderRadius: 4,
+                borderRadius: { xs: 3, sm: 4 },
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.06em', color: 'text.secondary', textTransform: 'uppercase' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.75, sm: 1.5 } }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.75rem' } }}>
                   You Owe
                 </Typography>
                 <Box
                   sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2.5,
+                    width: { xs: 26, sm: 36 },
+                    height: { xs: 26, sm: 36 },
+                    borderRadius: { xs: 2, sm: 2.5 },
                     bgcolor: 'rgba(239, 68, 68, 0.10)',
                     color: '#EF4444',
                     border: '1px solid rgba(239, 68, 68, 0.20)',
@@ -442,12 +460,12 @@ export default function DashboardPage() {
                     justifyContent: 'center',
                   }}
                 >
-                  <CallMade sx={{ fontSize: 19 }} />
+                  <CallMade sx={{ fontSize: { xs: 15, sm: 19 } }} />
                 </Box>
               </Box>
 
               {loading ? (
-                <Skeleton width="60%" height={40} />
+                <Skeleton width="60%" height={32} />
               ) : (
                 <Typography
                   variant="h4"
@@ -456,21 +474,23 @@ export default function DashboardPage() {
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
+                    fontSize: { xs: '1.15rem', sm: '1.45rem', md: '1.75rem' },
                     color: '#F87171',
-                    mb: 0.5,
+                    mb: 0.25,
                   }}
                 >
                   {formatCurrency(data?.youOwe ?? 0)}
                 </Typography>
               )}
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: { xs: 0.5, sm: 1 } }}>
                 <Chip
                   size="small"
-                  label={data?.youOwe ? 'Pay to Friends' : 'All Clear'}
+                  label={data?.youOwe ? 'Pay Friends' : 'All Clear'}
                   sx={{
-                    height: 22,
-                    fontSize: '0.7rem',
+                    height: { xs: 18, sm: 22 },
+                    fontSize: { xs: '0.62rem', sm: '0.7rem' },
+                    px: { xs: 0.5, sm: 1 },
                     fontWeight: 700,
                     bgcolor: 'rgba(239, 68, 68, 0.10)',
                     color: '#EF4444',
@@ -482,27 +502,27 @@ export default function DashboardPage() {
           </Grid>
 
           {/* Card 3: Owed to You (Subtle Emerald Liquid Glass Reflection) */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 2, sm: 2.75 },
+                p: { xs: 1.25, sm: 2.5 },
                 height: '100%',
-                borderRadius: 4,
+                borderRadius: { xs: 3, sm: 4 },
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.06em', color: 'text.secondary', textTransform: 'uppercase' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.75, sm: 1.5 } }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.75rem' } }}>
                   Owed to You
                 </Typography>
                 <Box
                   sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2.5,
+                    width: { xs: 26, sm: 36 },
+                    height: { xs: 26, sm: 36 },
+                    borderRadius: { xs: 2, sm: 2.5 },
                     bgcolor: isLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.14)',
                     color: isLight ? '#059669' : '#34D399',
                     border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.25)' : 'rgba(16, 185, 129, 0.3)'}`,
@@ -511,12 +531,12 @@ export default function DashboardPage() {
                     justifyContent: 'center',
                   }}
                 >
-                  <CallReceived sx={{ fontSize: 19 }} />
+                  <CallReceived sx={{ fontSize: { xs: 15, sm: 19 } }} />
                 </Box>
               </Box>
 
               {loading ? (
-                <Skeleton width="60%" height={40} animation="wave" />
+                <Skeleton width="60%" height={32} animation="wave" />
               ) : (
                 <Typography
                   variant="h4"
@@ -525,21 +545,23 @@ export default function DashboardPage() {
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
+                    fontSize: { xs: '1.15rem', sm: '1.45rem', md: '1.75rem' },
                     color: isLight ? '#059669' : '#34D399',
-                    mb: 0.5,
+                    mb: 0.25,
                   }}
                 >
                   {formatCurrency(data?.owedToYou ?? 0)}
                 </Typography>
               )}
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: { xs: 0.5, sm: 1 } }}>
                 <Chip
                   size="small"
                   label={data?.owedToYou ? 'Receivable' : 'Settled'}
                   sx={{
-                    height: 22,
-                    fontSize: '0.7rem',
+                    height: { xs: 18, sm: 22 },
+                    fontSize: { xs: '0.62rem', sm: '0.7rem' },
+                    px: { xs: 0.5, sm: 1 },
                     fontWeight: 700,
                     bgcolor: isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.14)',
                     color: isLight ? '#059669' : '#34D399',
@@ -551,27 +573,27 @@ export default function DashboardPage() {
           </Grid>
 
           {/* Card 4: This Month */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 2, sm: 2.75 },
+                p: { xs: 1.25, sm: 2.5 },
                 height: '100%',
-                borderRadius: 4,
+                borderRadius: { xs: 3, sm: 4 },
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.06em', color: 'text.secondary', textTransform: 'uppercase' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.75, sm: 1.5 } }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.75rem' } }}>
                   This Month
                 </Typography>
                 <Box
                   sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2.5,
+                    width: { xs: 26, sm: 36 },
+                    height: { xs: 26, sm: 36 },
+                    borderRadius: { xs: 2, sm: 2.5 },
                     bgcolor: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)',
                     color: 'text.secondary',
                     border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.09)'}`,
@@ -581,15 +603,15 @@ export default function DashboardPage() {
                   }}
                 >
                   {data?.thisMonth?.change && data.thisMonth.change > 0 ? (
-                    <TrendingUp sx={{ fontSize: 19, color: '#EF4444' }} />
+                    <TrendingUp sx={{ fontSize: { xs: 15, sm: 19 }, color: '#EF4444' }} />
                   ) : (
-                    <TrendingDown sx={{ fontSize: 19, color: isLight ? '#059669' : '#34D399' }} />
+                    <TrendingDown sx={{ fontSize: { xs: 15, sm: 19 }, color: isLight ? '#059669' : '#34D399' }} />
                   )}
                 </Box>
               </Box>
 
               {loading ? (
-                <Skeleton width="60%" height={40} />
+                <Skeleton width="60%" height={32} />
               ) : (
                 <Typography
                   variant="h4"
@@ -598,22 +620,24 @@ export default function DashboardPage() {
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
+                    fontSize: { xs: '1.15rem', sm: '1.45rem', md: '1.75rem' },
                     color: 'text.primary',
-                    mb: 0.5,
+                    mb: 0.25,
                   }}
                 >
                   {formatCurrency(data?.thisMonth?.total ?? 0)}
                 </Typography>
               )}
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: { xs: 0.5, sm: 1 } }}>
                 {data?.thisMonth?.change !== undefined ? (
                   <Chip
                     size="small"
-                    label={`${data.thisMonth.change > 0 ? '+' : ''}${data.thisMonth.change}% vs last month`}
+                    label={`${data.thisMonth.change > 0 ? '+' : ''}${data.thisMonth.change}%`}
                     sx={{
-                      height: 22,
-                      fontSize: '0.7rem',
+                      height: { xs: 18, sm: 22 },
+                      fontSize: { xs: '0.62rem', sm: '0.7rem' },
+                      px: { xs: 0.5, sm: 1 },
                       fontWeight: 700,
                       bgcolor: data.thisMonth.change > 0 ? 'rgba(239, 68, 68, 0.10)' : (isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.14)'),
                       color: data.thisMonth.change > 0 ? '#EF4444' : (isLight ? '#059669' : '#34D399'),
@@ -621,8 +645,8 @@ export default function DashboardPage() {
                     }}
                   />
                 ) : (
-                  <Typography variant="caption" color="text.secondary">
-                    {data?.thisMonth?.count ?? 0} transactions
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                    {data?.thisMonth?.count ?? 0} txns
                   </Typography>
                 )}
               </Box>
@@ -1184,5 +1208,13 @@ export default function DashboardPage() {
         )}
       </Box>
     </AppLayout>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<CoinSplitLoader />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
