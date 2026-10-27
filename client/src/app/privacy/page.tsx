@@ -66,9 +66,9 @@ export default function PrivacyPolicyPage() {
               size="small"
               icon={<Shield sx={{ fontSize: '14px !important', color: 'inherit !important' }} />}
               sx={{
-                bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(52, 211, 153, 0.12)',
-                color: isLight ? '#0E6245' : '#34D399',
-                border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
+                bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(52, 211, 153, 0.12)',
+                color: isLight ? '#059669' : '#34D399',
+                border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
                 fontWeight: 700,
                 fontSize: '0.72rem',
               }}
@@ -210,11 +210,11 @@ export default function PrivacyPolicyPage() {
             sx={{
               borderRadius: 2.5,
               p: { xs: 2.25, sm: 2.75 },
-              border: `1.5px solid ${isLight ? 'rgba(14, 98, 69, 0.25)' : 'rgba(16, 185, 129, 0.35)'}`,
-              bgcolor: isLight ? 'rgba(14, 98, 69, 0.03)' : 'rgba(16, 185, 129, 0.04)',
+              border: `1.5px solid ${isLight ? 'rgba(5, 150, 105, 0.25)' : 'rgba(16, 185, 129, 0.35)'}`,
+              bgcolor: isLight ? 'rgba(5, 150, 105, 0.03)' : 'rgba(16, 185, 129, 0.04)',
             }}
           >
-            <Typography variant="subtitle1" fontWeight={800} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, color: isLight ? '#0E6245' : '#34D399' }}>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, color: isLight ? '#059669' : '#34D399' }}>
               <ContactMail sx={{ fontSize: 22 }} />
               5. Grievance Redressal Officer & Statutory Contact (Section 13)
             </Typography>

@@ -234,8 +234,8 @@ export default function DashboardPage() {
                 px: 2,
                 py: 0.8,
                 '&:hover': {
-                  borderColor: isLight ? '#0E6245' : '#10b981',
-                  bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                  borderColor: isLight ? '#059669' : '#10b981',
+                  bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
                 },
               }}
             >
@@ -361,9 +361,9 @@ export default function DashboardPage() {
                     width: 36,
                     height: 36,
                     borderRadius: 2.5,
-                    bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-                    color: isLight ? '#0E6245' : '#34D399',
-                    border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(16, 185, 129, 0.25)'}`,
+                    bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                    color: isLight ? '#059669' : '#34D399',
+                    border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(16, 185, 129, 0.25)'}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -383,7 +383,7 @@ export default function DashboardPage() {
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
-                    color: (data?.totalBalance ?? 0) >= 0 ? (isLight ? '#0E6245' : '#34D399') : '#EF4444',
+                    color: (data?.totalBalance ?? 0) >= 0 ? (isLight ? '#059669' : '#34D399') : '#EF4444',
                     mb: 0.5,
                   }}
                 >
@@ -400,12 +400,12 @@ export default function DashboardPage() {
                     fontSize: '0.7rem',
                     fontWeight: 700,
                     bgcolor: (data?.totalBalance ?? 0) >= 0
-                      ? isLight ? 'rgba(14, 98, 69, 0.10)' : 'rgba(16, 185, 129, 0.14)'
+                      ? isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.14)'
                       : 'rgba(239, 68, 68, 0.12)',
                     color: (data?.totalBalance ?? 0) >= 0
-                      ? isLight ? '#0E6245' : '#34D399'
+                      ? isLight ? '#059669' : '#34D399'
                       : '#EF4444',
-                    border: `1px solid ${(data?.totalBalance ?? 0) >= 0 ? (isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.3)') : 'rgba(239, 68, 68, 0.25)'}`,
+                    border: `1px solid ${(data?.totalBalance ?? 0) >= 0 ? (isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(16, 185, 129, 0.3)') : 'rgba(239, 68, 68, 0.25)'}`,
                   }}
                 />
               </Box>
@@ -583,7 +583,7 @@ export default function DashboardPage() {
                   {data?.thisMonth?.change && data.thisMonth.change > 0 ? (
                     <TrendingUp sx={{ fontSize: 19, color: '#EF4444' }} />
                   ) : (
-                    <TrendingDown sx={{ fontSize: 19, color: isLight ? '#0E6245' : '#34D399' }} />
+                    <TrendingDown sx={{ fontSize: 19, color: isLight ? '#059669' : '#34D399' }} />
                   )}
                 </Box>
               </Box>
@@ -652,9 +652,9 @@ export default function DashboardPage() {
                   width: 48,
                   height: 48,
                   borderRadius: 3,
-                  bgcolor: isLight ? 'rgba(14, 98, 69, 0.10)' : 'rgba(16, 185, 129, 0.15)',
-                  color: isLight ? '#0E6245' : '#34D399',
-                  border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
+                  bgcolor: isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.15)',
+                  color: isLight ? '#059669' : '#34D399',
+                  border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -727,9 +727,9 @@ export default function DashboardPage() {
                     width: 48,
                     height: 48,
                     borderRadius: 3,
-                    bgcolor: isLight ? 'rgba(14, 98, 69, 0.10)' : 'rgba(16, 185, 129, 0.15)',
-                    color: isLight ? '#0E6245' : '#34D399',
-                    border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
+                    bgcolor: isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.15)',
+                    color: isLight ? '#059669' : '#34D399',
+                    border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -746,12 +746,12 @@ export default function DashboardPage() {
                       label="Diamond Tier"
                       size="small"
                       sx={{
-                        bgcolor: isLight ? 'rgba(14, 98, 69, 0.10)' : 'rgba(16, 185, 129, 0.15)',
-                        color: isLight ? '#0E6245' : '#34D399',
+                        bgcolor: isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.15)',
+                        color: isLight ? '#059669' : '#34D399',
                         fontWeight: 700,
                         height: 20,
                         fontSize: '0.675rem',
-                        border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
+                        border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
                       }}
                     />
                   </Box>
@@ -782,8 +782,8 @@ export default function DashboardPage() {
                     fontWeight: 600,
                     textTransform: 'none',
                     '&:hover': {
-                      borderColor: isLight ? '#0E6245' : '#10B981',
-                      bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                      borderColor: isLight ? '#059669' : '#10B981',
+                      bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
                     },
                   }}
                 >
@@ -920,7 +920,7 @@ export default function DashboardPage() {
                       <Area
                         type="monotone"
                         dataKey="amount"
-                        stroke={isLight ? '#0E6245' : '#10B981'}
+                        stroke={isLight ? '#059669' : '#10B981'}
                         strokeWidth={2.5}
                         fillOpacity={1}
                         fill="url(#spendingCurve)"
@@ -967,7 +967,7 @@ export default function DashboardPage() {
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
                     {data.categoryBreakdown.slice(0, 5).map((cat, i) => {
                       const percentage = Math.round((cat.amount / totalSpent) * 100);
-                      const color = CATEGORY_COLORS[cat.category] || '#0E6245';
+                      const color = CATEGORY_COLORS[cat.category] || (isLight ? '#059669' : '#10B981');
                       return (
                         <Box key={i}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
@@ -1041,7 +1041,7 @@ export default function DashboardPage() {
                   Quick Summary
                 </Typography>
                 {[
-                  { icon: <Receipt fontSize="small" />, label: 'Expenses this month', value: data?.thisMonth?.count ?? 0, color: isLight ? '#0E6245' : '#10B981' },
+                  { icon: <Receipt fontSize="small" />, label: 'Expenses this month', value: data?.thisMonth?.count ?? 0, color: isLight ? '#059669' : '#10B981' },
                   { icon: <Group fontSize="small" />, label: 'Active groups', value: data?.groupsCount ?? 0, color: '#3B82F6' },
                   { icon: <Handshake fontSize="small" />, label: 'Pending settlements', value: data?.pendingSettlements ?? 0, color: '#F59E0B' },
                 ].map((stat, i) => (

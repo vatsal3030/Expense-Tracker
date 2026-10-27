@@ -722,8 +722,8 @@ function GroupDetailContent() {
                     fontWeight: 700,
                     height: 22,
                     fontSize: '0.7rem',
-                    bgcolor: alpha('#0E6245', 0.1),
-                    color: '#0E6245',
+                    bgcolor: isLight ? alpha('#059669', 0.12) : alpha('#10B981', 0.15),
+                    color: isLight ? '#059669' : '#34D399',
                   }}
                 />
                 {(group?.isPasswordProtected || group?.requireAdminApproval) && (
@@ -1050,7 +1050,7 @@ function GroupDetailContent() {
                 transition: 'all 0.2s ease',
                 color: 'text.secondary',
                 '&.Mui-selected': {
-                  color: theme.palette.mode === 'dark' ? '#34D399' : '#0E6245',
+                  color: theme.palette.mode === 'dark' ? '#34D399' : '#059669',
                 },
               },
             }}
@@ -1582,7 +1582,7 @@ function GroupDetailContent() {
                             <ArrowForward sx={{ fontSize: 18, color: 'text.secondary', mx: 0.5 }} />
                             <Avatar
                               src={debt.to.avatarUrl || undefined}
-                              sx={{ width: 34, height: 34, fontSize: '0.8rem', bgcolor: '#0E6245' }}
+                              sx={{ width: 34, height: 34, fontSize: '0.8rem', bgcolor: isLight ? '#059669' : '#10B981' }}
                             >
                               {debt.to.name?.charAt(0)}
                             </Avatar>
@@ -1592,7 +1592,7 @@ function GroupDetailContent() {
                           </Box>
 
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, alignSelf: { xs: 'flex-end', sm: 'center' } }}>
-                            <Typography variant="subtitle1" fontWeight={800} sx={{ color: '#0E6245' }}>
+                            <Typography variant="subtitle1" fontWeight={800} sx={{ color: isLight ? '#059669' : '#34D399' }}>
                               {formatCurrency(debt.amount)}
                             </Typography>
                             <Button
@@ -1621,7 +1621,7 @@ function GroupDetailContent() {
                   </Stack>
                 ) : (
                   <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-                    <Check sx={{ fontSize: 44, color: '#0E6245', mb: 1 }} />
+                    <Check sx={{ fontSize: 44, color: isLight ? '#059669' : '#10B981', mb: 1 }} />
                     <Typography variant="body1" fontWeight={700} sx={{ color: 'text.primary' }}>
                       All settled up!
                     </Typography>

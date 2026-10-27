@@ -271,9 +271,9 @@ export const lightTheme = responsiveFontSizes(
     palette: {
       mode: 'light',
       primary: {
-        main: '#0E6245', // Deep Forest Green (Ocupite/Savexa style)
+        main: '#059669', // Vibrant Emerald 600
         light: '#10b981',
-        dark: '#064E3B',
+        dark: '#047857',
         contrastText: '#ffffff',
       },
       secondary: {
@@ -394,7 +394,7 @@ export const lightTheme = responsiveFontSizes(
           root: {
             '& fieldset': { borderColor: '#E5E7EB' },
             '&:hover fieldset': { borderColor: '#9CA3AF' },
-            '&.Mui-focused fieldset': { borderColor: '#0E6245', borderWidth: '1.5px' },
+            '&.Mui-focused fieldset': { borderColor: '#059669', borderWidth: '1.5px' },
           },
         },
       },

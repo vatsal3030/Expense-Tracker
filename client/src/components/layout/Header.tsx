@@ -326,8 +326,8 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
             transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
             '&:hover': {
               bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(32, 42, 60, 0.65)',
-              borderColor: isLight ? '#0E6245' : '#10B981',
-              boxShadow: `0 0 0 2px ${isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(16, 185, 129, 0.20)'}`,
+              borderColor: isLight ? '#059669' : '#10B981',
+              boxShadow: `0 0 0 2px ${isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(16, 185, 129, 0.20)'}`,
             },
           }}
         >
@@ -401,14 +401,14 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 cursor: 'pointer',
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
-                  borderColor: isLight ? '#0E6245' : '#10B981',
-                  bgcolor: isLight ? 'rgba(14, 98, 69, 0.06)' : 'rgba(16, 185, 129, 0.08)',
+                  borderColor: isLight ? '#059669' : '#10B981',
+                  bgcolor: isLight ? 'rgba(5, 150, 105, 0.06)' : 'rgba(16, 185, 129, 0.08)',
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                 },
               }}
             >
-              <SportsEsportsOutlined sx={{ fontSize: 17, color: isLight ? '#0E6245' : '#34D399' }} />
-              <Typography variant="caption" sx={{ fontWeight: 700, color: isLight ? '#0E6245' : '#34D399' }}>
+              <SportsEsportsOutlined sx={{ fontSize: 17, color: isLight ? '#059669' : '#34D399' }} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: isLight ? '#059669' : '#34D399' }}>
                 Product Tour
               </Typography>
               <Box
@@ -442,13 +442,13 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 cursor: 'pointer',
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
-                  borderColor: isLight ? '#0E6245' : '#10b981',
-                  bgcolor: isLight ? 'rgba(14, 98, 69, 0.06)' : 'rgba(16, 185, 129, 0.08)',
+                  borderColor: isLight ? '#059669' : '#10b981',
+                  bgcolor: isLight ? 'rgba(5, 150, 105, 0.06)' : 'rgba(16, 185, 129, 0.08)',
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                 },
               }}
             >
-              <Typography variant="caption" sx={{ color: isLight ? '#0E6245' : '#34d399', fontWeight: 700 }}>
+              <Typography variant="caption" sx={{ color: isLight ? '#059669' : '#34d399', fontWeight: 700 }}>
                 ⭐ 880
               </Typography>
               <Typography variant="caption" sx={{ color: '#f59e0b', fontWeight: 700 }}>
@@ -468,7 +468,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
                   bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(255, 255, 255, 0.10)',
-                  borderColor: isLight ? '#0E6245' : 'rgba(255, 255, 255, 0.20)',
+                  borderColor: isLight ? '#059669' : 'rgba(255, 255, 255, 0.20)',
                 },
               }}
             >
@@ -491,7 +491,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
                   bgcolor: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(255, 255, 255, 0.10)',
-                  borderColor: isLight ? '#0E6245' : 'rgba(255, 255, 255, 0.20)',
+                  borderColor: isLight ? '#059669' : 'rgba(255, 255, 255, 0.20)',
                 },
               }}
             >
@@ -524,7 +524,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 '&:hover': {
-                  borderColor: isLight ? '#0E6245' : '#10b981',
+                  borderColor: isLight ? '#059669' : '#10b981',
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
                 },
               }}
@@ -535,7 +535,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 sx={{
                   width: 32,
                   height: 32,
-                  bgcolor: isLight ? '#0E6245' : theme.palette.primary.main,
+                  bgcolor: isLight ? '#059669' : theme.palette.primary.main,
                   fontSize: '0.85rem',
                   fontWeight: 700,
                 }}
@@ -580,10 +580,10 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: isLight ? '#0E6245' : theme.palette.primary.main,
+                  bgcolor: isLight ? '#059669' : theme.palette.primary.main,
                   fontSize: '0.95rem',
                   fontWeight: 700,
-                  border: `2px solid ${isLight ? '#0E6245' : '#10b981'}`,
+                  border: `2px solid ${isLight ? '#059669' : '#10b981'}`,
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
                 }}
               >
@@ -601,7 +601,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                     fontFamily: 'monospace',
                     fontWeight: 700,
                     fontSize: '0.72rem',
-                    color: isLight ? '#0E6245' : '#34D399',
+                    color: isLight ? '#059669' : '#34D399',
                     mt: 0.25,
                   }}
                 >
@@ -622,13 +622,13 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 px: 1.25,
                 py: 0.6,
                 borderRadius: 2,
-                bgcolor: isLight ? 'rgba(14, 98, 69, 0.06)' : 'rgba(16, 185, 129, 0.08)',
-                border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(52, 211, 153, 0.2)'}`,
+                bgcolor: isLight ? 'rgba(5, 150, 105, 0.06)' : 'rgba(16, 185, 129, 0.08)',
+                border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(52, 211, 153, 0.2)'}`,
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                 <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
-                <Typography variant="caption" fontWeight={700} sx={{ fontSize: '0.68rem', color: isLight ? '#0E6245' : '#34D399' }}>
+                <Typography variant="caption" fontWeight={700} sx={{ fontSize: '0.68rem', color: isLight ? '#059669' : '#34D399' }}>
                   Personal Account
                 </Typography>
               </Box>
@@ -647,10 +647,10 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               my: 0.35,
               py: 0.85,
               px: 1.5,
-              '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+              '&:hover': { bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
             }}
           >
-            <ListItemIcon><PersonIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
+            <ListItemIcon><PersonIcon fontSize="small" sx={{ color: isLight ? '#059669' : '#34D399' }} /></ListItemIcon>
             <ListItemText
               primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Profile & Identity</Typography>}
             />
@@ -663,10 +663,10 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               my: 0.35,
               py: 0.85,
               px: 1.5,
-              '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+              '&:hover': { bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
             }}
           >
-            <ListItemIcon><SettingsIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
+            <ListItemIcon><SettingsIcon fontSize="small" sx={{ color: isLight ? '#059669' : '#34D399' }} /></ListItemIcon>
             <ListItemText
               primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Account Settings</Typography>}
             />
@@ -679,10 +679,10 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               my: 0.35,
               py: 0.85,
               px: 1.5,
-              '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+              '&:hover': { bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
             }}
           >
-            <ListItemIcon><AssessmentIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
+            <ListItemIcon><AssessmentIcon fontSize="small" sx={{ color: isLight ? '#059669' : '#34D399' }} /></ListItemIcon>
             <ListItemText
               primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Reports & Exports</Typography>}
             />
@@ -696,10 +696,10 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 my: 0.35,
                 py: 0.85,
                 px: 1.5,
-                '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+                '&:hover': { bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
               }}
             >
-              <ListItemIcon><AdminIcon fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
+              <ListItemIcon><AdminIcon fontSize="small" sx={{ color: isLight ? '#059669' : '#34D399' }} /></ListItemIcon>
               <ListItemText
                 primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Admin Console</Typography>}
               />
@@ -715,10 +715,10 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               my: 0.35,
               py: 0.85,
               px: 1.5,
-              '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
+              '&:hover': { bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)' },
             }}
           >
-            <ListItemIcon><SportsEsportsOutlined fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} /></ListItemIcon>
+            <ListItemIcon><SportsEsportsOutlined fontSize="small" sx={{ color: isLight ? '#059669' : '#34D399' }} /></ListItemIcon>
             <ListItemText
               primary={<Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>Interactive Product Tour</Typography>}
               secondary={<Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>Auto-play walkthrough of real features</Typography>}

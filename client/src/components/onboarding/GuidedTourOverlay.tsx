@@ -292,8 +292,8 @@ export default function GuidedTourOverlay() {
               width: 36,
               height: 36,
               borderRadius: 2.5,
-              bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-              color: isLight ? '#0E6245' : '#34D399',
+              bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+              color: isLight ? '#059669' : '#34D399',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -316,7 +316,7 @@ export default function GuidedTourOverlay() {
             onClick={() => startTour(0, true)}
             startIcon={<PlayArrow sx={{ fontSize: 16 }} />}
             sx={{
-              bgcolor: isLight ? '#0E6245' : '#0E6245',
+              bgcolor: isLight ? '#059669' : '#10B981',
               color: '#FFFFFF',
               fontWeight: 700,
               fontSize: '0.75rem',
@@ -325,7 +325,7 @@ export default function GuidedTourOverlay() {
               px: 1.5,
               py: 0.6,
               boxShadow: 'none',
-              '&:hover': { bgcolor: '#094A34' },
+              '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
             }}
           >
             Start Tour
@@ -508,9 +508,9 @@ export default function GuidedTourOverlay() {
                     fontWeight: 750,
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
-                    bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.14)',
-                    color: isLight ? '#0E6245' : '#34D399',
-                    border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(52, 211, 153, 0.25)'}`,
+                    bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.14)',
+                    color: isLight ? '#059669' : '#34D399',
+                    border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(52, 211, 153, 0.25)'}`,
                   }}
                 />
               </Box>
@@ -528,13 +528,13 @@ export default function GuidedTourOverlay() {
                     textTransform: 'none',
                     borderRadius: 9999,
                     px: 1.25,
-                    color: isAutoPlay ? (isLight ? '#0E6245' : '#34D399') : 'text.secondary',
+                    color: isAutoPlay ? (isLight ? '#059669' : '#34D399') : 'text.secondary',
                     bgcolor: isAutoPlay
-                      ? isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)'
+                      ? isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)'
                       : 'transparent',
-                    border: `1px solid ${isAutoPlay ? (isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)') : (isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)')}`,
+                    border: `1px solid ${isAutoPlay ? (isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(52, 211, 153, 0.25)') : (isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)')}`,
                     '&:hover': {
-                      bgcolor: isLight ? 'rgba(14, 98, 69, 0.12)' : 'rgba(16, 185, 129, 0.18)',
+                      bgcolor: isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.18)',
                     },
                   }}
                 >
@@ -574,7 +574,7 @@ export default function GuidedTourOverlay() {
               variant="caption"
               sx={{
                 display: 'block',
-                color: isLight ? '#0E6245' : '#34D399',
+                color: isLight ? '#059669' : '#34D399',
                 fontWeight: 700,
                 fontSize: '0.725rem',
                 mb: 1.25,
@@ -671,8 +671,8 @@ export default function GuidedTourOverlay() {
                       px: 1.4,
                       py: 0.55,
                       '&:hover': {
-                        borderColor: isLight ? '#0E6245' : '#10B981',
-                        color: isLight ? '#0E6245' : '#34D399',
+                        borderColor: isLight ? '#059669' : '#10B981',
+                        color: isLight ? '#059669' : '#34D399',
                       },
                     }}
                   >
@@ -690,12 +690,12 @@ export default function GuidedTourOverlay() {
                     textTransform: 'none',
                     fontSize: '0.78rem',
                     fontWeight: 700,
-                    bgcolor: isLight ? '#0E6245' : '#0E6245',
+                    bgcolor: isLight ? '#059669' : '#10B981',
                     color: '#FFFFFF',
                     px: 1.8,
                     py: 0.6,
                     boxShadow: 'none',
-                    '&:hover': { bgcolor: '#094A34' },
+                    '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
                   }}
                 >
                   {tourStepIndex === totalTourSteps - 1 ? 'Finish Tour' : 'Next Quest'}

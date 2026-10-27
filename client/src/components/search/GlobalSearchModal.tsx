@@ -340,7 +340,7 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
             gap: 1.5,
           }}
         >
-          <SearchIcon sx={{ color: isLight ? '#0E6245' : '#10B981', fontSize: { xs: 22, sm: 24 } }} />
+          <SearchIcon sx={{ color: isLight ? '#059669' : '#10B981', fontSize: { xs: 22, sm: 24 } }} />
           <InputBase
             inputRef={inputRef}
             fullWidth
@@ -419,14 +419,14 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
                   fontSize: '0.75rem',
                   bgcolor: active
                     ? isLight
-                      ? 'rgba(14, 98, 69, 0.12)'
+                      ? 'rgba(5, 150, 105, 0.12)'
                       : 'rgba(16, 185, 129, 0.18)'
                     : 'transparent',
-                  color: active ? (isLight ? '#0E6245' : '#10B981') : 'text.secondary',
+                  color: active ? (isLight ? '#059669' : '#10B981') : 'text.secondary',
                   border: `1px solid ${
                     active
                       ? isLight
-                        ? 'rgba(14, 98, 69, 0.25)'
+                        ? 'rgba(5, 150, 105, 0.25)'
                         : 'rgba(16, 185, 129, 0.35)'
                       : isLight
                       ? 'rgba(0, 0, 0, 0.06)'
@@ -466,13 +466,13 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
                     transition: 'all 0.12s ease',
                     bgcolor: isSelected
                       ? isLight
-                        ? 'rgba(14, 98, 69, 0.08)'
+                        ? 'rgba(5, 150, 105, 0.08)'
                         : 'rgba(16, 185, 129, 0.12)'
                       : 'transparent',
                     border: `1px solid ${
                       isSelected
                         ? isLight
-                          ? 'rgba(14, 98, 69, 0.20)'
+                          ? 'rgba(5, 150, 105, 0.20)'
                           : 'rgba(16, 185, 129, 0.25)'
                         : 'transparent'
                     }`,
@@ -493,7 +493,7 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
                           <Typography
                             variant="body2"
                             fontWeight={700}
-                            sx={{ color: isLight ? '#0E6245' : '#10B981', ml: 1 }}
+                            sx={{ color: isLight ? '#059669' : '#10B981', ml: 1 }}
                           >
                             {item.amount}
                           </Typography>
@@ -577,7 +577,7 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
           <Typography
             variant="caption"
             sx={{
-              color: isLight ? '#0E6245' : '#10B981',
+              color: isLight ? '#059669' : '#10B981',
               fontWeight: 700,
               fontSize: '0.7rem',
               letterSpacing: '0.04em',

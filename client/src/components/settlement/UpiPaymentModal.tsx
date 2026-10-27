@@ -140,8 +140,8 @@ export default function UpiPaymentModal({
             sx={{
               p: 0.75,
               borderRadius: 2,
-              bgcolor: alpha('#0E6245', 0.1),
-              color: '#0E6245',
+              bgcolor: alpha('#10B981', 0.12),
+              color: '#10B981',
               display: 'flex',
             }}
           >
@@ -166,7 +166,7 @@ export default function UpiPaymentModal({
         <Typography variant="body2" color="text.secondary">
           Paying <strong>{payeeName}</strong>
         </Typography>
-        <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : '#0E6245', my: 1, letterSpacing: '-0.02em' }}>
+        <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#34D399' : '#059669', my: 1, letterSpacing: '-0.02em' }}>
           ₹{amount.toFixed(0)}
         </Typography>
 
@@ -302,11 +302,12 @@ export default function UpiPaymentModal({
             borderRadius: 2.5,
             fontWeight: 600,
             textTransform: 'none',
-            bgcolor: '#0E6245',
+            bgcolor: isLight ? '#059669' : '#10B981',
             color: '#FFFFFF',
-            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)',
+            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20)',
             '&:hover': {
-              bgcolor: '#094A34',
+              bgcolor: isLight ? '#047857' : '#059669',
+              boxShadow: '0 6px 20px rgba(16, 185, 129, 0.45)',
             },
           }}
         >

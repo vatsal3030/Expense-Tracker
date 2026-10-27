@@ -139,7 +139,7 @@ export default function CurrencyPage() {
         >
           <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-              <CurrencyExchange sx={{ color: isLight ? '#0E6245' : '#34D399', fontSize: 28 }} />
+              <CurrencyExchange sx={{ color: isLight ? '#059669' : '#34D399', fontSize: 28 }} />
               <Typography variant="h6" fontWeight={800}>Convert Currency</Typography>
             </Box>
 
@@ -167,12 +167,12 @@ export default function CurrencyPage() {
                 <IconButton
                   onClick={handleSwap}
                   sx={{
-                    bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-                    border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
-                    '&:hover': { bgcolor: isLight ? 'rgba(14, 98, 69, 0.15)' : 'rgba(16, 185, 129, 0.2)' },
+                    bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                    border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`,
+                    '&:hover': { bgcolor: isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(16, 185, 129, 0.2)' },
                   }}
                 >
-                  <SwapHoriz sx={{ color: isLight ? '#0E6245' : '#34D399' }} />
+                  <SwapHoriz sx={{ color: isLight ? '#059669' : '#34D399' }} />
                 </IconButton>
               </Grid>
               <Grid size={{ xs: 5, sm: 3 }}>
@@ -192,13 +192,13 @@ export default function CurrencyPage() {
             {result && (
               <Box sx={{
                 mt: 3, p: 2.5, borderRadius: 3,
-                bgcolor: isLight ? 'rgba(14, 98, 69, 0.04)' : 'rgba(16, 185, 129, 0.06)',
-                border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.12)' : 'rgba(16, 185, 129, 0.15)'}`,
+                bgcolor: isLight ? 'rgba(5, 150, 105, 0.04)' : 'rgba(16, 185, 129, 0.06)',
+                border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.15)'}`,
               }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontSize: '0.8rem' }}>
                   {FLAG_EMOJI[result.from]} {result.fromSymbol}{Number(result.amount).toLocaleString('en-IN')} {result.from}
                 </Typography>
-                <Typography variant="h4" fontWeight={900} sx={{ color: isLight ? '#0E6245' : '#34D399', lineHeight: 1.2 }}>
+                <Typography variant="h4" fontWeight={900} sx={{ color: isLight ? '#059669' : '#34D399', lineHeight: 1.2 }}>
                   {FLAG_EMOJI[result.to]} {result.toSymbol}{Number(result.converted).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                   <Typography component="span" variant="body1" fontWeight={600} sx={{ ml: 1, color: 'text.secondary' }}>
                     {result.to}
@@ -218,7 +218,15 @@ export default function CurrencyPage() {
           <Grid container spacing={2}>
             {[1, 2, 3, 4].map((i) => (
               <Grid size={{ xs: 6, sm: 3 }} key={i}>
-                <Card className="glass-secondary"><CardContent><Skeleton height={60} /></CardContent></Card>
+                <Card className="glass-secondary" sx={{ borderRadius: 3, p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Skeleton variant="circular" width={22} height={22} animation="wave" />
+                    <Skeleton variant="text" width={14} animation="wave" />
+                    <Skeleton variant="circular" width={22} height={22} animation="wave" />
+                  </Box>
+                  <Skeleton variant="text" width="60%" height={16} animation="wave" />
+                  <Skeleton variant="text" width="80%" height={26} animation="wave" sx={{ mt: 0.5 }} />
+                </Card>
               </Grid>
             ))}
           </Grid>
@@ -240,7 +248,7 @@ export default function CurrencyPage() {
                       border: `1px solid ${theme.palette.divider}`,
                       boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.03)' : '0 4px 16px rgba(0,0,0,0.3)',
                       transition: 'all 0.2s ease',
-                      '&:hover': { borderColor: isLight ? '#0E6245' : '#34D399' },
+                      '&:hover': { borderColor: isLight ? '#059669' : '#34D399' },
                     }}
                     onClick={() => {
                       setFromCurrency(pair.from);
@@ -256,7 +264,7 @@ export default function CurrencyPage() {
                       <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                         {pair.from}/{pair.to}
                       </Typography>
-                      <Typography variant="body1" fontWeight={800} sx={{ color: isLight ? '#0E6245' : '#34D399' }}>
+                      <Typography variant="body1" fontWeight={800} sx={{ color: isLight ? '#059669' : '#34D399' }}>
                         {crossRate ? formatRate(crossRate) : '—'}
                       </Typography>
                     </CardContent>

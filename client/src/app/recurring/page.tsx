@@ -243,10 +243,32 @@ export default function RecurringPage() {
 
         {/* Rules List */}
         {loading ? (
-          <Grid container spacing={2.5}>
-            {[1, 2, 3].map((i) => (
+          <Grid container spacing={{ xs: 1.5, sm: 2.5, md: 3 }}>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
-                <Card className="glass-secondary"><CardContent><Skeleton height={130} /></CardContent></Card>
+                <Card
+                  className="glass-secondary glass-specular-top"
+                  sx={{ borderRadius: 3.5, p: 3 }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Skeleton variant="rounded" width={48} height={48} sx={{ borderRadius: 2.75 }} animation="wave" />
+                      <Box>
+                        <Skeleton variant="text" width={110} height={20} animation="wave" />
+                        <Skeleton variant="text" width={80} height={14} sx={{ mt: 0.5 }} animation="wave" />
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <Skeleton variant="circular" width={28} height={28} animation="wave" />
+                      <Skeleton variant="circular" width={28} height={28} animation="wave" />
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <Skeleton variant="text" width={90} height={32} animation="wave" />
+                    <Skeleton variant="rounded" width={65} height={22} sx={{ borderRadius: 1 }} animation="wave" />
+                  </Box>
+                  <Skeleton variant="text" width={140} height={16} animation="wave" />
+                </Card>
               </Grid>
             ))}
           </Grid>

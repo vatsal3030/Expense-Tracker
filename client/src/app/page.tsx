@@ -1420,7 +1420,7 @@ export default function LandingPage() {
                       : qrTab === 'GROUP'
                       ? 'https://fairshare.app/groups/join/demo-goa-trip'
                       : 'https://fairshare.app/friends/connect/shadow-ninja'
-                  )}&color=0e6245&bgcolor=ffffff&margin=8`}
+                  )}&color=059669&bgcolor=ffffff&margin=8`}
                   alt="QR Code"
                   className="w-44 h-44 object-contain"
                 />

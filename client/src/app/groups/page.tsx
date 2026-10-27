@@ -1076,7 +1076,7 @@ export default function GroupsPage() {
                   fontWeight={700}
                   sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1, color: 'text.primary' }}
                 >
-                  <Security sx={{ fontSize: 18, color: '#0E6245' }} />
+                  <Security sx={{ fontSize: 18, color: isLight ? '#059669' : '#10B981' }} />
                   Access & Security Settings
                 </Typography>
 

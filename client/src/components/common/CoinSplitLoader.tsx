@@ -38,7 +38,7 @@ export default function CoinSplitLoader({
     lg: { size: 92, stroke: 3.5, fontSize: '1rem' },
   }[size];
 
-  const primaryColor = theme.palette.mode === 'light' ? '#0E6245' : '#10B981';
+  const primaryColor = theme.palette.mode === 'light' ? '#059669' : '#10B981';
 
   const content = (
     <Box

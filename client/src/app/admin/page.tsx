@@ -417,9 +417,21 @@ export default function AdminPage() {
                   {loadingUsers ? (
                     [1, 2, 3, 4, 5].map((i) => (
                       <TableRow key={i}>
-                        <TableCell colSpan={7} sx={{ py: 2 }}>
-                          <Skeleton height={28} />
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Skeleton variant="circular" width={36} height={36} animation="wave" />
+                            <Box>
+                              <Skeleton variant="text" width={100} height={18} animation="wave" />
+                              <Skeleton variant="text" width={70} height={14} animation="wave" />
+                            </Box>
+                          </Box>
                         </TableCell>
+                        <TableCell><Skeleton variant="text" width={130} height={18} animation="wave" /></TableCell>
+                        <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: 1 }} animation="wave" /></TableCell>
+                        <TableCell><Skeleton variant="rounded" width={55} height={22} sx={{ borderRadius: 1 }} animation="wave" /></TableCell>
+                        <TableCell><Skeleton variant="text" width={40} height={18} animation="wave" /></TableCell>
+                        <TableCell><Skeleton variant="text" width={80} height={18} animation="wave" /></TableCell>
+                        <TableCell align="right"><Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} animation="wave" /></TableCell>
                       </TableRow>
                     ))
                   ) : users.length === 0 ? (

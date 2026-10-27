@@ -193,9 +193,9 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
               bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
               border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)'}`,
               '&:hover': {
-                bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-                color: isLight ? '#0E6245' : '#34D399',
-                borderColor: isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(16, 185, 129, 0.3)',
+                bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                color: isLight ? '#059669' : '#34D399',
+                borderColor: isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(16, 185, 129, 0.3)',
               },
             }}
           >
@@ -264,20 +264,20 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                         justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                         bgcolor: active
                           ? isLight
-                            ? 'rgba(14, 98, 69, 0.08)'
+                            ? 'rgba(5, 150, 105, 0.08)'
                             : 'rgba(16, 185, 129, 0.14)'
                           : 'transparent',
                         color: active
                           ? isLight
-                            ? '#0E6245'
+                            ? '#059669'
                             : '#34D399'
                           : 'text.secondary',
                         border: active
-                          ? `1px solid ${isLight ? 'rgba(14, 98, 69, 0.22)' : 'rgba(16, 185, 129, 0.32)'}`
+                          ? `1px solid ${isLight ? 'rgba(5, 150, 105, 0.22)' : 'rgba(16, 185, 129, 0.32)'}`
                           : '1px solid transparent',
                         boxShadow: active
                           ? isLight
-                            ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(14, 98, 69, 0.06)'
+                            ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(5, 150, 105, 0.06)'
                             : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 10px rgba(16, 185, 129, 0.18)'
                           : 'none',
                         backdropFilter: active ? 'blur(14px)' : 'none',
@@ -288,20 +288,20 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                           width: 3.5,
                           height: 18,
                           borderRadius: 2,
-                          bgcolor: isLight ? '#0E6245' : '#34D399',
+                          bgcolor: isLight ? '#059669' : '#34D399',
                           boxShadow: isLight ? 'none' : '0 0 8px #10B981',
                         } : undefined,
                         '&:hover': {
                           bgcolor: active
                             ? isLight
-                              ? 'rgba(14, 98, 69, 0.12)'
+                              ? 'rgba(5, 150, 105, 0.12)'
                               : 'rgba(16, 185, 129, 0.20)'
                             : isLight
                             ? 'rgba(0, 0, 0, 0.03)'
                             : 'rgba(255, 255, 255, 0.04)',
                           color: active
                             ? isLight
-                              ? '#0E6245'
+                              ? '#059669'
                               : '#34D399'
                             : isLight
                             ? '#1E293B'
@@ -310,7 +310,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                         '&.Mui-focusVisible, &:focus-visible': {
                           outline: 'none',
                           bgcolor: active
-                            ? (isLight ? 'rgba(14, 98, 69, 0.12)' : 'rgba(16, 185, 129, 0.20)')
+                            ? (isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.20)')
                             : 'transparent',
                         },
                         transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -320,7 +320,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                         sx={{
                           minWidth: collapsed && !isMobile ? 0 : 36,
                           justifyContent: 'center',
-                          color: active ? (isLight ? '#0E6245' : '#34D399') : 'inherit',
+                          color: active ? (isLight ? '#059669' : '#34D399') : 'inherit',
                         }}
                       >
                         {item.icon}
@@ -336,6 +336,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                                   fontSize: '0.85rem',
                                   color: 'inherit',
                                   letterSpacing: '-0.01em',
+                                  fontVariantNumeric: 'tabular-nums',
                                 }}
                               >
                                 {item.label}
@@ -348,8 +349,8 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                                     height: 18,
                                     fontSize: '0.625rem',
                                     fontWeight: 700,
-                                    bgcolor: isLight ? 'rgba(14, 98, 69, 0.1)' : 'rgba(16, 185, 129, 0.15)',
-                                    color: isLight ? '#0E6245' : '#10B981',
+                                    bgcolor: isLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.15)',
+                                    color: isLight ? '#059669' : '#10B981',
                                     borderRadius: 1,
                                     px: 0.5,
                                   }}
@@ -398,20 +399,20 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                   color: active
                     ? isLight
-                      ? '#0E6245'
+                      ? '#059669'
                       : '#34D399'
                     : 'text.secondary',
                   bgcolor: active
                     ? isLight
-                      ? 'rgba(14, 98, 69, 0.08)'
+                      ? 'rgba(5, 150, 105, 0.08)'
                       : 'rgba(16, 185, 129, 0.14)'
                     : 'transparent',
                   border: active
-                    ? `1px solid ${isLight ? 'rgba(14, 98, 69, 0.22)' : 'rgba(16, 185, 129, 0.32)'}`
+                    ? `1px solid ${isLight ? 'rgba(5, 150, 105, 0.22)' : 'rgba(16, 185, 129, 0.32)'}`
                     : '1px solid transparent',
                   boxShadow: active
                     ? isLight
-                      ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(14, 98, 69, 0.06)'
+                      ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(5, 150, 105, 0.06)'
                       : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 10px rgba(16, 185, 129, 0.18)'
                     : 'none',
                   '&::before': active ? {
@@ -421,23 +422,23 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                     width: 3.5,
                     height: 18,
                     borderRadius: 2,
-                    bgcolor: isLight ? '#0E6245' : '#34D399',
+                    bgcolor: isLight ? '#059669' : '#34D399',
                     boxShadow: isLight ? 'none' : '0 0 8px #10B981',
                   } : undefined,
                   '&:hover': {
                     bgcolor: active
                       ? isLight
-                        ? 'rgba(14, 98, 69, 0.12)'
+                        ? 'rgba(5, 150, 105, 0.12)'
                         : 'rgba(16, 185, 129, 0.20)'
                       : isLight
                       ? 'rgba(0, 0, 0, 0.03)'
                       : 'rgba(255, 255, 255, 0.04)',
-                    color: active ? (isLight ? '#0E6245' : '#34D399') : (isLight ? '#1E293B' : '#E2E8F0'),
+                    color: active ? (isLight ? '#059669' : '#34D399') : (isLight ? '#1E293B' : '#E2E8F0'),
                   },
                   '&.Mui-focusVisible, &:focus-visible': {
                     outline: 'none',
                     bgcolor: active
-                      ? (isLight ? 'rgba(14, 98, 69, 0.12)' : 'rgba(16, 185, 129, 0.20)')
+                      ? (isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.20)')
                       : 'transparent',
                   },
                   transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -447,7 +448,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   sx={{
                     minWidth: collapsed && !isMobile ? 0 : 36,
                     justifyContent: 'center',
-                    color: active ? (isLight ? '#0E6245' : '#34D399') : 'inherit',
+                    color: active ? (isLight ? '#059669' : '#34D399') : 'inherit',
                   }}
                 >
                   {item.icon}

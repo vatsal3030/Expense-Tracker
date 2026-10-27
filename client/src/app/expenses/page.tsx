@@ -521,8 +521,8 @@ function ExpensesContent() {
                 py: 0.85,
                 px: 2,
                 '&:hover': {
-                  borderColor: isLight ? '#0E6245' : '#10b981',
-                  bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                  borderColor: isLight ? '#059669' : '#10b981',
+                  bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
                 },
               }}
             >
@@ -547,7 +547,7 @@ function ExpensesContent() {
             >
               <MenuItem onClick={handleExportCSV} sx={{ borderRadius: 2, my: 0.25 }}>
                 <ListItemIcon>
-                  <TableChart fontSize="small" sx={{ color: isLight ? '#0E6245' : '#34D399' }} />
+                  <TableChart fontSize="small" sx={{ color: isLight ? '#059669' : '#34D399' }} />
                 </ListItemIcon>
                 <ListItemText primary="Export CSV" secondary="Excel / Spreadsheet (.csv)" />
               </MenuItem>
@@ -948,11 +948,11 @@ function ExpensesContent() {
             position: 'fixed',
             bottom: { xs: 84, sm: 24 },
             right: 20,
-            bgcolor: '#0E6245',
+            bgcolor: isLight ? '#059669' : '#10B981',
             color: '#ffffff',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
+            boxShadow: '0 6px 20px rgba(16, 185, 129, 0.4)',
             zIndex: 1100,
-            '&:hover': { bgcolor: '#094A34' },
+            '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
           }}
         >
           <Add />
@@ -1012,10 +1012,10 @@ function ExpensesContent() {
                   boxShadow: '0 8px 30px rgba(16,185,129,0.12)',
                 }}
               >
-                <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#34D399' : '#0E6245', fontWeight: 700, letterSpacing: '0.04em' }}>
+                <Typography variant="caption" sx={{ color: theme.palette.mode === 'dark' ? '#34D399' : '#059669', fontWeight: 700, letterSpacing: '0.04em' }}>
                   TOTAL EXPENSE AMOUNT
                 </Typography>
-                <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : '#0E6245', my: 0.5 }}>
+                <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : '#059669', my: 0.5 }}>
                   {formatCurrency(Number(selectedExpense.amount))}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
@@ -1051,7 +1051,7 @@ function ExpensesContent() {
                     bgcolor: 'background.paper',
                   }}
                 >
-                  <Avatar src={selectedExpense.paidBy?.avatarUrl} sx={{ width: 36, height: 36, bgcolor: alpha('#0E6245', 0.12), color: '#0E6245' }}>
+                  <Avatar src={selectedExpense.paidBy?.avatarUrl} sx={{ width: 36, height: 36, bgcolor: isLight ? alpha('#059669', 0.12) : alpha('#10B981', 0.15), color: isLight ? '#059669' : '#34D399' }}>
                     {selectedExpense.paidBy?.name?.charAt(0) || 'P'}
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
@@ -1086,7 +1086,7 @@ function ExpensesContent() {
                           <TableRow key={idx}>
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Avatar sx={{ width: 26, height: 26, fontSize: '0.75rem', bgcolor: alpha('#0E6245', 0.1), color: '#0E6245' }}>
+                                <Avatar sx={{ width: 26, height: 26, fontSize: '0.75rem', bgcolor: isLight ? alpha('#059669', 0.1) : alpha('#10B981', 0.15), color: isLight ? '#059669' : '#34D399' }}>
                                   {share.user?.name?.charAt(0) || '?'}
                                 </Avatar>
                                 <Typography variant="body2" fontSize="0.8rem" fontWeight={500}>
@@ -1101,7 +1101,7 @@ function ExpensesContent() {
                             </TableCell>
                             <TableCell align="right">
                               {isPayer ? (
-                                <Chip label="Paid" size="small" sx={{ bgcolor: alpha('#0E6245', 0.1), color: '#0E6245', height: 20, fontSize: '0.65rem', fontWeight: 700 }} />
+                                <Chip label="Paid" size="small" sx={{ bgcolor: isLight ? alpha('#059669', 0.12) : alpha('#10B981', 0.15), color: isLight ? '#059669' : '#34D399', height: 20, fontSize: '0.65rem', fontWeight: 700 }} />
                               ) : (
                                 <Chip label="Owes" size="small" sx={{ bgcolor: alpha('#F59E0B', 0.1), color: '#D97706', height: 20, fontSize: '0.65rem', fontWeight: 700 }} />
                               )}
@@ -1132,13 +1132,14 @@ function ExpensesContent() {
                     setSettleModalOpen(true);
                   }}
                   sx={{
-                    bgcolor: '#0E6245',
+                    bgcolor: isLight ? '#059669' : '#10B981',
                     color: '#ffffff',
                     fontWeight: 600,
                     textTransform: 'none',
                     py: 1,
                     borderRadius: 2.5,
-                    '&:hover': { bgcolor: '#094A34' },
+                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
+                    '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
                   }}
                 >
                   Settle
@@ -1307,13 +1308,14 @@ function ExpensesContent() {
               onClick={handleCreate}
               disabled={submitting || !form.description || !form.amount}
               sx={{
-                bgcolor: '#0E6245',
+                bgcolor: isLight ? '#059669' : '#10B981',
                 color: '#ffffff',
                 fontWeight: 600,
                 textTransform: 'none',
                 borderRadius: 2.5,
                 px: 3,
-                '&:hover': { bgcolor: '#094A34' },
+                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
+                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
               }}
             >
               {submitting ? 'Saving...' : 'Save Expense (0ms)'}

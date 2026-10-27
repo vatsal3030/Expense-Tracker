@@ -362,7 +362,7 @@ export default function SettlementsPage() {
                 transition: 'all 0.2s ease',
                 color: 'text.secondary',
                 '&.Mui-selected': {
-                  color: theme.palette.mode === 'dark' ? '#34D399' : '#0E6245',
+                  color: theme.palette.mode === 'dark' ? '#34D399' : '#059669',
                 },
               },
             }}
@@ -480,13 +480,13 @@ export default function SettlementsPage() {
                                     fontWeight: 700,
                                     bgcolor:
                                       s.status === 'CONFIRMED'
-                                        ? alpha('#0E6245', 0.1)
+                                        ? isLight ? alpha('#059669', 0.12) : alpha('#10B981', 0.15)
                                         : s.status === 'PENDING'
                                         ? alpha('#F59E0B', 0.1)
                                         : alpha('#EF4444', 0.1),
                                     color:
                                       s.status === 'CONFIRMED'
-                                        ? '#0E6245'
+                                        ? isLight ? '#059669' : '#34D399'
                                         : s.status === 'PENDING'
                                         ? '#D97706'
                                         : '#EF4444',
@@ -533,9 +533,10 @@ export default function SettlementsPage() {
                                 textTransform: 'none',
                                 py: 0.5,
                                 px: 1.5,
-                                bgcolor: '#0E6245',
+                                bgcolor: isLight ? '#059669' : '#10B981',
                                 color: '#ffffff',
-                                '&:hover': { bgcolor: '#094A34' },
+                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                                '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
                               }}
                             >
                               Pay UPI
@@ -547,7 +548,7 @@ export default function SettlementsPage() {
                               <IconButton
                                 size="small"
                                 onClick={() => handleConfirm(s.id)}
-                                sx={{ color: '#0E6245', bgcolor: alpha('#0E6245', 0.1) }}
+                                sx={{ color: isLight ? '#059669' : '#34D399', bgcolor: isLight ? alpha('#059669', 0.12) : alpha('#10B981', 0.15) }}
                               >
                                 <Check fontSize="small" />
                               </IconButton>

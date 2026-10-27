@@ -81,7 +81,7 @@ export default function CookieConsentBanner() {
         <Link
           href="/privacy"
           style={{
-            color: isLight ? '#0E6245' : '#10B981',
+            color: isLight ? '#059669' : '#10B981',
             textDecoration: 'underline',
             fontWeight: 500,
           }}
@@ -135,14 +135,14 @@ export default function CookieConsentBanner() {
             px: 2.75,
             py: 0.65,
             color: '#FFFFFF',
-            bgcolor: isLight ? '#0E6245' : '#10B981',
+            bgcolor: isLight ? '#059669' : '#10B981',
             boxShadow: isLight
-              ? '0 2px 8px rgba(14, 98, 69, 0.25)'
+              ? '0 2px 8px rgba(5, 150, 105, 0.25)'
               : '0 2px 12px rgba(16, 185, 129, 0.35)',
             '&:hover': {
-              bgcolor: isLight ? '#0b4f37' : '#059669',
+              bgcolor: isLight ? '#047857' : '#059669',
               boxShadow: isLight
-                ? '0 4px 14px rgba(14, 98, 69, 0.35)'
+                ? '0 4px 14px rgba(5, 150, 105, 0.35)'
                 : '0 4px 18px rgba(16, 185, 129, 0.45)',
             },
           }}

@@ -279,7 +279,7 @@ export default function BudgetsPage() {
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Speed sx={{ color: isLight ? '#0E6245' : '#34D399', fontSize: 22 }} />
+                  <Speed sx={{ color: isLight ? '#059669' : '#34D399', fontSize: 22 }} />
                   <Typography variant="subtitle1" fontWeight={800}>Burn Rate Insights</Typography>
                 </Box>
                 <Chip label="Live" size="small" sx={{ height: 20, fontSize: '0.625rem', fontWeight: 700, bgcolor: 'rgba(16, 185, 129, 0.12)', color: '#10B981' }} />
@@ -310,7 +310,7 @@ export default function BudgetsPage() {
                         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                           <Box>
                             <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>Daily Safe Spend</Typography>
-                            <Typography variant="body2" fontWeight={800} sx={{ color: isLight ? '#0E6245' : '#34D399' }}>
+                            <Typography variant="body2" fontWeight={800} sx={{ color: isLight ? '#059669' : '#34D399' }}>
                               {formatCurrency(br.dailySafeSpend)}/day
                             </Typography>
                           </Box>

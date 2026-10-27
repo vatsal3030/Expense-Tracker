@@ -62,9 +62,9 @@ export default function TermsOfServicePage() {
               label="Legal Agreement"
               size="small"
               sx={{
-                bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(52, 211, 153, 0.12)',
-                color: isLight ? '#0E6245' : '#34D399',
-                border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
+                bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(52, 211, 153, 0.12)',
+                color: isLight ? '#059669' : '#34D399',
+                border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
                 fontWeight: 700,
                 fontSize: '0.72rem',
               }}

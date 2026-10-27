@@ -1758,9 +1758,9 @@ function SettingsContent() {
                       sx={{
                         fontSize: '0.68rem',
                         fontWeight: 700,
-                        bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.12)',
-                        color: isLight ? '#0E6245' : '#34D399',
-                        border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
+                        bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                        color: isLight ? '#059669' : '#34D399',
+                        border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
                       }}
                     />
                   </Box>
@@ -1786,8 +1786,8 @@ function SettingsContent() {
                         color: 'inherit',
                         transition: 'all 0.2s ease',
                         '&:hover': {
-                          borderColor: isLight ? '#0E6245' : '#10B981',
-                          bgcolor: isLight ? 'rgba(14, 98, 69, 0.05)' : 'rgba(16, 185, 129, 0.08)',
+                          borderColor: isLight ? '#059669' : '#10B981',
+                          bgcolor: isLight ? 'rgba(5, 150, 105, 0.05)' : 'rgba(16, 185, 129, 0.08)',
                           transform: 'translateY(-1px)',
                         },
                       }}
@@ -1801,8 +1801,8 @@ function SettingsContent() {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            bgcolor: isLight ? 'rgba(14, 98, 69, 0.1)' : 'rgba(16, 185, 129, 0.15)',
-                            color: isLight ? '#0E6245' : '#34D399',
+                            bgcolor: isLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.15)',
+                            color: isLight ? '#059669' : '#34D399',
                           }}
                         >
                           <Gavel sx={{ fontSize: 18 }} />

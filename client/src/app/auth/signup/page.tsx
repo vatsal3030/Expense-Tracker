@@ -252,9 +252,9 @@ function SignupForm() {
                 height: 20,
                 fontSize: '0.65rem',
                 fontWeight: 700,
-                bgcolor: isLight ? 'rgba(14, 98, 69, 0.08)' : 'rgba(16, 185, 129, 0.1)',
-                color: isLight ? '#0E6245' : '#34D399',
-                border: `1px solid ${isLight ? 'rgba(14, 98, 69, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
+                bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.1)',
+                color: isLight ? '#059669' : '#34D399',
+                border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.2)' : 'rgba(52, 211, 153, 0.25)'}`,
                 borderRadius: 1.5,
               }}
             />
@@ -363,7 +363,7 @@ function SignupForm() {
                         mr: 0.5,
                         color: isLight ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.35)',
                         '&.Mui-checked': {
-                          color: isLight ? '#0E6245' : '#10B981',
+                          color: isLight ? '#059669' : '#10B981',
                         },
                       }}
                     />
@@ -376,7 +376,7 @@ function SignupForm() {
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
-                          color: isLight ? '#0E6245' : '#34D399',
+                          color: isLight ? '#059669' : '#34D399',
                           fontWeight: 700,
                           textDecoration: 'underline',
                         }}
@@ -389,7 +389,7 @@ function SignupForm() {
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
-                          color: isLight ? '#0E6245' : '#34D399',
+                          color: isLight ? '#059669' : '#34D399',
                           fontWeight: 700,
                           textDecoration: 'underline',
                         }}
@@ -421,8 +421,8 @@ function SignupForm() {
                   textTransform: 'none',
                   transition: 'all 0.18s ease',
                   '&:hover': {
-                    borderColor: isLight ? '#0E6245' : '#10B981',
-                    bgcolor: isLight ? 'rgba(14, 98, 69, 0.04)' : 'rgba(16, 185, 129, 0.08)',
+                    borderColor: isLight ? '#059669' : '#10B981',
+                    bgcolor: isLight ? 'rgba(5, 150, 105, 0.04)' : 'rgba(16, 185, 129, 0.08)',
                   },
                 }}
               >
