@@ -584,6 +584,7 @@ expenseRouter.put(
       appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
       appCache.invalidatePrefix('settlements:');
       if (existing.groupId) {
+        appCache.invalidatePrefix(`group:${existing.groupId}`);
         appCache.invalidatePrefix(`groups:${existing.groupId}`);
         appCache.invalidatePrefix('groups:list:');
       }
@@ -675,6 +676,7 @@ expenseRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): P
     appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
     appCache.invalidatePrefix('settlements:');
     if (existing.groupId) {
+      appCache.invalidatePrefix(`group:${existing.groupId}`);
       appCache.invalidatePrefix(`groups:${existing.groupId}`);
       appCache.invalidatePrefix('groups:list:');
     }

@@ -1253,14 +1253,27 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Concurrently fetch expenses, settlements, members, and group config
-    const [expenses, settlements, members, groupRecord] = await Promise.all([
-      prisma.expense.findMany({
+    // Concurrently fetch aggregate database sums, members, and group config (sub-50ms)
+    const [paidSums, shareSums, payerSettlementSums, payeeSettlementSums, members, groupRecord] = await Promise.all([
+      prisma.expense.groupBy({
+        by: ['paidById'],
         where: { groupId: id, isDeleted: false },
-        include: { shares: true },
+        _sum: { amount: true },
       }),
-      prisma.settlement.findMany({
+      prisma.expenseShare.groupBy({
+        by: ['userId'],
+        where: { expense: { groupId: id, isDeleted: false } },
+        _sum: { amount: true },
+      }),
+      prisma.settlement.groupBy({
+        by: ['payerId'],
         where: { groupId: id, status: 'CONFIRMED' },
+        _sum: { amount: true },
+      }),
+      prisma.settlement.groupBy({
+        by: ['payeeId'],
+        where: { groupId: id, status: 'CONFIRMED' },
+        _sum: { amount: true },
       }),
       prisma.groupMember.findMany({
         where: { groupId: id },
@@ -1272,23 +1285,23 @@ groupRouter.get('/:id/balances', async (req: AuthenticatedRequest, res: Response
       }),
     ]);
 
-    // Calculate net balances
+    // Calculate net balances mathematically in O(M) time where M is members (typically 2-20)
     const balanceMap: Record<string, number> = {};
 
-    for (const expense of expenses) {
-      const paidAmount = Number(expense.amount);
-      balanceMap[expense.paidById] = (balanceMap[expense.paidById] || 0) + paidAmount;
-
-      for (const share of expense.shares) {
-        const shareAmount = Number(share.amount);
-        balanceMap[share.userId] = (balanceMap[share.userId] || 0) - shareAmount;
-      }
+    for (const item of paidSums) {
+      balanceMap[item.paidById] = (balanceMap[item.paidById] || 0) + Number(item._sum.amount || 0);
     }
 
-    for (const settlement of settlements) {
-      const amount = Number(settlement.amount);
-      balanceMap[settlement.payerId] = (balanceMap[settlement.payerId] || 0) + amount;
-      balanceMap[settlement.payeeId] = (balanceMap[settlement.payeeId] || 0) - amount;
+    for (const item of shareSums) {
+      balanceMap[item.userId] = (balanceMap[item.userId] || 0) - Number(item._sum.amount || 0);
+    }
+
+    for (const item of payerSettlementSums) {
+      balanceMap[item.payerId] = (balanceMap[item.payerId] || 0) + Number(item._sum.amount || 0);
+    }
+
+    for (const item of payeeSettlementSums) {
+      balanceMap[item.payeeId] = (balanceMap[item.payeeId] || 0) - Number(item._sum.amount || 0);
     }
 
     const balances = members.map((member) => ({

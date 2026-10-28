@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, TextField, IconButton,
   Stack, Chip, Avatar, Tooltip, InputAdornment, Table, TableBody,
@@ -24,7 +24,7 @@ export interface BillLineItem {
   assignedMemberIds: string[];
 }
 
-export default function SplitBillPage() {
+function SplitBillContent() {
   const theme = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -738,5 +738,21 @@ export default function SplitBillPage() {
         </Snackbar>
       </Box>
     </AppLayout>
+  );
+}
+
+export default function SplitBillPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppLayout>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+            <CircularProgress size={36} sx={{ color: '#10B981' }} />
+          </Box>
+        </AppLayout>
+      }
+    >
+      <SplitBillContent />
+    </Suspense>
   );
 }

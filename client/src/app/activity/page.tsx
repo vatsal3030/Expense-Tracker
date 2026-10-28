@@ -254,23 +254,62 @@ export default function ActivityPage() {
                             </Typography>
                           }
                           secondary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
-                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>
-                                {formatDate(activity.createdAt)}
-                              </Typography>
-                              {activity.group && (
-                                <Chip
-                                  label={activity.group.name}
-                                  size="small"
-                                  className="glass-tertiary"
-                                  sx={{
-                                    height: 18,
-                                    fontSize: '0.65rem',
-                                    fontWeight: 600,
-                                    color: 'text.secondary',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                                  }}
-                                />
+                            <Box sx={{ mt: 0.25 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>
+                                  {formatDate(activity.createdAt)}
+                                </Typography>
+                                {activity.group && (
+                                  <Chip
+                                    label={activity.group.name}
+                                    size="small"
+                                    className="glass-tertiary"
+                                    sx={{
+                                      height: 18,
+                                      fontSize: '0.65rem',
+                                      fontWeight: 600,
+                                      color: 'text.secondary',
+                                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    }}
+                                  />
+                                )}
+                              </Box>
+
+                              {/* Accountability Audit Trail: Exact diffs of who edited / deleted what */}
+                              {activity.metadata?.changes && Object.keys(activity.metadata.changes).length > 0 && (
+                                <Box sx={{ mt: 0.6, display: 'flex', flexWrap: 'wrap', gap: 0.6 }}>
+                                  {Object.entries(activity.metadata.changes).map(([field, val]: [string, any]) => (
+                                    <Chip
+                                      key={field}
+                                      size="small"
+                                      label={`${field}: ${typeof val?.from === 'object' ? JSON.stringify(val.from) : val?.from} → ${typeof val?.to === 'object' ? JSON.stringify(val.to) : val?.to}`}
+                                      sx={{
+                                        fontSize: '0.68rem',
+                                        height: 19,
+                                        bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                                        border: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
+                                        color: isLight ? '#334155' : '#CBD5E1',
+                                        fontFamily: 'monospace',
+                                      }}
+                                    />
+                                  ))}
+                                </Box>
+                              )}
+                              {activity.metadata?.snapshot && (
+                                <Box sx={{ mt: 0.6 }}>
+                                  <Chip
+                                    size="small"
+                                    label={`Deleted Snapshot: ₹${Number(activity.metadata.snapshot.amount).toLocaleString('en-IN')} (${activity.metadata.snapshot.category || 'General'})`}
+                                    sx={{
+                                      fontSize: '0.68rem',
+                                      height: 19,
+                                      bgcolor: 'rgba(244,63,94,0.1)',
+                                      border: '1px solid rgba(244,63,94,0.2)',
+                                      color: '#F43F5E',
+                                      fontWeight: 600,
+                                    }}
+                                  />
+                                </Box>
                               )}
                             </Box>
                           }
