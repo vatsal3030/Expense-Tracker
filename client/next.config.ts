@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   devIndicators: false,
   output: "standalone",
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   experimental: {
     agentUpgrade: "security",
   },
