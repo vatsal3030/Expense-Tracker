@@ -715,34 +715,43 @@ div[role="presentation"] > .MuiBackdrop-root {
    ============================================================================= */
 html.dark input[type="date"],
 .dark input[type="date"],
-[data-theme="dark"] input[type="date"] {
+[data-theme="dark"] input[type="date"],
+input[type="date"] {
   color-scheme: dark !important;
 }
 
 html.dark input[type="date"]::-webkit-calendar-picker-indicator,
+html.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+html.dark input[type="time"]::-webkit-calendar-picker-indicator,
 .dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator,
 [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
-.dark .MuiInputBase-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(1.2) contrast(1.1) !important;
+.dark .MuiInputBase-input[type="date"]::-webkit-calendar-picker-indicator,
+.MuiInputBase-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.8) contrast(1.2) !important;
   cursor: pointer;
-  opacity: 0.92;
+  opacity: 0.95;
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 html.dark input[type="date"]::-webkit-calendar-picker-indicator:hover,
-.dark input[type="date"]::-webkit-calendar-picker-indicator:hover {
+.dark input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.MuiInputBase-input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
   transform: scale(1.1);
 }
 
 html.light input[type="date"],
-:root:not(.dark) input[type="date"] {
-  color-scheme: light;
+.light input[type="date"] {
+  color-scheme: light !important;
 }
 
 html.light input[type="date"]::-webkit-calendar-picker-indicator,
-:root:not(.dark) input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: none;
+html.light input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+html.light input[type="time"]::-webkit-calendar-picker-indicator,
+.light input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none !important;
   cursor: pointer;
   opacity: 0.75;
 }

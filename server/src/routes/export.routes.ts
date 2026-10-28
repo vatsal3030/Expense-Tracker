@@ -387,7 +387,28 @@ exportRouter.post(
 
       const uniqueUserIds = Array.from(new Set(Object.values(columnNameToUserId)));
 
-      // 3. Create Group and Group Members
+      // 3. Prevent duplicate groups: check if an identical group already exists for this user
+      const existingDuplicate = await prisma.group.findFirst({
+        where: {
+          name: groupName.trim(),
+          isActive: true,
+          members: { some: { userId: currentUserId } },
+        },
+        include: { _count: { select: { expenses: true } } },
+      });
+
+      // If an existing duplicate exists and overwrite was requested or previous import was partial/interrupted
+      if (existingDuplicate) {
+        if (req.body.overwriteDuplicate || existingDuplicate._count.expenses <= expenses.length) {
+          // Soft-delete the old/partial group so no redundant duplicate is shown
+          await prisma.group.update({
+            where: { id: existingDuplicate.id },
+            data: { isActive: false },
+          });
+        }
+      }
+
+      // Create Group and Group Members
       const group = await prisma.group.create({
         data: {
           name: groupName.trim(),

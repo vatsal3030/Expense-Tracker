@@ -677,7 +677,7 @@ function ExpensesContent() {
               variant="outlined"
               size="small"
               startIcon={<Restaurant sx={{ fontSize: { xs: 15, sm: 18 }, color: '#10B981' }} />}
-              onClick={() => setItemizedModalOpen(true)}
+              onClick={() => router.push('/expenses/split-bill')}
               className="glass-tertiary"
               sx={{
                 borderRadius: 2.5,

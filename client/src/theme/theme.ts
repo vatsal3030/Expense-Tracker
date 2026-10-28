@@ -168,6 +168,35 @@ export const darkTheme = responsiveFontSizes(
     },
     components: {
       ...baseTheme.components,
+      MuiInputBase: {
+        styleOverrides: {
+          root: {
+            '& input[type="date"]::-webkit-calendar-picker-indicator, & input[type="datetime-local"]::-webkit-calendar-picker-indicator, & input[type="time"]::-webkit-calendar-picker-indicator': {
+              filter: 'invert(1) brightness(1.8) contrast(1.2) !important',
+              cursor: 'pointer',
+              opacity: 0.95,
+            },
+          },
+          input: {
+            '&[type="date"]::-webkit-calendar-picker-indicator, &[type="datetime-local"]::-webkit-calendar-picker-indicator, &[type="time"]::-webkit-calendar-picker-indicator': {
+              filter: 'invert(1) brightness(1.8) contrast(1.2) !important',
+              cursor: 'pointer',
+              opacity: 0.95,
+            },
+          },
+        },
+      },
+      MuiTextField: {
+        styleOverrides: {
+          root: {
+            '& input[type="date"]::-webkit-calendar-picker-indicator, & input[type="datetime-local"]::-webkit-calendar-picker-indicator, & input[type="time"]::-webkit-calendar-picker-indicator': {
+              filter: 'invert(1) brightness(1.8) contrast(1.2) !important',
+              cursor: 'pointer',
+              opacity: 0.95,
+            },
+          },
+        },
+      },
       MuiCard: {
         styleOverrides: {
           root: {
@@ -317,6 +346,35 @@ export const lightTheme = responsiveFontSizes(
     },
     components: {
       ...baseTheme.components,
+      MuiInputBase: {
+        styleOverrides: {
+          root: {
+            '& input[type="date"]::-webkit-calendar-picker-indicator, & input[type="datetime-local"]::-webkit-calendar-picker-indicator, & input[type="time"]::-webkit-calendar-picker-indicator': {
+              filter: 'invert(1) brightness(1.8) contrast(1.2) !important',
+              cursor: 'pointer',
+              opacity: 0.95,
+            },
+          },
+          input: {
+            '&[type="date"]::-webkit-calendar-picker-indicator, &[type="datetime-local"]::-webkit-calendar-picker-indicator, &[type="time"]::-webkit-calendar-picker-indicator': {
+              filter: 'invert(1) brightness(1.8) contrast(1.2) !important',
+              cursor: 'pointer',
+              opacity: 0.95,
+            },
+          },
+        },
+      },
+      MuiTextField: {
+        styleOverrides: {
+          root: {
+            '& input[type="date"]::-webkit-calendar-picker-indicator, & input[type="datetime-local"]::-webkit-calendar-picker-indicator, & input[type="time"]::-webkit-calendar-picker-indicator': {
+              filter: 'invert(1) brightness(1.8) contrast(1.2) !important',
+              cursor: 'pointer',
+              opacity: 0.95,
+            },
+          },
+        },
+      },
       MuiCard: {
         styleOverrides: {
           root: {

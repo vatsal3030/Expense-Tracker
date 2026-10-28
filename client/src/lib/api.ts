@@ -120,7 +120,9 @@ export const expenseApi = {
 // Groups
 export const groupApi = {
   list: () => api.get('/groups'),
-  get: (id: string) => api.get(`/groups/${id}`),
+  get: (id: string, params?: { page?: number; limit?: number | string }) => api.get(`/groups/${id}`, { params }),
+  getExpenses: (id: string, params?: { page?: number; limit?: number | string; search?: string }) =>
+    api.get(`/groups/${id}/expenses`, { params }),
   create: (data: any) => api.post('/groups', data),
   update: (id: string, data: any) => api.put(`/groups/${id}`, data),
   addMember: (groupId: string, payload: { userId?: string; email?: string; phone?: string } | string) =>

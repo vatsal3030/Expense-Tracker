@@ -1128,7 +1128,7 @@ function NewExpenseContent() {
                         type="button"
                         size="small"
                         startIcon={<UtensilsCrossed size={13} />}
-                        onClick={() => setItemizedModalOpen(true)}
+                        onClick={() => router.push(groupId ? `/expenses/split-bill?groupId=${groupId}` : '/expenses/split-bill')}
                         sx={{
                           textTransform: 'none',
                           fontWeight: 700,

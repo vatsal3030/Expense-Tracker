@@ -269,7 +269,7 @@ groupRouter.post(
   }
 );
 
-// GET /api/groups — Get all groups for current user
+// GET /api/groups — Get all groups for current user (with high-level financial stance)
 groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const cacheKey = `groups:list:${req.user!.id}`;
@@ -279,7 +279,7 @@ groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean);
+    const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean) as string[];
     const groups = await prisma.group.findMany({
       where: {
         members: { some: { userId: { in: userIds } } },
@@ -296,10 +296,102 @@ groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<v
       orderBy: { updatedAt: 'desc' },
     });
 
+    const groupIds = groups.map((g) => g.id);
+
+    // 1. Compute total spending per group (non-deleted expenses)
+    const groupTotals = await prisma.expense.groupBy({
+      by: ['groupId'],
+      where: {
+        groupId: { in: groupIds },
+        isDeleted: false,
+      },
+      _sum: { amount: true },
+    });
+    const totalSpentMap: Record<string, number> = {};
+    for (const item of groupTotals) {
+      if (item.groupId) {
+        totalSpentMap[item.groupId] = Number(item._sum.amount || 0);
+      }
+    }
+
+    // 2. Compute total amount paid by the user per group
+    const userPaidTotals = await prisma.expense.groupBy({
+      by: ['groupId'],
+      where: {
+        groupId: { in: groupIds },
+        paidById: { in: userIds },
+        isDeleted: false,
+      },
+      _sum: { amount: true },
+    });
+    const userPaidMap: Record<string, number> = {};
+    for (const item of userPaidTotals) {
+      if (item.groupId) {
+        userPaidMap[item.groupId] = Number(item._sum.amount || 0);
+      }
+    }
+
+    // 3. Compute user's shares across all non-deleted expenses in these groups
+    const userShares = await prisma.expenseShare.findMany({
+      where: {
+        userId: { in: userIds },
+        expense: {
+          groupId: { in: groupIds },
+          isDeleted: false,
+        },
+      },
+      select: {
+        amount: true,
+        expense: { select: { groupId: true } },
+      },
+    });
+    const userShareMap: Record<string, number> = {};
+    for (const s of userShares) {
+      if (s.expense?.groupId) {
+        userShareMap[s.expense.groupId] = (userShareMap[s.expense.groupId] || 0) + Number(s.amount);
+      }
+    }
+
+    // 4. Compute user's confirmed settlements in these groups
+    const settlements = await prisma.settlement.findMany({
+      where: {
+        groupId: { in: groupIds },
+        status: 'CONFIRMED',
+        OR: [
+          { payerId: { in: userIds } },
+          { payeeId: { in: userIds } },
+        ],
+      },
+      select: {
+        groupId: true,
+        amount: true,
+        payerId: true,
+        payeeId: true,
+      },
+    });
+    const settlementDeltaMap: Record<string, number> = {};
+    for (const st of settlements) {
+      if (!st.groupId) continue;
+      const amt = Number(st.amount);
+      const isPayer = userIds.includes(st.payerId);
+      const isPayee = userIds.includes(st.payeeId);
+      if (isPayer) settlementDeltaMap[st.groupId] = (settlementDeltaMap[st.groupId] || 0) + amt;
+      if (isPayee) settlementDeltaMap[st.groupId] = (settlementDeltaMap[st.groupId] || 0) - amt;
+    }
+
     const mapped = groups.map((g) => {
       const meta = parseGroupMeta(g.description);
+      const totalSpent = Math.round((totalSpentMap[g.id] || 0) * 100) / 100;
+      const userPaid = userPaidMap[g.id] || 0;
+      const userShare = userShareMap[g.id] || 0;
+      const stDelta = settlementDeltaMap[g.id] || 0;
+      const userNetBalance = Math.round((userPaid - userShare + stDelta) * 100) / 100;
+
       return {
         ...g,
+        totalSpent,
+        userNetBalance,
+        expensesCount: g._count.expenses,
         description: meta.description,
         isPasswordProtected: meta.isPasswordProtected,
         requireAdminApproval: meta.requireAdminApproval,
@@ -314,11 +406,66 @@ groupRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<v
   }
 });
 
+// GET /api/groups/:id/expenses — Paginated expenses for a group
+groupRouter.get('/:id/expenses', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { isMember } = await getRequesterRole(id, req.user!);
+    if (!isMember) {
+      res.status(403).json({ success: false, error: 'Not a member of this group.' });
+      return;
+    }
+
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limitQuery = req.query.limit as string;
+    const isAll = limitQuery === 'all';
+    const limit = isAll ? 5000 : Math.min(250, Math.max(1, parseInt(limitQuery) || 50));
+    const skip = isAll ? 0 : (page - 1) * limit;
+
+    const [expenses, total] = await Promise.all([
+      prisma.expense.findMany({
+        where: { groupId: id, isDeleted: false },
+        include: {
+          paidBy: { select: { id: true, name: true, avatarUrl: true, username: true, supabaseId: true } },
+          shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, username: true, supabaseId: true } } } },
+        },
+        orderBy: { date: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.expense.count({
+        where: { groupId: id, isDeleted: false },
+      }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        expenses,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / (isAll ? total || 1 : limit)),
+        hasMore: skip + expenses.length < total,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get group expenses error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch group expenses.' });
+  }
+});
+
 // GET /api/groups/:id — Get group details
 groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const cacheKey = `group:${id}:${req.user!.id}`;
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limitQuery = req.query.limit as string;
+    const isAll = limitQuery === 'all';
+    const limit = isAll ? 5000 : Math.min(250, Math.max(1, parseInt(limitQuery) || 50));
+    const skip = isAll ? 0 : (page - 1) * limit;
+
+    const cacheKey = `group:${id}:${req.user!.id}:p${page}:l${limitQuery || 50}`;
     const cached = await appCache.get(cacheKey);
     if (cached) {
       res.json({ success: true, data: cached });
@@ -327,36 +474,42 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
 
     const userIds = [req.user!.id, req.user!.supabaseId].filter(Boolean) as string[];
 
-    const group = await prisma.group.findFirst({
-      where: {
-        id,
-        members: {
-          some: {
-            OR: [
-              { userId: { in: userIds } },
-              ...(req.user!.email ? [{ user: { email: req.user!.email } }] : []),
-              ...(req.user!.supabaseId ? [{ user: { supabaseId: req.user!.supabaseId } }] : []),
-            ],
+    const [group, totalExpensesCount] = await Promise.all([
+      prisma.group.findFirst({
+        where: {
+          id,
+          members: {
+            some: {
+              OR: [
+                { userId: { in: userIds } },
+                ...(req.user!.email ? [{ user: { email: req.user!.email } }] : []),
+                ...(req.user!.supabaseId ? [{ user: { supabaseId: req.user!.supabaseId } }] : []),
+              ],
+            },
           },
         },
-      },
-      include: {
-        members: {
-          include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true, supabaseId: true } },
+        include: {
+          members: {
+            include: {
+              user: { select: { id: true, name: true, email: true, avatarUrl: true, username: true, supabaseId: true } },
+            },
+          },
+          expenses: {
+            where: { isDeleted: false },
+            include: {
+              paidBy: { select: { id: true, name: true, avatarUrl: true, username: true, supabaseId: true } },
+              shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, username: true, supabaseId: true } } } },
+            },
+            orderBy: { date: 'desc' },
+            skip,
+            take: limit,
           },
         },
-        expenses: {
-          where: { isDeleted: false },
-          include: {
-            paidBy: { select: { id: true, name: true, avatarUrl: true, username: true, supabaseId: true } },
-            shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, username: true, supabaseId: true } } } },
-          },
-          orderBy: { date: 'desc' },
-          take: 50,
-        },
-      },
-    });
+      }),
+      prisma.expense.count({
+        where: { groupId: id, isDeleted: false },
+      }),
+    ]);
 
     if (!group) {
       res.status(404).json({ success: false, error: 'Group not found.' });
@@ -366,6 +519,10 @@ groupRouter.get('/:id', async (req: AuthenticatedRequest, res: Response): Promis
     const meta = parseGroupMeta(group.description);
     const data = {
       ...group,
+      totalExpensesCount,
+      page,
+      limit,
+      hasMore: skip + (group.expenses?.length || 0) < totalExpensesCount,
       description: meta.description,
       isPasswordProtected: meta.isPasswordProtected,
       requireAdminApproval: meta.requireAdminApproval,

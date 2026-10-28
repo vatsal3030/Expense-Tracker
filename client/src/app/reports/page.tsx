@@ -78,6 +78,9 @@ export default function ReportsPage() {
     }
   }, [user?.id]);
 
+  const [reportPage, setReportPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState<number | 'all'>(50);
+
   const isFetchingRef = useRef(false);
 
   const fetchReport = useCallback(async () => {
@@ -85,12 +88,15 @@ export default function ReportsPage() {
     isFetchingRef.current = true;
     if (!report) setLoading(true);
     try {
-      const params: any = { from: dateFrom, to: dateTo };
+      const params: any = {};
+      if (dateFrom) params.from = dateFrom;
+      if (dateTo) params.to = dateTo;
       if (selectedGroup !== 'personal') params.groupId = selectedGroup;
 
       const res = await exportApi.report(params);
       const data = res.data.data;
       setReport(data);
+      setReportPage(1);
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('fairshare_cached_report', JSON.stringify(data));
@@ -108,7 +114,13 @@ export default function ReportsPage() {
     if (user?.id) fetchReport();
   }, [user?.id, fetchReport]);
 
-  const handleApplyPreset = (preset: 'thisMonth' | 'last30' | 'lastMonth' | 'thisYear') => {
+  const handleApplyPreset = (preset: 'thisMonth' | 'last30' | 'lastMonth' | 'thisYear' | 'allTime') => {
+    if (preset === 'allTime') {
+      setDateFrom('');
+      setDateTo('');
+      return;
+    }
+
     const now = new Date();
     let from = new Date();
     let to = new Date();
@@ -167,6 +179,14 @@ export default function ReportsPage() {
 
   const summary = report?.summary;
   const expensesList: any[] = report?.expenses || [];
+
+  const paginatedExpenses = useMemo(() => {
+    if (rowsPerPage === 'all') return expensesList;
+    const start = (reportPage - 1) * rowsPerPage;
+    return expensesList.slice(start, start + rowsPerPage);
+  }, [expensesList, reportPage, rowsPerPage]);
+
+  const totalPages = rowsPerPage === 'all' ? 1 : Math.ceil(expensesList.length / (rowsPerPage || 50));
 
   const categoryBreakdown = summary?.categoryBreakdown;
   const categoryEntries = useMemo(() => {
@@ -364,6 +384,7 @@ const getCategoryColorScale = (pct: number) => {
                 QUICK PERIOD:
               </Typography>
               {[
+                { label: 'All Time (Full History)', id: 'allTime' as const },
                 { label: 'Last 30 Days', id: 'last30' as const },
                 { label: 'This Month', id: 'thisMonth' as const },
                 { label: 'Last Month', id: 'lastMonth' as const },
@@ -768,7 +789,7 @@ const getCategoryColorScale = (pct: number) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {expensesList.map((exp: any, idx: number) => {
+                      {paginatedExpenses.map((exp: any, idx: number) => {
                         const userShare = Number(exp.userShare ?? exp.amount);
                         const totalBill = Number(exp.totalBill ?? exp.amount);
                         const isSplitExpense = (exp.isSplit || (exp.shares && exp.shares.length > 1) || (exp.group && exp.group !== 'Personal')) && totalBill > userShare;
@@ -856,6 +877,76 @@ const getCategoryColorScale = (pct: number) => {
                     </TableBody>
                   </Table>
                 </TableContainer>
+
+                {/* Interactive Table Pagination Controls */}
+                {expensesList.length > 0 && (
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderTop: `1px solid ${theme.palette.divider}`,
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'stretch', sm: 'center' },
+                      justifyContent: 'space-between',
+                      gap: 1.5,
+                      '@media print': { display: 'none !important' },
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight={650}>
+                        Rows per page:
+                      </Typography>
+                      <TextField
+                        select
+                        size="small"
+                        value={rowsPerPage}
+                        onChange={(e) => {
+                          const val = e.target.value === 'all' ? 'all' : parseInt(e.target.value);
+                          setRowsPerPage(val as any);
+                          setReportPage(1);
+                        }}
+                        sx={{ width: 88, '& .MuiInputBase-input': { py: 0.45, fontSize: '0.78rem' } }}
+                      >
+                        <MenuItem value={25}>25</MenuItem>
+                        <MenuItem value={50}>50</MenuItem>
+                        <MenuItem value={100}>100</MenuItem>
+                        <MenuItem value={250}>250</MenuItem>
+                        <MenuItem value="all">All ({expensesList.length})</MenuItem>
+                      </TextField>
+
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Showing {rowsPerPage === 'all' ? 1 : (reportPage - 1) * (rowsPerPage as number) + 1} -{' '}
+                        {rowsPerPage === 'all' ? expensesList.length : Math.min(reportPage * (rowsPerPage as number), expensesList.length)} of {expensesList.length}
+                      </Typography>
+                    </Box>
+
+                    {rowsPerPage !== 'all' && totalPages > 1 && (
+                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: { xs: 'center', sm: 'flex-end' } }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          disabled={reportPage <= 1}
+                          onClick={() => setReportPage((p) => Math.max(1, p - 1))}
+                          sx={{ textTransform: 'none', borderRadius: 2, fontSize: '0.75rem', py: 0.4 }}
+                        >
+                          Previous
+                        </Button>
+                        <Typography variant="caption" sx={{ px: 1, fontWeight: 700 }}>
+                          Page {reportPage} of {totalPages}
+                        </Typography>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          disabled={reportPage >= totalPages}
+                          onClick={() => setReportPage((p) => Math.min(totalPages, p + 1))}
+                          sx={{ textTransform: 'none', borderRadius: 2, fontSize: '0.75rem', py: 0.4 }}
+                        >
+                          Next
+                        </Button>
+                      </Stack>
+                    )}
+                  </Box>
+                )}
               </CardContent>
             </Card>
           </>

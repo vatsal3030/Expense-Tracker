@@ -10,7 +10,7 @@ import {
 import {
   Add, Close, Home, Flight, Favorite, Business, People, FamilyRestroom,
   Work, MoreHoriz, ArrowForward, Lock, Security, Search, ContentCopy,
-  Check, ReceiptLong, GroupAdd, AutoAwesome, SwapHoriz,
+  Check, ReceiptLong, GroupAdd, AutoAwesome, SwapHoriz, Delete,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -192,6 +192,36 @@ export default function GroupsPage() {
       setToastMessage('Failed to create group. Reverted.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const [groupToDelete, setGroupToDelete] = useState<any | null>(null);
+  const [deletingGroup, setDeletingGroup] = useState(false);
+
+  const handleConfirmDeleteGroup = async () => {
+    if (!groupToDelete?.id) return;
+    setDeletingGroup(true);
+    const targetId = groupToDelete.id;
+    const targetName = groupToDelete.name;
+    try {
+      await groupApi.delete(targetId);
+      setGroups((prev) => prev.filter((g) => g.id !== targetId));
+      if (typeof window !== 'undefined') {
+        try {
+          const saved = localStorage.getItem('fairshare_cached_groups');
+          if (saved) {
+            const list = JSON.parse(saved);
+            localStorage.setItem('fairshare_cached_groups', JSON.stringify(list.filter((g: any) => g.id !== targetId)));
+          }
+        } catch {}
+      }
+      setToastMessage(`"${targetName}" group removed successfully.`);
+      setGroupToDelete(null);
+    } catch (err: any) {
+      console.error('Delete group error:', err);
+      setToastMessage(err?.response?.data?.error || 'Failed to delete group.');
+    } finally {
+      setDeletingGroup(false);
     }
   };
 
@@ -678,6 +708,24 @@ export default function GroupsPage() {
                                   {isCopied ? <Check fontSize="small" /> : <ContentCopy fontSize="small" />}
                                 </IconButton>
                               </Tooltip>
+
+                              {/* Admin or Member quick delete option (e.g. duplicate cleanup) */}
+                              <Tooltip title="Delete or Archive Group">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setGroupToDelete(group);
+                                  }}
+                                  sx={{
+                                    color: 'text.secondary',
+                                    bgcolor: alpha(theme.palette.text.secondary, 0.05),
+                                    '&:hover': { color: '#F43F5E', bgcolor: alpha('#F43F5E', 0.12) },
+                                  }}
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
                             </Box>
                           </Box>
 
@@ -706,11 +754,65 @@ export default function GroupsPage() {
                               WebkitLineClamp: 2,
                               WebkitBoxOrient: 'vertical',
                               overflow: 'hidden',
-                              mb: 2.5,
+                              mb: 1.75,
                             }}
                           >
                             {group.description || 'No description provided.'}
                           </Typography>
+
+                          {/* Financial Metric Badges: Group Total Spend & Your Stance */}
+                          <Box
+                            sx={{
+                              p: 1.25,
+                              mb: 2,
+                              borderRadius: 2.5,
+                              bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
+                              border: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 1,
+                            }}
+                          >
+                            <Box>
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.68rem', fontWeight: 600, display: 'block' }}>
+                                Total Spend
+                              </Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 750, fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                                {group.currency === 'USD' ? '$' : group.currency === 'EUR' ? '€' : '₹'}
+                                {(Number(group.totalSpent || 0)).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              </Typography>
+                            </Box>
+
+                            <Box sx={{ textAlign: 'right' }}>
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.68rem', fontWeight: 600, display: 'block' }}>
+                                Your Balance
+                              </Typography>
+                              {(() => {
+                                const bal = Number(group.userNetBalance || 0);
+                                const curr = group.currency === 'USD' ? '$' : group.currency === 'EUR' ? '€' : '₹';
+                                if (bal > 0.01) {
+                                  return (
+                                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#10B981', fontFamily: 'monospace', fontSize: '0.825rem' }}>
+                                      +{curr}{bal.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} (owed)
+                                    </Typography>
+                                  );
+                                }
+                                if (bal < -0.01) {
+                                  return (
+                                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#F43F5E', fontFamily: 'monospace', fontSize: '0.825rem' }}>
+                                      -{curr}{Math.abs(bal).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} (you owe)
+                                    </Typography>
+                                  );
+                                }
+                                return (
+                                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#94A3B8', fontSize: '0.8rem' }}>
+                                    Settled up
+                                  </Typography>
+                                );
+                              })()}
+                            </Box>
+                          </Box>
 
                           {/* Bottom Row: Member Avatars and Expense Counter */}
                           <Box
@@ -1188,6 +1290,53 @@ export default function GroupsPage() {
               }}
             >
               {submitting ? 'Creating...' : 'Create Group'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete / Archive Group Confirmation Dialog */}
+        <Dialog
+          open={Boolean(groupToDelete)}
+          onClose={() => setGroupToDelete(null)}
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: 3.5,
+                p: 1,
+                bgcolor: isLight ? '#FFFFFF' : '#111827',
+                border: `1px solid ${isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                maxWidth: 420,
+              },
+            },
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: 800, color: 'text.primary', pb: 1 }}>
+            Delete or Archive Group?
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Are you sure you want to remove <strong>"{groupToDelete?.name}"</strong>?
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#F43F5E', display: 'block' }}>
+              ⚠️ This will archive this group and remove it from your active groups list. If you have duplicate groups from an earlier import, this will cleanly clean up the redundant group.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+            <Button
+              onClick={() => setGroupToDelete(null)}
+              disabled={deletingGroup}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleConfirmDeleteGroup}
+              disabled={deletingGroup}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, px: 2.5 }}
+            >
+              {deletingGroup ? 'Deleting...' : 'Delete Group'}
             </Button>
           </DialogActions>
         </Dialog>

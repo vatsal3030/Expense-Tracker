@@ -127,6 +127,10 @@ function GroupDetailContent() {
   const [balances, setBalances] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const [expensePage, setExpensePage] = useState(1);
+  const [loadingMoreExpenses, setLoadingMoreExpenses] = useState(false);
+  const [totalExpensesCount, setTotalExpensesCount] = useState(0);
+  const [hasMoreExpenses, setHasMoreExpenses] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteContact, setInviteContact] = useState('');
   const [copied, setCopied] = useState(false);
@@ -251,11 +255,21 @@ function GroupDetailContent() {
         setLoading(true);
       }
       const [groupRes, balancesRes] = await Promise.all([
-        groupApi.get(params.id as string),
+        groupApi.get(params.id as string, { page: 1, limit: 50 }),
         groupApi.getBalances(params.id as string),
       ]);
-      setGroup(groupRes.data?.data);
+      const gData = groupRes.data?.data;
+      setGroup(gData);
       setBalances(balancesRes.data?.data);
+      if (gData?.totalExpensesCount !== undefined) {
+        setTotalExpensesCount(gData.totalExpensesCount);
+        setHasMoreExpenses(Boolean(gData.hasMore));
+      } else {
+        const count = gData?.expenses?.length || 0;
+        setTotalExpensesCount(count);
+        setHasMoreExpenses(false);
+      }
+      setExpensePage(1);
       hasLoadedGroupRef.current = true;
 
       if (typeof window !== 'undefined') {
@@ -268,6 +282,56 @@ function GroupDetailContent() {
       console.error('Fetch group error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLoadMoreExpenses = async () => {
+    if (!group?.id || loadingMoreExpenses) return;
+    setLoadingMoreExpenses(true);
+    const nextPage = expensePage + 1;
+    try {
+      const res = await groupApi.getExpenses(group.id, { page: nextPage, limit: 50 });
+      const newExpenses = res.data?.data?.expenses || [];
+      const total = res.data?.data?.total || totalExpensesCount;
+      const hasMore = Boolean(res.data?.data?.hasMore);
+
+      setGroup((prev: any) => {
+        if (!prev) return prev;
+        const existingIds = new Set((prev.expenses || []).map((e: any) => e.id));
+        const filteredNew = newExpenses.filter((e: any) => !existingIds.has(e.id));
+        return {
+          ...prev,
+          expenses: [...(prev.expenses || []), ...filteredNew],
+        };
+      });
+      setExpensePage(nextPage);
+      setTotalExpensesCount(total);
+      setHasMoreExpenses(hasMore);
+    } catch (err) {
+      console.error('Load more expenses error:', err);
+    } finally {
+      setLoadingMoreExpenses(false);
+    }
+  };
+
+  const handleLoadAllExpenses = async () => {
+    if (!group?.id || loadingMoreExpenses) return;
+    setLoadingMoreExpenses(true);
+    try {
+      const res = await groupApi.getExpenses(group.id, { limit: 'all' });
+      const allExpenses = res.data?.data?.expenses || [];
+      const total = res.data?.data?.total || allExpenses.length;
+
+      setGroup((prev: any) => ({
+        ...prev,
+        expenses: allExpenses,
+      }));
+      setTotalExpensesCount(total);
+      setHasMoreExpenses(false);
+    } catch (err) {
+      console.error('Load all expenses error:', err);
+    } finally {
+      setLoadingMoreExpenses(false);
     }
   };
 
@@ -1212,8 +1276,68 @@ function GroupDetailContent() {
                               </React.Fragment>
                             );
                           })}
+                          {/* End of monthItems */}
                         </Box>
                       ))}
+
+                      {/* Pagination & Load More Stream Controls */}
+                      {totalExpensesCount > 0 && (
+                        <Box
+                          sx={{
+                            p: { xs: 2, sm: 2.5 },
+                            borderTop: `1px solid ${theme.palette.divider}`,
+                            bgcolor: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)',
+                            display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            alignItems: { xs: 'stretch', sm: 'center' },
+                            justifyContent: 'space-between',
+                            gap: 1.5,
+                          }}
+                        >
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem', fontWeight: 600 }}>
+                            Showing <strong>{group.expenses?.length || 0}</strong> of <strong>{totalExpensesCount}</strong> bills
+                          </Typography>
+
+                          {hasMoreExpenses && (
+                            <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                disabled={loadingMoreExpenses}
+                                onClick={handleLoadMoreExpenses}
+                                startIcon={loadingMoreExpenses ? <CircularProgress size={14} color="inherit" /> : undefined}
+                                sx={{
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  fontWeight: 700,
+                                  fontSize: '0.8rem',
+                                  flex: { xs: 1, sm: 'none' },
+                                }}
+                              >
+                                {loadingMoreExpenses ? 'Loading...' : 'Load Next 50'}
+                              </Button>
+                              <Button
+                                variant="contained"
+                                size="small"
+                                disabled={loadingMoreExpenses}
+                                onClick={handleLoadAllExpenses}
+                                sx={{
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  fontWeight: 700,
+                                  fontSize: '0.8rem',
+                                  bgcolor: isLight ? '#059669' : '#10B981',
+                                  color: '#fff',
+                                  flex: { xs: 1, sm: 'none' },
+                                  '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
+                                }}
+                              >
+                                Load All ({totalExpensesCount})
+                              </Button>
+                            </Stack>
+                          )}
+                        </Box>
+                      )}
                     </Box>
                   ) : (
                     <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
