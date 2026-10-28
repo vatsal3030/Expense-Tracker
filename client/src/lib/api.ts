@@ -22,16 +22,34 @@ const api = axios.create({
   },
 });
 
-// Request interceptor — attach auth token
+let inMemoryToken: string | null = null;
+let tokenExpiresAt = 0;
+
+if (typeof window !== 'undefined') {
+  supabase.auth.onAuthStateChange((_, session) => {
+    inMemoryToken = session?.access_token || null;
+    tokenExpiresAt = (session?.expires_at || 0) * 1000;
+  });
+}
+
+// Request interceptor — attach auth token with zero latency
 api.interceptors.request.use(
   async (config) => {
     if (typeof window !== 'undefined') {
       config.baseURL = getApiBaseUrl();
     }
-    const { data: { session } } = await supabase.auth.getSession();
+
+    // Fast-path: use in-memory token if valid (0ms)
+    let token = inMemoryToken;
+    if (!token || Date.now() > tokenExpiresAt - 60000) {
+      const { data: { session } } = await supabase.auth.getSession();
+      token = session?.access_token || null;
+      inMemoryToken = token;
+      tokenExpiresAt = (session?.expires_at || 0) * 1000;
+    }
     
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     
     return config;

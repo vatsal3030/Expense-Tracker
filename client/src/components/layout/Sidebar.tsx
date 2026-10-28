@@ -168,12 +168,12 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
       {/* Brand Header */}
       <Box
         sx={{
-          px: collapsed && !isMobile ? 1.5 : { xs: 2, sm: 2.5 },
-          py: { xs: 1.25, sm: 2 },
+          px: collapsed && !isMobile ? 1.25 : { xs: 1.5, sm: 2 },
+          py: { xs: 1, sm: 1.25 },
           display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed && !isMobile ? 'center' : 'space-between',
-          minHeight: collapsed && !isMobile ? 68 : { xs: 54, sm: 68 },
+          minHeight: collapsed && !isMobile ? 56 : { xs: 52, sm: 56 },
           borderBottom: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.07)'}`,
         }}
       >
@@ -181,6 +181,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
           size={collapsed && !isMobile ? 'sm' : 'md'}
           showText={!collapsed || isMobile}
           asLink={true}
+          href="/"
         />
         {!isMobile && (
           <IconButton
@@ -188,8 +189,8 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
             size="small"
             sx={{
               color: 'text.secondary',
-              p: 0.5,
-              borderRadius: 2,
+              p: 0.4,
+              borderRadius: 1.75,
               bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
               border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)'}`,
               '&:hover': {
@@ -199,7 +200,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
               },
             }}
           >
-            {collapsed ? <ExpandIcon sx={{ fontSize: 18 }} /> : <CollapseIcon sx={{ fontSize: 18 }} />}
+            {collapsed ? <ExpandIcon sx={{ fontSize: 16 }} /> : <CollapseIcon sx={{ fontSize: 16 }} />}
           </IconButton>
         )}
       </Box>
@@ -209,19 +210,19 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
         ref={scrollContainerRef}
         onScroll={handleSidebarScroll}
         data-tour="sidebar-nav"
-        sx={{ flex: 1, py: { xs: 0.75, sm: 1.5 }, overflowY: 'auto', overflowX: 'hidden' }}
+        sx={{ flex: 1, py: { xs: 0.5, sm: 0.85 }, overflowY: 'auto', overflowX: 'hidden' }}
       >
         {navSections.map((section, sIdx) => (
-          <Box key={section.title} sx={{ mb: { xs: 0.75, sm: 1.5 } }}>
+          <Box key={section.title} sx={{ mb: { xs: 0.45, sm: 0.75 } }}>
             {(!collapsed || isMobile) && (
               <Typography
                 variant="caption"
                 sx={{
-                  px: { xs: 2, sm: 2.5 },
-                  pt: sIdx === 0 ? 0.25 : { xs: 0.75, sm: 1.5 },
-                  pb: 0.25,
+                  px: { xs: 1.75, sm: 2 },
+                  pt: sIdx === 0 ? 0.25 : { xs: 0.6, sm: 0.8 },
+                  pb: 0.2,
                   display: 'block',
-                  fontSize: { xs: '0.625rem', sm: '0.675rem' },
+                  fontSize: '0.675rem',
                   fontWeight: 700,
                   letterSpacing: '0.08em',
                   color: isLight ? '#9CA3AF' : '#6B7280',
@@ -232,7 +233,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
               </Typography>
             )}
 
-            <List disablePadding sx={{ px: collapsed && !isMobile ? 1 : { xs: 1, sm: 1.5 } }}>
+            <List disablePadding sx={{ px: collapsed && !isMobile ? 0.75 : { xs: 0.85, sm: 1.15 } }}>
               {section.items.map((item) => {
                 const active = isActive(item.path);
                 return (
@@ -256,11 +257,11 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                         if (isMobile) onClose();
                       }}
                       sx={{
-                        minHeight: { xs: 36, sm: 42 },
-                        px: collapsed && !isMobile ? 1.5 : { xs: 1.25, sm: 1.75 },
-                        py: { xs: 0.35, sm: 0.75 },
-                        my: { xs: 0.15, sm: 0.25 },
-                        borderRadius: 2.5,
+                        minHeight: { xs: 34, sm: 38 },
+                        px: collapsed && !isMobile ? 1 : { xs: 1.15, sm: 1.4 },
+                        py: { xs: 0.45, sm: 0.55 },
+                        my: 0.18,
+                        borderRadius: 2,
                         position: 'relative',
                         justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                         bgcolor: active
@@ -279,18 +280,17 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                         boxShadow: active
                           ? isLight
                             ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(5, 150, 105, 0.06)'
-                            : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 10px rgba(16, 185, 129, 0.18)'
+                            : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 8px rgba(16, 185, 129, 0.18)'
                           : 'none',
-                        backdropFilter: active ? 'blur(14px)' : 'none',
                         '&::before': active ? {
                           content: '""',
                           position: 'absolute',
-                          left: 6,
-                          width: 3.5,
-                          height: 18,
+                          left: 5,
+                          width: 3,
+                          height: 15,
                           borderRadius: 2,
                           bgcolor: isLight ? '#059669' : '#34D399',
-                          boxShadow: isLight ? 'none' : '0 0 8px #10B981',
+                          boxShadow: isLight ? 'none' : '0 0 6px #10B981',
                         } : undefined,
                         '&:hover': {
                           bgcolor: active
@@ -314,15 +314,15 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                             ? (isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.20)')
                             : 'transparent',
                         },
-                        transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                        transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
                       }}
                     >
                       <ListItemIcon
                         sx={{
-                          minWidth: collapsed && !isMobile ? 0 : { xs: 30, sm: 36 },
+                          minWidth: collapsed && !isMobile ? 0 : { xs: 28, sm: 32 },
                           justifyContent: 'center',
                           color: active ? (isLight ? '#059669' : '#34D399') : 'inherit',
-                          '& .MuiSvgIcon-root': { fontSize: { xs: 18, sm: 20 } },
+                          '& .MuiSvgIcon-root': { fontSize: { xs: 18, sm: 19 } },
                         }}
                       >
                         {item.icon}
@@ -335,7 +335,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                               <Typography
                                 sx={{
                                   fontWeight: active ? 600 : 500,
-                                  fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                                  fontSize: { xs: '0.8rem', sm: '0.84rem' },
                                   color: 'inherit',
                                   letterSpacing: '-0.01em',
                                   fontVariantNumeric: 'tabular-nums',
@@ -348,13 +348,13 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                                   label={item.badge}
                                   size="small"
                                   sx={{
-                                    height: { xs: 16, sm: 18 },
-                                    fontSize: { xs: '0.575rem', sm: '0.625rem' },
+                                    height: { xs: 15, sm: 16 },
+                                    fontSize: { xs: '0.55rem', sm: '0.6rem' },
                                     fontWeight: 700,
                                     bgcolor: isLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.15)',
                                     color: isLight ? '#059669' : '#10B981',
                                     borderRadius: 1,
-                                    px: 0.5,
+                                    px: 0.4,
                                   }}
                                 />
                               )}
@@ -372,7 +372,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
       </Box>
 
       {/* Settings & Bottom Items */}
-      <Box sx={{ p: collapsed && !isMobile ? 1 : { xs: 1, sm: 1.5 }, borderTop: `1px solid ${theme.palette.divider}` }}>
+      <Box sx={{ p: collapsed && !isMobile ? 0.75 : { xs: 0.75, sm: 1 }, borderTop: `1px solid ${theme.palette.divider}` }}>
         <List disablePadding>
           {bottomNavItems
             .filter((item) => item.path !== '/admin' || (profile as any)?.isAdmin)
@@ -394,10 +394,11 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   if (isMobile) onClose();
                 }}
                 sx={{
-                  minHeight: { xs: 36, sm: 40 },
-                  px: collapsed && !isMobile ? 1.5 : { xs: 1.25, sm: 1.75 },
-                  py: { xs: 0.35, sm: 0.75 },
-                  borderRadius: 2.5,
+                  minHeight: { xs: 34, sm: 38 },
+                  px: collapsed && !isMobile ? 1 : { xs: 1.15, sm: 1.4 },
+                  py: { xs: 0.45, sm: 0.55 },
+                  my: 0.18,
+                  borderRadius: 2,
                   position: 'relative',
                   justifyContent: collapsed && !isMobile ? 'center' : 'flex-start',
                   color: active
@@ -416,17 +417,17 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                   boxShadow: active
                     ? isLight
                       ? 'inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(5, 150, 105, 0.06)'
-                      : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 10px rgba(16, 185, 129, 0.18)'
+                      : 'inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 2px 8px rgba(16, 185, 129, 0.18)'
                     : 'none',
                   '&::before': active ? {
                     content: '""',
                     position: 'absolute',
-                    left: 6,
-                    width: 3.5,
-                    height: 18,
+                    left: 5,
+                    width: 3,
+                    height: 15,
                     borderRadius: 2,
                     bgcolor: isLight ? '#059669' : '#34D399',
-                    boxShadow: isLight ? 'none' : '0 0 8px #10B981',
+                    boxShadow: isLight ? 'none' : '0 0 6px #10B981',
                   } : undefined,
                   '&:hover': {
                     bgcolor: active
@@ -444,14 +445,15 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                       ? (isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.20)')
                       : 'transparent',
                   },
-                  transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                  transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    minWidth: collapsed && !isMobile ? 0 : { xs: 30, sm: 36 },
+                    minWidth: collapsed && !isMobile ? 0 : { xs: 26, sm: 30 },
                     justifyContent: 'center',
                     color: active ? (isLight ? '#059669' : '#34D399') : 'inherit',
+                    '& .MuiSvgIcon-root': { fontSize: { xs: 17, sm: 18 } },
                   }}
                 >
                   {item.icon}
@@ -459,7 +461,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
                 {(!collapsed || isMobile) && (
                   <ListItemText
                     primary={
-                      <Typography sx={{ fontWeight: active ? 600 : 500, fontSize: '0.85rem', color: 'inherit' }}>
+                      <Typography sx={{ fontWeight: active ? 600 : 500, fontSize: { xs: '0.76rem', sm: '0.8125rem' }, color: 'inherit' }}>
                         {item.label}
                       </Typography>
                     }

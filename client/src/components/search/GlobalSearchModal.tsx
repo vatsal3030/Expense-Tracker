@@ -308,8 +308,9 @@ export default function GlobalSearchModal({ open, onClose }: GlobalSearchModalPr
       slotProps={{
         backdrop: {
           sx: {
-            bgcolor: 'rgba(0, 0, 0, 0.65)',
-            backdropFilter: 'blur(16px)',
+            bgcolor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'none !important',
+            WebkitBackdropFilter: 'none !important',
           },
         },
         paper: {

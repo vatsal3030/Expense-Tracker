@@ -43,6 +43,26 @@ export default function BudgetsPage() {
   const [showBurnRate, setShowBurnRate] = useState(true);
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fairshare_cached_budgets');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setBudgets(parsed);
+          setLoading(false);
+        }
+      }
+      const savedRates = localStorage.getItem('fairshare_cached_burnrates');
+      if (savedRates) {
+        const parsedRates = JSON.parse(savedRates);
+        if (Array.isArray(parsedRates) && parsedRates.length > 0) {
+          setBurnRates(parsedRates);
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
@@ -57,6 +77,11 @@ export default function BudgetsPage() {
     try {
       const res = await budgetApi.list();
       setBudgets(res.data.data);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('fairshare_cached_budgets', JSON.stringify(res.data.data));
+        } catch {}
+      }
     } catch (error) {
       console.error('Fetch budgets error:', error);
     } finally {
@@ -67,7 +92,13 @@ export default function BudgetsPage() {
   const fetchBurnRate = async () => {
     try {
       const res = await budgetApi.getBurnRate();
-      setBurnRates(res.data.data || []);
+      const rates = res.data.data || [];
+      setBurnRates(rates);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('fairshare_cached_burnrates', JSON.stringify(rates));
+        } catch {}
+      }
     } catch (error) {
       console.error('Fetch burn rate error:', error);
     }
@@ -240,8 +271,10 @@ export default function BudgetsPage() {
       <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 1.25, sm: 1.75 }, flexWrap: 'wrap', gap: 1 }}>
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>Budgets</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>Set and track spending limits</Typography>
+            <Typography fontWeight={700} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' } }}>
+              Budgets & Spending Limits
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>Set and track category spending limits with proactive alerts</Typography>
           </Box>
           <Button
             variant="contained"
@@ -423,20 +456,20 @@ export default function BudgetsPage() {
                       '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: progressColor },
                     }}
                   >
-                    <CardContent sx={{ p: { xs: 1.5, sm: 3 }, '&:last-child': { pb: { xs: 1.5, sm: 3 } } }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                    <CardContent sx={{ p: { xs: 1.25, sm: 2 }, '&:last-child': { pb: { xs: 1.25, sm: 2 } } }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.25 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                           <Box
                             sx={{
-                              width: { xs: 38, sm: 48 },
-                              height: { xs: 38, sm: 48 },
-                              borderRadius: { xs: 2, sm: 2.75 },
+                              width: { xs: 36, sm: 40 },
+                              height: { xs: 36, sm: 40 },
+                              borderRadius: { xs: 2, sm: 2.25 },
                               bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
                               border: `1.5px solid ${theme.palette.divider}`,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: { xs: '1.35rem', sm: '1.75rem' },
+                              fontSize: { xs: '1.2rem', sm: '1.4rem' },
                               flexShrink: 0,
                               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                             }}

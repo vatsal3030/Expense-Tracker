@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef, Suspense } from 'react';
 import {
   Box,
   Typography,
@@ -66,6 +66,7 @@ import {
   Print,
   KeyboardArrowDown,
   Description,
+  Restaurant,
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
@@ -74,6 +75,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 import SplitwiseExpenseItem from '@/components/expense/SplitwiseExpenseItem';
 import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
+import ItemizedBillSplitModal from '@/components/expense/ItemizedBillSplitModal';
 import { useDataRefresh, triggerDataRefresh } from '@/lib/events';
 
 const CATEGORIES = [
@@ -138,6 +140,7 @@ function ExpensesContent() {
 
   // Modals & Drawers
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [itemizedModalOpen, setItemizedModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [settleModalOpen, setSettleModalOpen] = useState(false);
   const [settleTarget, setSettleTarget] = useState<{ name: string; amount: number; upiId?: string; payeeId?: string; groupId?: string }>({
@@ -174,18 +177,38 @@ function ExpensesContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fairshare_cached_expenses');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setExpenses(parsed);
+          setLoading(false);
+          hasLoadedExpensesRef.current = true;
+        }
+      }
+      const savedG = localStorage.getItem('fairshare_cached_groups');
+      if (savedG) {
+        setGroups(JSON.parse(savedG));
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
   // Fetch expenses with all active filters
+  const fetchExpensesTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const fetchExpenses = useCallback(async () => {
     try {
-      if (!hasLoadedExpensesRef.current) {
+      if (!hasLoadedExpensesRef.current && expenses.length === 0) {
         setLoading(true);
       }
       const params: Record<string, any> = {
         page,
-        limit: 15,
+        limit: 25,
         sortBy,
       };
 
@@ -229,10 +252,22 @@ function ExpensesContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, searchQuery, filterCategory, filterGroup, filterSplitType, filterDatePreset, sortBy, minAmount, maxAmount]);
+  }, [page, searchQuery, filterCategory, filterGroup, filterSplitType, filterDatePreset, sortBy, minAmount, maxAmount, expenses.length]);
 
+  // Debounced server sync to prevent network congestion on typing / filtering
   useEffect(() => {
-    if (user?.id) fetchExpenses();
+    if (!user?.id) return;
+    if (fetchExpensesTimerRef.current) clearTimeout(fetchExpensesTimerRef.current);
+
+    // Initial load runs immediately, subsequent typing/filter runs with 300ms debounce
+    const delay = hasLoadedExpensesRef.current ? 300 : 0;
+    fetchExpensesTimerRef.current = setTimeout(() => {
+      fetchExpenses();
+    }, delay);
+
+    return () => {
+      if (fetchExpensesTimerRef.current) clearTimeout(fetchExpensesTimerRef.current);
+    };
   }, [user?.id, fetchExpenses]);
 
   useDataRefresh(useCallback((detail?: any) => {
@@ -254,10 +289,30 @@ function ExpensesContent() {
     }
   }, [user?.id]);
 
+  // Instant 0ms Client-Side Filtering for lightning-fast UI responsiveness
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter((exp) => {
+      if (filterCategory && exp.category !== filterCategory) return false;
+      if (filterGroup && exp.groupId !== filterGroup) return false;
+      if (filterSplitType && exp.splitType !== filterSplitType) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesDesc = exp.description?.toLowerCase().includes(q);
+        const matchesNotes = exp.notes?.toLowerCase().includes(q);
+        const matchesPayer = exp.paidBy?.name?.toLowerCase().includes(q);
+        const matchesCategory = exp.category?.toLowerCase().includes(q);
+        if (!matchesDesc && !matchesNotes && !matchesPayer && !matchesCategory) return false;
+      }
+      if (minAmount && Number(exp.amount) < Number(minAmount)) return false;
+      if (maxAmount && Number(exp.amount) > Number(maxAmount)) return false;
+      return true;
+    });
+  }, [expenses, filterCategory, filterGroup, filterSplitType, searchQuery, minAmount, maxAmount]);
+
   // Splitwise style grouping by month & year
   const groupedExpenses = useMemo(() => {
     const groups: Record<string, any[]> = {};
-    expenses.forEach((exp) => {
+    filteredExpenses.forEach((exp) => {
       const d = exp.date ? new Date(exp.date) : new Date();
       const monthKey = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       if (!groups[monthKey]) {
@@ -266,7 +321,7 @@ function ExpensesContent() {
       groups[monthKey].push(exp);
     });
     return groups;
-  }, [expenses]);
+  }, [filteredExpenses]);
 
   // Fast Optimistic UI Creation (0ms UI lag strategy)
   const handleCreate = async () => {
@@ -480,6 +535,29 @@ function ExpensesContent() {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
+  const availableMembers = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; avatarUrl?: string }>();
+    if (user) {
+      map.set(user.id, {
+        id: user.id,
+        name: profile?.name || user.email?.split('@')[0] || 'You',
+        avatarUrl: profile?.avatarUrl || undefined,
+      });
+    }
+    groups.forEach((g: any) => {
+      g.members?.forEach((m: any) => {
+        const u = m.user || m;
+        if (u?.id && !map.has(u.id)) {
+          map.set(u.id, {
+            id: u.id,
+            name: u.name || u.fullName || u.email?.split('@')[0] || 'Member',
+            avatarUrl: u.avatarUrl || undefined,
+          });
+        }
+      });
+    });
+    return Array.from(map.values());
+  }, [user, profile, groups]);
 
   return (
     <AppLayout>
@@ -496,10 +574,10 @@ function ExpensesContent() {
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
+            <Typography fontWeight={700} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' } }}>
               Expenses & Shared Transactions
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' }, display: { xs: 'none', sm: 'block' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
               Manage itemized bills, splits, and settlement statuses ({totalCount} total)
             </Typography>
           </Box>
@@ -572,6 +650,29 @@ function ExpensesContent() {
                 <ListItemText primary="Print Statement" secondary="PDF / Printable statement" />
               </MenuItem>
             </Menu>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Restaurant sx={{ fontSize: { xs: 15, sm: 18 }, color: '#10B981' }} />}
+              onClick={() => setItemizedModalOpen(true)}
+              className="glass-tertiary"
+              sx={{
+                borderRadius: 2.5,
+                borderColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)',
+                color: 'text.primary',
+                fontWeight: 600,
+                textTransform: 'none',
+                py: { xs: 0.6, sm: 0.85 },
+                px: { xs: 1.25, sm: 2 },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                '&:hover': {
+                  borderColor: isLight ? '#059669' : '#10b981',
+                  bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                },
+              }}
+            >
+              Split Bill
+            </Button>
             <Button
               variant="contained"
               size="small"
@@ -820,7 +921,7 @@ function ExpensesContent() {
                   </Box>
                 ))}
               </Box>
-            ) : expenses.length === 0 ? (
+            ) : filteredExpenses.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 8 }}>
                 <Receipt sx={{ fontSize: 64, color: 'text.secondary', opacity: 0.3, mb: 2 }} />
                 <Typography variant="h6" color="text.secondary">
@@ -967,7 +1068,7 @@ function ExpensesContent() {
           onClose={() => setSelectedExpense(null)}
           sx={{ zIndex: 1400 }}
           slotProps={{
-            backdrop: { sx: { zIndex: 1400, bgcolor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' } },
+            backdrop: { sx: { zIndex: 1400, bgcolor: 'rgba(0,0,0,0.65)', backdropFilter: 'none !important' } },
             paper: {
               className: 'glass-deep glass-specular-top',
               sx: {
@@ -1351,6 +1452,18 @@ function ExpensesContent() {
             }
             setSettleModalOpen(false);
             fetchExpenses();
+          }}
+        />
+
+        {/* Itemized Bill Splitter Modal (Restaurant & Grocery Bill Splitter) */}
+        <ItemizedBillSplitModal
+          open={itemizedModalOpen}
+          onClose={() => setItemizedModalOpen(false)}
+          groupId={filterGroup || undefined}
+          members={availableMembers}
+          onExpenseCreated={() => {
+            fetchExpenses();
+            triggerDataRefresh({ type: 'expense' });
           }}
         />
       </Box>

@@ -140,6 +140,13 @@ export default function QrCodeModal({
         open={open}
         onClose={onClose}
         slotProps={{
+          backdrop: {
+            sx: {
+              bgcolor: 'rgba(0, 0, 0, 0.72)',
+              backdropFilter: 'none !important',
+              WebkitBackdropFilter: 'none !important',
+            },
+          },
           paper: {
             sx: {
               borderRadius: { xs: 3, sm: 4 },

@@ -4,6 +4,7 @@ import { validate } from '../middleware/validate';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { Decimal } from '@prisma/client/runtime/library';
+import appCache from '../lib/cache';
 
 export const budgetRouter = Router();
 budgetRouter.use(authenticate);
@@ -76,47 +77,57 @@ budgetRouter.post(
   }
 );
 
-// GET /api/budgets — Get all budgets with spending progress
+// GET /api/budgets — Get all budgets with spending progress (Cached & Parallelized)
 budgetRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    const userId = req.user!.id;
+    const cacheKey = `budgets:list:${userId}`;
+    const cached = appCache.getSync(cacheKey) || (await appCache.get(cacheKey));
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
+
     const budgets = await prisma.budget.findMany({
-      where: { userId: req.user!.id, isActive: true },
+      where: { userId, isActive: true },
       orderBy: { category: 'asc' },
     });
 
-    // Calculate spending for each budget safely without exhausting connections
-    const budgetsWithSpending = [];
-    for (const budget of budgets) {
-      const { start, end } = getPeriodDateRange(budget.period);
+    // Concurrently aggregate spending for all budgets in a single roundtrip
+    const budgetsWithSpending = await Promise.all(
+      budgets.map(async (budget) => {
+        const { start, end } = getPeriodDateRange(budget.period);
 
-      const spending = await prisma.expense.aggregate({
-        where: {
-          isDeleted: false,
-          category: budget.category,
-          date: { gte: start, lte: end },
-          OR: [
-            { paidById: req.user!.id },
-            { shares: { some: { userId: req.user!.id } } },
-          ],
-        },
-        _sum: { amount: true },
-      });
+        const spending = await prisma.expense.aggregate({
+          where: {
+            isDeleted: false,
+            category: budget.category,
+            date: { gte: start, lte: end },
+            OR: [
+              { paidById: userId },
+              { shares: { some: { userId } } },
+            ],
+          },
+          _sum: { amount: true },
+        });
 
-      const spent = Number(spending._sum.amount || 0);
-      const budgetAmount = Number(budget.amount);
-      const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
+        const spent = Number(spending._sum.amount || 0);
+        const budgetAmount = Number(budget.amount);
+        const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
 
-      budgetsWithSpending.push({
-        ...budget,
-        spent,
-        remaining: Math.max(budgetAmount - spent, 0),
-        percentage,
-        isOverBudget: spent > budgetAmount,
-        isAlerted: percentage >= budget.alertAt,
-        periodRange: { start, end },
-      });
-    }
+        return {
+          ...budget,
+          spent,
+          remaining: Math.max(budgetAmount - spent, 0),
+          percentage,
+          isOverBudget: spent > budgetAmount,
+          isAlerted: percentage >= budget.alertAt,
+          periodRange: { start, end },
+        };
+      })
+    );
 
+    appCache.set(cacheKey, budgetsWithSpending, 30000);
     res.json({ success: true, data: budgetsWithSpending });
   } catch (error: any) {
     console.error('Get budgets error:', error);
@@ -176,6 +187,7 @@ budgetRouter.put(
         },
       });
 
+      appCache.invalidatePrefix('budgets:');
       res.json({ success: true, data: updated });
     } catch (error: any) {
       console.error('Update budget error:', error);
@@ -198,6 +210,7 @@ budgetRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): Pr
     }
 
     await prisma.budget.delete({ where: { id } });
+    appCache.invalidatePrefix('budgets:');
     res.json({ success: true, message: 'Budget deleted successfully.' });
   } catch (error: any) {
     console.error('Delete budget error:', error);
@@ -206,85 +219,94 @@ budgetRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): Pr
 });
 
 // =============================================================================
-// GET /api/budgets/burn-rate — Predictive budget burn rate & daily safe-spend
+// GET /api/budgets/burn-rate — Predictive budget burn rate & daily safe-spend (Cached & Parallelized)
 // =============================================================================
 budgetRouter.get('/burn-rate', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    const userId = req.user!.id;
+    const cacheKey = `budgets:burn-rate:${userId}`;
+    const cached = appCache.getSync(cacheKey) || (await appCache.get(cacheKey));
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
+
     const budgets = await prisma.budget.findMany({
-      where: { userId: req.user!.id, isActive: true },
+      where: { userId, isActive: true },
       orderBy: { category: 'asc' },
     });
 
     const now = new Date();
-    const burnRates = [];
+    const burnRates = await Promise.all(
+      budgets.map(async (budget) => {
+        const { start, end } = getPeriodDateRange(budget.period);
+        const totalDays = Math.max(Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
+        const elapsedDays = Math.max(Math.ceil((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
+        const remainingDays = Math.max(Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)), 1);
 
-    for (const budget of budgets) {
-      const { start, end } = getPeriodDateRange(budget.period);
-      const totalDays = Math.max(Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
-      const elapsedDays = Math.max(Math.ceil((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)), 1);
-      const remainingDays = Math.max(Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)), 1);
+        // Concurrently query spending
+        const spending = await prisma.expense.aggregate({
+          where: {
+            isDeleted: false,
+            category: budget.category,
+            date: { gte: start, lte: end },
+            OR: [
+              { paidById: userId },
+              { shares: { some: { userId } } },
+            ],
+          },
+          _sum: { amount: true },
+        });
 
-      // Get actual spending in this period
-      const spending = await prisma.expense.aggregate({
-        where: {
-          isDeleted: false,
+        const spent = Number(spending._sum.amount || 0);
+        const budgetAmount = Number(budget.amount);
+        const remaining = Math.max(budgetAmount - spent, 0);
+        const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
+
+        // Burn rate calculations
+        const dailySpendRate = elapsedDays > 0 ? spent / elapsedDays : 0;
+        const dailySafeSpend = remainingDays > 0 ? remaining / remainingDays : 0;
+        const idealDailySpend = totalDays > 0 ? budgetAmount / totalDays : 0;
+
+        // Projected depletion
+        const projectedDepletionDays = dailySpendRate > 0 ? Math.ceil(remaining / dailySpendRate) : Infinity;
+        const projectedDepletionDate = projectedDepletionDays !== Infinity
+          ? new Date(now.getTime() + projectedDepletionDays * 24 * 60 * 60 * 1000)
+          : null;
+
+        // Pacing: how many days ahead or behind the ideal linear spend
+        const idealSpentByNow = idealDailySpend * elapsedDays;
+        const pacingDelta = idealSpentByNow - spent; // positive = under budget, negative = over
+        const pacingStatus: 'on_track' | 'ahead' | 'behind' | 'depleted' =
+          remaining <= 0 ? 'depleted' :
+          Math.abs(pacingDelta) < idealDailySpend * 0.5 ? 'on_track' :
+          pacingDelta > 0 ? 'ahead' : 'behind';
+
+        return {
+          budgetId: budget.id,
           category: budget.category,
-          date: { gte: start, lte: end },
-          OR: [
-            { paidById: req.user!.id },
-            { shares: { some: { userId: req.user!.id } } },
-          ],
-        },
-        _sum: { amount: true },
-      });
+          period: budget.period,
+          budgetAmount,
+          spent,
+          remaining,
+          percentage,
+          totalDays,
+          elapsedDays,
+          remainingDays,
+          dailySpendRate: Math.round(dailySpendRate * 100) / 100,
+          dailySafeSpend: Math.round(dailySafeSpend * 100) / 100,
+          idealDailySpend: Math.round(idealDailySpend * 100) / 100,
+          projectedDepletionDays: projectedDepletionDays === Infinity ? null : projectedDepletionDays,
+          projectedDepletionDate,
+          pacingDelta: Math.round(pacingDelta * 100) / 100,
+          pacingStatus,
+          alertMessage: generateBurnRateAlert(budget.category, dailySpendRate, remaining, remainingDays, pacingStatus),
+          periodRange: { start, end },
+        };
+      })
+    );
 
-      const spent = Number(spending._sum.amount || 0);
-      const budgetAmount = Number(budget.amount);
-      const remaining = Math.max(budgetAmount - spent, 0);
-      const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
-
-      // Burn rate calculations
-      const dailySpendRate = elapsedDays > 0 ? spent / elapsedDays : 0;
-      const dailySafeSpend = remainingDays > 0 ? remaining / remainingDays : 0;
-      const idealDailySpend = totalDays > 0 ? budgetAmount / totalDays : 0;
-
-      // Projected depletion
-      const projectedDepletionDays = dailySpendRate > 0 ? Math.ceil(remaining / dailySpendRate) : Infinity;
-      const projectedDepletionDate = projectedDepletionDays !== Infinity
-        ? new Date(now.getTime() + projectedDepletionDays * 24 * 60 * 60 * 1000)
-        : null;
-
-      // Pacing: how many days ahead or behind the ideal linear spend
-      const idealSpentByNow = idealDailySpend * elapsedDays;
-      const pacingDelta = idealSpentByNow - spent; // positive = under budget, negative = over
-      const pacingStatus: 'on_track' | 'ahead' | 'behind' | 'depleted' =
-        remaining <= 0 ? 'depleted' :
-        Math.abs(pacingDelta) < idealDailySpend * 0.5 ? 'on_track' :
-        pacingDelta > 0 ? 'ahead' : 'behind';
-
-      burnRates.push({
-        budgetId: budget.id,
-        category: budget.category,
-        period: budget.period,
-        budgetAmount,
-        spent,
-        remaining,
-        percentage,
-        totalDays,
-        elapsedDays,
-        remainingDays,
-        dailySpendRate: Math.round(dailySpendRate * 100) / 100,
-        dailySafeSpend: Math.round(dailySafeSpend * 100) / 100,
-        idealDailySpend: Math.round(idealDailySpend * 100) / 100,
-        projectedDepletionDays: projectedDepletionDays === Infinity ? null : projectedDepletionDays,
-        projectedDepletionDate,
-        pacingDelta: Math.round(pacingDelta * 100) / 100,
-        pacingStatus,
-        alertMessage: generateBurnRateAlert(budget.category, dailySpendRate, remaining, remainingDays, pacingStatus),
-        periodRange: { start, end },
-      });
-    }
-
+    appCache.set(cacheKey, burnRates, 30000);
     res.json({ success: true, data: burnRates });
   } catch (error: any) {
     console.error('Burn rate error:', error);

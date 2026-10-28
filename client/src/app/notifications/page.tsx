@@ -19,6 +19,7 @@ import {
   Alert,
   Divider,
   useTheme,
+  useMediaQuery,
   alpha,
   Dialog,
   DialogTitle,
@@ -46,8 +47,9 @@ import { useRouter } from 'next/navigation';
 
 export default function NotificationsPage() {
   const theme = useTheme();
-  const router = useRouter();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
 
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -253,8 +255,8 @@ export default function NotificationsPage() {
         >
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-              <NotificationsIcon sx={{ color: '#34D399', fontSize: { xs: 24, sm: 28 } }} />
-              <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.125rem' } }}>
+              <NotificationsIcon sx={{ color: '#34D399', fontSize: { xs: 20, sm: 24 } }} />
+              <Typography fontWeight={700} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' } }}>
                 Notification Center
               </Typography>
             </Box>
@@ -308,7 +310,7 @@ export default function NotificationsPage() {
         </Box>
 
         {/* Tab Controls Capsule (Proper width on desktop) */}
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
           <Box
             className="glass-control-surface"
             sx={{
@@ -318,15 +320,22 @@ export default function NotificationsPage() {
               width: { xs: '100%', sm: 'auto' },
               maxWidth: '100%',
               overflowX: 'auto',
+              justifyContent: 'center',
             }}
           >
             <Tabs
               value={tab}
               onChange={(_, v) => setTab(v)}
-              variant="scrollable"
-              scrollButtons="auto"
+              variant={isMobile ? 'scrollable' : 'standard'}
+              centered={!isMobile}
+              scrollButtons={false}
+              allowScrollButtonsMobile={isMobile}
               sx={{
                 minHeight: 40,
+                width: { xs: '100%', sm: 'auto' },
+                '& .MuiTabs-flexContainer': {
+                  justifyContent: 'center',
+                },
                 '& .MuiTabs-indicator': {
                   height: '100%',
                   borderRadius: 2.5,

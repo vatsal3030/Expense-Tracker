@@ -19,6 +19,8 @@ import { useAuth } from '@/providers/AuthProvider';
 import { expenseApi, groupApi, friendApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { triggerDataRefresh } from '@/lib/events';
+import ItemizedBillSplitModal from '@/components/expense/ItemizedBillSplitModal';
+import { UtensilsCrossed } from 'lucide-react';
 
 function NewExpenseSkeleton() {
   return (
@@ -175,6 +177,8 @@ function NewExpenseContent() {
 
   // UI & Draft State
   const [draftRestored, setDraftRestored] = useState(false);
+  const [availableDraft, setAvailableDraft] = useState<any | null>(null);
+  const [itemizedModalOpen, setItemizedModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [loadingInitial, setLoadingInitial] = useState(true);
@@ -202,9 +206,12 @@ function NewExpenseContent() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
-  // Save draft to localStorage (debounced)
+  // Save draft to localStorage (debounced) - only when user has actively typed data
   useEffect(() => {
     if (loadingInitial || isEditMode) return;
+    if (!isFormDirtyRef.current || (!description.trim() && (!amount || parseFloat(amount) <= 0))) {
+      return;
+    }
     const timer = setTimeout(() => {
       try {
         const draftData = {
@@ -227,7 +234,7 @@ function NewExpenseContent() {
       } catch (err) {
         console.error('Failed to save draft:', err);
       }
-    }, 400);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [
@@ -240,6 +247,40 @@ function NewExpenseContent() {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
+  // Instant local hydration for 0ms load time
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedGroupsRaw = localStorage.getItem('fairshare_cached_groups');
+        const cachedFriendsRaw = localStorage.getItem('fairshare_cached_friends');
+        if (cachedGroupsRaw) {
+          const parsed = JSON.parse(cachedGroupsRaw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setGroups(parsed);
+          }
+        }
+        if (cachedFriendsRaw) {
+          const parsed = JSON.parse(cachedFriendsRaw);
+          if (Array.isArray(parsed)) {
+            setFriends(parsed);
+          }
+        }
+        const targetGid = preselectedGroupId;
+        if (targetGid) {
+          const cachedGroupRaw = localStorage.getItem('fairshare_cached_group_' + targetGid);
+          if (cachedGroupRaw) {
+            const parsedG = JSON.parse(cachedGroupRaw);
+            if (parsedG?.members && parsedG.members.length > 0) {
+              setSelectedGroupMembers(parsedG.members);
+              setSelectedMemberIds(parsedG.members.map((m: any) => m.userId || m.user?.id));
+              setLoadingInitial(false);
+            }
+          }
+        }
+      } catch {}
+    }
+  }, [preselectedGroupId]);
+
   // Initial Data Load (Runs once when user is authenticated)
   useEffect(() => {
     if (user?.id && !hasLoadedInitialRef.current) {
@@ -250,16 +291,25 @@ function NewExpenseContent() {
 
   const loadInitialData = async () => {
     try {
-      setLoadingInitial(true);
-      const [groupsRes, friendsRes] = await Promise.all([
+      const targetGid = preselectedGroupId || '';
+      const [groupsRes, friendsRes, targetGroupRes] = await Promise.all([
         groupApi.list().catch(() => ({ data: { data: [] } })),
         friendApi.list().catch(() => ({ data: { data: [] } })),
+        targetGid ? groupApi.get(targetGid).catch(() => null) : Promise.resolve(null),
       ]);
 
       const groupList = groupsRes.data?.data || [];
       const friendList = friendsRes.data?.data || [];
       setGroups(groupList);
       setFriends(friendList);
+
+      if (typeof window !== 'undefined') {
+        try {
+          if (groupList.length > 0) localStorage.setItem('fairshare_cached_groups', JSON.stringify(groupList));
+          if (friendList.length > 0) localStorage.setItem('fairshare_cached_friends', JSON.stringify(friendList));
+          if (targetGroupRes?.data?.data) localStorage.setItem('fairshare_cached_group_' + targetGid, JSON.stringify(targetGroupRes.data.data));
+        } catch {}
+      }
 
       // Handle Edit or Clone Mode: Load existing expense and current group members
       const targetExpId = editId || cloneId;
@@ -313,61 +363,45 @@ function NewExpenseContent() {
         }
       }
 
-      // Check for saved draft
-      let restoredFromDraft = false;
-      const savedDraftRaw = localStorage.getItem(DRAFT_KEY);
+      // Check for saved draft without force-overwriting form
+      const savedDraftRaw = typeof window !== 'undefined' ? localStorage.getItem(DRAFT_KEY) : null;
       if (savedDraftRaw) {
         try {
           const draft = JSON.parse(savedDraftRaw);
-          // Only restore if draft has some meaningful content and is reasonably fresh (e.g. within 7 days)
-          if (draft && (draft.description || draft.amount)) {
-            if (draft.description) setDescription(draft.description);
-            if (draft.amount) setAmount(draft.amount);
-            if (draft.category) setCategory(draft.category);
-            if (draft.paidById) setPaidById(draft.paidById);
-            if (draft.splitType) setSplitType(draft.splitType);
-            if (draft.notes) setNotes(draft.notes);
-            if (draft.date) setDate(draft.date);
-            if (draft.exactAmounts) setExactAmounts(draft.exactAmounts);
-            if (draft.percentages) setPercentages(draft.percentages);
-            if (draft.shares) setShares(draft.shares);
-            if (draft.adjustments) setAdjustments(draft.adjustments);
-
-            const targetGid = draft.groupId !== undefined ? draft.groupId : preselectedGroupId;
-            setGroupId(targetGid);
-            if (targetGid) {
-              await loadGroupMembers(targetGid, draft.selectedMemberIds);
-            } else {
-              initializePersonalMembers(friendList, draft.selectedMemberIds);
-            }
-
-            restoredFromDraft = true;
-            setDraftRestored(true);
+          if (draft && (draft.description || (draft.amount && parseFloat(draft.amount) > 0))) {
+            setAvailableDraft(draft);
           }
         } catch (e) {
           console.warn('Failed parsing draft:', e);
         }
       }
 
-      // If no draft restored, setup defaults from URL query params and user settings
-      if (!restoredFromDraft) {
-        try {
-          const prefsRaw = localStorage.getItem('owino_user_preferences');
-          if (prefsRaw) {
-            const prefs = JSON.parse(prefsRaw);
-            if (prefs.defaultSplitType) {
-              setSplitType(prefs.defaultSplitType);
-            }
+      // Default setup: clean form, setup initial group members
+      try {
+        const prefsRaw = localStorage.getItem('owino_user_preferences');
+        if (prefsRaw) {
+          const prefs = JSON.parse(prefsRaw);
+          if (prefs.defaultSplitType) {
+            setSplitType(prefs.defaultSplitType);
           }
-        } catch {}
-
-        const targetGid = preselectedGroupId || (groupList.length > 0 ? groupList[0].id : '');
-        setGroupId(targetGid);
-        if (targetGid) {
-          await loadGroupMembers(targetGid);
-        } else {
-          initializePersonalMembers(friendList);
         }
+      } catch {}
+
+      const finalGid = preselectedGroupId || (groupList.length > 0 ? groupList[0].id : '');
+      setGroupId(finalGid);
+      if (finalGid) {
+        if (targetGroupRes?.data?.data?.members && targetGroupRes.data.data.members.length > 0) {
+          const members = targetGroupRes.data.data.members;
+          setSelectedGroupMembers(members);
+          setSelectedMemberIds(members.map((m: any) => m.userId || m.user?.id));
+          if (!paidById) {
+            setPaidById(user?.id || members[0].userId || members[0].user?.id);
+          }
+        } else {
+          await loadGroupMembers(finalGid);
+        }
+      } else {
+        initializePersonalMembers(friendList);
       }
     } catch (err) {
       console.error('Failed to load initial data:', err);
@@ -451,8 +485,46 @@ function NewExpenseContent() {
     });
   };
 
-  const clearDraft = () => {
+  const handleRestoreDraft = async () => {
+    if (!availableDraft) return;
+    try {
+      if (availableDraft.description) setDescription(availableDraft.description);
+      if (availableDraft.amount) setAmount(availableDraft.amount);
+      if (availableDraft.category) setCategory(availableDraft.category);
+      if (availableDraft.paidById) setPaidById(availableDraft.paidById);
+      if (availableDraft.splitType) setSplitType(availableDraft.splitType);
+      if (availableDraft.notes) setNotes(availableDraft.notes);
+      if (availableDraft.date) setDate(availableDraft.date);
+      if (availableDraft.exactAmounts) setExactAmounts(availableDraft.exactAmounts);
+      if (availableDraft.percentages) setPercentages(availableDraft.percentages);
+      if (availableDraft.shares) setShares(availableDraft.shares);
+      if (availableDraft.adjustments) setAdjustments(availableDraft.adjustments);
+
+      const targetGid = availableDraft.groupId !== undefined ? availableDraft.groupId : preselectedGroupId;
+      setGroupId(targetGid);
+      if (targetGid) {
+        await loadGroupMembers(targetGid, availableDraft.selectedMemberIds);
+      } else {
+        initializePersonalMembers(friends, availableDraft.selectedMemberIds);
+      }
+      setDraftRestored(true);
+      setAvailableDraft(null);
+      isFormDirtyRef.current = true;
+    } catch (e) {
+      console.warn('Failed restoring draft:', e);
+    }
+  };
+
+  const handleDiscardDraft = () => {
     localStorage.removeItem(DRAFT_KEY);
+    setAvailableDraft(null);
+    setDraftRestored(false);
+  };
+
+  const clearDraft = () => {
+    isFormDirtyRef.current = false;
+    localStorage.removeItem(DRAFT_KEY);
+    setAvailableDraft(null);
     setDescription('');
     setAmount('');
     setNotes('');
@@ -461,7 +533,6 @@ function NewExpenseContent() {
     setShares({});
     setAdjustments({});
     setDraftRestored(false);
-    isFormDirtyRef.current = false;
   };
 
   // Calculations & Balance Validation
@@ -708,6 +779,20 @@ function NewExpenseContent() {
     }
   };
 
+  const handleApplyItemized = (data: { description: string; totalAmount: number; shares: Record<string, number> }) => {
+    setDescription(data.description);
+    setAmount(String(data.totalAmount));
+    setCategory('FOOD');
+    setSplitType('EXACT');
+    const exactMap: Record<string, string> = {};
+    Object.entries(data.shares).forEach(([uid, val]) => {
+      exactMap[uid] = val.toFixed(2);
+    });
+    setExactAmounts(exactMap);
+    setSelectedMemberIds(Object.keys(data.shares));
+    isFormDirtyRef.current = true;
+  };
+
   // Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -924,10 +1009,10 @@ function NewExpenseContent() {
                 <ArrowBack fontSize="small" />
               </IconButton>
               <Box>
-                <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.75rem', md: '2.125rem' } }}>
+                <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.5rem', md: '1.85rem' } }}>
                   {isEditMode ? 'Edit Expense' : 'Add New Expense'}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
                   {isEditMode ? 'Update bill details, adjust shares, or add newly joined group members' : 'Exact mathematical splits with zero calculation errors'}
                 </Typography>
               </Box>
@@ -942,7 +1027,7 @@ function NewExpenseContent() {
                 deleteIcon={<DeleteSweep fontSize="small" />}
                 sx={{
                   fontWeight: 700,
-                  fontSize: '0.75rem',
+                  fontSize: '0.72rem',
                   bgcolor: emeraldBg,
                   color: emeraldText,
                   border: `1px solid ${emeraldBorder}`,
@@ -951,13 +1036,60 @@ function NewExpenseContent() {
             )}
           </Box>
 
+          {availableDraft && !draftRestored && (
+            <Alert
+              severity="info"
+              icon={<FlashOn fontSize="small" />}
+              action={
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={handleRestoreDraft}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      bgcolor: emeraldColor,
+                      color: '#ffffff',
+                      '&:hover': { bgcolor: isLight ? '#047857' : '#059669' },
+                    }}
+                  >
+                    Restore
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="text"
+                    color="inherit"
+                    onClick={handleDiscardDraft}
+                    sx={{ textTransform: 'none', fontSize: '0.75rem', color: 'text.secondary' }}
+                  >
+                    Discard
+                  </Button>
+                </Stack>
+              }
+              sx={{
+                mb: 2.5,
+                borderRadius: 2.5,
+                bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
+                border: `1px solid ${emeraldBorder}`,
+                color: 'text.primary',
+                '& .MuiAlert-message': { width: '100%' },
+              }}
+            >
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                Unsaved draft available: <strong>&ldquo;{availableDraft.description || 'Expense'}&rdquo;</strong>{availableDraft.amount ? ` • ₹${availableDraft.amount}` : ''}
+              </Typography>
+            </Alert>
+          )}
+
           {isCloneMode && (
             <Alert
               severity="info"
               icon={<ContentCopy fontSize="small" />}
               sx={{
-                mb: 3,
-                borderRadius: 3,
+                mb: 2.5,
+                borderRadius: 2.5,
                 fontWeight: 600,
                 border: '1px solid',
                 borderColor: alpha('#0288d1', 0.3),
@@ -969,34 +1101,57 @@ function NewExpenseContent() {
           )}
 
           {errorMsg && (
-            <Alert severity="error" sx={{ mb: 3, borderRadius: 3, fontWeight: 600 }}>
+            <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2.5, fontWeight: 600 }}>
               {errorMsg}
             </Alert>
           )}
 
           <form onSubmit={handleSubmit}>
-            <Grid container spacing={3.5} sx={{ alignItems: 'flex-start' }}>
+            <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ alignItems: 'flex-start' }}>
               {/* Left Column: Comprehensive Form Cards */}
               <Grid size={{ xs: 12, lg: 7.5, xl: 8 }}>
-                <Stack spacing={3}>
+                <Stack spacing={{ xs: 1.75, sm: 2.5 }}>
                   {/* Card 1: Expense Details */}
                   <Card
                     className="glass-secondary glass-specular-top"
                     sx={{
-                      borderRadius: 3.5,
-                      p: { xs: 2.5, sm: 3.5 },
+                      borderRadius: { xs: 2.5, sm: 3.5 },
+                      p: { xs: 1.75, sm: 3 },
                       boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                     }}
                   >
-                    <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.secondary', mb: 2, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
-                      1. Expense Details
-                    </Typography>
-                    <Grid container spacing={2}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.68rem' }}>
+                        1. Expense Details
+                      </Typography>
+                      <Button
+                        type="button"
+                        size="small"
+                        startIcon={<UtensilsCrossed size={13} />}
+                        onClick={() => setItemizedModalOpen(true)}
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.72rem',
+                          color: emeraldColor,
+                          bgcolor: emeraldBg,
+                          border: `1px solid ${emeraldBorder}`,
+                          borderRadius: 2,
+                          py: 0.25,
+                          px: 1,
+                          '&:hover': { bgcolor: isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(16, 185, 129, 0.22)' },
+                        }}
+                      >
+                        Itemized Bill Splitter
+                      </Button>
+                    </Box>
+                    <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                       <Grid size={{ xs: 12, sm: 8 }}>
                         <TextField
                           fullWidth
+                          size="small"
                           label="Expense Description / Title"
-                          placeholder="e.g. Dinner at Olive, Grocery Haul, Hotel Booking"
+                          placeholder="e.g. Dinner, Grocery Haul, Flight"
                           value={description}
                           onChange={(e) => setDescription(e.target.value)}
                           required
@@ -1004,13 +1159,13 @@ function NewExpenseContent() {
                             inputLabel: { shrink: true },
                             htmlInput: { maxLength: 150 },
                           }}
-                          helperText="Max 150 characters"
                         />
                       </Grid>
 
                       <Grid size={{ xs: 12, sm: 4 }}>
                         <TextField
                           fullWidth
+                          size="small"
                           label="Total Amount"
                           type="number"
                           placeholder="0.00"
@@ -1023,20 +1178,20 @@ function NewExpenseContent() {
                             input: {
                               startAdornment: (
                                 <InputAdornment position="start">
-                                  <Typography fontWeight={800} sx={{ color: emeraldColor, fontSize: '1.1rem' }}>
+                                  <Typography fontWeight={800} sx={{ color: emeraldColor, fontSize: '0.95rem' }}>
                                     ₹
                                   </Typography>
                                 </InputAdornment>
                               ),
                             },
                           }}
-                          helperText="Range: ₹0.01 to ₹10,000,000"
                         />
                       </Grid>
 
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
+                          size="small"
                           select
                           label="Category"
                           value={category}
@@ -1046,8 +1201,8 @@ function NewExpenseContent() {
                           {CATEGORIES.map((cat) => (
                             <MenuItem key={cat} value={cat}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                                <span style={{ fontSize: '1.1rem' }}>{CATEGORY_EMOJI[cat]}</span>
-                                <Typography variant="body2" fontWeight={500}>
+                                <span style={{ fontSize: '1rem' }}>{CATEGORY_EMOJI[cat]}</span>
+                                <Typography variant="body2" fontWeight={500} sx={{ fontSize: '0.825rem' }}>
                                   {cat.charAt(0) + cat.slice(1).toLowerCase()}
                                 </Typography>
                               </Box>
@@ -1059,6 +1214,7 @@ function NewExpenseContent() {
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
+                          size="small"
                           type="date"
                           label="Expense Date"
                           value={date}
@@ -1073,18 +1229,19 @@ function NewExpenseContent() {
                   <Card
                     className="glass-secondary glass-specular-top"
                     sx={{
-                      borderRadius: 3.5,
-                      p: { xs: 2.5, sm: 3.5 },
+                      borderRadius: { xs: 2.5, sm: 3.5 },
+                      p: { xs: 1.75, sm: 3 },
                       boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                     }}
                   >
-                    <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.secondary', mb: 2, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
+                    <Typography variant="subtitle2" fontWeight={750} sx={{ color: 'text.secondary', mb: 1.5, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.68rem' }}>
                       2. Participants & Payer
                     </Typography>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
+                          size="small"
                           select
                           label="Shared In (Group / Personal)"
                           value={groupId}
@@ -1094,7 +1251,7 @@ function NewExpenseContent() {
                             preselectedGroupId
                               ? '🔒 Locked to this group'
                               : isEditMode
-                              ? '🔒 Group cannot be changed when editing an expense'
+                              ? '🔒 Locked for edit'
                               : undefined
                           }
                           slotProps={{ inputLabel: { shrink: true } }}
@@ -1104,7 +1261,7 @@ function NewExpenseContent() {
                             <MenuItem key={g.id} value={g.id}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <GroupIcon fontSize="small" sx={{ color: emeraldColor }} />
-                                <Typography variant="body2" fontWeight={600}>{g.name}</Typography>
+                                <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.825rem' }}>{g.name}</Typography>
                               </Box>
                             </MenuItem>
                           ))}
@@ -1114,6 +1271,7 @@ function NewExpenseContent() {
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
+                          size="small"
                           select
                           label="Paid By"
                           value={paidById}
@@ -1126,10 +1284,10 @@ function NewExpenseContent() {
                             return (
                               <MenuItem key={uid} value={uid}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Avatar src={m.user?.avatarUrl} sx={{ width: 22, height: 22, fontSize: '0.7rem', bgcolor: emeraldColor, color: '#FFFFFF' }}>
+                                  <Avatar src={m.user?.avatarUrl} sx={{ width: 20, height: 20, fontSize: '0.65rem', bgcolor: emeraldColor, color: '#FFFFFF' }}>
                                     {m.user?.name?.charAt(0) || '?'}
                                   </Avatar>
-                                  <Typography variant="body2" fontWeight={isYou ? 700 : 500}>
+                                  <Typography variant="body2" fontWeight={isYou ? 700 : 500} sx={{ fontSize: '0.825rem' }}>
                                     {m.user?.name} {isYou ? '(You)' : m.user?.username ? `(@${m.user.username})` : m.user?.email ? `(${m.user.email.split('@')[0]})` : ''}
                                   </Typography>
                                 </Box>
@@ -1141,11 +1299,11 @@ function NewExpenseContent() {
                     </Grid>
 
                     {/* Member selection chips */}
-                    <Box sx={{ mt: 2.5 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
-                        Select members included in this bill ({selectedMemberIds.length} of {selectedGroupMembers.length} selected):
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600, fontSize: '0.72rem' }}>
+                        Select members included ({selectedMemberIds.length} of {selectedGroupMembers.length} selected):
                       </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {selectedGroupMembers.map((m: any) => {
                           const uid = m.user?.id || m.userId;
                           const isSelected = selectedMemberIds.includes(uid);
@@ -1155,15 +1313,16 @@ function NewExpenseContent() {
                           return (
                             <Chip
                               key={uid}
+                              size="small"
                               avatar={
                                 <Avatar
                                   src={m.user?.avatarUrl}
                                   sx={{
-                                    width: 24,
-                                    height: 24,
+                                    width: 20,
+                                    height: 20,
                                     bgcolor: isSelected ? emeraldColor : theme.palette.divider,
                                     color: '#FFFFFF',
-                                    fontSize: '0.75rem',
+                                    fontSize: '0.65rem',
                                   }}
                                 >
                                   {m.user?.name?.charAt(0) || '?'}
@@ -1174,6 +1333,8 @@ function NewExpenseContent() {
                               variant={isSelected ? 'filled' : 'outlined'}
                               sx={{
                                 fontWeight: isSelected ? 700 : 500,
+                                fontSize: '0.75rem',
+                                height: 28,
                                 bgcolor: isSelected ? emeraldBg : 'transparent',
                                 borderColor: isSelected ? emeraldBorder : theme.palette.divider,
                                 color: isSelected ? emeraldText : 'text.secondary',
@@ -1903,6 +2064,20 @@ function NewExpenseContent() {
           </form>
         </Box>
       )}
+
+      {/* Itemized Restaurant Bill Splitter Modal */}
+      <ItemizedBillSplitModal
+        open={itemizedModalOpen}
+        onClose={() => setItemizedModalOpen(false)}
+        members={selectedGroupMembers.map((m: any) => ({
+          id: m.user?.id || m.userId,
+          name: (m.user?.id || m.userId) === currentUserId ? 'You' : m.user?.name || 'Friend',
+          avatarUrl: m.user?.avatarUrl,
+        }))}
+        groupId={groupId}
+        currentUserId={currentUserId}
+        onApplySplit={handleApplyItemized}
+      />
     </AppLayout>
   );
 }

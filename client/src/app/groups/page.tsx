@@ -77,11 +77,21 @@ export default function GroupsPage() {
   const isFetchingGroupsRef = useRef(false);
 
   useEffect(() => {
-    if (!authLoading && !user) router.push('/auth/login');
-  }, [user?.id, authLoading, router]);
+    try {
+      const saved = localStorage.getItem('fairshare_cached_groups');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setGroups(parsed);
+          setLoading(false);
+          hasLoadedGroupsRef.current = true;
+        }
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
-    if (user?.id && !hasLoadedGroupsRef.current) fetchGroups();
+    if (user?.id) fetchGroups();
   }, [user?.id]);
 
   const fetchGroups = async () => {
@@ -232,7 +242,7 @@ export default function GroupsPage() {
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
+            <Typography fontWeight={700} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' } }}>
               Expense Groups
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
@@ -332,7 +342,7 @@ export default function GroupsPage() {
                 <Typography variant="caption" noWrap sx={{ color: isLight ? '#047857' : '#34D399', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.58rem', sm: '0.75rem' }, display: 'block' }}>
                   Groups
                 </Typography>
-                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
+                <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
                   {loading ? <Skeleton width={30} /> : groups.length}
                 </Typography>
               </Box>
@@ -374,7 +384,7 @@ export default function GroupsPage() {
                 <Typography variant="caption" noWrap sx={{ color: isLight ? '#0284C7' : '#7DD3FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.58rem', sm: '0.75rem' }, display: 'block' }}>
                   Members
                 </Typography>
-                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
+                <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
                   {loading ? <Skeleton width={30} /> : totalMembers}
                 </Typography>
               </Box>
@@ -416,7 +426,7 @@ export default function GroupsPage() {
                 <Typography variant="caption" noWrap sx={{ color: isLight ? '#7E22CE' : '#C084FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.58rem', sm: '0.75rem' }, display: 'block' }}>
                   Expenses
                 </Typography>
-                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
+                <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
                   {loading ? <Skeleton width={30} /> : totalExpensesCount}
                 </Typography>
               </Box>

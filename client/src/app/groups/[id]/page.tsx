@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useState, useMemo, useCallback, useRef } fr
 import {
   Box, Typography, Card, CardContent, Grid, Avatar, AvatarGroup, Chip,
   List, ListItem, ListItemAvatar, ListItemText, Divider, Button,
-  Skeleton, useTheme, alpha, IconButton, Tooltip, Stack, CircularProgress,
+  Skeleton, useTheme, useMediaQuery, alpha, IconButton, Tooltip, Stack, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Tabs, Tab,
   Alert, Snackbar, FormControlLabel, Switch, MenuItem, Paper, Menu, ListItemIcon,
 } from '@mui/material';
@@ -120,6 +120,7 @@ function GroupDetailContent() {
   const router = useRouter();
   const params = useParams();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, profile, loading: authLoading } = useAuth();
 
   const [group, setGroup] = useState<any>(null);
@@ -204,6 +205,27 @@ function GroupDetailContent() {
     }
   }, [params.id, joinGroup, leaveGroup]);
 
+  // Instant local hydration for 0ms transitions
+  useEffect(() => {
+    if (typeof window !== 'undefined' && params.id) {
+      try {
+        const cachedG = localStorage.getItem('fairshare_cached_group_' + params.id);
+        const cachedB = localStorage.getItem('fairshare_cached_balances_' + params.id);
+        if (cachedG) {
+          const parsed = JSON.parse(cachedG);
+          if (parsed && parsed.id) {
+            setGroup(parsed);
+            hasLoadedGroupRef.current = true;
+            setLoading(false);
+          }
+        }
+        if (cachedB) {
+          setBalances(JSON.parse(cachedB));
+        }
+      } catch {}
+    }
+  }, [params.id]);
+
   useEffect(() => {
     if (user?.id && params.id) fetchGroup();
   }, [user?.id, params.id]);
@@ -235,6 +257,13 @@ function GroupDetailContent() {
       setGroup(groupRes.data?.data);
       setBalances(balancesRes.data?.data);
       hasLoadedGroupRef.current = true;
+
+      if (typeof window !== 'undefined') {
+        try {
+          if (groupRes.data?.data) localStorage.setItem('fairshare_cached_group_' + params.id, JSON.stringify(groupRes.data.data));
+          if (balancesRes.data?.data) localStorage.setItem('fairshare_cached_balances_' + params.id, JSON.stringify(balancesRes.data.data));
+        } catch {}
+      }
     } catch (error) {
       console.error('Fetch group error:', error);
     } finally {
@@ -907,8 +936,8 @@ function GroupDetailContent() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 1.1, sm: 2.5 },
-                borderRadius: { xs: 2.5, sm: 3.5 },
+                p: { xs: 1.1, sm: 1.75 },
+                borderRadius: { xs: 2.5, sm: 3 },
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 bgcolor: isLight ? 'rgba(255, 255, 255, 0.8)' : 'rgba(30, 41, 59, 0.35)',
                 border: isLight ? undefined : '1px solid rgba(255, 255, 255, 0.10)',
@@ -921,15 +950,15 @@ function GroupDetailContent() {
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
                   <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#38BDF8' }} />
-                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.72rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     Group Spend
                   </Typography>
                 </Box>
-                <Typography fontWeight={800} sx={{ color: 'text.primary', mt: { xs: 0.25, sm: 0.5 }, letterSpacing: '-0.02em', fontSize: { xs: '0.95rem', sm: '1.5rem', md: '1.85rem' }, lineHeight: 1.2 }}>
+                <Typography fontWeight={700} sx={{ color: 'text.primary', mt: { xs: 0.25, sm: 0.5 }, letterSpacing: '-0.02em', fontSize: { xs: '0.95rem', sm: '1.25rem', md: '1.45rem' }, lineHeight: 1.2 }}>
                   {formatCurrency(totalSpent)}
                 </Typography>
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', fontSize: { xs: '0.625rem', sm: '0.75rem' } }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', fontSize: { xs: '0.625rem', sm: '0.72rem' } }}>
                 {group?.expenses?.length || 0} bills<Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}> across {group?.members?.length || 0} members</Box>
               </Typography>
             </Card>
@@ -940,8 +969,8 @@ function GroupDetailContent() {
             <Card
               className={myBalance > 0 ? "glass-secondary glass-specular-top glass-emerald-ambient" : "glass-secondary glass-specular-top"}
               sx={{
-                p: { xs: 1.1, sm: 2.5 },
-                borderRadius: { xs: 2.5, sm: 3.5 },
+                p: { xs: 1.1, sm: 1.75 },
+                borderRadius: { xs: 2.5, sm: 3 },
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 bgcolor: myBalance > 0
                   ? isLight ? 'rgba(16, 185, 129, 0.08)' : 'rgba(6, 78, 59, 0.28)'
@@ -962,17 +991,17 @@ function GroupDetailContent() {
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
                   <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.secondary' }} />
-                  <Typography variant="caption" sx={{ color: myBalance > 0 ? '#34D399' : myBalance < 0 ? '#FB7185' : 'text.secondary', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <Typography variant="caption" sx={{ color: myBalance > 0 ? '#34D399' : myBalance < 0 ? '#FB7185' : 'text.secondary', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.72rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     Your Balance
                   </Typography>
                 </Box>
                 <Typography
-                  fontWeight={800}
+                  fontWeight={700}
                   sx={{
                     color: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.primary',
                     mt: { xs: 0.25, sm: 0.5 },
                     letterSpacing: '-0.02em',
-                    fontSize: { xs: '0.95rem', sm: '1.5rem', md: '1.85rem' },
+                    fontSize: { xs: '0.95rem', sm: '1.25rem', md: '1.45rem' },
                     lineHeight: 1.2,
                   }}
                 >
@@ -996,8 +1025,8 @@ function GroupDetailContent() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 1.1, sm: 2.5 },
-                borderRadius: { xs: 2.5, sm: 3.5 },
+                p: { xs: 1.1, sm: 1.75 },
+                borderRadius: { xs: 2.5, sm: 3 },
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
                 display: 'flex',
                 flexDirection: 'column',
@@ -1010,14 +1039,14 @@ function GroupDetailContent() {
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
                   <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#A855F7' }} />
-                  <Typography variant="caption" sx={{ color: isLight ? '#7E22CE' : '#C084FC', fontWeight: 750, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <Typography variant="caption" sx={{ color: isLight ? '#7E22CE' : '#C084FC', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.72rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     Debts
                   </Typography>
                 </Box>
-                <Typography fontWeight={800} sx={{ color: isLight ? '#7E22CE' : '#C084FC', mt: { xs: 0.25, sm: 0.5 }, fontSize: { xs: '0.95rem', sm: '1.25rem' }, lineHeight: 1.2 }}>
+                <Typography fontWeight={700} sx={{ color: isLight ? '#7E22CE' : '#C084FC', mt: { xs: 0.25, sm: 0.5 }, fontSize: { xs: '0.95rem', sm: '1.15rem' }, lineHeight: 1.2 }}>
                   {balances?.simplifiedDebts?.length || 0} Pending
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' }, mt: 0.25 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' }, mt: 0.25, fontSize: '0.72rem' }}>
                   Greedy cash-flow algorithm active
                 </Typography>
               </Box>
@@ -1043,63 +1072,63 @@ function GroupDetailContent() {
           </Grid>
         </Grid>
 
-        {/* Tab Controls (Expenses | Balances & Settle Up | Members & Security) */}
-        <Box
-          className="glass-tertiary"
-          sx={{
-            borderRadius: 3,
-            p: 0.5,
-            mb: 3,
-            display: 'flex',
-            width: '100%',
-            maxWidth: '100%',
-            minWidth: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <Tabs
-            value={activeTab}
-            onChange={(_, val) => setActiveTab(val)}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
+        {/* Tab Controls Capsule Centered */}
+        <Box sx={{ width: '100%', mb: 3, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Box
+            className="glass-control-surface"
             sx={{
-              minHeight: 40,
-              width: '100%',
-              maxWidth: '100%',
-              minWidth: 0,
-              '& .MuiTabs-scroller': {
-                overflowX: 'auto !important',
-              },
-              '& .MuiTabs-indicator': {
-                height: '100%',
-                borderRadius: 2.5,
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 98, 69, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
-                zIndex: 0,
-              },
-              '& .MuiTab-root': {
-                textTransform: 'none',
-                fontWeight: 700,
-                fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                minWidth: { xs: 'auto', sm: 120 },
-                px: { xs: 1.75, sm: 2.5 },
-                minHeight: 40,
-                zIndex: 1,
-                borderRadius: 2.5,
-                transition: 'all 0.2s ease',
-                color: 'text.secondary',
-                '&.Mui-selected': {
-                  color: theme.palette.mode === 'dark' ? '#34D399' : '#059669',
-                },
-              },
+              display: 'inline-flex',
+              mx: 'auto',
+              p: 0.4,
+              borderRadius: { xs: 2.5, sm: 3 },
+              width: { xs: '100%', sm: 'auto' },
+              maxWidth: { xs: '100%', sm: 'auto' },
+              justifyContent: 'center',
             }}
           >
-            <Tab label={`Expenses (${group?.expenses?.length || 0})`} />
-            <Tab label={`Balances & Settle Up (${balances?.balances?.length || 0})`} />
-            <Tab label={`Members (${group?.members?.length || 0})`} />
-            <Tab label="Settings ⚙️" />
-          </Tabs>
+            <Tabs
+              value={activeTab}
+              onChange={(_, val) => setActiveTab(val)}
+              variant={isMobile ? 'scrollable' : 'standard'}
+              centered={!isMobile}
+              scrollButtons={false}
+              allowScrollButtonsMobile={isMobile}
+              sx={{
+                minHeight: 38,
+                width: { xs: '100%', sm: 'auto' },
+                '& .MuiTabs-flexContainer': {
+                  justifyContent: 'center',
+                },
+                '& .MuiTabs-indicator': {
+                  height: '100%',
+                  borderRadius: 2.5,
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 98, 69, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  zIndex: 0,
+                },
+                '& .MuiTab-root': {
+                  textTransform: 'none',
+                  fontWeight: 650,
+                  fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                  minWidth: { xs: 'auto', sm: 110 },
+                  px: { xs: 1.5, sm: 2.25 },
+                  minHeight: 36,
+                  zIndex: 1,
+                  borderRadius: 2.5,
+                  transition: 'all 0.2s ease',
+                  color: 'text.secondary',
+                  '&.Mui-selected': {
+                    color: theme.palette.mode === 'dark' ? '#34D399' : '#059669',
+                  },
+                },
+              }}
+            >
+              <Tab label={`Expenses (${group?.expenses?.length || 0})`} />
+              <Tab label={`Balances & Settle Up (${balances?.balances?.length || 0})`} />
+              <Tab label={`Members (${group?.members?.length || 0})`} />
+              <Tab label="Settings" />
+            </Tabs>
+          </Box>
         </Box>
 
         {/* TAB 0: EXPENSES & COMMAND HUB */}
@@ -1248,7 +1277,7 @@ function GroupDetailContent() {
                     />
                   </Box>
 
-                  <Typography variant="h4" fontWeight={850} sx={{ color: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.primary', letterSpacing: '-0.02em', mb: 1.5 }}>
+                  <Typography fontWeight={700} sx={{ color: myBalance > 0 ? '#10B981' : myBalance < 0 ? '#EF4444' : 'text.primary', letterSpacing: '-0.02em', mb: 1.25, fontSize: { xs: '1.25rem', sm: '1.45rem', md: '1.6rem' } }}>
                     {myBalance > 0 ? '+' : ''}{formatCurrency(myBalance)}
                   </Typography>
 

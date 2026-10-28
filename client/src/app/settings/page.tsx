@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, TextField, Button, Avatar,
-  Divider, useTheme, alpha, Stack, Switch, FormControlLabel, MenuItem,
+  Divider, useTheme, useMediaQuery, alpha, Stack, Switch, FormControlLabel, MenuItem,
   Chip, Dialog, DialogTitle, DialogContent, DialogActions, Alert,
   InputAdornment, IconButton, CircularProgress, Snackbar, Tabs, Tab,
   RadioGroup, Radio, FormControl, FormLabel, Tooltip, List, ListItem,
@@ -57,6 +57,7 @@ function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { profile, signOut, refreshProfile, loading: authLoading, user, updatePassword } = useAuth();
   const { mode, toggleTheme, setMode } = useThemeMode();
 
@@ -574,7 +575,7 @@ function SettingsContent() {
               </Avatar>
               <Box sx={{ minWidth: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                  <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em', color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' } }}>
+                  <Typography variant="h6" fontWeight={700} sx={{ letterSpacing: '-0.01em', color: 'text.primary', fontSize: { xs: '0.95rem', sm: '1.25rem' } }}>
                     {form.name || 'User'}
                   </Typography>
                   {(form.username || profile?.username) && (
@@ -653,31 +654,33 @@ function SettingsContent() {
         </Card>
 
         {/* Segmented Liquid Glass Tabs */}
-        <Box sx={{ mb: { xs: 2, sm: 3 }, width: '100%', maxWidth: '100%', minWidth: 0 }}>
+        <Box sx={{ mb: { xs: 2, sm: 3 }, width: '100%', maxWidth: '100%', minWidth: 0, display: 'flex', justifyContent: 'center' }}>
           <Box
             className="glass-tertiary"
             sx={{
-              display: 'flex',
+              display: 'inline-flex',
+              justifyContent: 'center',
               p: 0.4,
               borderRadius: { xs: 2.5, sm: 3 },
               border: '1px solid rgba(255, 255, 255, 0.08)',
-              width: '100%',
-              maxWidth: '100%',
-              minWidth: 0,
-              overflow: 'hidden',
+              width: { xs: '100%', sm: 'auto' },
+              maxWidth: { xs: '100%', sm: 'auto' },
+              mx: 'auto',
             }}
           >
             <Tabs
               value={activeTab}
               onChange={handleTabChange}
-              variant="scrollable"
+              variant={isMobile ? 'scrollable' : 'standard'}
+              centered={!isMobile}
               scrollButtons={false}
-              allowScrollButtonsMobile
+              allowScrollButtonsMobile={isMobile}
               sx={{
                 minHeight: { xs: 34, sm: 40 },
-                width: '100%',
-                maxWidth: '100%',
-                minWidth: 0,
+                width: { xs: '100%', sm: 'auto' },
+                '& .MuiTabs-flexContainer': {
+                  justifyContent: 'center',
+                },
                 '& .MuiTabs-scroller': {
                   overflowX: 'auto !important',
                 },

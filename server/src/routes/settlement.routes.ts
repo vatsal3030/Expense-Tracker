@@ -105,6 +105,7 @@ settlementRouter.post(
       });
 
       appCache.invalidatePrefix('dashboard:');
+      appCache.invalidatePrefix('settlements:');
       if (groupId) {
         appCache.invalidatePrefix(`group:${groupId}`);
         appCache.invalidatePrefix('groups:list');
@@ -119,40 +120,47 @@ settlementRouter.post(
   }
 );
 
-// GET /api/settlements/simplified — Splitwise-style Global Debt Simplification
+// GET /api/settlements/simplified — Splitwise-style Global Debt Simplification (Cached & Parallelized)
 settlementRouter.get('/simplified', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const currentUserId = req.user!.id;
+    const cacheKey = `settlements:simplified:${currentUserId}`;
 
-    // Fetch all user's shared expenses (where user is payer or participant)
-    const expenses = await prisma.expense.findMany({
-      where: {
-        isDeleted: false,
-        OR: [
-          { paidById: currentUserId },
-          { shares: { some: { userId: currentUserId } } },
-        ],
-      },
-      include: {
-        paidBy: { select: { id: true, name: true, avatarUrl: true } },
-        shares: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
-      },
-    });
+    const cached = appCache.getSync(cacheKey) || (await appCache.get(cacheKey));
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
 
-    // Fetch all confirmed settlements
-    const settlements = await prisma.settlement.findMany({
-      where: {
-        status: 'CONFIRMED',
-        OR: [
-          { payerId: currentUserId },
-          { payeeId: currentUserId },
-        ],
-      },
-      include: {
-        payer: { select: { id: true, name: true, avatarUrl: true } },
-        payee: { select: { id: true, name: true, avatarUrl: true } },
-      },
-    });
+    // Parallel fetch user's expenses and confirmed settlements in a single database flight
+    const [expenses, settlements] = await Promise.all([
+      prisma.expense.findMany({
+        where: {
+          isDeleted: false,
+          OR: [
+            { paidById: currentUserId },
+            { shares: { some: { userId: currentUserId } } },
+          ],
+        },
+        include: {
+          paidBy: { select: { id: true, name: true, avatarUrl: true } },
+          shares: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
+        },
+      }),
+      prisma.settlement.findMany({
+        where: {
+          status: 'CONFIRMED',
+          OR: [
+            { payerId: currentUserId },
+            { payeeId: currentUserId },
+          ],
+        },
+        include: {
+          payer: { select: { id: true, name: true, avatarUrl: true } },
+          payee: { select: { id: true, name: true, avatarUrl: true } },
+        },
+      }),
+    ]);
 
     // Map net balances across all counterparties
     const userMap = new Map<string, { id: string; name: string; avatarUrl: string | null }>();
@@ -229,14 +237,17 @@ settlementRouter.get('/simplified', async (req: AuthenticatedRequest, res: Respo
       if (creditor.amount < 0.01) j++;
     }
 
+    const responseData = {
+      balances,
+      simplifiedDebts,
+      currentUserBalance: balanceMap[currentUserId] || 0,
+      savingsCount: Math.max(0, expenses.length - simplifiedDebts.length),
+    };
+
+    appCache.set(cacheKey, responseData, 30000);
     res.json({
       success: true,
-      data: {
-        balances,
-        simplifiedDebts,
-        currentUserBalance: balanceMap[currentUserId] || 0,
-        savingsCount: Math.max(0, expenses.length - simplifiedDebts.length),
-      },
+      data: responseData,
     });
   } catch (error: any) {
     console.error('Simplify debts error:', error);
@@ -330,6 +341,7 @@ settlementRouter.patch('/:id/confirm', async (req: AuthenticatedRequest, res: Re
     });
 
     appCache.invalidatePrefix('dashboard:');
+    appCache.invalidatePrefix('settlements:');
     if (settlement.groupId) {
       appCache.invalidatePrefix(`group:${settlement.groupId}`);
       appCache.invalidatePrefix('groups:list');

@@ -56,13 +56,32 @@ export default function RecurringPage() {
   });
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fairshare_cached_recurring');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setRules(parsed);
+          setLoading(false);
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
   const fetchRules = useCallback(async () => {
     try {
       const res = await recurringApi.list();
-      setRules(res.data.data || []);
+      const data = res.data.data || [];
+      setRules(data);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('fairshare_cached_recurring', JSON.stringify(data));
+        } catch {}
+      }
     } catch (error) {
       console.error('Fetch recurring error:', error);
     } finally {
@@ -178,7 +197,7 @@ export default function RecurringPage() {
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.75, flexWrap: 'wrap', gap: 1.5 }}>
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
+            <Typography fontWeight={700} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' } }}>
               Recurring Expenses
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
@@ -312,20 +331,20 @@ export default function RecurringPage() {
                       '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: statusColor },
                     }}
                   >
-                    <CardContent sx={{ p: 3 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <CardContent sx={{ p: { xs: 1.5, sm: 2.25 }, '&:last-child': { pb: { xs: 1.5, sm: 2.25 } } }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                           <Box sx={{
-                            width: 48, height: 48, borderRadius: 2.75,
+                            width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, borderRadius: { xs: 2, sm: 2.25 },
                             bgcolor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
                             border: `1.5px solid ${theme.palette.divider}`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '1.75rem', flexShrink: 0,
+                            fontSize: { xs: '1.2rem', sm: '1.4rem' }, flexShrink: 0,
                           }}>
                             {CATEGORY_EMOJI[rule.category] || '📋'}
                           </Box>
                           <Box>
-                            <Typography variant="body1" fontWeight={750} sx={{ color: 'text.primary' }}>
+                            <Typography variant="body1" fontWeight={750} sx={{ color: 'text.primary', fontSize: { xs: '0.85rem', sm: '0.95rem' } }}>
                               {rule.description}
                             </Typography>
                             <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>

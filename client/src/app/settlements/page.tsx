@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -15,6 +15,7 @@ import {
   Chip,
   Skeleton,
   useTheme,
+  useMediaQuery,
   alpha,
   IconButton,
   Divider,
@@ -42,6 +43,7 @@ import UpiPaymentModal from '@/components/settlement/UpiPaymentModal';
 export default function SettlementsPage() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
   const [settlements, setSettlements] = useState<any[]>([]);
@@ -68,10 +70,22 @@ export default function SettlementsPage() {
   const hasLoadedSettlementsRef = React.useRef(false);
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fairshare_cached_settlements');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSettlements(parsed);
+          setLoading(false);
+          hasLoadedSettlementsRef.current = true;
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
-
-  const statusFilter = ['', 'PENDING', 'CONFIRMED'][tab];
 
   const isFetchingSettlementsRef = useRef(false);
 
@@ -79,11 +93,10 @@ export default function SettlementsPage() {
     if (isFetchingSettlementsRef.current) return;
     isFetchingSettlementsRef.current = true;
     try {
-      if (!hasLoadedSettlementsRef.current) {
+      if (!hasLoadedSettlementsRef.current && settlements.length === 0) {
         setLoading(true);
       }
-      const params: Record<string, any> = { page, limit: 15 };
-      if (statusFilter) params.status = statusFilter;
+      const params: Record<string, any> = { page, limit: 50 };
 
       const [listRes, simplifiedRes] = await Promise.allSettled([
         settlementApi.list(params),
@@ -91,8 +104,14 @@ export default function SettlementsPage() {
       ]);
 
       if (listRes.status === 'fulfilled') {
-        setSettlements(listRes.value.data?.data || []);
+        const data = listRes.value.data?.data || [];
+        setSettlements(data);
         setTotalPages(listRes.value.data?.pagination?.totalPages || 1);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('fairshare_cached_settlements', JSON.stringify(data));
+          } catch {}
+        }
       }
       if (simplifiedRes.status === 'fulfilled') {
         setSimplifiedData(simplifiedRes.value.data?.data || null);
@@ -104,11 +123,18 @@ export default function SettlementsPage() {
       isFetchingSettlementsRef.current = false;
       setLoading(false);
     }
-  }, [page, statusFilter]);
+  }, [page, settlements.length]);
 
   useEffect(() => {
     if (user?.id) fetchSettlements();
   }, [user?.id, fetchSettlements]);
+
+  // Instant 0ms Tab Filtering
+  const displayedSettlements = useMemo(() => {
+    if (tab === 1) return settlements.filter((s) => s.status === 'PENDING');
+    if (tab === 2) return settlements.filter((s) => s.status === 'CONFIRMED');
+    return settlements;
+  }, [settlements, tab]);
 
   // Fast optimistic confirmation (0ms UI lag)
   const handleConfirm = async (id: string) => {
@@ -155,7 +181,7 @@ export default function SettlementsPage() {
       <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Page Header */}
         <Box sx={{ mb: { xs: 1.25, sm: 1.75 } }}>
-          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
+          <Typography fontWeight={700} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' } }}>
             Settlements & Debt Simplification
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
@@ -319,59 +345,65 @@ export default function SettlementsPage() {
           )}
         </Card>
 
-        {/* Tab Filter (Floating Control Layer - Z2) */}
-        <Box
-          className="glass-control-surface"
-          sx={{
-            mb: { xs: 1.5, sm: 3 },
-            borderRadius: { xs: 2.5, sm: 3 },
-            p: 0.5,
-            display: { xs: 'flex', sm: 'inline-flex' },
-            width: { xs: '100%', sm: 'auto' },
-            maxWidth: '100%',
-            overflowX: 'auto',
-          }}
-        >
-          <Tabs
-            value={tab}
-            onChange={(_, v) => {
-              setTab(v);
-              setPage(1);
-            }}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
+        {/* Tab Filter (Floating Control Layer - Z2 - Centered) */}
+        <Box sx={{ width: '100%', mb: { xs: 1.5, sm: 2.5 }, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Box
+            className="glass-control-surface"
             sx={{
-              minHeight: 40,
-              maxWidth: '100%',
-              '& .MuiTabs-indicator': {
-                height: '100%',
-                borderRadius: 2.5,
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 98, 69, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
-                zIndex: 0,
-              },
-              '& .MuiTab-root': {
-                textTransform: 'none',
-                fontWeight: 700,
-                fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                minWidth: { xs: 'auto', sm: 120 },
-                px: { xs: 1.75, sm: 2.5 },
-                minHeight: 40,
-                zIndex: 1,
-                borderRadius: 2.5,
-                transition: 'all 0.2s ease',
-                color: 'text.secondary',
-                '&.Mui-selected': {
-                  color: theme.palette.mode === 'dark' ? '#34D399' : '#059669',
-                },
-              },
+              borderRadius: { xs: 2.5, sm: 3 },
+              p: 0.4,
+              display: 'inline-flex',
+              mx: 'auto',
+              width: { xs: '100%', sm: 'auto' },
+              maxWidth: { xs: '100%', sm: 'auto' },
+              justifyContent: 'center',
             }}
           >
-            <Tab label="All Settlements" />
-            <Tab label="Pending Confirmation" />
-            <Tab label="Confirmed" />
-          </Tabs>
+            <Tabs
+              value={tab}
+              onChange={(_, v) => {
+                setTab(v);
+                setPage(1);
+              }}
+              variant={isMobile ? 'scrollable' : 'standard'}
+              centered={!isMobile}
+              scrollButtons={false}
+              allowScrollButtonsMobile={isMobile}
+              sx={{
+                minHeight: 38,
+                width: { xs: '100%', sm: 'auto' },
+                '& .MuiTabs-flexContainer': {
+                  justifyContent: 'center',
+                },
+                '& .MuiTabs-indicator': {
+                  height: '100%',
+                  borderRadius: 2.5,
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 98, 69, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  zIndex: 0,
+                },
+                '& .MuiTab-root': {
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: { xs: '0.75rem', sm: '0.825rem' },
+                  minWidth: { xs: 'auto', sm: 110 },
+                  px: { xs: 1.25, sm: 2 },
+                  minHeight: 36,
+                  zIndex: 1,
+                  borderRadius: 2.5,
+                  transition: 'all 0.2s ease',
+                  color: 'text.secondary',
+                  '&.Mui-selected': {
+                    color: theme.palette.mode === 'dark' ? '#34D399' : '#059669',
+                  },
+                },
+              }}
+            >
+              <Tab label="All Settlements" />
+              <Tab label="Pending Confirmation" />
+              <Tab label="Confirmed" />
+            </Tabs>
+          </Box>
         </Box>
 
         {/* Settlements Log */}
@@ -412,7 +444,7 @@ export default function SettlementsPage() {
                   </Box>
                 ))}
               </Box>
-            ) : settlements.length === 0 ? (
+            ) : displayedSettlements.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 8 }}>
                 <Handshake sx={{ fontSize: 64, color: 'text.secondary', opacity: 0.3, mb: 2 }} />
                 <Typography variant="h6" color="text.secondary">
@@ -424,7 +456,7 @@ export default function SettlementsPage() {
               </Box>
             ) : (
               <List disablePadding>
-                {settlements.map((s, i) => {
+                {displayedSettlements.map((s: any, i: number) => {
                   const isPayee = s.payeeId === (profile?.id || user?.id);
                   const isPayer = s.payerId === (profile?.id || user?.id);
                   const canConfirm = isPayee && s.status === 'PENDING';

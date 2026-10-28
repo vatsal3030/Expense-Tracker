@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/providers/AuthProvider';
+import { useGamification } from '@/lib/useGamification';
 import api from '@/lib/api';
 
 const BADGE_ICONS: Record<string, React.ReactNode> = {
@@ -57,31 +58,11 @@ export default function FairScorePage() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const { session } = useAuth();
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { fairScore, streakDays, tier, data: gamificationData, loading: gamificationLoading } = useGamification();
   const [cheered, setCheered] = useState<Record<string, boolean>>({});
 
-  const hasLoadedGamificationRef = React.useRef(false);
-
-  useEffect(() => {
-    if (!session?.access_token || hasLoadedGamificationRef.current) return;
-    const fetchGamification = async () => {
-      try {
-        setLoading(true);
-        hasLoadedGamificationRef.current = true;
-        const res = await api.get('/dashboard/gamification');
-        if (res.data?.success) {
-          setData(res.data.data);
-        }
-      } catch (err) {
-        console.error('Failed to load gamification data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGamification();
-  }, [session?.user?.id, session?.access_token]);
+  const data = gamificationData;
+  const loading = gamificationLoading;
 
   const handleCheer = (name: string) => {
     setCheered((prev) => ({ ...prev, [name]: true }));
@@ -90,8 +71,7 @@ export default function FairScorePage() {
     }, 2500);
   };
 
-  const score = data?.fairScore || 750;
-  const tier = data?.tier || 'Platinum';
+  const score = fairScore;
   const tierStyle = TIER_COLORS[tier] || TIER_COLORS.Gold;
   const strokeDashoffset = 440 - (440 * score) / 1000;
 
@@ -130,17 +110,17 @@ export default function FairScorePage() {
             <Card
               className="glass-secondary glass-specular-top glass-emerald-ambient"
               sx={{
-                borderRadius: { xs: 2.5, sm: 3.5 },
+                borderRadius: { xs: 2.5, sm: 3 },
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
-                p: { xs: 1.5, sm: 3.5, md: 4 },
+                p: { xs: 1.5, sm: 2.5 },
                 position: 'relative',
                 overflow: 'hidden',
               }}
             >
-              <Grid container spacing={{ xs: 1.5, sm: 3 }} sx={{ alignItems: 'center' }}>
+              <Grid container spacing={{ xs: 1.5, sm: 2.5 }} sx={{ alignItems: 'center' }}>
                 <Grid size={{ xs: 12, sm: 5 }} sx={{ textAlign: 'center' }}>
-                  {/* Circular SVG Gauge with liquid glow */}
-                  <Box sx={{ position: 'relative', width: { xs: 130, sm: 170 }, height: { xs: 130, sm: 170 }, mx: 'auto' }}>
+                  {/* Circular SVG Gauge with liquid glow - Compact Sizing */}
+                  <Box sx={{ position: 'relative', width: { xs: 110, sm: 135 }, height: { xs: 110, sm: 135 }, mx: 'auto' }}>
                     <svg width="100%" height="100%" viewBox="0 0 160 160" style={{ transform: 'rotate(-90deg)' }}>
                       <circle
                         cx="80"
@@ -180,10 +160,10 @@ export default function FairScorePage() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Typography variant="h3" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : 'text.primary', lineHeight: 1, fontSize: { xs: '1.75rem', sm: '3rem' } }}>
-                        {loading ? <Skeleton width={60} /> : score}
+                      <Typography variant="h4" fontWeight={800} sx={{ color: theme.palette.mode === 'dark' ? '#10B981' : 'text.primary', lineHeight: 1, fontSize: { xs: '1.45rem', sm: '2.1rem' } }}>
+                        {loading ? <Skeleton width={50} /> : score}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mt: 0.25, fontSize: '0.7rem' }}>
                         out of 1000
                       </Typography>
                     </Box>
@@ -245,9 +225,9 @@ export default function FairScorePage() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                borderRadius: 3.5,
+                borderRadius: { xs: 2.5, sm: 3 },
                 boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.03)' : '0 12px 30px rgba(0,0,0,0.35)',
-                p: 3.5,
+                p: { xs: 2, sm: 2.5 },
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
@@ -255,31 +235,35 @@ export default function FairScorePage() {
               }}
             >
               <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LocalFireDepartment sx={{ color: '#F59E0B', fontSize: 28 }} />
-                    <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary' }}>
+                    <LocalFireDepartment sx={{ color: '#F59E0B', fontSize: 24 }} />
+                    <Typography variant="subtitle1" fontWeight={750} sx={{ color: 'text.primary', fontSize: '0.95rem' }}>
                       Clarity Streak
                     </Typography>
                   </Box>
                   <Chip
                     label="Active"
                     size="small"
-                    sx={{ bgcolor: alpha('#F59E0B', 0.15), color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 700 }}
+                    sx={{ bgcolor: alpha('#F59E0B', 0.15), color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 700, height: 22 }}
                   />
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
-                  <Typography variant="h2" fontWeight={800} sx={{ color: '#F59E0B', lineHeight: 1 }}>
-                    14
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 0.75 }}>
+                  <Typography variant="h3" fontWeight={800} sx={{ color: '#F59E0B', lineHeight: 1, fontSize: { xs: '1.75rem', sm: '2.25rem' } }}>
+                    {streakDays}
                   </Typography>
-                  <Typography variant="subtitle1" fontWeight={600} color="text.secondary">
+                  <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
                     consecutive days
                   </Typography>
                 </Box>
 
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5, mb: 3, fontSize: '0.825rem' }}>
-                  You have logged or verified every group expense for two straight weeks without delay.
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5, mb: 2, fontSize: '0.8rem' }}>
+                  {streakDays >= 7
+                    ? 'Outstanding consistency! You have logged and verified group expenses on time.'
+                    : streakDays > 0
+                    ? 'Active daily momentum! Keep logging and confirming shared expenses.'
+                    : 'Log or confirm an expense today to start your streak!'}
                 </Typography>
               </Box>
 
@@ -543,23 +527,24 @@ export default function FairScorePage() {
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: 'text.primary', fontWeight: 700 }}>
-                      {row.score}
+                    <TableCell sx={{ color: 'text.primary', fontWeight: 700, fontSize: '0.825rem', py: 1.25 }}>
+                      {row.isCurrentUser ? score : row.score}
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ py: 1.25 }}>
                       <Chip
-                        label={row.tier}
+                        label={row.isCurrentUser ? tier : row.tier}
                         size="small"
                         sx={{
-                          bgcolor: (TIER_COLORS[row.tier] || TIER_COLORS.Gold).bg,
-                          color: (TIER_COLORS[row.tier] || TIER_COLORS.Gold).text,
+                          bgcolor: (TIER_COLORS[row.isCurrentUser ? tier : row.tier] || TIER_COLORS.Gold).bg,
+                          color: (TIER_COLORS[row.isCurrentUser ? tier : row.tier] || TIER_COLORS.Gold).text,
                           fontWeight: 700,
-                          fontSize: '0.7rem',
+                          fontSize: '0.675rem',
+                          height: 20,
                         }}
                       />
                     </TableCell>
-                    <TableCell sx={{ color: '#F59E0B', fontWeight: 700 }}>
-                      🔥 {row.streak}d
+                    <TableCell sx={{ color: '#F59E0B', fontWeight: 700, fontSize: '0.825rem', py: 1.25 }}>
+                      🔥 {row.isCurrentUser ? streakDays : row.streak}d
                     </TableCell>
                     <TableCell align="right">
                       {!row.isCurrentUser && (

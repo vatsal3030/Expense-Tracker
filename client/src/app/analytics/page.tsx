@@ -390,29 +390,29 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* 4 Telemetry Metrics */}
-        <Grid container spacing={{ xs: 1.25, sm: 2.5 }} sx={{ mb: { xs: 2.5, sm: 4 } }}>
+        <Grid container spacing={{ xs: 1.25, sm: 1.75 }} sx={{ mb: { xs: 2, sm: 3 } }}>
           <Grid size={{ xs: 6, sm: 6, lg: 3 }}>
             <Card
               className="glass-secondary glass-specular-top glass-accent-emerald"
               sx={{
-                borderRadius: { xs: 2.5, sm: 3.5 },
-                p: { xs: 1.5, sm: 2.5 },
+                borderRadius: { xs: 2.5, sm: 3 },
+                p: { xs: 1.25, sm: 1.75 },
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box sx={{ minWidth: 0, flex: 1, pr: 0.5 }}>
-                  <Typography variant="caption" noWrap sx={{ display: 'block', color: theme.palette.mode === 'dark' ? '#34D399' : 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' } }}>
+                  <Typography variant="caption" noWrap sx={{ display: 'block', color: theme.palette.mode === 'dark' ? '#34D399' : 'text.secondary', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.72rem' } }}>
                     {timeframe === '7D' ? '7-Day' : timeframe === '90D' ? '90-Day' : timeframe === '1Y' ? '1-Year' : timeframe === 'ALL' ? 'All-Time' : '30-Day'} {viewType === 'total' ? 'Spend' : 'Share'}
                   </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.25, fontSize: { xs: '1.2rem', sm: '1.65rem', md: '2.125rem' } }}>
+                  <Typography sx={{ fontWeight: 700, color: 'text.primary', mt: 0.25, fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.45rem' } }}>
                     {loading ? <Skeleton width={80} /> : `₹${totalSpend.toLocaleString('en-IN')}`}
                   </Typography>
                 </Box>
-                <Box className="glass-tertiary" sx={{ p: { xs: 0.6, sm: 1 }, borderRadius: 2, bgcolor: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981', flexShrink: 0 }}>
-                  <AccountBalanceWallet sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                <Box className="glass-tertiary" sx={{ p: { xs: 0.5, sm: 0.75 }, borderRadius: 2, bgcolor: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981', flexShrink: 0 }}>
+                  <AccountBalanceWallet sx={{ fontSize: { xs: 15, sm: 18 } }} />
                 </Box>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: { xs: 1, sm: 1.5 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: { xs: 0.75, sm: 1 } }}>
                 <Chip
                   size="small"
                   label={viewType === 'total' ? 'Total volume' : 'Your share'}
@@ -420,9 +420,9 @@ export default function AnalyticsPage() {
                     bgcolor: 'rgba(16, 185, 129, 0.15)',
                     color: '#34D399',
                     border: '1px solid rgba(16, 185, 129, 0.3)',
-                    fontSize: { xs: '0.625rem', sm: '0.7rem' },
+                    fontSize: { xs: '0.6rem', sm: '0.675rem' },
                     fontWeight: 700,
-                    height: { xs: 18, sm: 22 },
+                    height: { xs: 18, sm: 20 },
                   }}
                 />
               </Box>
@@ -433,24 +433,24 @@ export default function AnalyticsPage() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                borderRadius: { xs: 2.5, sm: 3.5 },
-                p: { xs: 1.5, sm: 2.5 },
+                borderRadius: { xs: 2.5, sm: 3 },
+                p: { xs: 1.25, sm: 1.75 },
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box sx={{ minWidth: 0, flex: 1, pr: 0.5 }}>
-                  <Typography variant="caption" noWrap sx={{ display: 'block', color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' } }}>
+                  <Typography variant="caption" noWrap sx={{ display: 'block', color: 'text.secondary', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.72rem' } }}>
                     Daily Burn Rate
                   </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.25, fontSize: { xs: '1.2rem', sm: '1.65rem', md: '2.125rem' } }}>
+                  <Typography sx={{ fontWeight: 700, color: 'text.primary', mt: 0.25, fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.45rem' } }}>
                     {loading ? <Skeleton width={80} /> : `₹${dailyAverage.toLocaleString('en-IN')}`}
                   </Typography>
                 </Box>
-                <Box className="glass-tertiary" sx={{ p: { xs: 0.6, sm: 1 }, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.15), border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981', flexShrink: 0 }}>
-                  <TrendingUp sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                <Box className="glass-tertiary" sx={{ p: { xs: 0.5, sm: 0.75 }, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.15), border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981', flexShrink: 0 }}>
+                  <TrendingUp sx={{ fontSize: { xs: 15, sm: 18 } }} />
                 </Box>
               </Box>
-              <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block', mt: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+              <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block', mt: { xs: 0.75, sm: 1 }, fontSize: { xs: '0.625rem', sm: '0.72rem' } }}>
                 ~₹{(dailyAverage * 30).toLocaleString('en-IN')}/mo pace
               </Typography>
             </Card>
@@ -460,24 +460,24 @@ export default function AnalyticsPage() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                borderRadius: { xs: 2.5, sm: 3.5 },
-                p: { xs: 1.5, sm: 2.5 },
+                borderRadius: { xs: 2.5, sm: 3 },
+                p: { xs: 1.25, sm: 1.75 },
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box sx={{ minWidth: 0, flex: 1, pr: 0.5 }}>
-                  <Typography variant="caption" noWrap sx={{ display: 'block', color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' } }}>
+                  <Typography variant="caption" noWrap sx={{ display: 'block', color: 'text.secondary', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.72rem' } }}>
                     Reimbursement
                   </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#10B981', mt: 0.25, fontSize: { xs: '1.2rem', sm: '1.65rem', md: '2.125rem' } }}>
+                  <Typography sx={{ fontWeight: 700, color: '#10B981', mt: 0.25, fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.45rem' } }}>
                     94.2%
                   </Typography>
                 </Box>
-                <Box className="glass-tertiary" sx={{ p: { xs: 0.6, sm: 1 }, borderRadius: 2, bgcolor: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981', flexShrink: 0 }}>
-                  <CheckCircle sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                <Box className="glass-tertiary" sx={{ p: { xs: 0.5, sm: 0.75 }, borderRadius: 2, bgcolor: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981', flexShrink: 0 }}>
+                  <CheckCircle sx={{ fontSize: { xs: 15, sm: 18 } }} />
                 </Box>
               </Box>
-              <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block', mt: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+              <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block', mt: { xs: 0.75, sm: 1 }, fontSize: { xs: '0.625rem', sm: '0.72rem' } }}>
                 ~1.4 days avg settlement
               </Typography>
             </Card>
@@ -487,24 +487,24 @@ export default function AnalyticsPage() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                borderRadius: { xs: 2.5, sm: 3.5 },
-                p: { xs: 1.5, sm: 2.5 },
+                borderRadius: { xs: 2.5, sm: 3 },
+                p: { xs: 1.25, sm: 1.75 },
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box sx={{ minWidth: 0, flex: 1, pr: 0.5 }}>
-                  <Typography variant="caption" noWrap sx={{ display: 'block', color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.75rem' } }}>
+                  <Typography variant="caption" noWrap sx={{ display: 'block', color: 'text.secondary', fontWeight: 650, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: { xs: '0.625rem', sm: '0.72rem' } }}>
                     Active Shared Bills
                   </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mt: 0.25, fontSize: { xs: '1.2rem', sm: '1.65rem', md: '2.125rem' } }}>
+                  <Typography sx={{ fontWeight: 700, color: 'text.primary', mt: 0.25, fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.45rem' } }}>
                     {loading ? <Skeleton width={50} /> : categories.reduce((sum: number, c: any) => sum + c.count, 0)}
                   </Typography>
                 </Box>
-                <Box className="glass-tertiary" sx={{ p: { xs: 0.6, sm: 1 }, borderRadius: 2, bgcolor: alpha('#F59E0B', 0.15), border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FBBF24', flexShrink: 0 }}>
-                  <ReceiptLong sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                <Box className="glass-tertiary" sx={{ p: { xs: 0.5, sm: 0.75 }, borderRadius: 2, bgcolor: alpha('#F59E0B', 0.15), border: '1px solid rgba(245, 158, 11, 0.3)', color: '#FBBF24', flexShrink: 0 }}>
+                  <ReceiptLong sx={{ fontSize: { xs: 15, sm: 18 } }} />
                 </Box>
               </Box>
-              <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block', mt: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+              <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block', mt: { xs: 0.75, sm: 1 }, fontSize: { xs: '0.625rem', sm: '0.72rem' } }}>
                 All friend & trip groups
               </Typography>
             </Card>

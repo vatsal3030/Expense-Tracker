@@ -216,9 +216,17 @@ export const darkTheme = responsiveFontSizes(
       MuiBackdrop: {
         styleOverrides: {
           root: {
-            backgroundColor: 'rgba(4, 6, 12, 0.68)',
-            backdropFilter: 'blur(16px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+            backgroundColor: 'rgba(4, 6, 12, 0.72)',
+            backdropFilter: 'none !important',
+            WebkitBackdropFilter: 'none !important',
+          },
+        },
+      },
+      MuiModal: {
+        styleOverrides: {
+          backdrop: {
+            backdropFilter: 'none !important',
+            WebkitBackdropFilter: 'none !important',
           },
         },
       },
@@ -357,9 +365,17 @@ export const lightTheme = responsiveFontSizes(
       MuiBackdrop: {
         styleOverrides: {
           root: {
-            backgroundColor: 'rgba(15, 23, 42, 0.40)',
-            backdropFilter: 'blur(16px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(140%)',
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'none !important',
+            WebkitBackdropFilter: 'none !important',
+          },
+        },
+      },
+      MuiModal: {
+        styleOverrides: {
+          backdrop: {
+            backdropFilter: 'none !important',
+            WebkitBackdropFilter: 'none !important',
           },
         },
       },

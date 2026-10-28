@@ -42,6 +42,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useThemeMode } from '@/providers/ThemeProvider';
 import { useOnboarding } from '@/providers/OnboardingProvider';
 import { useDataRefresh } from '@/lib/events';
+import { useGamification } from '@/lib/useGamification';
 import { useRouter, usePathname } from 'next/navigation';
 import BrandLogo from '@/components/brand/BrandLogo';
 import GlobalSearchModal from '@/components/search/GlobalSearchModal';
@@ -58,6 +59,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
   const { user, profile, signOut } = useAuth();
   const { mode, toggleTheme } = useThemeMode();
   const { startTour } = useOnboarding();
+  const { fairScore, streakDays, tier } = useGamification();
 
   const handleLaunchTour = () => {
     if (pathname !== '/dashboard') {
@@ -304,7 +306,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
 
         {/* Mobile Brand Logo — Only circular icon without long text */}
         <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: { xs: 0.5, sm: 1.5 }, flexShrink: 0 }}>
-          <BrandLogo size="sm" showText={false} />
+          <BrandLogo size="sm" showText={false} href="/" />
         </Box>
 
         {/* Search Bar (Tertiary Glass Pill) — Click to open Elastic Search Modal */}
@@ -436,7 +438,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
           </Tooltip>
 
           {/* FairScore & Streak Badge (Tertiary Glass Pill) */}
-          <Tooltip title="FairScore: 880 (Diamond Tier) • 14-day streak">
+          <Tooltip title={`FairScore: ${fairScore} (${tier} Tier) • ${streakDays}-day streak`}>
             <Box
               data-tour="fairscore-badge"
               onClick={() => router.push('/fairscore')}
@@ -449,7 +451,6 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
                 borderRadius: 9999,
                 border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.10)'}`,
                 bgcolor: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.04)',
-                backdropFilter: 'blur(14px)',
                 boxShadow: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -461,10 +462,10 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
               }}
             >
               <Typography variant="caption" sx={{ color: isLight ? '#059669' : '#34d399', fontWeight: 700 }}>
-                ⭐ 880
+                ⭐ {fairScore}
               </Typography>
               <Typography variant="caption" sx={{ color: '#f59e0b', fontWeight: 700 }}>
-                🔥 14d
+                🔥 {streakDays}d
               </Typography>
             </Box>
           </Tooltip>

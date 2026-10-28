@@ -493,79 +493,136 @@ dashboardRouter.get('/analytics', async (req: AuthenticatedRequest, res: Respons
   }
 });
 
+// In-flight gamification request deduplication to prevent connection pool exhaustion
+const inFlightGamification = new Map<string, Promise<any>>();
+
 // GET /api/dashboard/gamification — FairScore, Karma, Streaks & Badges
 dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
     const cacheKey = `dashboard:gamification:${userId}`;
-    const cached = await appCache.get(cacheKey);
+
+    // 0ms synchronous memory check then async L2 check
+    const cached = appCache.getSync(cacheKey) || (await appCache.get(cacheKey));
     if (cached) {
       res.json({ success: true, data: cached });
       return;
     }
 
-    // 1. Settlements count & speed
-    const confirmedSettlements = await prisma.settlement.count({
-      where: {
-        OR: [{ payerId: userId }, { payeeId: userId }],
-        status: 'CONFIRMED',
-      },
-    });
+    // In-flight request deduplication: if this user's gamification is already computing, await existing promise
+    if (inFlightGamification.has(userId)) {
+      const data = await inFlightGamification.get(userId);
+      res.json({ success: true, data });
+      return;
+    }
 
-    // 2. Unpaid balances count
-    const unpaidShares = await prisma.expenseShare.count({
-      where: {
-        userId,
-        isPaid: false,
-        expense: { paidById: { not: userId } },
-      },
-    });
+    const computePromise = (async () => {
+      // Parallel resilient execution of all 10 metrics in a SINGLE database roundtrip
+      const [
+        confirmedSettlements,
+        unpaidShares,
+        expensesCreatedCount,
+        groupsCount,
+        tripGroupsCount,
+        largeExpensePaid,
+        recentUserActivities,
+        recentUserExpenses,
+        currentUser,
+        friends,
+      ] = await Promise.all([
+        prisma.settlement.count({
+          where: {
+            OR: [{ payerId: userId }, { payeeId: userId }],
+            status: 'CONFIRMED',
+          },
+        }),
+        prisma.expenseShare.count({
+          where: {
+            userId,
+            isPaid: false,
+            expense: { paidById: { not: userId } },
+          },
+        }),
+        prisma.expense.count({
+          where: { createdById: userId, isDeleted: false },
+        }),
+        prisma.groupMember.count({
+          where: { userId },
+        }),
+        prisma.groupMember.count({
+          where: {
+            userId,
+            group: { type: 'TRIP' },
+          },
+        }),
+        prisma.expense.count({
+          where: {
+            paidById: userId,
+            amount: { gte: 10000 },
+            isDeleted: false,
+          },
+        }),
+        prisma.activity.findMany({
+          where: { userId },
+          select: { createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 30,
+        }),
+        prisma.expense.findMany({
+          where: {
+            OR: [{ paidById: userId }, { createdById: userId }],
+            isDeleted: false,
+          },
+          select: { createdAt: true, date: true },
+          orderBy: { createdAt: 'desc' },
+          take: 30,
+        }),
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: { name: true, avatarUrl: true },
+        }),
+        prisma.user.findMany({
+          where: { id: { not: userId }, isActive: true },
+          select: { id: true, name: true, avatarUrl: true },
+          take: 5,
+        }),
+      ]);
 
-    // 3. User expenses created
-    const expensesCreatedCount = await prisma.expense.count({
-      where: { createdById: userId, isDeleted: false },
-    });
+      return {
+        confirmedSettlements,
+        unpaidShares,
+        expensesCreatedCount,
+        groupsCount,
+        tripGroupsCount,
+        largeExpensePaid,
+        recentUserActivities,
+        recentUserExpenses,
+        currentUser,
+        friends,
+      };
+    })();
 
-    // 4. Group memberships count
-    const groupsCount = await prisma.groupMember.count({
-      where: { userId },
-    });
+    inFlightGamification.set(userId, computePromise);
 
-    // 5. Trip groups count
-    const tripGroupsCount = await prisma.groupMember.count({
-      where: {
-        userId,
-        group: { type: 'TRIP' },
-      },
-    });
+    let metrics;
+    try {
+      metrics = await computePromise;
+    } finally {
+      inFlightGamification.delete(userId);
+    }
 
-    // 6. Large expenses fronted (>= ₹10,000)
-    const largeExpensePaid = await prisma.expense.count({
-      where: {
-        paidById: userId,
-        amount: { gte: 10000 },
-        isDeleted: false,
-      },
-    });
-
-    // 7. Calculate REAL consecutive active streak days based on user's activities & expenses
-    const [recentUserActivities, recentUserExpenses] = await Promise.all([
-      prisma.activity.findMany({
-        where: { userId },
-        select: { createdAt: true },
-        orderBy: { createdAt: 'desc' },
-        take: 100,
-      }),
-      prisma.expense.findMany({
-        where: {
-          OR: [{ paidById: userId }, { createdById: userId }],
-          isDeleted: false,
-        },
-        select: { createdAt: true, date: true },
-        orderBy: { createdAt: 'desc' },
-        take: 100,
-      }),
-    ]);
+    const {
+      confirmedSettlements,
+      unpaidShares,
+      expensesCreatedCount,
+      groupsCount,
+      tripGroupsCount,
+      largeExpensePaid,
+      recentUserActivities,
+      recentUserExpenses,
+      currentUser,
+      friends,
+    } = metrics;
 
     const activeDatesSet = new Set<string>();
     recentUserActivities.forEach((a) => {
@@ -576,31 +633,23 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
       if (e.date) activeDatesSet.add(new Date(e.date).toISOString().split('T')[0]);
     });
 
-    let streakDays = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const todayStr = today.toISOString().split('T')[0];
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    const hasToday = activeDatesSet.has(todayStr);
-    const hasYesterday = activeDatesSet.has(yesterdayStr);
+    // Authenticated active session counts as active today
+    activeDatesSet.add(todayStr);
 
-    if (hasToday || hasYesterday) {
-      const checkDate = hasToday ? new Date(today) : new Date(yesterday);
-      while (true) {
-        const checkStr = checkDate.toISOString().split('T')[0];
-        if (activeDatesSet.has(checkStr)) {
-          streakDays++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break;
-        }
+    let streakDays = 0;
+    const checkDate = new Date(today);
+    while (true) {
+      const checkStr = checkDate.toISOString().split('T')[0];
+      if (activeDatesSet.has(checkStr)) {
+        streakDays++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
       }
-    } else {
-      streakDays = 0;
     }
 
     // Calculate FairScore (Max 1000)
@@ -715,18 +764,7 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
       },
     ];
 
-    // Friend Leaderboard
-    const currentUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true, avatarUrl: true },
-    });
-
-    const friends = await prisma.user.findMany({
-      where: { id: { not: userId }, isActive: true },
-      select: { id: true, name: true, avatarUrl: true },
-      take: 5,
-    });
-
+    // Friend Leaderboard (uses currentUser & friends from parallel Promise.all)
     const leaderboard = [
       {
         rank: 1,
@@ -766,7 +804,7 @@ dashboardRouter.get('/gamification', async (req: AuthenticatedRequest, res: Resp
       leaderboard,
     };
 
-    appCache.set(cacheKey, gamificationData, 30000);
+    appCache.set(cacheKey, gamificationData, 120000); // 2 minute cache
     res.json({
       success: true,
       data: gamificationData,

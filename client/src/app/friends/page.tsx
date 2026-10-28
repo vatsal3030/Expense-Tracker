@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, Avatar, List, ListItem,
-  ListItemAvatar, ListItemText, Divider, Skeleton, useTheme, alpha,
+  ListItemAvatar, ListItemText, Divider, Skeleton, useTheme, useMediaQuery, alpha,
   IconButton, Chip, TextField, Dialog, DialogTitle, DialogContent,
   DialogActions, Stack, Tabs, Tab, Badge, InputAdornment, Tooltip,
   Snackbar, Alert, Grid, CircularProgress,
@@ -22,8 +22,9 @@ import QrCodeModal from '@/components/common/QrCodeModal';
 
 export default function FriendsPage() {
   const theme = useTheme();
-  const router = useRouter();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const router = useRouter();
   const { user, profile, loading: authLoading } = useAuth();
 
   const [friends, setFriends] = useState<any[]>([]);
@@ -127,11 +128,25 @@ export default function FriendsPage() {
     }
   }, [user?.id, authLoading]);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fairshare_cached_friends');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setFriends(parsed);
+          setLoading(false);
+          hasLoadedFriendsRef.current = true;
+        }
+      }
+    } catch {}
+  }, []);
+
   const fetchData = async () => {
     if (isFetchingFriendsRef.current) return;
     isFetchingFriendsRef.current = true;
     try {
-      if (!hasLoadedFriendsRef.current) {
+      if (!hasLoadedFriendsRef.current && friends.length === 0) {
         setLoading(true);
       }
       const [friendsRes, pendingRes, sentRes] = await Promise.all([
@@ -139,10 +154,16 @@ export default function FriendsPage() {
         friendApi.pending(),
         friendApi.sent ? friendApi.sent().catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
       ]);
-      setFriends(friendsRes.data?.data || []);
+      const list = friendsRes.data?.data || [];
+      setFriends(list);
       setPending(pendingRes.data?.data || []);
       setSentRequests(sentRes.data?.data || []);
       hasLoadedFriendsRef.current = true;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('fairshare_cached_friends', JSON.stringify(list));
+        } catch {}
+      }
     } catch (error) {
       console.error('Fetch friends error:', error);
     } finally {
@@ -408,7 +429,7 @@ export default function FriendsPage() {
           }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
+            <Typography fontWeight={700} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' } }}>
               Friends & Connections
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, letterSpacing: '-0.01em', fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
@@ -578,26 +599,33 @@ export default function FriendsPage() {
           </Grid>
         </Card>
 
-        {/* Segmented Liquid Glass Tabs (Proper fitting capsule width) */}
-        <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+        {/* Segmented Liquid Glass Tabs (Properly centered & fitting capsule width) */}
+        <Box sx={{ width: '100%', mb: { xs: 2, sm: 3 }, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Box
             className="glass-control-surface"
             sx={{
-              display: { xs: 'flex', sm: 'inline-flex' },
+              display: 'inline-flex',
+              mx: 'auto',
               p: 0.4,
               borderRadius: { xs: 2.5, sm: 3 },
               width: { xs: '100%', sm: 'auto' },
-              maxWidth: '100%',
-              overflowX: 'auto',
+              maxWidth: { xs: '100%', sm: 'auto' },
+              justifyContent: 'center',
             }}
           >
             <Tabs
               value={tab}
               onChange={(_, v) => setTab(v)}
-              variant="scrollable"
+              variant={isMobile ? 'scrollable' : 'standard'}
+              centered={!isMobile}
               scrollButtons={false}
+              allowScrollButtonsMobile={isMobile}
               sx={{
-                minHeight: { xs: 34, sm: 40 },
+                minHeight: { xs: 34, sm: 38 },
+                width: { xs: '100%', sm: 'auto' },
+                '& .MuiTabs-flexContainer': {
+                  justifyContent: 'center',
+                },
                 '& .MuiTabs-indicator': {
                   height: '100%',
                   borderRadius: { xs: 2, sm: 2.5 },
@@ -609,11 +637,12 @@ export default function FriendsPage() {
                   zIndex: 1,
                   textTransform: 'none',
                   fontWeight: 650,
-                  fontSize: { xs: '0.75rem', sm: '0.85rem' },
-                  minHeight: { xs: 34, sm: 38 },
+                  fontSize: { xs: '0.75rem', sm: '0.825rem' },
+                  minHeight: { xs: 34, sm: 36 },
                   minWidth: { xs: 'auto', sm: 80 },
-                  px: { xs: 1.25, sm: 2.5 },
-                  py: { xs: 0.4, sm: 0.75 },
+                  flex: { xs: 1, sm: 'none' },
+                  px: { xs: 1, sm: 2 },
+                  py: { xs: 0.35, sm: 0.6 },
                   borderRadius: { xs: 2, sm: 2.5 },
                   color: 'text.secondary',
                   transition: 'all 0.2s ease',

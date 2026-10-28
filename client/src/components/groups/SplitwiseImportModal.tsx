@@ -296,13 +296,22 @@ export default function SplitwiseImportModal({
       onClose={handleClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        className: 'glass-primary',
-        sx: {
-          borderRadius: 4,
-          border: '1px solid rgba(16, 185, 129, 0.25)',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.4)',
-          overflow: 'hidden',
+      slotProps={{
+        backdrop: {
+          sx: {
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'none !important',
+            WebkitBackdropFilter: 'none !important',
+          },
+        },
+        paper: {
+          sx: {
+            borderRadius: 4,
+            bgcolor: '#0F131C',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
+            overflow: 'hidden',
+          },
         },
       }}
     >

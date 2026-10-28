@@ -50,6 +50,7 @@ import CoinSplitLoader from '@/components/common/CoinSplitLoader';
 import Link from 'next/link';
 import SmartQuickAddBar from '@/components/expense/SmartQuickAddBar';
 import { useDataRefresh } from '@/lib/events';
+import { useGamification } from '@/lib/useGamification';
 
 const CATEGORY_COLORS: Record<string, string> = {
   FOOD: '#F59E0B',
@@ -89,6 +90,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, profile, loading: authLoading } = useAuth();
+  const { fairScore, streakDays, tier } = useGamification();
   const [data, setData] = useState<DashboardData | null>(null);
   const [trendData, setTrendData] = useState<Array<{ month: string; amount: number }>>([]);
   const [loading, setLoading] = useState(true);
@@ -219,7 +221,7 @@ function DashboardContent() {
           }}
         >
           <Box sx={{ maxWidth: '100%' }}>
-            <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
+            <Typography fontWeight={700} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' } }}>
               Financial Overview
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
@@ -288,97 +290,96 @@ function DashboardContent() {
         {/* Smart Natural Language Quick-Add Bar (Time-Saving Fast Mode) */}
         <SmartQuickAddBar onExpenseCreated={fetchDashboard} />
 
-        {/* Segmented Control Pills (Floating Control Capsule - Layer 2: Z2) */}
-        <Box
-          className="glass-control-surface"
-          sx={{
-            display: { xs: 'flex', sm: 'inline-flex' },
-            alignItems: 'center',
-            p: { xs: 0.4, sm: 0.6 },
-            mb: { xs: 1.5, sm: 2 },
-            borderRadius: 9999,
-            gap: { xs: 0.25, sm: 0.5 },
-            width: { xs: '100%', sm: 'auto' },
-            maxWidth: '100%',
-            minWidth: 0,
-            overflowX: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            '&::-webkit-scrollbar': { display: 'none' },
-            scrollbarWidth: 'none',
-          }}
-        >
-          {(['overview', 'breakdown', 'balances', 'activity'] as const).map((tab) => {
-            const active = activeTab === tab;
-            return (
-              <Button
-                key={tab}
-                size="small"
-                onClick={() => handleTabChange(tab)}
-                sx={{
-                  flex: { xs: 1, sm: 'none' },
-                  minWidth: 0,
-                  borderRadius: 9999,
-                  px: { xs: 1, sm: 2.5 },
-                  py: { xs: 0.45, sm: 0.6 },
-                  fontSize: { xs: '0.72rem', sm: '0.825rem' },
-                  fontWeight: active ? 600 : 500,
-                  textTransform: 'capitalize',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  color: active
-                    ? (isLight ? '#0F172A' : '#FFFFFF')
-                    : 'text.secondary',
-                  bgcolor: active
-                    ? (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.12)')
-                    : 'transparent',
-                  border: active
-                    ? `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.14)'}`
-                    : '1px solid transparent',
-                  boxShadow: active
-                    ? isLight
-                      ? '0 1px 3px rgba(0, 0, 0, 0.06)'
-                      : '0 2px 6px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                    : 'none',
-                  '&:hover': {
+        {/* Segmented Control Pills (Floating Control Capsule - Layer 2: Z2 - Centered) */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 1.5, sm: 2 } }}>
+          <Box
+            className="glass-control-surface"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              p: { xs: 0.4, sm: 0.5 },
+              borderRadius: 9999,
+              gap: { xs: 0.25, sm: 0.4 },
+              maxWidth: '100%',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
+            }}
+          >
+            {(['overview', 'breakdown', 'balances', 'activity'] as const).map((tab) => {
+              const active = activeTab === tab;
+              return (
+                <Button
+                  key={tab}
+                  size="small"
+                  onClick={() => handleTabChange(tab)}
+                  sx={{
+                    flex: { xs: 1, sm: 'none' },
+                    minWidth: 0,
+                    borderRadius: 9999,
+                    px: { xs: 1.25, sm: 2.25 },
+                    py: { xs: 0.4, sm: 0.55 },
+                    fontSize: { xs: '0.72rem', sm: '0.8rem' },
+                    fontWeight: active ? 650 : 500,
+                    textTransform: 'capitalize',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    color: active
+                      ? (isLight ? '#0F172A' : '#FFFFFF')
+                      : 'text.secondary',
                     bgcolor: active
-                      ? (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.15)')
-                      : isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255, 255, 255, 0.04)',
-                    color: active ? (isLight ? '#0F172A' : '#FFFFFF') : 'text.primary',
-                  },
-                  transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-              >
-                {tab}
-              </Button>
-            );
-          })}
+                      ? (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.12)')
+                      : 'transparent',
+                    border: active
+                      ? `1px solid ${isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.14)'}`
+                      : '1px solid transparent',
+                    boxShadow: active
+                      ? isLight
+                        ? '0 1px 3px rgba(0, 0, 0, 0.06)'
+                        : '0 2px 6px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                      : 'none',
+                    '&:hover': {
+                      bgcolor: active
+                        ? (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.15)')
+                        : isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255, 255, 255, 0.04)',
+                      color: active ? (isLight ? '#0F172A' : '#FFFFFF') : 'text.primary',
+                    },
+                    transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                >
+                  {tab}
+                </Button>
+              );
+            })}
+          </Box>
         </Box>
 
         {/* Financial Metrics Cards (Apple visionOS Liquid Glass Panels) */}
         {(activeTab === 'overview' || activeTab === 'balances') && (
-        <Grid data-tour="financial-overview" container spacing={{ xs: 1.25, sm: 2.5 }} sx={{ mb: { xs: 2.5, sm: 4 } }}>
+        <Grid data-tour="financial-overview" container spacing={{ xs: 1.25, sm: 1.75 }} sx={{ mb: { xs: 2, sm: 2.5 } }}>
           {/* Card 1: Net Balance (Primary Hero Metric with Ambient Emerald Reflection) */}
           <Grid size={{ xs: 6, sm: 6, md: 3 }}>
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 1.25, sm: 2.5 },
+                p: { xs: 1.25, sm: 1.75 },
                 height: '100%',
-                borderRadius: { xs: 3, sm: 4 },
+                borderRadius: { xs: 2.5, sm: 3 },
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.75, sm: 1.5 } }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.75rem' } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.5, sm: 1 } }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.72rem' } }}>
                   Net Balance
                 </Typography>
                 <Box
                   sx={{
-                    width: { xs: 26, sm: 36 },
-                    height: { xs: 26, sm: 36 },
-                    borderRadius: { xs: 2, sm: 2.5 },
+                    width: { xs: 24, sm: 30 },
+                    height: { xs: 24, sm: 30 },
+                    borderRadius: 2,
                     bgcolor: isLight ? 'rgba(5, 150, 105, 0.08)' : 'rgba(16, 185, 129, 0.12)',
                     color: isLight ? '#059669' : '#34D399',
                     border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.15)' : 'rgba(16, 185, 129, 0.25)'}`,
@@ -387,21 +388,21 @@ function DashboardContent() {
                     justifyContent: 'center',
                   }}
                 >
-                  <AccountBalanceWallet sx={{ fontSize: { xs: 15, sm: 19 } }} />
+                  <AccountBalanceWallet sx={{ fontSize: { xs: 14, sm: 17 } }} />
                 </Box>
               </Box>
 
               {loading ? (
-                <Skeleton width="70%" height={32} />
+                <Skeleton width="70%" height={28} />
               ) : (
                 <Typography
-                  variant="h4"
+                  variant="h5"
                   fontWeight={700}
                   sx={{
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
-                    fontSize: { xs: '1.15rem', sm: '1.45rem', md: '1.75rem' },
+                    fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.45rem' },
                     color: (data?.totalBalance ?? 0) >= 0 ? (isLight ? '#059669' : '#34D399') : '#EF4444',
                     mb: 0.25,
                   }}
@@ -437,23 +438,23 @@ function DashboardContent() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 1.25, sm: 2.5 },
+                p: { xs: 1.25, sm: 1.75 },
                 height: '100%',
-                borderRadius: { xs: 3, sm: 4 },
+                borderRadius: { xs: 2.5, sm: 3 },
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.75, sm: 1.5 } }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.75rem' } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.5, sm: 1 } }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.72rem' } }}>
                   You Owe
                 </Typography>
                 <Box
                   sx={{
-                    width: { xs: 26, sm: 36 },
-                    height: { xs: 26, sm: 36 },
-                    borderRadius: { xs: 2, sm: 2.5 },
+                    width: { xs: 24, sm: 30 },
+                    height: { xs: 24, sm: 30 },
+                    borderRadius: 2,
                     bgcolor: 'rgba(239, 68, 68, 0.10)',
                     color: '#EF4444',
                     border: '1px solid rgba(239, 68, 68, 0.20)',
@@ -462,21 +463,21 @@ function DashboardContent() {
                     justifyContent: 'center',
                   }}
                 >
-                  <CallMade sx={{ fontSize: { xs: 15, sm: 19 } }} />
+                  <CallMade sx={{ fontSize: { xs: 14, sm: 17 } }} />
                 </Box>
               </Box>
 
               {loading ? (
-                <Skeleton width="60%" height={32} />
+                <Skeleton width="60%" height={28} />
               ) : (
                 <Typography
-                  variant="h4"
+                  variant="h5"
                   fontWeight={700}
                   sx={{
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
-                    fontSize: { xs: '1.15rem', sm: '1.45rem', md: '1.75rem' },
+                    fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.45rem' },
                     color: '#F87171',
                     mb: 0.25,
                   }}
@@ -508,23 +509,23 @@ function DashboardContent() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 1.25, sm: 2.5 },
+                p: { xs: 1.25, sm: 1.75 },
                 height: '100%',
-                borderRadius: { xs: 3, sm: 4 },
+                borderRadius: { xs: 2.5, sm: 3 },
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.75, sm: 1.5 } }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.75rem' } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.5, sm: 1 } }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.72rem' } }}>
                   Owed to You
                 </Typography>
                 <Box
                   sx={{
-                    width: { xs: 26, sm: 36 },
-                    height: { xs: 26, sm: 36 },
-                    borderRadius: { xs: 2, sm: 2.5 },
+                    width: { xs: 24, sm: 30 },
+                    height: { xs: 24, sm: 30 },
+                    borderRadius: 2,
                     bgcolor: isLight ? 'rgba(5, 150, 105, 0.1)' : 'rgba(16, 185, 129, 0.14)',
                     color: isLight ? '#059669' : '#34D399',
                     border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.25)' : 'rgba(16, 185, 129, 0.3)'}`,
@@ -533,21 +534,21 @@ function DashboardContent() {
                     justifyContent: 'center',
                   }}
                 >
-                  <CallReceived sx={{ fontSize: { xs: 15, sm: 19 } }} />
+                  <CallReceived sx={{ fontSize: { xs: 14, sm: 17 } }} />
                 </Box>
               </Box>
 
               {loading ? (
-                <Skeleton width="60%" height={32} animation="wave" />
+                <Skeleton width="60%" height={28} animation="wave" />
               ) : (
                 <Typography
-                  variant="h4"
+                  variant="h5"
                   fontWeight={700}
                   sx={{
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
-                    fontSize: { xs: '1.15rem', sm: '1.45rem', md: '1.75rem' },
+                    fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.45rem' },
                     color: isLight ? '#059669' : '#34D399',
                     mb: 0.25,
                   }}
@@ -579,23 +580,23 @@ function DashboardContent() {
             <Card
               className="glass-secondary glass-specular-top"
               sx={{
-                p: { xs: 1.25, sm: 2.5 },
+                p: { xs: 1.25, sm: 1.75 },
                 height: '100%',
-                borderRadius: { xs: 3, sm: 4 },
+                borderRadius: { xs: 2.5, sm: 3 },
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.75, sm: 1.5 } }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.75rem' } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 0.5, sm: 1 } }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: '0.04em', color: 'text.secondary', textTransform: 'uppercase', fontSize: { xs: '0.62rem', sm: '0.72rem' } }}>
                   This Month
                 </Typography>
                 <Box
                   sx={{
-                    width: { xs: 26, sm: 36 },
-                    height: { xs: 26, sm: 36 },
-                    borderRadius: { xs: 2, sm: 2.5 },
+                    width: { xs: 24, sm: 30 },
+                    height: { xs: 24, sm: 30 },
+                    borderRadius: 2,
                     bgcolor: isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.06)',
                     color: 'text.secondary',
                     border: `1px solid ${isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.09)'}`,
@@ -605,24 +606,24 @@ function DashboardContent() {
                   }}
                 >
                   {data?.thisMonth?.change && data.thisMonth.change > 0 ? (
-                    <TrendingUp sx={{ fontSize: { xs: 15, sm: 19 }, color: '#EF4444' }} />
+                    <TrendingUp sx={{ fontSize: { xs: 14, sm: 17 }, color: '#EF4444' }} />
                   ) : (
-                    <TrendingDown sx={{ fontSize: { xs: 15, sm: 19 }, color: isLight ? '#059669' : '#34D399' }} />
+                    <TrendingDown sx={{ fontSize: { xs: 14, sm: 17 }, color: isLight ? '#059669' : '#34D399' }} />
                   )}
                 </Box>
               </Box>
 
               {loading ? (
-                <Skeleton width="60%" height={32} />
+                <Skeleton width="60%" height={28} />
               ) : (
                 <Typography
-                  variant="h4"
+                  variant="h5"
                   fontWeight={700}
                   sx={{
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
                     fontFeatureSettings: '"tnum"',
-                    fontSize: { xs: '1.15rem', sm: '1.45rem', md: '1.75rem' },
+                    fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.45rem' },
                     color: 'text.primary',
                     mb: 0.25,
                   }}
@@ -765,11 +766,11 @@ function DashboardContent() {
                 </Box>
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary' }}>
-                      FairScore: 880 / 1000
+                    <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary', fontSize: '0.9rem' }}>
+                      FairScore: {fairScore} / 1000
                     </Typography>
                     <Chip
-                      label="Diamond Tier"
+                      label={`${tier} Tier`}
                       size="small"
                       sx={{
                         bgcolor: isLight ? 'rgba(5, 150, 105, 0.10)' : 'rgba(16, 185, 129, 0.15)',
@@ -781,7 +782,7 @@ function DashboardContent() {
                       }}
                     />
                   </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                     Top 8% of reliable friends. Zero delinquent settlements this quarter.
                   </Typography>
                 </Box>
@@ -793,7 +794,7 @@ function DashboardContent() {
                     STREAK
                   </Typography>
                   <Typography variant="subtitle2" sx={{ color: '#F59E0B', fontWeight: 800 }}>
-                    🔥 14 Days
+                    🔥 {streakDays} Days
                   </Typography>
                 </Box>
                 <Button

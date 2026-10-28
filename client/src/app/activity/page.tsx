@@ -43,6 +43,20 @@ export default function ActivityPage() {
   const hasLoadedActivitiesRef = useRef(false);
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fairshare_cached_activity');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setActivities(parsed);
+          setLoading(false);
+          hasLoadedActivitiesRef.current = true;
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
@@ -56,9 +70,15 @@ export default function ActivityPage() {
         setLoading(true);
       }
       const res = await activityApi.list({ page, limit: 25 });
-      setActivities(res.data?.data || []);
+      const data = res.data?.data || [];
+      setActivities(data);
       setTotalPages(res.data?.pagination?.totalPages || 1);
       hasLoadedActivitiesRef.current = true;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('fairshare_cached_activity', JSON.stringify(data));
+        } catch {}
+      }
     } catch (error) {
       console.error('Fetch activities error:', error);
     } finally {
@@ -100,7 +120,7 @@ export default function ActivityPage() {
       <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
         {/* Header */}
         <Box sx={{ mb: { xs: 1.25, sm: 1.75 }, width: '100%', maxWidth: '100%' }}>
-          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' } }}>
+          <Typography fontWeight={700} sx={{ letterSpacing: '-0.025em', color: 'text.primary', fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' } }}>
             Activity Feed
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, letterSpacing: '-0.01em', fontSize: { xs: '0.78rem', sm: '0.85rem' }, display: { xs: 'none', sm: 'block' } }}>
@@ -112,6 +132,7 @@ export default function ActivityPage() {
         <Box
           sx={{
             display: 'flex',
+            justifyContent: { xs: 'flex-start', sm: 'center' },
             gap: { xs: 0.5, sm: 0.75 },
             overflowX: 'auto',
             width: '100%',

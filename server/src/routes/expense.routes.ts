@@ -186,8 +186,10 @@ expenseRouter.post(
         emitToGroup(groupId, 'expense:created', { expense, groupId });
       }
 
-      // Invalidate dashboard, analytics, trends, and group caches for all involved users
+      // Invalidate dashboard, analytics, trends, budgets, settlements, and group caches for all involved users
       appCache.invalidatePrefix('dashboard:');
+      appCache.invalidatePrefix('budgets:');
+      appCache.invalidatePrefix('settlements:');
       appCache.invalidatePrefix('groups:list:');
       if (groupId) {
         appCache.invalidatePrefix(`group:${groupId}`);
@@ -289,19 +291,20 @@ expenseRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promise
         break;
     }
 
-    const expenses = await prisma.expense.findMany({
-      where,
-      include: {
-        paidBy: { select: { id: true, name: true, avatarUrl: true, email: true, username: true } },
-        shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, email: true, username: true } } } },
-        group: { select: { id: true, name: true } },
-      },
-      orderBy,
-      skip,
-      take: limitNum,
-    });
-
-    const total = await prisma.expense.count({ where });
+    const [expenses, total] = await Promise.all([
+      prisma.expense.findMany({
+        where,
+        include: {
+          paidBy: { select: { id: true, name: true, avatarUrl: true, email: true, username: true } },
+          shares: { include: { user: { select: { id: true, name: true, avatarUrl: true, email: true, username: true } } } },
+          group: { select: { id: true, name: true } },
+        },
+        orderBy,
+        skip,
+        take: limitNum,
+      }),
+      prisma.expense.count({ where }),
+    ]);
 
     res.json({
       success: true,

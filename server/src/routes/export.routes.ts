@@ -341,81 +341,95 @@ exportRouter.post(
         return;
       }
 
-      // 2. Execute migration inside an atomic database transaction
-      const result = await prisma.$transaction(async (tx) => {
-        const columnNameToUserId: Record<string, string> = {};
+      // 2. Resolve members to FairShare User IDs (Pre-resolution outside long transaction)
+      const columnNameToUserId: Record<string, string> = {};
 
-        // Resolve each member in the CSV to a FairShare user ID
-        for (const member of membersMapping) {
-          if (member.isCurrentUser) {
-            columnNameToUserId[member.columnName] = currentUserId;
-          } else if (member.existingUserId) {
-            const existing = await tx.user.findUnique({ where: { id: member.existingUserId } });
-            if (existing) {
-              columnNameToUserId[member.columnName] = existing.id;
-            } else {
-              throw new Error(`Specified user with ID ${member.existingUserId} not found.`);
-            }
+      for (const member of membersMapping) {
+        if (member.isCurrentUser) {
+          columnNameToUserId[member.columnName] = currentUserId;
+        } else if (member.existingUserId) {
+          const existing = await prisma.user.findUnique({ where: { id: member.existingUserId } });
+          if (existing) {
+            columnNameToUserId[member.columnName] = existing.id;
           } else {
-            // Find or create guest placeholder user
-            const guestEmail =
-              member.guestEmail ||
-              `guest_${member.columnName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}@fairshare.local`;
+            throw new Error(`Specified user with ID ${member.existingUserId} not found.`);
+          }
+        } else {
+          // Find or create guest placeholder user
+          const guestEmail =
+            member.guestEmail ||
+            `guest_${member.columnName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}@fairshare.local`;
 
-            let guestUser = await tx.user.findFirst({
-              where: {
-                OR: [
-                  { email: guestEmail },
-                  { name: member.columnName.trim(), supabaseId: null },
-                ],
+          let guestUser = await prisma.user.findFirst({
+            where: {
+              OR: [
+                { email: guestEmail },
+                { name: member.columnName.trim(), supabaseId: null },
+              ],
+            },
+          });
+
+          if (!guestUser) {
+            guestUser = await prisma.user.create({
+              data: {
+                name: member.columnName.trim(),
+                email: guestEmail,
+                defaultCurrency: currency || 'INR',
+                isActive: true,
               },
             });
-
-            if (!guestUser) {
-              guestUser = await tx.user.create({
-                data: {
-                  name: member.columnName.trim(),
-                  email: guestEmail,
-                  defaultCurrency: currency || 'INR',
-                  isActive: true,
-                },
-              });
-            }
-
-            columnNameToUserId[member.columnName] = guestUser.id;
           }
+
+          columnNameToUserId[member.columnName] = guestUser.id;
         }
+      }
 
-        const uniqueUserIds = Array.from(new Set(Object.values(columnNameToUserId)));
+      const uniqueUserIds = Array.from(new Set(Object.values(columnNameToUserId)));
 
-        // Create the Group
-        const group = await tx.group.create({
-          data: {
-            name: groupName.trim(),
-            type: (groupType as GroupType) || 'TRIP',
-            currency: currency || 'INR',
-            members: {
-              create: uniqueUserIds.map((userId) => ({
-                userId,
-                role: userId === currentUserId ? 'ADMIN' : 'MEMBER',
-              })),
-            },
+      // 3. Create Group and Group Members
+      const group = await prisma.group.create({
+        data: {
+          name: groupName.trim(),
+          type: (groupType as GroupType) || 'TRIP',
+          currency: currency || 'INR',
+          members: {
+            create: uniqueUserIds.map((userId) => ({
+              userId,
+              role: userId === currentUserId ? 'ADMIN' : 'MEMBER',
+            })),
           },
-        });
+        },
+      });
 
-        let expensesCreated = 0;
-        let settlementsCreated = 0;
+      let expensesCreated = 0;
+      let settlementsCreated = 0;
 
-        // Process each expense / settlement row
-        for (const row of expenses) {
-          const cost = Number(row.cost) || 0;
-          const desc = (row.description || '').trim();
-          const isSettlement =
-            /settle|payment|repay/i.test(desc) ||
-            (row.category && row.category.toLowerCase() === 'payment');
+      // 4. Separate and prepare expenses & settlements
+      const settlementRows: any[] = [];
+      const expenseRows: any[] = [];
 
-          if (isSettlement && cost > 0) {
-            // Settlement row in Splitwise: one person has positive delta (payer), one has negative delta (payee)
+      for (const row of expenses) {
+        const cost = Number(row.cost) || 0;
+        const desc = (row.description || '').trim();
+        const isSettlement =
+          /settle|payment|repay/i.test(desc) ||
+          (row.category && row.category.toLowerCase() === 'payment');
+
+        if (isSettlement && cost > 0) {
+          settlementRows.push(row);
+        } else if (cost > 0) {
+          expenseRows.push(row);
+        }
+      }
+
+      // Process settlements in parallel chunks of 20
+      const SETTLEMENT_CHUNK_SIZE = 20;
+      for (let i = 0; i < settlementRows.length; i += SETTLEMENT_CHUNK_SIZE) {
+        const chunk = settlementRows.slice(i, i + SETTLEMENT_CHUNK_SIZE);
+        await Promise.all(
+          chunk.map(async (row) => {
+            const cost = Number(row.cost) || 0;
+            const desc = (row.description || '').trim();
             let payerCol: string | null = null;
             let payeeCol: string | null = null;
 
@@ -426,7 +440,7 @@ exportRouter.post(
             }
 
             if (payerCol && payeeCol && columnNameToUserId[payerCol] && columnNameToUserId[payeeCol]) {
-              await tx.settlement.create({
+              await prisma.settlement.create({
                 data: {
                   groupId: group.id,
                   payerId: columnNameToUserId[payerCol],
@@ -438,13 +452,20 @@ exportRouter.post(
                 },
               });
               settlementsCreated++;
-              continue;
             }
-          }
+          })
+        );
+      }
 
-          // Standard Expense row
-          if (cost > 0) {
-            // Determine primary payer: member with maximum positive delta
+      // Process expenses in parallel batches of 25 for fast throughput
+      const EXPENSE_BATCH_SIZE = 25;
+      for (let i = 0; i < expenseRows.length; i += EXPENSE_BATCH_SIZE) {
+        const chunk = expenseRows.slice(i, i + EXPENSE_BATCH_SIZE);
+        await Promise.all(
+          chunk.map(async (row) => {
+            const cost = Number(row.cost) || 0;
+            const desc = (row.description || '').trim();
+
             let maxDelta = -Infinity;
             let payerCol: string | null = null;
 
@@ -456,14 +477,10 @@ exportRouter.post(
               }
             }
 
-            // Fallback to current user if payer not identified
             const paidById = payerCol && columnNameToUserId[payerCol]
               ? columnNameToUserId[payerCol]
               : currentUserId;
 
-            // Calculate each member's owed share:
-            // For member i != payer: owed = |delta|
-            // For payer: owed = cost - maxDelta (or remaining portion)
             const rawShares: Array<{ userId: string; amount: number }> = [];
 
             for (const [col, rawDelta] of Object.entries(row.shares)) {
@@ -483,14 +500,12 @@ exportRouter.post(
               }
             }
 
-            // If rawShares is empty or zero, split equally among all group members
             let finalShares = rawShares;
             if (finalShares.length === 0) {
               const equalShare = Number((cost / uniqueUserIds.length).toFixed(2));
               finalShares = uniqueUserIds.map((uId) => ({ userId: uId, amount: equalShare }));
             }
 
-            // Normalize shares to guarantee sum(shares) === cost
             const totalSplitSum = finalShares.reduce((s, item) => s + item.amount, 0);
             const diff = Number((cost - totalSplitSum).toFixed(2));
             if (diff !== 0 && finalShares.length > 0) {
@@ -499,7 +514,7 @@ exportRouter.post(
 
             const expDate = row.date ? new Date(row.date) : new Date();
 
-            await tx.expense.create({
+            await prisma.expense.create({
               data: {
                 groupId: group.id,
                 paidById,
@@ -520,27 +535,27 @@ exportRouter.post(
               },
             });
             expensesCreated++;
-          }
-        }
+          })
+        );
+      }
 
-        // Record Activity
-        await tx.activity.create({
-          data: {
-            userId: currentUserId,
-            groupId: group.id,
-            type: 'GROUP_CREATED',
-            message: `created group "${group.name}" with ${expensesCreated} expenses and ${settlementsCreated} settlements imported from Splitwise`,
-          },
-        });
-
-        return {
+      // Record Activity
+      await prisma.activity.create({
+        data: {
+          userId: currentUserId,
           groupId: group.id,
-          groupName: group.name,
-          expensesCreated,
-          settlementsCreated,
-          membersCount: uniqueUserIds.length,
-        };
+          type: 'GROUP_CREATED',
+          message: `created group "${group.name}" with ${expensesCreated} expenses and ${settlementsCreated} settlements imported from Splitwise`,
+        },
       });
+
+      const result = {
+        groupId: group.id,
+        groupName: group.name,
+        expensesCreated,
+        settlementsCreated,
+        membersCount: uniqueUserIds.length,
+      };
 
       res.status(201).json({
         success: true,

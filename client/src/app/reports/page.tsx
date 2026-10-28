@@ -45,6 +45,21 @@ export default function ReportsPage() {
   const [dateTo, setDateTo] = useState(new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
+    try {
+      const savedReport = localStorage.getItem('fairshare_cached_report');
+      if (savedReport) {
+        const parsed = JSON.parse(savedReport);
+        if (parsed) setReport(parsed);
+      }
+      const savedGroups = localStorage.getItem('fairshare_cached_groups');
+      if (savedGroups) {
+        const parsedGroups = JSON.parse(savedGroups);
+        if (Array.isArray(parsedGroups) && parsedGroups.length > 0) setGroups(parsedGroups);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login');
   }, [user?.id, authLoading, router]);
 
@@ -52,25 +67,37 @@ export default function ReportsPage() {
   useEffect(() => {
     if (user?.id) {
       groupApi.list().then((res) => {
-        setGroups(res.data?.data || []);
+        const data = res.data?.data || [];
+        setGroups(data);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('fairshare_cached_groups', JSON.stringify(data));
+          } catch {}
+        }
       }).catch(() => {});
     }
   }, [user?.id]);
 
   const fetchReport = useCallback(async () => {
-    setLoading(true);
+    if (!report) setLoading(true);
     try {
       const params: any = { from: dateFrom, to: dateTo };
       if (selectedGroup !== 'personal') params.groupId = selectedGroup;
 
       const res = await exportApi.report(params);
-      setReport(res.data.data);
+      const data = res.data.data;
+      setReport(data);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('fairshare_cached_report', JSON.stringify(data));
+        } catch {}
+      }
     } catch (error) {
       console.error('Fetch report error:', error);
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, selectedGroup]);
+  }, [dateFrom, dateTo, selectedGroup, report]);
 
   useEffect(() => {
     if (user?.id) fetchReport();
@@ -226,7 +253,7 @@ const getCategoryColorScale = (pct: number) => {
         {/* Header - Compact Spacing & Structured Layout */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1.5 }}>
           <Box>
-            <Typography variant="h4" fontWeight={800} sx={{ fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' }, letterSpacing: '-0.02em' }}>
+            <Typography fontWeight={700} sx={{ fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' }, letterSpacing: '-0.02em', color: 'text.primary' }}>
               Reports & Intelligence
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.78rem', sm: '0.875rem' } }}>
@@ -275,7 +302,7 @@ const getCategoryColorScale = (pct: number) => {
         >
           <CardContent sx={{ p: { xs: 1.75, sm: 2 }, '&:last-child': { pb: { xs: 1.75, sm: 2 } } }}>
             {/* Quick Range Presets */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap', justifyContent: { xs: 'flex-start', sm: 'center' } }}>
               <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 650, mr: 0.5, fontSize: '0.72rem' }}>
                 QUICK PERIOD:
               </Typography>

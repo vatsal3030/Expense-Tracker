@@ -437,10 +437,10 @@ export default function LandingPage() {
       </div>
 
       {/* HERO SECTION */}
-      <section className="relative pt-20 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+      <section className="relative pt-10 sm:pt-14 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
       {/* Trust Pill or Logged In Welcome Pill */}
         {user ? (
-          <div className="macos-glass-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold mb-6 animate-fade-in shadow-inner">
+          <div className="macos-glass-pill inline-flex items-center gap-2 px-3.5 py-1 text-xs font-semibold mb-5 animate-fade-in shadow-inner">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className={isLight ? 'text-emerald-900 font-bold' : 'text-emerald-300 font-bold'}>
               Logged in as {profile?.name || user.email?.split('@')[0]}
@@ -451,7 +451,7 @@ export default function LandingPage() {
             </Link>
           </div>
         ) : (
-          <div className="macos-glass-pill inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold mb-6 animate-fade-in shadow-inner">
+          <div className="macos-glass-pill inline-flex items-center gap-2 px-3.5 py-1 text-xs font-semibold mb-5 animate-fade-in shadow-inner">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
             <span className={isLight ? 'text-emerald-900 font-bold' : 'text-emerald-300 font-bold'}>
               100% Free • Unlimited Daily Splits • Zero Subscription Paywalls
@@ -459,9 +459,9 @@ export default function LandingPage() {
           </div>
         )}
 
-        {/* Main Title */}
+        {/* Main Title — Compact, balanced typography matching app standards */}
         <h1
-          className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.12] mb-6 ${
+          className={`text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight mb-4 ${
             isLight ? 'text-slate-900' : 'text-white'
           }`}
         >
@@ -478,7 +478,7 @@ export default function LandingPage() {
         </h1>
 
         <p
-          className={`max-w-2xl mx-auto text-base sm:text-lg leading-relaxed mb-9 ${
+          className={`max-w-2xl mx-auto text-xs sm:text-sm md:text-base leading-relaxed mb-7 ${
             isLight ? 'text-slate-600' : 'text-slate-300/90'
           }`}
         >
@@ -486,11 +486,11 @@ export default function LandingPage() {
         </p>
 
         {/* Hero Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-14">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
           {user ? (
             <Link
               href="/dashboard"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/30 hover:shadow-emerald-900/50 transition-all active:scale-95"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:shadow-emerald-900/30 transition-all active:scale-95"
             >
               <LayoutDashboard className="w-4 h-4" />
               Go to Your Dashboard
@@ -499,7 +499,7 @@ export default function LandingPage() {
           ) : (
             <Link
               href="/auth/signup"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/30 hover:shadow-emerald-900/50 transition-all active:scale-95"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:shadow-emerald-900/30 transition-all active:scale-95"
             >
               Start Splitting for Free
               <ArrowRight className="w-4 h-4" />
@@ -507,7 +507,7 @@ export default function LandingPage() {
           )}
           <a
             href="#simulator"
-            className="macos-glass-card w-full sm:w-auto px-6 py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+            className="macos-glass-card w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
           >
             <Sparkles className="w-4 h-4 text-emerald-500" />
             <span className={isLight ? 'text-slate-800' : 'text-slate-200'}>Try Live Interactive Simulator</span>
@@ -515,7 +515,7 @@ export default function LandingPage() {
         </div>
 
         {/* Live Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto mb-16">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-w-2xl mx-auto mb-12">
           {[
             { label: 'Platform Fee', val: '₹0 Always' },
             { label: 'Daily Expense Cap', val: 'Unlimited' },
@@ -524,13 +524,13 @@ export default function LandingPage() {
           ].map((m, i) => (
             <div
               key={i}
-              className="macos-liquid-surface p-3.5 rounded-2xl text-center transition-all hover:scale-[1.02]"
+              className="macos-liquid-surface p-2.5 sm:p-3 rounded-xl text-center transition-all hover:scale-[1.02]"
             >
-              <span className={`text-[11px] font-medium block ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <span className={`text-[10px] sm:text-[11px] font-medium block uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                 {m.label}
               </span>
               <span
-                className={`text-base font-extrabold mt-0.5 block ${
+                className={`text-sm sm:text-base font-bold mt-0.5 block ${
                   isLight ? 'text-emerald-750' : 'text-emerald-400'
                 }`}
               >
@@ -837,21 +837,21 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       <section
         id="debt-minimizer"
-        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
+        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t ${
           isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold mb-3">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold mb-2.5">
             <Scale className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span className={isLight ? 'text-emerald-900' : 'text-emerald-300'}>
               Mathematical Debt Graph Optimization
             </span>
           </div>
-          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Cut redundant payments by up to 70%.
           </h2>
-          <p className={`mt-4 text-sm sm:text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`mt-2.5 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             In any group trip, circular IOUs create confusion. FairShare runs a greedy minimum-cash-flow graph reduction algorithm so you settle in the fewest possible direct transfers.
           </p>
 
@@ -1090,21 +1090,21 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       <section
         id="quick-add"
-        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
+        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t ${
           isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold mb-3">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold mb-2.5">
             <Zap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span className={isLight ? 'text-emerald-900' : 'text-emerald-300'}>
               Natural Language & Web Speech Voice Engine
             </span>
           </div>
-          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Speak or type. Log in 1 second flat.
           </h2>
-          <p className={`mt-4 text-sm sm:text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`mt-2.5 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             Forget clicking through 6 tedious form steps. Just speak or write in universal shorthand:{' '}
             <code className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-bold">
               item amount [group]
@@ -1114,7 +1114,7 @@ export default function LandingPage() {
         </div>
 
         {/* Interactive Try-it-Out Bar */}
-        <div className="macos-glass-card max-w-4xl mx-auto p-6 sm:p-8 rounded-3xl shadow-2xl">
+        <div className="macos-glass-card max-w-3xl mx-auto p-4 sm:p-6 rounded-2xl shadow-xl">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
               <input
@@ -1273,26 +1273,26 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       <section
         id="qr-ecosystem"
-        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
+        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t ${
           isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold mb-3">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold mb-2.5">
             <QrCode className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span className={isLight ? 'text-emerald-900' : 'text-emerald-300'}>
               Universal QR Code Infrastructure
             </span>
           </div>
-          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Point, scan, and settle. Zero typing needed.
           </h2>
-          <p className={`mt-4 text-sm sm:text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`mt-2.5 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             Every group ledger, user profile, and settlement transaction automatically generates a high-contrast dynamic QR code readable by any smartphone camera or UPI app.
           </p>
 
           {/* QR Feature Tabs */}
-          <div className="macos-liquid-surface inline-flex p-1 rounded-2xl mt-6 shadow-inner">
+          <div className="macos-liquid-surface inline-flex p-1 rounded-xl mt-5 shadow-inner">
             {[
               { id: 'UPI', label: '1. Instant UPI QR' },
               { id: 'GROUP', label: '2. Group Join QR' },
@@ -1301,7 +1301,7 @@ export default function LandingPage() {
               <button
                 key={t.id}
                 onClick={() => setQrTab(t.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   qrTab === t.id
                     ? 'bg-emerald-600 text-white shadow-md'
                     : isLight
@@ -1316,7 +1316,7 @@ export default function LandingPage() {
         </div>
 
         {/* QR Showcase Card */}
-        <div className="macos-glass-card max-w-4xl mx-auto p-6 sm:p-10 rounded-3xl shadow-2xl">
+        <div className="macos-glass-card max-w-4xl mx-auto p-5 sm:p-7 rounded-2xl shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             {/* Left: Explanation */}
             <div>
@@ -1441,61 +1441,61 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       <section
         id="features"
-        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t ${
+        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t ${
           isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="macos-glass-pill text-xs font-bold px-3.5 py-1 text-emerald-800 dark:text-emerald-400">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <span className="macos-glass-pill text-xs font-bold px-3 py-1 text-emerald-800 dark:text-emerald-400">
             ENGINEERED FOR FINTECH EXCELLENCE
           </span>
-          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight mt-3 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mt-2.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Every feature you need. Zero gimmicks.
           </h2>
-          <p className={`mt-4 text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`mt-2 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             Engineered from scratch to replace cluttered, ad-supported apps with high-speed mathematical clarity.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {[
             {
-              icon: <Scale className="w-5 h-5" />,
+              icon: <Scale className="w-4 h-4" />,
               title: 'Greedy Graph Simplification',
               desc: 'Solves complex multilateral debts with linear programming reduction so no circular money transfers occur.',
             },
             {
-              icon: <PieChart className="w-5 h-5" />,
+              icon: <PieChart className="w-4 h-4" />,
               title: '5 Precise Splitting Strategies',
               desc: 'Split equally, by exact amount, percentage, weighted shares, or individual adjustment offsets with zero penny loss.',
             },
             {
-              icon: <QrCode className="w-5 h-5" />,
+              icon: <QrCode className="w-4 h-4" />,
               title: 'Universal QR Codes',
               desc: 'Instant QR generation for group invites, UPI settlement payments, and personal friend connections.',
             },
             {
-              icon: <Gamepad2 className="w-5 h-5" />,
+              icon: <Gamepad2 className="w-4 h-4" />,
               title: 'Gaming & Cartoon Avatars',
               desc: 'Choose from 12+ playful avatars (Shadow Ninja, Pixel Mage, Robo Mecha) or upload your own avatar.',
             },
             {
-              icon: <TrendingUp className="w-5 h-5" />,
+              icon: <TrendingUp className="w-4 h-4" />,
               title: 'Category Budgets & Alerts',
               desc: 'Set monthly budget limits for Food, Travel, and Utilities. Get real-time alerts at 80% and 100% caps.',
             },
             {
-              icon: <ShieldCheck className="w-5 h-5" />,
+              icon: <ShieldCheck className="w-4 h-4" />,
               title: 'Two-Party Verification',
               desc: 'Settlements require mutual confirmation from both the payer and payee to ensure complete accounting trust.',
             },
           ].map((f, i) => (
             <div
               key={i}
-              className="macos-glass-card p-6 rounded-3xl transition-all group hover:-translate-y-1 hover:shadow-xl"
+              className="macos-glass-card p-4 sm:p-5 rounded-2xl transition-all group hover:-translate-y-0.5 hover:shadow-lg"
             >
               <div
-                className={`w-11 h-11 rounded-2xl border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform ${
+                className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-3 group-hover:scale-105 transition-transform ${
                   isLight
                     ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-800'
                     : 'bg-emerald-950/60 border-emerald-500/30 text-emerald-400'
@@ -1503,8 +1503,8 @@ export default function LandingPage() {
               >
                 {f.icon}
               </div>
-              <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>{f.title}</h3>
-              <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <h3 className={`text-sm sm:text-base font-bold mb-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>{f.title}</h3>
+              <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                 {f.desc}
               </p>
             </div>
@@ -1517,32 +1517,32 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       <section
         id="comparison"
-        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t ${
+        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t ${
           isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <span className="macos-glass-pill text-xs font-bold px-3.5 py-1 text-emerald-800 dark:text-emerald-400">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <span className="macos-glass-pill text-xs font-bold px-3 py-1 text-emerald-800 dark:text-emerald-400">
             TRANSPARENT VALUE
           </span>
-          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight mt-3 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mt-2.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Why people are switching to FairShare.
           </h2>
-          <p className={`mt-4 text-sm sm:text-base ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`mt-2 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             See how FairShare eliminates artificial limitations imposed by incumbent tools.
           </p>
         </div>
 
-        <div className="macos-glass-card rounded-3xl overflow-hidden shadow-2xl">
+        <div className="macos-glass-card rounded-2xl overflow-hidden shadow-xl">
           <div
-            className={`grid grid-cols-3 p-4 sm:p-5 font-bold text-xs uppercase tracking-wider border-b ${
+            className={`grid grid-cols-3 p-3.5 sm:p-4 font-bold text-[11px] sm:text-xs uppercase tracking-wider border-b ${
               isLight
                 ? 'bg-white/40 text-slate-800 border-slate-300/60'
                 : 'bg-slate-900/60 text-slate-300 border-slate-800'
             }`}
           >
             <div>Feature</div>
-            <div className="text-center text-emerald-600 dark:text-emerald-400 font-extrabold">FairShare</div>
+            <div className="text-center text-emerald-600 dark:text-emerald-400 font-bold">FairShare</div>
             <div className="text-center text-slate-400">Other Split Apps</div>
           </div>
 
@@ -1567,20 +1567,20 @@ export default function LandingPage() {
             ].map((row, i) => (
               <div
                 key={i}
-                className={`grid grid-cols-3 p-4 items-center transition-colors ${
+                className={`grid grid-cols-3 p-3 sm:p-3.5 items-center transition-colors ${
                   isLight ? 'hover:bg-white/40' : 'hover:bg-slate-800/40'
                 }`}
               >
-                <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{row.feat}</span>
+                <span className={`font-semibold text-xs sm:text-sm ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{row.feat}</span>
                 <span
-                  className={`text-center font-bold flex items-center justify-center gap-1.5 ${
+                  className={`text-center font-bold flex items-center justify-center gap-1.5 text-xs sm:text-sm ${
                     isLight ? 'text-emerald-700' : 'text-emerald-400'
                   }`}
                 >
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   {row.fair}
                 </span>
-                <span className={`text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{row.other}</span>
+                <span className={`text-center text-xs sm:text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{row.other}</span>
               </div>
             ))}
           </div>
@@ -1590,22 +1590,25 @@ export default function LandingPage() {
       {/* ========================================================================= */}
       {/* FAQ ACCORDION */}
       {/* ========================================================================= */}
+      {/* ========================================================================= */}
+      {/* FAQ ACCORDION */}
+      {/* ========================================================================= */}
       <section
         id="faqs"
-        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto border-t ${
+        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto border-t ${
           isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Frequently Asked Questions
           </h2>
-          <p className={`mt-3 text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`mt-2 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             Everything you need to know about FairShare, privacy, and settlements.
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {[
             {
               q: 'Is FairShare genuinely 100% free with no hidden charges?',
@@ -1632,11 +1635,11 @@ export default function LandingPage() {
             return (
               <div
                 key={index}
-                className="macos-glass-card rounded-2xl overflow-hidden transition-all"
+                className="macos-glass-card rounded-xl overflow-hidden transition-all"
               >
                 <button
                   onClick={() => setOpenFaq(isOpen ? null : index)}
-                  className={`w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base transition-colors ${
+                  className={`w-full p-3.5 sm:p-4 text-left flex items-center justify-between gap-4 font-semibold text-xs sm:text-sm transition-colors ${
                     isLight
                       ? 'text-slate-900 hover:text-emerald-700'
                       : 'text-white hover:text-emerald-400'
@@ -1644,14 +1647,14 @@ export default function LandingPage() {
                 >
                   <span>{faq.q}</span>
                   {isOpen ? (
-                    <ChevronUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <ChevronUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />
+                    <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                   )}
                 </button>
                 {isOpen && (
                   <div
-                    className={`px-5 pb-5 text-xs sm:text-sm leading-relaxed border-t pt-3 ${
+                    className={`px-4 pb-4 text-xs leading-relaxed border-t pt-2.5 ${
                       isLight
                         ? 'border-slate-300/60 text-slate-700'
                         : 'border-slate-800/80 text-slate-300/90'
@@ -1670,36 +1673,36 @@ export default function LandingPage() {
       {/* FINAL HIGH-CONVERTING CTA BANNER */}
       {/* ========================================================================= */}
       <section
-        className={`py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center border-t ${
+        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center border-t ${
           isLight ? 'border-slate-300/60' : 'border-slate-800/80'
         }`}
       >
-        <div className="macos-glass-card p-8 sm:p-14 rounded-3xl relative overflow-hidden shadow-2xl">
+        <div className="macos-glass-card p-6 sm:p-10 rounded-2xl relative overflow-hidden shadow-xl">
           <div
             className={`absolute top-0 right-0 w-64 h-64 blur-[90px] rounded-full pointer-events-none ${
               isLight ? 'bg-emerald-400/25' : 'bg-emerald-500/15'
             }`}
           />
 
-          <BrandLogo size="lg" className="justify-center mb-6" asLink={false} textColor={isLight ? "text-slate-900" : "text-white"} />
-          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight mb-4 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <BrandLogo size="md" className="justify-center mb-4" asLink={false} textColor={isLight ? "text-slate-900" : "text-white"} />
+          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-2.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Start splitting bills stress-free today.
           </h2>
-          <p className={`text-sm sm:text-base max-w-2xl mx-auto mb-8 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+          <p className={`text-xs sm:text-sm max-w-xl mx-auto mb-6 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
             Join roommates, travel squads, and couples who keep their expenses clear, transparent, and settled on time.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/auth/signup"
-              className="w-full sm:w-auto px-9 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/30 transition-all active:scale-95"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 transition-all active:scale-95"
             >
               Create Free Account
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/auth/login"
-              className="macos-liquid-surface w-full sm:w-auto px-7 py-3.5 rounded-2xl font-semibold text-sm transition-all"
+              className="macos-liquid-surface w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all"
             >
               <span className={isLight ? 'text-slate-800' : 'text-slate-200'}>Sign In to Existing Account</span>
             </Link>

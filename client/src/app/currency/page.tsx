@@ -137,13 +137,13 @@ export default function CurrencyPage() {
             boxShadow: isLight ? '0 4px 16px rgba(0,0,0,0.04)' : '0 12px 30px rgba(0,0,0,0.35)',
           }}
         >
-          <CardContent sx={{ p: { xs: 1.5, sm: 4 }, '&:last-child': { pb: { xs: 1.5, sm: 4 } } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: { xs: 1.5, sm: 3 } }}>
-              <CurrencyExchange sx={{ color: isLight ? '#059669' : '#34D399', fontSize: { xs: 22, sm: 28 } }} />
-              <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>Convert Currency</Typography>
+          <CardContent sx={{ p: { xs: 1.25, sm: 2.5 }, '&:last-child': { pb: { xs: 1.25, sm: 2.5 } } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: { xs: 1.25, sm: 2 } }}>
+              <CurrencyExchange sx={{ color: isLight ? '#059669' : '#34D399', fontSize: { xs: 20, sm: 24 } }} />
+              <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>Convert Currency</Typography>
             </Box>
 
-            <Grid container spacing={{ xs: 1.25, sm: 2 }} sx={{ alignItems: 'center' }}>
+            <Grid container spacing={{ xs: 1, sm: 1.75 }} sx={{ alignItems: 'center' }}>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField
                   fullWidth size="small" label="Amount" type="number"
@@ -192,20 +192,20 @@ export default function CurrencyPage() {
             {/* Result */}
             {result && (
               <Box sx={{
-                mt: { xs: 1.5, sm: 3 }, p: { xs: 1.5, sm: 2.5 }, borderRadius: { xs: 2, sm: 3 },
+                mt: { xs: 1.25, sm: 2 }, p: { xs: 1.25, sm: 2 }, borderRadius: { xs: 2, sm: 2.5 },
                 bgcolor: isLight ? 'rgba(5, 150, 105, 0.04)' : 'rgba(16, 185, 129, 0.06)',
                 border: `1px solid ${isLight ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.15)'}`,
               }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.25, fontSize: { xs: '0.75rem', sm: '0.8rem' } }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.25, fontSize: { xs: '0.72rem', sm: '0.78rem' } }}>
                   {FLAG_EMOJI[result.from]} {result.fromSymbol}{Number(result.amount).toLocaleString('en-IN')} {result.from}
                 </Typography>
-                <Typography variant="h4" fontWeight={900} sx={{ color: isLight ? '#059669' : '#34D399', lineHeight: 1.2, fontSize: { xs: '1.45rem', sm: '2.125rem' } }}>
+                <Typography variant="h5" fontWeight={900} sx={{ color: isLight ? '#059669' : '#34D399', lineHeight: 1.2, fontSize: { xs: '1.25rem', sm: '1.65rem' } }}>
                   {FLAG_EMOJI[result.to]} {result.toSymbol}{Number(result.converted).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                  <Typography component="span" variant="body1" fontWeight={600} sx={{ ml: 1, color: 'text.secondary', fontSize: { xs: '0.85rem', sm: '1rem' } }}>
+                  <Typography component="span" variant="body2" fontWeight={600} sx={{ ml: 1, color: 'text.secondary', fontSize: { xs: '0.78rem', sm: '0.875rem' } }}>
                     {result.to}
                   </Typography>
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', fontSize: { xs: '0.72rem', sm: '0.75rem' } }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block', fontSize: { xs: '0.7rem', sm: '0.72rem' } }}>
                   Rate: 1 {result.from} = {formatRate(result.rate)} {result.to}
                 </Typography>
               </Box>
