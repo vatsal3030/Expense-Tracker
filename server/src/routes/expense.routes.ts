@@ -6,6 +6,7 @@ import prisma from '../lib/prisma';
 import { Prisma } from '@prisma/client';
 import appCache from '../lib/cache';
 import { emitToUser, emitToGroup, emitToUsers } from '../lib/socket';
+import { invalidateAndPrecomputeSimplifiedBalances } from './settlement.routes';
 
 export const expenseRouter = Router();
 expenseRouter.use(authenticate);
@@ -186,6 +187,31 @@ expenseRouter.post(
         emitToGroup(groupId, 'expense:created', { expense, groupId });
       }
 
+      // Accountability audit trail: record activity on creation with initial state snapshot
+      await prisma.activity.create({
+        data: {
+          userId: req.user!.id,
+          groupId: groupId || null,
+          expenseId: expense.id,
+          type: 'EXPENSE_CREATED',
+          message: `created expense "${expense.description}" for ₹${Number(expense.amount).toFixed(2)}`,
+          metadata: {
+            action: 'CREATED',
+            actor: { id: req.user!.id, name: (req.user as any).name || req.user!.email, email: req.user!.email },
+            snapshot: {
+              description: expense.description,
+              amount: Number(expense.amount),
+              currency: expense.currency,
+              category: expense.category,
+              date: expense.date,
+              splitType: expense.splitType,
+              paidById: expense.paidById,
+              sharesCount: calculatedShares.length,
+            },
+          },
+        },
+      }).catch((err) => console.error('Activity creation error:', err));
+
       // Invalidate dashboard, analytics, trends, budgets, settlements, and group caches for all involved users
       appCache.invalidatePrefix('dashboard:');
       appCache.invalidatePrefix('budgets:');
@@ -194,6 +220,9 @@ expenseRouter.post(
       if (groupId) {
         appCache.invalidatePrefix(`group:${groupId}`);
       }
+
+      // Materialized balance maintenance: precompute simplified debts in background (0ms reads)
+      invalidateAndPrecomputeSimplifiedBalances(allInvolvedUsers);
 
       appCache.set(`idempotent:${idempotencyKey}`, expense, 8000);
       res.status(201).json({ success: true, data: expense });
@@ -484,13 +513,56 @@ expenseRouter.put(
         },
       });
 
+      // Compute exact accountability diff of what changed
+      const changes: Record<string, { from: any; to: any }> = {};
+      if (description && description !== existing.description) {
+        changes.description = { from: existing.description, to: description };
+      }
+      if (amount && Number(amount) !== Number(existing.amount)) {
+        changes.amount = { from: Number(existing.amount), to: Number(amount) };
+      }
+      if (category && category !== existing.category) {
+        changes.category = { from: existing.category, to: category };
+      }
+      if (date && new Date(date).toISOString().slice(0, 10) !== new Date(existing.date).toISOString().slice(0, 10)) {
+        changes.date = { from: new Date(existing.date).toISOString().slice(0, 10), to: new Date(date).toISOString().slice(0, 10) };
+      }
+      if (splitType && splitType !== existing.splitType) {
+        changes.splitType = { from: existing.splitType, to: splitType };
+      }
+      if (notes !== undefined && notes !== existing.notes) {
+        changes.notes = { from: existing.notes || '', to: notes || '' };
+      }
+
+      const changedFields = Object.keys(changes);
+      const changeSummary = changedFields.length > 0 ? changedFields.join(', ') : 'shares breakdown adjusted';
+
       await prisma.activity.create({
         data: {
           userId: req.user!.id,
           groupId: existing.groupId,
           expenseId: id,
           type: 'EXPENSE_UPDATED',
-          message: `updated "${updated.description}"`,
+          message: `updated "${updated.description}" (${changeSummary})`,
+          metadata: {
+            action: 'UPDATED',
+            actor: { id: req.user!.id, name: (req.user as any).name || req.user!.email, email: req.user!.email },
+            changes,
+            previousState: {
+              description: existing.description,
+              amount: Number(existing.amount),
+              category: existing.category,
+              date: existing.date,
+              splitType: existing.splitType,
+            },
+            newState: {
+              description: updated.description,
+              amount: Number(updated.amount),
+              category: updated.category,
+              date: updated.date,
+              splitType: updated.splitType,
+            },
+          },
         },
       });
 
@@ -510,10 +582,14 @@ expenseRouter.put(
       }
 
       appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+      appCache.invalidatePrefix('settlements:');
       if (existing.groupId) {
         appCache.invalidatePrefix(`groups:${existing.groupId}`);
         appCache.invalidatePrefix('groups:list:');
       }
+
+      // Materialized balance maintenance: precompute simplified debts in background (0ms reads)
+      invalidateAndPrecomputeSimplifiedBalances(allInvolvedUsers);
 
       res.json({ success: true, data: updated });
     } catch (error: any) {
@@ -567,6 +643,18 @@ expenseRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): P
         expenseId: id,
         type: 'EXPENSE_DELETED',
         message: `deleted "${existing.description}"`,
+        metadata: {
+          action: 'DELETED',
+          actor: { id: req.user!.id, name: (req.user as any).name || req.user!.email, email: req.user!.email },
+          snapshot: {
+            description: existing.description,
+            amount: Number(existing.amount),
+            currency: existing.currency,
+            category: existing.category,
+            date: existing.date,
+            splitType: existing.splitType,
+          },
+        },
       },
     });
 
@@ -585,15 +673,82 @@ expenseRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response): P
     }
 
     appCache.invalidatePrefix(`dashboard:${req.user!.id}`);
+    appCache.invalidatePrefix('settlements:');
     if (existing.groupId) {
       appCache.invalidatePrefix(`groups:${existing.groupId}`);
       appCache.invalidatePrefix('groups:list:');
     }
 
+    // Materialized balance maintenance: precompute simplified debts in background (0ms reads)
+    invalidateAndPrecomputeSimplifiedBalances(allInvolvedUsers);
+
     res.json({ success: true, message: 'Expense deleted successfully.' });
   } catch (error: any) {
     console.error('Delete expense error:', error);
     res.status(500).json({ success: false, error: 'Failed to delete expense.' });
+  }
+});
+
+// GET /api/expenses/:id/audit-trail — Transaction Accountability & Change History
+expenseRouter.get('/:id/audit-trail', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const expense = await prisma.expense.findFirst({
+      where: { id },
+      include: {
+        shares: true,
+        group: {
+          include: {
+            members: {
+              where: { userId: req.user!.id },
+            },
+          },
+        },
+      },
+    });
+
+    if (!expense) {
+      res.status(404).json({ success: false, error: 'Expense not found.' });
+      return;
+    }
+
+    // Authorization: User must be creator, payer, share recipient, or group member
+    const isCreator = expense.createdById === req.user!.id;
+    const isPayer = expense.paidById === req.user!.id;
+    const isParticipant = expense.shares.some((s) => s.userId === req.user!.id);
+    const isGroupMember = (expense.group?.members?.length ?? 0) > 0;
+
+    if (!isCreator && !isPayer && !isParticipant && !isGroupMember) {
+      res.status(403).json({ success: false, error: 'Unauthorized to view audit trail for this expense.' });
+      return;
+    }
+
+    const activities = await prisma.activity.findMany({
+      where: {
+        expenseId: id,
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({
+      success: true,
+      data: activities.map((act) => ({
+        id: act.id,
+        type: act.type,
+        message: act.message,
+        timestamp: act.createdAt,
+        actor: act.user,
+        metadata: act.metadata,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Fetch audit trail error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch audit trail.' });
   }
 });
 

@@ -111,6 +111,7 @@ export const dashboardApi = {
 export const expenseApi = {
   list: (params?: Record<string, any>) => api.get('/expenses', { params }),
   get: (id: string) => api.get(`/expenses/${id}`),
+  getAuditTrail: (id: string) => api.get(`/expenses/${id}/audit-trail`),
   create: (data: any, config?: any) => api.post('/expenses', data, config),
   update: (id: string, data: any) => api.put(`/expenses/${id}`, data),
   delete: (id: string) => api.delete(`/expenses/${id}`),

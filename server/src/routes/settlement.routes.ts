@@ -112,6 +112,8 @@ settlementRouter.post(
       }
       appCache.set(`idempotent:${idempotencyKey}`, settlement, 8000);
 
+      invalidateAndPrecomputeSimplifiedBalances([req.user!.id, payeeId]);
+
       res.status(201).json({ success: true, data: settlement });
     } catch (error: any) {
       console.error('Create settlement error:', error);
@@ -120,19 +122,22 @@ settlementRouter.post(
   }
 );
 
-// GET /api/settlements/simplified — Splitwise-style Global Debt Simplification (Cached & Parallelized)
-settlementRouter.get('/simplified', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const currentUserId = req.user!.id;
-    const cacheKey = `settlements:simplified:${currentUserId}`;
+// Map for in-flight request deduplication on balance computation
+const inFlightSimplified = new Map<string, Promise<any>>();
 
-    const cached = appCache.getSync(cacheKey) || (await appCache.get(cacheKey));
-    if (cached) {
-      res.json({ success: true, data: cached });
-      return;
-    }
+/**
+ * Pre-computes and materializes simplified debts & net balances for a user using lean queries.
+ * Stores result in durable cache with 24h retention.
+ */
+export async function computeSimplifiedBalances(currentUserId: string): Promise<any> {
+  const cacheKey = `settlements:simplified:${currentUserId}`;
 
-    // Parallel fetch user's expenses and confirmed settlements in a single database flight
+  if (inFlightSimplified.has(currentUserId)) {
+    return inFlightSimplified.get(currentUserId)!;
+  }
+
+  const computePromise = (async () => {
+    // Parallel fetch user's expenses and confirmed settlements using lean projections
     const [expenses, settlements] = await Promise.all([
       prisma.expense.findMany({
         where: {
@@ -142,9 +147,17 @@ settlementRouter.get('/simplified', async (req: AuthenticatedRequest, res: Respo
             { shares: { some: { userId: currentUserId } } },
           ],
         },
-        include: {
+        select: {
+          id: true,
+          paidById: true,
           paidBy: { select: { id: true, name: true, avatarUrl: true } },
-          shares: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
+          shares: {
+            select: {
+              userId: true,
+              amount: true,
+              user: { select: { id: true, name: true, avatarUrl: true } },
+            },
+          },
         },
       }),
       prisma.settlement.findMany({
@@ -155,7 +168,11 @@ settlementRouter.get('/simplified', async (req: AuthenticatedRequest, res: Respo
             { payeeId: currentUserId },
           ],
         },
-        include: {
+        select: {
+          id: true,
+          amount: true,
+          payerId: true,
+          payeeId: true,
           payer: { select: { id: true, name: true, avatarUrl: true } },
           payee: { select: { id: true, name: true, avatarUrl: true } },
         },
@@ -196,8 +213,7 @@ settlementRouter.get('/simplified', async (req: AuthenticatedRequest, res: Respo
       balance: Math.round((balanceMap[u.id] || 0) * 100) / 100,
     }));
 
-    // Splitwise Min-Cash-Flow Algorithm:
-    // Separate into debtors (< 0) and creditors (> 0)
+    // Splitwise Min-Cash-Flow Greedy Algorithm
     const debtors = balances
       .filter((b) => b.balance < -0.01)
       .map((b) => ({ ...b.user, amount: Math.abs(b.balance) }))
@@ -242,9 +258,50 @@ settlementRouter.get('/simplified', async (req: AuthenticatedRequest, res: Respo
       simplifiedDebts,
       currentUserBalance: balanceMap[currentUserId] || 0,
       savingsCount: Math.max(0, expenses.length - simplifiedDebts.length),
+      computedAt: new Date().toISOString(),
     };
 
-    appCache.set(cacheKey, responseData, 30000);
+    // Store in durable cache (24 hours = 86400000 ms)
+    appCache.set(cacheKey, responseData, 86400000);
+    return responseData;
+  })();
+
+  inFlightSimplified.set(currentUserId, computePromise);
+  try {
+    return await computePromise;
+  } finally {
+    inFlightSimplified.delete(currentUserId);
+  }
+}
+
+/**
+ * Asynchronously invalidates and pre-computes simplified balances in background for all affected users.
+ */
+export function invalidateAndPrecomputeSimplifiedBalances(userIds: string[]): void {
+  const uniqueUserIds = Array.from(new Set(userIds.filter(Boolean)));
+  for (const uid of uniqueUserIds) {
+    appCache.delete(`settlements:simplified:${uid}`);
+    setImmediate(() => {
+      computeSimplifiedBalances(uid).catch((err) => {
+        console.error(`Background balance precomputation failed for user ${uid}:`, err);
+      });
+    });
+  }
+}
+
+// GET /api/settlements/simplified — Splitwise-style Global Debt Simplification (Materialized & 0ms Cached)
+settlementRouter.get('/simplified', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const currentUserId = req.user!.id;
+    const cacheKey = `settlements:simplified:${currentUserId}`;
+
+    const cached = appCache.getSync(cacheKey) || (await appCache.get(cacheKey));
+    if (cached) {
+      res.json({ success: true, data: cached });
+      return;
+    }
+
+    const responseData = await computeSimplifiedBalances(currentUserId);
     res.json({
       success: true,
       data: responseData,
@@ -350,6 +407,8 @@ settlementRouter.patch('/:id/confirm', async (req: AuthenticatedRequest, res: Re
     emitToUser(settlement.payerId, 'settlement:confirmed', updated);
     emitToUser(req.user!.id, 'settlement:confirmed', updated);
 
+    invalidateAndPrecomputeSimplifiedBalances([settlement.payerId, req.user!.id]);
+
     res.json({ success: true, data: updated });
   } catch (error: any) {
     console.error('Confirm settlement error:', error);
@@ -379,6 +438,8 @@ settlementRouter.patch('/:id/reject', async (req: AuthenticatedRequest, res: Res
       },
     });
 
+    invalidateAndPrecomputeSimplifiedBalances([settlement.payerId, req.user!.id]);
+
     res.json({ success: true, data: updated });
   } catch (error: any) {
     console.error('Reject settlement error:', error);
@@ -402,6 +463,8 @@ settlementRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response)
     await prisma.settlement.delete({ where: { id } });
 
     appCache.invalidatePrefix('dashboard:');
+    appCache.invalidatePrefix('settlements:');
+    invalidateAndPrecomputeSimplifiedBalances([settlement.payerId, settlement.payeeId]);
 
     res.json({ success: true, message: 'Settlement request cancelled successfully.' });
   } catch (error: any) {

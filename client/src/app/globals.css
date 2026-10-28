@@ -709,3 +709,109 @@ div[role="presentation"] > .MuiBackdrop-root {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
+/* =============================================================================
+   UNIVERSAL DATE INPUT & CALENDAR ICON (WHITE IN DARK MODE, TEXT-COLOR MATCH)
+   ============================================================================= */
+html.dark input[type="date"],
+.dark input[type="date"],
+[data-theme="dark"] input[type="date"] {
+  color-scheme: dark !important;
+}
+
+html.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+.dark .MuiInputBase-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.2) contrast(1.1) !important;
+  cursor: pointer;
+  opacity: 0.92;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+html.dark input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.dark input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+html.light input[type="date"],
+:root:not(.dark) input[type="date"] {
+  color-scheme: light;
+}
+
+html.light input[type="date"]::-webkit-calendar-picker-indicator,
+:root:not(.dark) input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+/* =============================================================================
+   EXECUTIVE FINANCIAL PRINT & STATEMENT STYLES (@media print)
+   ============================================================================= */
+@media print {
+  /* Hide all web application chrome, navigation, headers, sidebars, buttons, and floating widgets */
+  header,
+  nav,
+  aside,
+  .MuiDrawer-root,
+  #mobile-bottom-nav,
+  .no-print,
+  button:not(.printable),
+  a[href^="#"],
+  .MuiFab-root,
+  .MuiSpeedDial-root {
+    display: none !important;
+  }
+
+  /* Reset main layout containers for clean document printing */
+  html,
+  body,
+  main,
+  #print-report-container,
+  .MuiBox-root {
+    background: #ffffff !important;
+    color: #0F172A !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure background graphics, gradients, and colored badge borders are preserved accurately */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Card and table borders in print */
+  .MuiCard-root,
+  .glass-secondary,
+  .glass-card,
+  table,
+  tr,
+  td,
+  th {
+    border-color: #E2E8F0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Typography clarity on paper / PDF */
+  h1, h2, h3, h4, h5, h6, p, span, td, th {
+    color: #0F172A !important;
+  }
+
+  .text-emerald-500,
+  .text-emerald-400 {
+    color: #059669 !important;
+  }
+
+  .text-rose-500,
+  .text-rose-400 {
+    color: #DC2626 !important;
+  }
+}

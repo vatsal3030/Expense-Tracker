@@ -195,8 +195,8 @@ export default function QrCodeModal({
           />
         </Box>
 
-        <DialogTitle sx={{ p: 0, px: 2.5, pb: 1 }}>
-          <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.15rem', sm: '1.3rem' } }}>
+        <DialogTitle component="div" sx={{ p: 0, px: 2.5, pb: 1 }}>
+          <Typography component="div" variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.02em', color: 'text.primary', fontSize: { xs: '1.15rem', sm: '1.3rem' } }}>
             {title}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem', mt: 0.5 }}>

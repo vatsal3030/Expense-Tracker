@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, Button, TextField,
   MenuItem, useTheme, alpha, Skeleton, Chip, Divider,
@@ -78,7 +78,11 @@ export default function ReportsPage() {
     }
   }, [user?.id]);
 
+  const isFetchingRef = useRef(false);
+
   const fetchReport = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     if (!report) setLoading(true);
     try {
       const params: any = { from: dateFrom, to: dateTo };
@@ -95,9 +99,10 @@ export default function ReportsPage() {
     } catch (error) {
       console.error('Fetch report error:', error);
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
-  }, [dateFrom, dateTo, selectedGroup, report]);
+  }, [dateFrom, dateTo, selectedGroup]);
 
   useEffect(() => {
     if (user?.id) fetchReport();
@@ -249,12 +254,59 @@ const getCategoryColorScale = (pct: number) => {
 
   return (
     <AppLayout>
-      <Box sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
-        {/* Header - Compact Spacing & Structured Layout */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1.5 }}>
+      <Box id="print-report-container" sx={{ pb: { xs: 4, sm: 4 }, width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
+        {/* Print-Only Executive Header (Appears only on printed statements / PDFs) */}
+        <Box
+          className="print-only"
+          sx={{
+            display: 'none',
+            '@media print': {
+              display: 'block !important',
+              mb: 3,
+              pb: 2,
+              borderBottom: '2px solid #E2E8F0',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Box>
+              <Typography sx={{ fontSize: '20pt', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em' }}>
+                Owino <span style={{ color: '#10B981', fontSize: '15pt', fontWeight: 700 }}>FairShare</span>
+              </Typography>
+              <Typography sx={{ fontSize: '11pt', fontWeight: 600, color: '#475569', mt: 0.5 }}>
+                Financial Statement &amp; Outflow Intelligence Report
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography sx={{ fontSize: '9pt', color: '#64748B' }}>
+                <strong>Generated:</strong> {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </Typography>
+              <Typography sx={{ fontSize: '9pt', color: '#64748B' }}>
+                <strong>Scope:</strong> {selectedGroup === 'personal' ? 'Personal Expenses' : (groups.find(g => g.id === selectedGroup)?.name || 'Group Expenses')}
+              </Typography>
+              <Typography sx={{ fontSize: '9pt', color: '#64748B' }}>
+                <strong>Period:</strong> {dateFrom} to {dateTo}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Header - Compact Spacing & Structured Layout (Hidden on Print) */}
+        <Box
+          className="no-print"
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 1.5,
+            flexWrap: 'wrap',
+            gap: 1.5,
+            '@media print': { display: 'none !important' },
+          }}
+        >
           <Box>
             <Typography fontWeight={700} sx={{ fontSize: { xs: '1.2rem', sm: '1.45rem', md: '1.65rem' }, letterSpacing: '-0.02em', color: 'text.primary' }}>
-              Reports & Intelligence
+              Reports &amp; Intelligence
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.78rem', sm: '0.875rem' } }}>
               Comprehensive outflow analytics, category distribution, and financial statements
@@ -295,10 +347,15 @@ const getCategoryColorScale = (pct: number) => {
           </Stack>
         </Box>
 
-        {/* Filters Card - Tight, clean, with instant presets */}
+        {/* Filters Card - Tight, clean, with instant presets (Hidden on Print) */}
         <Card
-          className="glass-secondary"
-          sx={{ borderRadius: 2.75, mb: 1.5, border: `1px solid ${theme.palette.divider}` }}
+          className="glass-secondary no-print"
+          sx={{
+            borderRadius: 2.75,
+            mb: 1.5,
+            border: `1px solid ${theme.palette.divider}`,
+            '@media print': { display: 'none !important' },
+          }}
         >
           <CardContent sx={{ p: { xs: 1.75, sm: 2 }, '&:last-child': { pb: { xs: 1.75, sm: 2 } } }}>
             {/* Quick Range Presets */}

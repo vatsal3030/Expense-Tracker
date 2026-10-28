@@ -322,7 +322,12 @@ export default function LandingPage() {
       <div className="sticky top-4 z-50 px-2 sm:px-6 w-full max-w-[98%] xl:max-w-[96%] 2xl:max-w-[1560px] mx-auto">
         <header className="macos-glass rounded-full px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4 shadow-2xl transition-all duration-300">
           <div className="shrink-0 flex items-center">
-            <BrandLogo size="md" textColor={isLight ? "text-slate-900" : "text-white"} />
+            <div className="hidden sm:block">
+              <BrandLogo size="md" textColor={isLight ? "text-slate-900" : "text-white"} />
+            </div>
+            <div className="block sm:hidden">
+              <BrandLogo size="sm" textColor={isLight ? "text-slate-900" : "text-white"} />
+            </div>
           </div>
 
           {/* Nav links */}
@@ -352,7 +357,7 @@ export default function LandingPage() {
           </nav>
 
           {/* Action buttons + Theme Toggle */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Themed Segmented Switcher for Light & Dark (Desktop) */}
             <div className="hidden sm:flex macos-liquid-surface items-center p-0.5 sm:p-1 rounded-full shadow-inner">
               <button
@@ -390,7 +395,7 @@ export default function LandingPage() {
             {/* Compact Mobile Theme Switcher */}
             <button
               onClick={toggleTheme}
-              className="sm:hidden w-8 h-8 rounded-full macos-liquid-surface flex items-center justify-center border border-white/10 text-slate-300 active:scale-95 transition-all"
+              className="sm:hidden w-8 h-8 rounded-full macos-liquid-surface flex items-center justify-center border border-white/10 text-slate-300 active:scale-95 transition-all shrink-0"
               aria-label="Toggle Theme"
               title="Toggle Theme"
             >
@@ -399,15 +404,15 @@ export default function LandingPage() {
 
             {/* Authenticated Dashboard Button vs Guest Auth Buttons */}
             {user ? (
-              <div className="flex items-center gap-2 shrink-0">
-                {/* Direct Dashboard Link (Account name removed for clean spacious layout) */}
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                {/* Direct Dashboard Link - Compact & responsive on mobile */}
                 <Link
                   href="/dashboard"
-                  className="text-xs font-bold px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95 shrink-0 whitespace-nowrap"
+                  className="text-[11px] sm:text-xs font-bold px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1 sm:gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95 shrink-0 whitespace-nowrap"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
                   <span>Dashboard</span>
-                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0 hidden sm:inline-block" />
                 </Link>
               </div>
             ) : (
@@ -1718,21 +1723,48 @@ export default function LandingPage() {
             : 'bg-[#05070A] border-slate-800/80 text-slate-400'
         }`}
       >
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-          <BrandLogo size="sm" textColor={isLight ? "text-slate-900" : "text-white"} />
-          <p className="text-center sm:text-left">
-            © 2026 FairShare. Privacy-first, open architecture expense ledger. Built for modern financial transparency.
-          </p>
-          <div className="flex items-center gap-6 font-semibold">
-            <Link href="/auth/login" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-              Sign In
-            </Link>
-            <Link href="/auth/signup" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-              Sign Up
-            </Link>
-            <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-              Interactive Demo
-            </a>
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-700/20 dark:border-slate-800/80">
+            <BrandLogo size="sm" textColor={isLight ? "text-slate-900" : "text-white"} />
+
+            {/* Legal Documents & Policies */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-medium">
+              <Link href="/privacy" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                Privacy Policy
+              </Link>
+              <span className="text-slate-600 dark:text-slate-700 hidden sm:inline">•</span>
+              <Link href="/terms" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                Terms of Service
+              </Link>
+              <span className="text-slate-600 dark:text-slate-700 hidden sm:inline">•</span>
+              <Link href="/privacy#security" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                Security &amp; Compliance
+              </Link>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center gap-5 font-semibold">
+              <Link href="/auth/login" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                Sign In
+              </Link>
+              <Link href="/auth/signup" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                Sign Up
+              </Link>
+              <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                Interactive Demo
+              </a>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-[11px] text-slate-500">
+            <p>
+              © 2026 FairShare (Owino). Open architecture mathematical expense ledger. Built for modern financial transparency.
+            </p>
+            <p className="flex items-center gap-3 font-mono text-[10px]">
+              <span>🔒 256-Bit TLS</span>
+              <span>⚡ DAG Minimization</span>
+              <span>📱 UPI 2.0</span>
+            </p>
           </div>
         </div>
       </footer>

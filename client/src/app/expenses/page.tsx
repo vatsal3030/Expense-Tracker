@@ -151,6 +151,29 @@ function ExpensesContent() {
   const [groups, setGroups] = useState<any[]>([]);
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
 
+  // Transaction Accountability & Audit Trail state
+  const [auditTrail, setAuditTrail] = useState<any[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedExpense?.id) {
+      setAuditLoading(true);
+      expenseApi.getAuditTrail(selectedExpense.id)
+        .then((res) => {
+          setAuditTrail(res.data?.data || []);
+        })
+        .catch((err) => {
+          console.error('Failed to load audit trail:', err);
+          setAuditTrail([]);
+        })
+        .finally(() => {
+          setAuditLoading(false);
+        });
+    } else {
+      setAuditTrail([]);
+    }
+  }, [selectedExpense?.id]);
+
   // Add Expense Form state
   const [form, setForm] = useState({
     description: '',
@@ -1215,6 +1238,106 @@ function ExpensesContent() {
                     </TableBody>
                   </Table>
                 </Card>
+              </Box>
+
+              {/* Transaction Accountability & Change History Audit Trail */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Audit History &amp; Accountability</span>
+                  {auditTrail.length > 0 && (
+                    <Chip size="small" label={`${auditTrail.length} ${auditTrail.length === 1 ? 'event' : 'events'}`} sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }} />
+                  )}
+                </Typography>
+
+                {auditLoading ? (
+                  <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Skeleton width="60%" height={16} />
+                    <Skeleton width="90%" height={24} />
+                    <Skeleton width="40%" height={14} />
+                  </Box>
+                ) : auditTrail.length === 0 ? (
+                  <Box sx={{ p: 2, borderRadius: 2.5, border: `1px dashed ${theme.palette.divider}`, textAlign: 'center' }}>
+                    <Typography variant="caption" color="text.secondary">
+                      No modifications recorded for this transaction yet.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, maxHeight: 220, overflowY: 'auto', pr: 0.5 }}>
+                    {auditTrail.map((item, i) => {
+                      const isCreated = item.type === 'EXPENSE_CREATED';
+                      const isUpdated = item.type === 'EXPENSE_UPDATED';
+                      const isDeleted = item.type === 'EXPENSE_DELETED';
+                      const changes = item.metadata?.changes;
+
+                      return (
+                        <Box
+                          key={item.id || i}
+                          sx={{
+                            p: 1.25,
+                            borderRadius: 2.5,
+                            border: `1px solid ${theme.palette.divider}`,
+                            bgcolor: isLight ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.03)',
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip
+                                size="small"
+                                label={isCreated ? 'Created' : isUpdated ? 'Edited' : 'Deleted'}
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  bgcolor: isCreated
+                                    ? (isLight ? alpha('#059669', 0.12) : alpha('#10B981', 0.18))
+                                    : isUpdated
+                                    ? alpha('#38BDF8', 0.15)
+                                    : alpha('#EF4444', 0.15),
+                                  color: isCreated ? (isLight ? '#059669' : '#34D399') : isUpdated ? '#0284C7' : '#EF4444',
+                                }}
+                              />
+                              <Typography variant="body2" fontWeight={650} fontSize="0.78rem">
+                                {item.actor?.name || 'User'}
+                              </Typography>
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" fontSize="0.68rem">
+                              {new Date(item.timestamp).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </Typography>
+                          </Box>
+
+                          <Typography variant="body2" color="text.secondary" fontSize="0.75rem">
+                            {item.message}
+                          </Typography>
+
+                          {/* Field Diff Badges */}
+                          {changes && Object.keys(changes).length > 0 && (
+                            <Box sx={{ mt: 1, pt: 0.75, borderTop: `1px dashed ${theme.palette.divider}`, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                              {Object.entries(changes).map(([field, diff]: [string, any]) => (
+                                <Box key={field} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, fontSize: '0.7rem' }}>
+                                  <span style={{ textTransform: 'capitalize', fontWeight: 600, color: isLight ? '#475569' : '#94A3B8' }}>
+                                    {field}:
+                                  </span>
+                                  <span style={{ textDecoration: 'line-through', color: '#EF4444', opacity: 0.85 }}>
+                                    {field === 'amount' ? `₹${Number(diff.from).toFixed(2)}` : String(diff.from ?? 'none')}
+                                  </span>
+                                  <span>→</span>
+                                  <span style={{ fontWeight: 700, color: '#10B981' }}>
+                                    {field === 'amount' ? `₹${Number(diff.to).toFixed(2)}` : String(diff.to ?? 'none')}
+                                  </span>
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                )}
               </Box>
 
               {/* Action Buttons */}
