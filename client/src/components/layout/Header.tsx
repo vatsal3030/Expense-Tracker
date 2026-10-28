@@ -306,7 +306,7 @@ export default function Header({ onMenuToggle, drawerWidth }: HeaderProps) {
 
         {/* Mobile Brand Logo — Only circular icon without long text */}
         <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: { xs: 0.5, sm: 1.5 }, flexShrink: 0 }}>
-          <BrandLogo size="sm" showText={false} href="/" />
+          <BrandLogo size="sm" showText={false} href="/dashboard" />
         </Box>
 
         {/* Search Bar (Tertiary Glass Pill) — Click to open Elastic Search Modal */}

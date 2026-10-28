@@ -101,7 +101,8 @@ function LoginForm() {
   const theme = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTarget = searchParams.get('redirect') || '/dashboard';
+  const rawRedirect = searchParams.get('redirect');
+  const redirectTarget = (rawRedirect && rawRedirect !== '/' && rawRedirect !== '/#') ? rawRedirect : '/dashboard';
   const isVerified = searchParams.get('verified') === 'true';
   const isReset = searchParams.get('reset') === 'true';
   const { signIn, signInWithGoogle, user, loading: authLoading } = useAuth();
@@ -124,7 +125,7 @@ function LoginForm() {
   }, []);
 
   const getEffectiveRedirect = () => {
-    if (redirectTarget && redirectTarget !== '/dashboard') return redirectTarget;
+    if (redirectTarget && redirectTarget !== '/dashboard' && redirectTarget !== '/' && redirectTarget !== '/#') return redirectTarget;
     try {
       const pendingInvite = typeof window !== 'undefined' ? localStorage.getItem('fairshare_pending_invite') : null;
       if (pendingInvite) return `/friends?invite=${pendingInvite}`;

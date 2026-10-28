@@ -106,7 +106,8 @@ function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const refCode = searchParams?.get('ref');
-  const redirectTarget = searchParams?.get('redirect') || '/dashboard';
+  const rawRedirect = searchParams?.get('redirect');
+  const redirectTarget = (rawRedirect && rawRedirect !== '/' && rawRedirect !== '/#') ? rawRedirect : '/dashboard';
   const { signUp, signInWithGoogle, user, loading: authLoading } = useAuth();
 
   const [name, setName] = useState('');

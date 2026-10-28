@@ -227,6 +227,6 @@ export const exportApi = {
   report: (params?: { from?: string; to?: string; groupId?: string }) =>
     api.get('/export/report', { params }),
   importSplitwise: (payload: any) =>
-    api.post('/export/import-splitwise', payload),
+    api.post('/export/import-splitwise', payload, { timeout: 180000 }),
 };
 

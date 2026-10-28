@@ -41,6 +41,7 @@ import BrandLogo from '@/components/brand/BrandLogo';
 import QrCodeModal from '@/components/common/QrCodeModal';
 import { useThemeMode } from '@/providers/ThemeProvider';
 import { useAuth } from '@/providers/AuthProvider';
+import { supabase } from '@/lib/supabase';
 
 // Cartoon & Gaming Avatar Profiles for Live Interactive Simulation
 const SIMULATED_HERO_USERS = [
@@ -106,6 +107,31 @@ export default function LandingPage() {
   const { mode, toggleTheme } = useThemeMode();
   const { user, profile, loading: authLoading } = useAuth();
   const isLight = mode === 'light';
+
+    // Automatically intercept Supabase OAuth, email verification, or invite links that land on /#
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash && (hash.includes('access_token') || hash.includes('refresh_token') || hash.includes('type='))) {
+        if (hash.includes('type=recovery')) {
+          router.replace('/auth/reset-password');
+          return;
+        }
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            router.replace('/dashboard');
+          } else {
+            setTimeout(async () => {
+              const { data } = await supabase.auth.getSession();
+              if (data?.session) {
+                router.replace('/dashboard');
+              }
+            }, 400);
+          }
+        });
+      }
+    }
+  }, [router]);
 
   // Do NOT forcefully redirect authenticated users to /dashboard so they can view the landing page features & simulator freely
 

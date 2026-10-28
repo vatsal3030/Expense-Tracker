@@ -181,7 +181,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
           size={collapsed && !isMobile ? 'sm' : 'md'}
           showText={!collapsed || isMobile}
           asLink={true}
-          href="/"
+          href="/dashboard"
         />
         {!isMobile && (
           <IconButton

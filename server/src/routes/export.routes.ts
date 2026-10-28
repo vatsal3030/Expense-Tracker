@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import { randomUUID } from 'crypto';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { Prisma, ExpenseCategory, GroupType } from '@prisma/client';
@@ -422,121 +423,136 @@ exportRouter.post(
         }
       }
 
-      // Process settlements in parallel chunks of 20
-      const SETTLEMENT_CHUNK_SIZE = 20;
-      for (let i = 0; i < settlementRows.length; i += SETTLEMENT_CHUNK_SIZE) {
-        const chunk = settlementRows.slice(i, i + SETTLEMENT_CHUNK_SIZE);
-        await Promise.all(
-          chunk.map(async (row) => {
-            const cost = Number(row.cost) || 0;
-            const desc = (row.description || '').trim();
-            let payerCol: string | null = null;
-            let payeeCol: string | null = null;
+      // High-speed bulk preparation for settlements
+      const settlementsToCreate: any[] = [];
+      for (const row of settlementRows) {
+        const cost = Number(row.cost) || 0;
+        const desc = (row.description || '').trim();
+        let payerCol: string | null = null;
+        let payeeCol: string | null = null;
 
-            for (const [col, rawDelta] of Object.entries(row.shares)) {
-              const delta = Number(rawDelta) || 0;
-              if (delta > 0 && !payerCol) payerCol = col;
-              if (delta < 0 && !payeeCol) payeeCol = col;
-            }
+        for (const [col, rawDelta] of Object.entries(row.shares)) {
+          const delta = Number(rawDelta) || 0;
+          if (delta > 0 && !payerCol) payerCol = col;
+          if (delta < 0 && !payeeCol) payeeCol = col;
+        }
 
-            if (payerCol && payeeCol && columnNameToUserId[payerCol] && columnNameToUserId[payeeCol]) {
-              await prisma.settlement.create({
-                data: {
-                  groupId: group.id,
-                  payerId: columnNameToUserId[payerCol],
-                  payeeId: columnNameToUserId[payeeCol],
-                  amount: new Prisma.Decimal(cost),
-                  currency: row.currency || currency || 'INR',
-                  status: 'CONFIRMED',
-                  notes: desc || 'Imported Splitwise Settlement',
-                },
-              });
-              settlementsCreated++;
-            }
-          })
-        );
+        if (payerCol && payeeCol && columnNameToUserId[payerCol] && columnNameToUserId[payeeCol]) {
+          settlementsToCreate.push({
+            id: randomUUID(),
+            groupId: group.id,
+            payerId: columnNameToUserId[payerCol],
+            payeeId: columnNameToUserId[payeeCol],
+            amount: new Prisma.Decimal(cost),
+            currency: row.currency || currency || 'INR',
+            status: 'CONFIRMED',
+            notes: desc || 'Imported Splitwise Settlement',
+          });
+        }
       }
 
-      // Process expenses in parallel batches of 25 for fast throughput
-      const EXPENSE_BATCH_SIZE = 25;
-      for (let i = 0; i < expenseRows.length; i += EXPENSE_BATCH_SIZE) {
-        const chunk = expenseRows.slice(i, i + EXPENSE_BATCH_SIZE);
-        await Promise.all(
-          chunk.map(async (row) => {
-            const cost = Number(row.cost) || 0;
-            const desc = (row.description || '').trim();
+      // Bulk insert settlements in chunks of 500
+      const SETTLEMENT_CHUNK_SIZE = 500;
+      for (let i = 0; i < settlementsToCreate.length; i += SETTLEMENT_CHUNK_SIZE) {
+        const chunk = settlementsToCreate.slice(i, i + SETTLEMENT_CHUNK_SIZE);
+        await prisma.settlement.createMany({ data: chunk });
+      }
+      settlementsCreated = settlementsToCreate.length;
 
-            let maxDelta = -Infinity;
-            let payerCol: string | null = null;
+      // High-speed bulk preparation for expenses and expense shares
+      const expensesToCreate: any[] = [];
+      const sharesToCreate: any[] = [];
 
-            for (const [col, rawDelta] of Object.entries(row.shares)) {
-              const delta = Number(rawDelta) || 0;
-              if (delta > maxDelta) {
-                maxDelta = delta;
-                payerCol = col;
-              }
-            }
+      for (const row of expenseRows) {
+        const cost = Number(row.cost) || 0;
+        const desc = (row.description || '').trim();
 
-            const paidById = payerCol && columnNameToUserId[payerCol]
-              ? columnNameToUserId[payerCol]
-              : currentUserId;
+        let maxDelta = -Infinity;
+        let payerCol: string | null = null;
 
-            const rawShares: Array<{ userId: string; amount: number }> = [];
+        for (const [col, rawDelta] of Object.entries(row.shares)) {
+          const delta = Number(rawDelta) || 0;
+          if (delta > maxDelta) {
+            maxDelta = delta;
+            payerCol = col;
+          }
+        }
 
-            for (const [col, rawDelta] of Object.entries(row.shares)) {
-              const delta = Number(rawDelta) || 0;
-              const uId = columnNameToUserId[col];
-              if (!uId) continue;
+        const paidById = payerCol && columnNameToUserId[payerCol]
+          ? columnNameToUserId[payerCol]
+          : currentUserId;
 
-              let shareAmt = 0;
-              if (col === payerCol) {
-                shareAmt = Math.max(0, cost - maxDelta);
-              } else {
-                shareAmt = Math.abs(delta);
-              }
+        const rawShares: Array<{ userId: string; amount: number }> = [];
 
-              if (shareAmt > 0) {
-                rawShares.push({ userId: uId, amount: shareAmt });
-              }
-            }
+        for (const [col, rawDelta] of Object.entries(row.shares)) {
+          const delta = Number(rawDelta) || 0;
+          const uId = columnNameToUserId[col];
+          if (!uId) continue;
 
-            let finalShares = rawShares;
-            if (finalShares.length === 0) {
-              const equalShare = Number((cost / uniqueUserIds.length).toFixed(2));
-              finalShares = uniqueUserIds.map((uId) => ({ userId: uId, amount: equalShare }));
-            }
+          let shareAmt = 0;
+          if (col === payerCol) {
+            shareAmt = Math.max(0, cost - maxDelta);
+          } else {
+            shareAmt = Math.abs(delta);
+          }
 
-            const totalSplitSum = finalShares.reduce((s, item) => s + item.amount, 0);
-            const diff = Number((cost - totalSplitSum).toFixed(2));
-            if (diff !== 0 && finalShares.length > 0) {
-              finalShares[0].amount = Number((finalShares[0].amount + diff).toFixed(2));
-            }
+          if (shareAmt > 0) {
+            rawShares.push({ userId: uId, amount: shareAmt });
+          }
+        }
 
-            const expDate = row.date ? new Date(row.date) : new Date();
+        let finalShares = rawShares;
+        if (finalShares.length === 0) {
+          const equalShare = Number((cost / uniqueUserIds.length).toFixed(2));
+          finalShares = uniqueUserIds.map((uId) => ({ userId: uId, amount: equalShare }));
+        }
 
-            await prisma.expense.create({
-              data: {
-                groupId: group.id,
-                paidById,
-                createdById: currentUserId,
-                description: desc || 'Imported Expense',
-                amount: new Prisma.Decimal(cost),
-                currency: row.currency || currency || 'INR',
-                category: mapSplitwiseCategory(row.category),
-                splitType: 'EXACT',
-                date: isNaN(expDate.getTime()) ? new Date() : expDate,
-                notes: 'Imported from Splitwise',
-                shares: {
-                  create: finalShares.map((s) => ({
-                    userId: s.userId,
-                    amount: new Prisma.Decimal(s.amount),
-                  })),
-                },
-              },
-            });
-            expensesCreated++;
-          })
-        );
+        const totalSplitSum = finalShares.reduce((s, item) => s + item.amount, 0);
+        const diff = Number((cost - totalSplitSum).toFixed(2));
+        if (diff !== 0 && finalShares.length > 0) {
+          finalShares[0].amount = Number((finalShares[0].amount + diff).toFixed(2));
+        }
+
+        const expDate = row.date ? new Date(row.date) : new Date();
+        const expenseId = randomUUID();
+
+        expensesToCreate.push({
+          id: expenseId,
+          groupId: group.id,
+          paidById,
+          createdById: currentUserId,
+          description: desc || 'Imported Expense',
+          amount: new Prisma.Decimal(cost),
+          currency: row.currency || currency || 'INR',
+          category: mapSplitwiseCategory(row.category),
+          splitType: 'EXACT',
+          date: isNaN(expDate.getTime()) ? new Date() : expDate,
+          notes: 'Imported from Splitwise',
+        });
+
+        for (const s of finalShares) {
+          sharesToCreate.push({
+            id: randomUUID(),
+            expenseId,
+            userId: s.userId,
+            amount: new Prisma.Decimal(s.amount),
+          });
+        }
+      }
+
+      // Bulk insert expenses in chunks of 500
+      const EXPENSE_CHUNK_SIZE = 500;
+      for (let i = 0; i < expensesToCreate.length; i += EXPENSE_CHUNK_SIZE) {
+        const chunk = expensesToCreate.slice(i, i + EXPENSE_CHUNK_SIZE);
+        await prisma.expense.createMany({ data: chunk });
+      }
+      expensesCreated = expensesToCreate.length;
+
+      // Bulk insert expense shares in chunks of 1000
+      const SHARE_CHUNK_SIZE = 1000;
+      for (let i = 0; i < sharesToCreate.length; i += SHARE_CHUNK_SIZE) {
+        const chunk = sharesToCreate.slice(i, i + SHARE_CHUNK_SIZE);
+        await prisma.expenseShare.createMany({ data: chunk });
       }
 
       // Record Activity

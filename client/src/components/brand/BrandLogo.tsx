@@ -22,8 +22,8 @@ export default function BrandLogo({
   textColor,
   href,
 }: BrandLogoProps) {
-  const { user: _user } = useAuth();
-  const targetHref = href !== undefined ? href : '/';
+  const { user } = useAuth();
+  const targetHref = href !== undefined ? href : (user ? '/dashboard' : '/');
   const iconDimensions = {
     sm: { width: 28, height: 28, stroke: 2.2 },
     md: { width: 36, height: 36, stroke: 2.5 },
