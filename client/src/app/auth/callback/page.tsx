@@ -11,6 +11,11 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        if (typeof window !== 'undefined' && window.location.hostname === '16.192.15.202') {
+          window.location.replace(`https://16.192.15.202.sslip.io${window.location.pathname}${window.location.search}${window.location.hash}`);
+          return;
+        }
+
         let isRecovery = false;
         if (typeof window !== 'undefined') {
           const searchParams = new URLSearchParams(window.location.search);

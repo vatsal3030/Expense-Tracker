@@ -111,6 +111,10 @@ export default function LandingPage() {
     // Automatically intercept Supabase OAuth, email verification, or invite links that land on /#
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      if (window.location.hostname === '16.192.15.202') {
+        window.location.replace(`https://16.192.15.202.sslip.io${window.location.pathname}${window.location.search}${window.location.hash}`);
+        return;
+      }
       const hash = window.location.hash;
       if (hash && (hash.includes('access_token') || hash.includes('refresh_token') || hash.includes('type='))) {
         if (hash.includes('type=recovery')) {
@@ -358,28 +362,31 @@ export default function LandingPage() {
 
           {/* Nav links */}
           <nav
-            className={`hidden lg:flex items-center gap-4 xl:gap-6 2xl:gap-8 text-xs font-semibold uppercase tracking-wider shrink-0 whitespace-nowrap ${
+            className={`hidden lg:flex items-center gap-3 xl:gap-5 2xl:gap-6 text-xs font-semibold uppercase tracking-wider shrink-0 whitespace-nowrap ${
               isLight ? 'text-slate-700' : 'text-slate-300'
             }`}
           >
             <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              Live Simulator
+              Simulator
             </a>
-            <a href="#debt-minimizer" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              Debt Graph
-            </a>
-            <a href="#features" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              Features
-            </a>
-            <a href="#comparison" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
+            <Link href="/compare/splitwise" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
               Vs Splitwise
-            </a>
-            <a href="#qr-ecosystem" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              QR Ecosystem
-            </a>
-            <a href="#faqs" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
+            </Link>
+            <Link href="/expenses/split-bill" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
+              Split Bill
+            </Link>
+            <Link href="/pricing" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
+              Pricing
+            </Link>
+            <Link href="/case-studies" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
+              Case Studies
+            </Link>
+            <Link href="/reviews" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
+              Reviews
+            </Link>
+            <Link href="/faq" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
               FAQ
-            </a>
+            </Link>
           </nav>
 
           {/* Action buttons + Theme Toggle */}
@@ -1743,53 +1750,75 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer
-        className={`border-t py-10 px-4 text-xs transition-colors ${
+        className={`border-t py-12 px-4 sm:px-6 text-xs transition-colors ${
           isLight
-            ? 'bg-slate-200/40 border-slate-300/60 text-slate-600'
-            : 'bg-[#05070A] border-slate-800/80 text-slate-400'
+            ? 'bg-slate-200/50 border-slate-300 text-slate-600'
+            : 'bg-[#05070A] border-slate-800 text-slate-400'
         }`}
       >
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-700/20 dark:border-slate-800/80">
-            <BrandLogo size="sm" textColor={isLight ? "text-slate-900" : "text-white"} />
-
-            {/* Legal Documents & Policies */}
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-medium">
-              <Link href="/privacy" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                Privacy Policy
-              </Link>
-              <span className="text-slate-600 dark:text-slate-700 hidden sm:inline">•</span>
-              <Link href="/terms" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                Terms of Service
-              </Link>
-              <span className="text-slate-600 dark:text-slate-700 hidden sm:inline">•</span>
-              <Link href="/privacy#security" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                Security &amp; Compliance
-              </Link>
+        <div className="max-w-7xl mx-auto space-y-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+            {/* Col 1: Brand & NAP */}
+            <div className="col-span-2 space-y-3">
+              <BrandLogo size="sm" textColor={isLight ? "text-slate-900" : "text-white"} />
+              <p className="text-xs leading-relaxed max-w-sm">
+                Owino (FairShare) is an open-architecture, privacy-first group expense ledger and debt minimization SaaS.
+                Built to eliminate multi-party payment chaos with greedy DAG graph algorithms and dynamic UPI 2.0 settlements.
+              </p>
+              <div className="text-[11px] space-y-1 font-mono text-slate-500">
+                <p><strong>Entity:</strong> Owino FairShare Technologies Pvt. Ltd.</p>
+                <p><strong>HQ:</strong> FinTech Innovation Hub, 4th Block Koramangala, Bengaluru 560034</p>
+                <p><strong>Contact:</strong> <a href="mailto:support@fairshare.io" className="text-emerald-500 hover:underline">support@fairshare.io</a></p>
+              </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="flex items-center gap-5 font-semibold">
-              <Link href="/auth/login" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                Sign In
-              </Link>
-              <Link href="/auth/signup" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                Sign Up
-              </Link>
-              <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                Interactive Demo
-              </a>
+            {/* Col 2: Solutions */}
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Solutions</h4>
+              <ul className="space-y-2">
+                <li><Link href="/features/debt-simplification" className="hover:text-emerald-400 transition-colors">Debt Minimization (DAG)</Link></li>
+                <li><Link href="/features/upi-settlements" className="hover:text-emerald-400 transition-colors">Dynamic UPI 2.0 QR</Link></li>
+                <li><Link href="/features/splitwise-migration" className="hover:text-emerald-400 transition-colors">1-Click Splitwise Importer</Link></li>
+                <li><Link href="/expenses/split-bill" className="hover:text-emerald-400 transition-colors">Itemized Bill Splitter</Link></li>
+                <li><Link href="/pricing" className="hover:text-emerald-400 transition-colors font-semibold text-emerald-400">Pricing &amp; Free Plan</Link></li>
+              </ul>
+            </div>
+
+            {/* Col 3: Resources & Trust */}
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Resources</h4>
+              <ul className="space-y-2">
+                <li><Link href="/research" className="hover:text-emerald-400 transition-colors">Algorithmic Research Paper</Link></li>
+                <li><Link href="/case-studies" className="hover:text-emerald-400 transition-colors">Real-World Case Studies</Link></li>
+                <li><Link href="/reviews" className="hover:text-emerald-400 transition-colors">Customer Reviews (4.9★)</Link></li>
+                <li><Link href="/faq" className="hover:text-emerald-400 transition-colors">Frequently Asked Questions</Link></li>
+                <li><Link href="/directories" className="hover:text-emerald-400 transition-colors">Verified Directories</Link></li>
+                <li><a href="/llms.txt" className="hover:text-emerald-400 transition-colors font-mono text-[11px]">llms.txt (AI Crawlers)</a></li>
+              </ul>
+            </div>
+
+            {/* Col 4: Comparison & Legal */}
+            <div className="space-y-2.5">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Compare &amp; Legal</h4>
+              <ul className="space-y-2">
+                <li><Link href="/compare/splitwise" className="hover:text-emerald-400 transition-colors font-semibold text-emerald-400">FairShare vs Splitwise</Link></li>
+                <li><Link href="/privacy" className="hover:text-emerald-400 transition-colors">Privacy Policy (DPDP)</Link></li>
+                <li><Link href="/terms" className="hover:text-emerald-400 transition-colors">Terms of Service</Link></li>
+                <li><Link href="/privacy#security" className="hover:text-emerald-400 transition-colors">256-Bit TLS Security</Link></li>
+                <li><a href="https://github.com/vatsal3030/Expense-Tracker" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-colors">GitHub Repository</a></li>
+              </ul>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-[11px] text-slate-500">
+          <div className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-[11px] text-slate-500">
             <p>
-              © 2026 FairShare (Owino). Open architecture mathematical expense ledger. Built for modern financial transparency.
+              © 2026 Owino FairShare Technologies Pvt. Ltd. All rights reserved. Mathematical invariance strictly conserved.
             </p>
             <p className="flex items-center gap-3 font-mono text-[10px]">
               <span>🔒 256-Bit TLS</span>
               <span>⚡ DAG Minimization</span>
               <span>📱 UPI 2.0</span>
+              <span>🚀 Zero Limits</span>
             </p>
           </div>
         </div>

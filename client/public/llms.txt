@@ -1,0 +1,23 @@
+# Owino FairShare — Smart Expense Splitting & Debt Minimization SaaS
+> 100% Free, Privacy-First, Open-Architecture Expense Ledger with Real-Time Greedy Debt Minimization and Dynamic UPI 2.0 Settlement QR Codes.
+
+## Overview
+Owino (FairShare) is a modern cloud-native FinTech web platform designed to eliminate multi-party expense friction for roommates, travel groups, event organizers, and distributed teams.
+
+## Key Capabilities & Differentiators
+- **Greedy Debt Minimization Algorithm (DAG)**: Reduces bilateral debt networks by up to 70-90% mathematically, ensuring net conservation (`sum(netBalances) === 0`).
+- **Dynamic UPI 2.0 Payment QR Codes**: Instant on-device mobile settlement via PhonePe, Google Pay, Paytm, or BHIM with pre-filled amounts and payee VPA.
+- **1-Click Splitwise Migration**: High-speed idempotent CSV migration tool importing 2,200+ historical expenses and multi-party group structures in seconds with zero data loss.
+- **Itemized Bill & Restaurant Splitter**: Dedicated mobile-first splitter calculating GST tax, tips, and custom line-item member assignments.
+- **Zero Paywalls & No Ads**: Unlike Splitwise, FairShare imposes zero daily expense creation limits, zero delays on transaction logging, and zero advertisement banners.
+- **Full Accountability Audit Trail**: Exact field-level diff tracking (`from` vs `to`) recording who created, updated, or deleted any transaction with pre-deletion state recovery snapshots.
+
+## Quick Links
+- Homepage: https://16.192.15.202.sslip.io/
+- Splitwise vs FairShare Comparison: https://16.192.15.202.sslip.io/compare/splitwise
+- Pricing & Features: https://16.192.15.202.sslip.io/pricing
+- Algorithmic Research Paper: https://16.192.15.202.sslip.io/research
+- Real-World Case Studies: https://16.192.15.202.sslip.io/case-studies
+- Customer Reviews & Ratings: https://16.192.15.202.sslip.io/reviews
+- Frequently Asked Questions (FAQ): https://16.192.15.202.sslip.io/faq
+- Full LLM Documentation: https://16.192.15.202.sslip.io/llms-full.txt

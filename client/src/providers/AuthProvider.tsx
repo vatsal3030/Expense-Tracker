@@ -33,6 +33,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+export const getCanonicalOrigin = (): string => {
+  if (typeof window !== 'undefined') {
+    // If user accessed via raw EC2 IP address, enforce the SSL domain
+    if (window.location.hostname === '16.192.15.202') {
+      return 'https://16.192.15.202.sslip.io';
+    }
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_APP_URL || 'https://16.192.15.202.sslip.io';
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -63,6 +74,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Enforce canonical domain if accessed directly via raw IP address
+    if (typeof window !== 'undefined' && window.location.hostname === '16.192.15.202') {
+      const canonicalUrl = `https://16.192.15.202.sslip.io${window.location.pathname}${window.location.search}${window.location.hash}`;
+      window.location.replace(canonicalUrl);
+      return;
+    }
+
     // Restore cached profile immediately on client mount
     try {
       const saved = localStorage.getItem('fairshare_user_profile');
@@ -151,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const emailRedirectTo = typeof window !== 'undefined'
-        ? `${window.location.origin}/auth/callback`
+        ? `${getCanonicalOrigin()}/auth/callback`
         : undefined;
       const { error } = await supabase.auth.signUp({
         email,
@@ -216,7 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
+        options: { redirectTo: `${getCanonicalOrigin()}/auth/callback` },
       });
       if (error) {
         if (error.message.includes('not enabled') || error.message.includes('validation_failed')) {
@@ -243,7 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
+        options: { redirectTo: `${getCanonicalOrigin()}/auth/callback` },
       });
       if (error) {
         if (error.message.includes('not enabled') || error.message.includes('validation_failed')) {
@@ -269,7 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const redirectTo = typeof window !== 'undefined'
-        ? `${window.location.origin}/auth/callback?type=recovery`
+        ? `${getCanonicalOrigin()}/auth/callback?type=recovery`
         : undefined;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
