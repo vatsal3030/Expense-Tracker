@@ -202,21 +202,14 @@ export const darkTheme = responsiveFontSizes(
           root: {
             ...baseTheme.components?.MuiCard?.styleOverrides?.root,
             position: 'relative',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 22%, rgba(15, 22, 34, 0.40) 55%, rgba(10, 14, 22, 0.50) 100%)',
-            backdropFilter: 'blur(20px) saturate(180%) contrast(102%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%) contrast(102%)',
-            border: '1px solid rgba(255, 255, 255, 0.10)',
-            borderTopColor: 'rgba(255, 255, 255, 0.24)',
-            borderLeftColor: 'rgba(255, 255, 255, 0.14)',
-            borderRightColor: 'rgba(255, 255, 255, 0.06)',
-            borderBottomColor: 'rgba(255, 255, 255, 0.03)',
-            boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.24), inset 1px 0 0 0 rgba(255, 255, 255, 0.07), inset 0 -1px 0 0 rgba(0, 0, 0, 0.45), 0 16px 38px -8px rgba(0, 0, 0, 0.52), 0 2px 8px -1px rgba(0, 0, 0, 0.35)',
-            transition: 'border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+            background: '#121824',
+            border: '1px solid #1E293B',
+            borderRadius: 14,
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.25)',
+            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
             '&:hover': {
-              borderColor: 'rgba(255, 255, 255, 0.18)',
-              borderTopColor: 'rgba(255, 255, 255, 0.38)',
-              borderLeftColor: 'rgba(255, 255, 255, 0.22)',
-              boxShadow: 'inset 0 1.5px 0 0 rgba(255, 255, 255, 0.32), inset 1px 0 0 0 rgba(255, 255, 255, 0.10), inset 0 -1px 0 0 rgba(0, 0, 0, 0.50), 0 22px 50px -10px rgba(0, 0, 0, 0.65), 0 4px 14px -2px rgba(0, 0, 0, 0.40)',
+              borderColor: '#334155',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.35)',
             },
           },
         },
@@ -224,9 +217,8 @@ export const darkTheme = responsiveFontSizes(
       MuiPaper: {
         styleOverrides: {
           root: {
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.018) 22%, rgba(15, 22, 34, 0.38) 55%, rgba(10, 14, 22, 0.48) 100%)',
-            backdropFilter: 'blur(20px) saturate(190%) contrast(106%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(190%) contrast(106%)',
+            background: '#121824',
+            border: '1px solid #1E293B',
             backgroundImage: 'none',
           },
         },
@@ -234,11 +226,9 @@ export const darkTheme = responsiveFontSizes(
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            background: 'linear-gradient(180deg, rgba(14, 20, 30, 0.75) 0%, rgba(9, 13, 20, 0.68) 100%)',
-            backdropFilter: 'blur(28px) saturate(200%) contrast(106%)',
-            WebkitBackdropFilter: 'blur(28px) saturate(200%) contrast(106%)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.12)',
-            boxShadow: '10px 0 40px -8px rgba(0, 0, 0, 0.65), 2px 0 12px -2px rgba(0, 0, 0, 0.45)',
+            background: '#0E1420',
+            borderRight: '1px solid #1E293B',
+            boxShadow: '4px 0 24px rgba(0, 0, 0, 0.4)',
           },
         },
       },
@@ -380,21 +370,14 @@ export const lightTheme = responsiveFontSizes(
           root: {
             ...baseTheme.components?.MuiCard?.styleOverrides?.root,
             position: 'relative',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.46) 35%, rgba(244, 247, 252, 0.38) 100%)',
-            backdropFilter: 'blur(20px) saturate(180%) contrast(102%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%) contrast(102%)',
-            border: '1px solid rgba(255, 255, 255, 0.85)',
-            borderTopColor: 'rgba(255, 255, 255, 0.98)',
-            borderLeftColor: 'rgba(255, 255, 255, 0.90)',
-            borderRightColor: 'rgba(255, 255, 255, 0.70)',
-            borderBottomColor: 'rgba(226, 232, 240, 0.55)',
-            borderRadius: 18,
-            boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.98), inset 1px 0 0 0 rgba(255, 255, 255, 0.65), inset 0 -1px 0 0 rgba(0, 0, 0, 0.03), 0 12px 32px -8px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03)',
-            transition: 'border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+            background: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: 14,
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
             '&:hover': {
-              borderColor: 'rgba(0, 0, 0, 0.14)',
-              borderTopColor: 'rgba(0, 0, 0, 0.20)',
-              boxShadow: 'inset 0 1.5px 0 0 rgba(255, 255, 255, 1), 0 18px 42px -8px rgba(15, 23, 42, 0.09), 0 2px 8px -1px rgba(15, 23, 42, 0.04)',
+              borderColor: '#CBD5E1',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.06)',
             },
           },
         },
@@ -402,9 +385,8 @@ export const lightTheme = responsiveFontSizes(
       MuiPaper: {
         styleOverrides: {
           root: {
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.46) 35%, rgba(244, 247, 252, 0.38) 100%)',
-            backdropFilter: 'blur(20px) saturate(180%) contrast(102%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%) contrast(102%)',
+            background: '#FFFFFF',
+            border: '1px solid #E2E8F0',
             backgroundImage: 'none',
           },
         },
@@ -412,11 +394,9 @@ export const lightTheme = responsiveFontSizes(
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.86) 0%, rgba(248, 250, 254, 0.78) 100%)',
-            backdropFilter: 'blur(24px) saturate(190%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(190%)',
-            borderRight: '1px solid rgba(226, 232, 240, 0.85)',
-            boxShadow: '6px 0 28px -6px rgba(15, 23, 42, 0.07)',
+            background: '#FFFFFF',
+            borderRight: '1px solid #E2E8F0',
+            boxShadow: '2px 0 16px rgba(15, 23, 42, 0.05)',
           },
         },
       },

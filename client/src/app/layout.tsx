@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/providers/ThemeProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { SocketProvider } from '@/providers/SocketProvider';
 import { OnboardingProvider } from '@/providers/OnboardingProvider';
+import { LenisProvider } from '@/theme/LenisProvider';
 import GuidedTourOverlay from '@/components/onboarding/GuidedTourOverlay';
 import CookieConsentBanner from '@/components/common/CookieConsentBanner';
 
@@ -162,9 +163,11 @@ export default function RootLayout({
           <AuthProvider>
             <SocketProvider>
               <OnboardingProvider>
-                {children}
-                <GuidedTourOverlay />
-                <CookieConsentBanner />
+                <LenisProvider>
+                  {children}
+                  <GuidedTourOverlay />
+                  <CookieConsentBanner />
+                </LenisProvider>
               </OnboardingProvider>
             </SocketProvider>
           </AuthProvider>

@@ -1,1842 +1,683 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { motion } from 'motion/react';
 import {
   ArrowRight,
   CheckCircle2,
   Users,
-  PieChart,
   ShieldCheck,
   Zap,
-  TrendingUp,
   Receipt,
-  Scale,
-  Sparkles,
-  Lock,
   QrCode,
   Smartphone,
-  Check,
   ChevronDown,
   ChevronUp,
-  Sliders,
-  Shield,
-  Coins,
-  RefreshCw,
-  Share2,
+  Sparkles,
   ArrowRightLeft,
-  Gamepad2,
-  CreditCard,
-  Layers,
-  Sparkle,
-  Sun,
   Moon,
+  Sun,
   LayoutDashboard,
-  Mic,
-  Radio,
-  AtSign,
+  Coins,
+  Lock,
+  ExternalLink,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import QrCodeModal from '@/components/common/QrCodeModal';
 import { useThemeMode } from '@/providers/ThemeProvider';
 import { useAuth } from '@/providers/AuthProvider';
-import { supabase } from '@/lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { BalanceChip } from '@/components/ui/balance-chip';
+import { Badge } from '@/components/ui/badge';
 
-// Cartoon & Gaming Avatar Profiles for Live Interactive Simulation
-const SIMULATED_HERO_USERS = [
-  {
-    id: 'u1',
-    name: 'Shadow Ninja',
-    tag: '@ninja',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=ShadowNinja&backgroundColor=b6e3f4,c0aede,d1d4f9',
-    badge: 'Paid Bill',
-    upiId: 'shadowninja@okhdfcbank',
-  },
-  {
-    id: 'u2',
-    name: 'Pixel Mage',
-    tag: '@pixel',
-    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=PixelMage&backgroundColor=ffd5dc,ffdfbf',
-    badge: 'Member',
-    upiId: 'pixelmage@okaxis',
-  },
-  {
-    id: 'u3',
-    name: 'Robo Mecha',
-    tag: '@mecha',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=RoboMecha&backgroundColor=c0aede,d1d4f9',
-    badge: 'Member',
-    upiId: 'robomecha@paytm',
-  },
-  {
-    id: 'u4',
-    name: 'Astro Pilot',
-    tag: '@astro',
-    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=AstroPilot&backgroundColor=b6e3f4,ffd5dc',
-    badge: 'Member',
-    upiId: 'astropilot@ybl',
-  },
-  {
-    id: 'u5',
-    name: 'Battle Knight',
-    tag: '@knight',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=BattleKnight&backgroundColor=ffdfbf,c0aede',
-    badge: 'Member',
-    upiId: 'battleknight@okicici',
-  },
-  {
-    id: 'u6',
-    name: 'Cyber Fox',
-    tag: '@fox',
-    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=CyberFox&backgroundColor=d1d4f9,b6e3f4',
-    badge: 'Member',
-    upiId: 'cyberfox@okhdfcbank',
-  },
-];
-
-const PRESET_BILLS = [
-  { label: 'Dinner & Drinks', amount: 3600, icon: '🍕' },
-  { label: 'Weekend Villa Trip', amount: 16800, icon: '🏖️' },
-  { label: 'Flat Rent & WiFi', amount: 24000, icon: '🏠' },
-  { label: 'Supermarket Groceries', amount: 4800, icon: '🛒' },
+// Simulation participants for interactive hero demo
+const DEMO_FRIENDS = [
+  { id: '1', name: 'You (Rahul)', paid: true, share: 1200, balance: 2400 },
+  { id: '2', name: 'Priya Sharma', paid: false, share: 1200, balance: -1200 },
+  { id: '3', name: 'Amit Verma', paid: false, share: 1200, balance: -1200 },
 ];
 
 export default function LandingPage() {
   const router = useRouter();
   const { mode, toggleTheme } = useThemeMode();
-  const { user, profile, loading: authLoading } = useAuth();
-  const isLight = mode === 'light';
+  const { user } = useAuth();
 
-    // Automatically intercept Supabase OAuth, email verification, or invite links that land on /#
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (window.location.hostname === '16.192.15.202') {
-        window.location.replace(`https://16.192.15.202.sslip.io${window.location.pathname}${window.location.search}${window.location.hash}`);
-        return;
-      }
-      const hash = window.location.hash;
-      const hadAuthHash = hash && (hash.includes('access_token') || hash.includes('refresh_token') || hash.includes('type='));
+  // Interactive Live Bill Simulator State
+  const [totalBill, setTotalBill] = useState(3600);
+  const [memberCount, setMemberCount] = useState(3);
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [showDemoQr, setShowDemoQr] = useState(false);
 
-      if (hadAuthHash) {
-        if (hash.includes('type=recovery')) {
-          router.replace('/auth/reset-password');
-          return;
-        }
-        const checkAndRedirect = async () => {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            router.replace('/dashboard');
-          }
-        };
-        checkAndRedirect();
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
-            router.replace('/dashboard');
-          }
-        });
-        return () => subscription.unsubscribe();
-      }
-    }
-  }, [router]);
-
-  // Do NOT forcefully redirect authenticated users to /dashboard so they can view the landing page features & simulator freely
-
-  // --- Live Bill Simulator State ---
-  const [billAmount, setBillAmount] = useState<number>(4800);
-  const [memberCount, setMemberCount] = useState<number>(4);
-  const [splitMode, setSplitMode] = useState<'EQUAL' | 'PERCENTAGE' | 'SHARES' | 'EXACT'>('EQUAL');
-
-  // Custom percentages (default equal for 4 members)
-  const [customPercents, setCustomPercents] = useState<number[]>([40, 20, 20, 20, 0, 0]);
-  // Custom shares
-  const [customShares, setCustomShares] = useState<number[]>([2, 1, 1, 1, 1, 1]);
-
-  // QR Modal Simulation
-  const [qrModal, setQrModal] = useState<{
-    open: boolean;
-    title: string;
-    subtitle: string;
-    value: string;
-    badgeText: string;
-  }>({
-    open: false,
-    title: '',
-    subtitle: '',
-    value: '',
-    badgeText: '',
-  });
-
-  // Debt Graph Simplification Visualizer Toggle ('optimized' | 'unoptimized' | 'compare')
-  const [debtViewMode, setDebtViewMode] = useState<'optimized' | 'unoptimized' | 'compare'>('optimized');
-
-  // QR Ecosystem Tab
-  const [qrTab, setQrTab] = useState<'UPI' | 'GROUP' | 'CONNECT'>('UPI');
-
-  // FAQ Accordion State
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-
-  // Smart Natural Language & Voice Simulation
-  const [nlInput, setNlInput] = useState('Pizza 1200 Goa Trip');
-  const [isSimulatedListening, setIsSimulatedListening] = useState(false);
-
-  const parsedNl = useMemo(() => {
-    const raw = nlInput.trim();
-    if (!raw) return { item: 'Expense', amount: 0, category: 'GENERAL 📋', group: 'Personal Expense' };
-    const tokens = raw.split(/\s+/);
-    let amount = 0;
-    let amountIndex = -1;
-    for (let i = 0; i < tokens.length; i++) {
-      const clean = tokens[i].replace(/[₹$,]/g, '');
-      const num = parseFloat(clean);
-      if (!isNaN(num) && num > 0) {
-        amount = num;
-        amountIndex = i;
-        break;
-      }
-    }
-
-    let item = 'Expense';
-    let group = 'Personal Expense';
-    if (amountIndex !== -1) {
-      const itemTokens = tokens.slice(0, amountIndex);
-      if (itemTokens.length > 0) item = itemTokens.join(' ');
-      const groupTokens = tokens.slice(amountIndex + 1);
-      if (groupTokens.length > 0) group = groupTokens.join(' ');
-    } else {
-      item = raw;
-    }
-
-    const lower = item.toLowerCase();
-    let cat = 'FOOD 🍕';
-    if (/uber|ola|cab|auto|taxi|metro|fuel|train|bus/i.test(lower)) cat = 'TRANSPORT 🚗';
-    else if (/movie|cinema|netflix|game|party|drinks/i.test(lower)) cat = 'ENTERTAINMENT 🎬';
-    else if (/grocery|milk|veggies|ration|supermarket/i.test(lower)) cat = 'GROCERIES 🛒';
-    else if (/rent|wifi|electricity|maintenance/i.test(lower)) cat = 'UTILITIES 💡';
-    else if (/hotel|flight|trip|resort/i.test(lower)) cat = 'TRAVEL ✈️';
-
-    return { item, amount: amount || 1200, category: cat, group: group || 'Personal Expense' };
-  }, [nlInput]);
-
-  // --- Dynamic Calculation of Member Shares ---
-  const calculatedMembers = useMemo(() => {
-    const active = SIMULATED_HERO_USERS.slice(0, memberCount);
-    const payer = active[0];
-
-    if (splitMode === 'EQUAL') {
-      const baseShare = Math.floor(billAmount / memberCount);
-      const remainder = billAmount - baseShare * memberCount;
-
-      return active.map((m, idx) => {
-        // Penny balancing: first remainder members pay +1
-        const share = baseShare + (idx < remainder ? 1 : 0);
-        const isPayer = idx === 0;
-        const netOwed = isPayer ? billAmount - share : -share;
-        return {
-          ...m,
-          share,
-          netOwed,
-          isPayer,
-          note: isPayer ? `Paid ₹${billAmount.toLocaleString('en-IN')}` : `Owes ₹${share.toLocaleString('en-IN')}`,
-        };
-      });
-    }
-
-    if (splitMode === 'PERCENTAGE') {
-      // Normalize percentages to memberCount
-      const relevantPercents = customPercents.slice(0, memberCount);
-      const totalPct = relevantPercents.reduce((a, b) => a + b, 0) || 100;
-
-      return active.map((m, idx) => {
-        const pct = relevantPercents[idx] || 0;
-        const share = Math.round((billAmount * pct) / totalPct);
-        const isPayer = idx === 0;
-        const netOwed = isPayer ? billAmount - share : -share;
-        return {
-          ...m,
-          share,
-          netOwed,
-          isPayer,
-          note: `${pct}% share (₹${share.toLocaleString('en-IN')})`,
-        };
-      });
-    }
-
-    if (splitMode === 'SHARES') {
-      const relevantShares = customShares.slice(0, memberCount);
-      const totalShares = relevantShares.reduce((a, b) => a + b, 0) || 1;
-
-      return active.map((m, idx) => {
-        const s = relevantShares[idx] || 1;
-        const share = Math.round((billAmount * s) / totalShares);
-        const isPayer = idx === 0;
-        const netOwed = isPayer ? billAmount - share : -share;
-        return {
-          ...m,
-          share,
-          netOwed,
-          isPayer,
-          note: `${s} ${s === 1 ? 'share' : 'shares'} (₹${share.toLocaleString('en-IN')})`,
-        };
-      });
-    }
-
-    // Default Exact
-    const equalShare = Math.round(billAmount / memberCount);
-    return active.map((m, idx) => ({
-      ...m,
-      share: equalShare,
-      netOwed: idx === 0 ? billAmount - equalShare : -equalShare,
-      isPayer: idx === 0,
-      note: idx === 0 ? `Paid ₹${billAmount.toLocaleString('en-IN')}` : `Owes ₹${equalShare.toLocaleString('en-IN')}`,
-    }));
-  }, [billAmount, memberCount, splitMode, customPercents, customShares]);
-
-  const handleOpenSimulatedUpiQr = (user: typeof SIMULATED_HERO_USERS[0], amount: number) => {
-    const upiUri = `upi://pay?pa=${encodeURIComponent(user.upiId)}&pn=${encodeURIComponent(
-      user.name
-    )}&am=${amount}&cu=INR&tn=FairShare%20Bill%20Split`;
-
-    setQrModal({
-      open: true,
-      title: `Instant UPI Pay: ${user.name}`,
-      subtitle: `Scan with Google Pay, PhonePe, Paytm, or any UPI app to settle ₹${amount.toLocaleString('en-IN')} instantly.`,
-      value: upiUri,
-      badgeText: 'Zero Fee UPI Settlement',
-    });
-  };
+  // Compute live split
+  const perPersonShare = Math.round(totalBill / memberCount);
+  const payerOwed = totalBill - perPersonShare;
 
   return (
-    <div
-      className={`min-h-screen transition-colors duration-300 relative overflow-x-hidden ${
-        isLight
-          ? 'bg-[#F6F8F6] text-slate-900 selection:bg-emerald-500/20 selection:text-emerald-900'
-          : 'bg-[#06080D] text-slate-100 selection:bg-emerald-500/25 selection:text-emerald-300'
-      }`}
-    >
-      {/* Dynamic Ambient Background Glows that shine vividly through liquid glass */}
-      <div
-        className={`fixed top-[-80px] left-1/4 w-[750px] h-[500px] blur-[130px] pointer-events-none rounded-full transition-all duration-700 ${
-          isLight
-            ? 'bg-gradient-to-tr from-emerald-400/22 via-teal-300/18 to-transparent opacity-85'
-            : 'bg-gradient-to-tr from-emerald-500/20 via-teal-400/14 to-transparent opacity-90'
-        }`}
-      />
-      <div
-        className={`fixed top-[150px] right-10 w-[600px] h-[550px] blur-[140px] pointer-events-none rounded-full transition-all duration-700 ${
-          isLight
-            ? 'bg-gradient-to-bl from-teal-400/18 via-cyan-300/14 to-transparent opacity-85'
-            : 'bg-gradient-to-bl from-teal-500/16 via-cyan-500/12 to-transparent opacity-90'
-        }`}
-      />
-      <div
-        className={`fixed top-[900px] left-[-80px] w-[650px] h-[650px] blur-[150px] pointer-events-none rounded-full transition-all duration-700 ${
-          isLight
-            ? 'bg-gradient-to-tr from-emerald-300/16 via-teal-400/14 to-transparent opacity-85'
-            : 'bg-gradient-to-tr from-emerald-600/15 via-teal-500/12 to-transparent opacity-90'
-        }`}
-      />
-      <div
-        className={`fixed top-[1800px] right-[-100px] w-[700px] h-[700px] blur-[160px] pointer-events-none rounded-full transition-all duration-700 ${
-          isLight
-            ? 'bg-gradient-to-bl from-cyan-400/16 via-emerald-300/14 to-transparent opacity-85'
-            : 'bg-gradient-to-bl from-cyan-500/14 via-emerald-600/12 to-transparent opacity-90'
-        }`}
-      />
-      <div
-        className={`fixed bottom-[-100px] left-1/3 w-[800px] h-[600px] blur-[160px] pointer-events-none rounded-full transition-all duration-700 ${
-          isLight
-            ? 'bg-gradient-to-t from-teal-400/16 via-emerald-300/12 to-transparent opacity-85'
-            : 'bg-gradient-to-t from-emerald-500/15 via-teal-600/10 to-transparent opacity-90'
-        }`}
-      />
-
-      {/* Floating macOS Liquid Glass Header — Expanded Full Width */}
-      <div className="sticky top-4 z-50 px-2 sm:px-6 w-full max-w-[98%] xl:max-w-[96%] 2xl:max-w-[1560px] mx-auto">
-        <header className="macos-glass rounded-full px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4 shadow-2xl transition-all duration-300">
-          <div className="shrink-0 flex items-center">
-            <div className="hidden sm:block">
-              <BrandLogo size="md" textColor={isLight ? "text-slate-900" : "text-white"} />
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0E17] text-slate-900 dark:text-slate-100 transition-colors duration-150">
+      {/* =========================================================================
+          1. NAVIGATION BAR
+      ========================================================================== */}
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0A0E17]/95 border-b border-slate-200 dark:border-slate-800 backdrop-blur-xs transition-colors">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <BrandLogo size="md" />
+            <div className="flex flex-col">
+              <span className="font-bold text-lg leading-tight tracking-tight text-slate-900 dark:text-white">
+                Owino <span className="text-teal-600 dark:text-teal-400 font-medium">FairShare</span>
+              </span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">
+                Smart Expense Ledger
+              </span>
             </div>
-            <div className="block sm:hidden">
-              <BrandLogo size="sm" textColor={isLight ? "text-slate-900" : "text-white"} />
-            </div>
-          </div>
+          </Link>
 
-          {/* Nav links */}
-          <nav
-            className={`hidden lg:flex items-center gap-3 xl:gap-5 2xl:gap-6 text-xs font-semibold uppercase tracking-wider shrink-0 whitespace-nowrap ${
-              isLight ? 'text-slate-700' : 'text-slate-300'
-            }`}
-          >
-            <a href="#simulator" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              Simulator
+          {/* Desktop Nav Links */}
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-300">
+            <a href="#features" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+              Features
             </a>
-            <Link href="/compare/splitwise" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              Vs Splitwise
-            </Link>
-            <Link href="/expenses/split-bill" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              Split Bill
-            </Link>
-            <Link href="/pricing" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              Pricing
-            </Link>
-            <Link href="/case-studies" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              Case Studies
-            </Link>
-            <Link href="/reviews" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
-              Reviews
-            </Link>
-            <Link href="/faq" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors whitespace-nowrap">
+            <a href="#demo" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+              How It Works
+            </a>
+            <a href="#comparison" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+              Splitwise vs Owino
+            </a>
+            <a href="#faq" className="hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
               FAQ
-            </Link>
+            </a>
           </nav>
 
-          {/* Action buttons + Theme Toggle */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* Themed Segmented Switcher for Light & Dark (Desktop) */}
-            <div className="hidden sm:flex macos-liquid-surface items-center p-0.5 sm:p-1 rounded-full shadow-inner">
-              <button
-                onClick={() => {
-                  if (mode !== 'light') toggleTheme();
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
-                  isLight
-                    ? 'bg-white/90 text-emerald-800 shadow-sm border border-white/60'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title="Switch to Light Theme"
-                aria-label="Light Theme"
-              >
-                <Sun className="w-3.5 h-3.5 text-amber-500" />
-                <span>Light</span>
-              </button>
-              <button
-                onClick={() => {
-                  if (mode !== 'dark') toggleTheme();
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
-                  !isLight
-                    ? 'bg-slate-700/80 text-white shadow-sm border border-white/10'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-                title="Switch to Dark Theme"
-                aria-label="Dark Theme"
-              >
-                <Moon className="w-3.5 h-3.5 text-indigo-300" />
-                <span>Dark</span>
-              </button>
-            </div>
-
-            {/* Compact Mobile Theme Switcher */}
+          {/* Actions & Theme Switch */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <button
               onClick={toggleTheme}
-              className="sm:hidden w-8 h-8 rounded-full macos-liquid-surface flex items-center justify-center border border-white/10 text-slate-300 active:scale-95 transition-all shrink-0"
-              aria-label="Toggle Theme"
-              title="Toggle Theme"
+              aria-label="Toggle theme mode"
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-colors"
             >
-              {isLight ? <Moon className="w-4 h-4 text-indigo-600" /> : <Sun className="w-4 h-4 text-amber-400" />}
+              {mode === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
             </button>
 
-            {/* Authenticated Dashboard Button vs Guest Auth Buttons */}
             {user ? (
-              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                {/* Direct Dashboard Link - Compact & responsive on mobile */}
-                <Link
-                  href="/dashboard"
-                  className="text-[11px] sm:text-xs font-bold px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1 sm:gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95 shrink-0 whitespace-nowrap"
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
-                  <span>Dashboard</span>
-                  <ArrowRight className="w-3.5 h-3.5 shrink-0 hidden sm:inline-block" />
-                </Link>
-              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => router.push('/dashboard')}
+                rightIcon={<LayoutDashboard className="w-4 h-4" />}
+              >
+                Go to Dashboard
+              </Button>
             ) : (
               <>
-                <Link
-                  href="/auth/login"
-                  className={`text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-full transition-all ${
-                    isLight
-                      ? 'text-slate-700 hover:text-slate-900 hover:bg-white/40'
-                      : 'text-slate-300 hover:text-white hover:bg-white/5'
-                  }`}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push('/login')}
+                  className="hidden sm:inline-flex"
                 >
                   Sign In
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  className="text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950/20 hover:shadow-lg transition-all active:scale-95"
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => router.push('/signup')}
+                  rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
                 >
-                  <span className="hidden sm:inline">Get Started Free</span>
-                  <span className="sm:hidden">Start</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                  Get Started Free
+                </Button>
               </>
             )}
           </div>
-        </header>
-      </div>
-
-      {/* HERO SECTION */}
-      <section className="relative pt-10 sm:pt-14 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
-      {/* Trust Pill or Logged In Welcome Pill */}
-        {user ? (
-          <div className="macos-glass-pill inline-flex items-center gap-2 px-3.5 py-1 text-xs font-semibold mb-5 animate-fade-in shadow-inner">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className={isLight ? 'text-emerald-900 font-bold' : 'text-emerald-300 font-bold'}>
-              Logged in as {profile?.name || user.email?.split('@')[0]}
-            </span>
-            <span className="text-slate-400">•</span>
-            <Link href="/dashboard" className="underline hover:text-emerald-600 dark:hover:text-emerald-200 font-bold">
-              Go to Financial Dashboard &rarr;
-            </Link>
-          </div>
-        ) : (
-          <div className="macos-glass-pill inline-flex items-center gap-2 px-3.5 py-1 text-xs font-semibold mb-5 animate-fade-in shadow-inner">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            <span className={isLight ? 'text-emerald-900 font-bold' : 'text-emerald-300 font-bold'}>
-              100% Free • Unlimited Daily Splits • Zero Subscription Paywalls
-            </span>
-          </div>
-        )}
-
-        {/* Main Title — Compact, balanced typography matching app standards */}
-        <h1
-          className={`text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight mb-4 ${
-            isLight ? 'text-slate-900' : 'text-white'
-          }`}
-        >
-          Split expenses fairly. <br />
-          <span
-            className={`bg-clip-text text-transparent bg-gradient-to-r ${
-              isLight
-                ? 'from-emerald-700 via-teal-600 to-emerald-800'
-                : 'from-emerald-400 via-teal-300 to-emerald-200'
-            }`}
-          >
-            Settle instantly via UPI.
-          </span>
-        </h1>
-
-        <p
-          className={`max-w-2xl mx-auto text-xs sm:text-sm md:text-base leading-relaxed mb-7 ${
-            isLight ? 'text-slate-600' : 'text-slate-300/90'
-          }`}
-        >
-          The modern, privacy-first FinTech expense ledger. Calculate 5 split strategies with penny accuracy, minimize group debts mathematically, and pay direct bank-to-bank via dynamic QR codes.
-        </p>
-
-        {/* Hero Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
-          {user ? (
-            <Link
-              href="/dashboard"
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:shadow-emerald-900/30 transition-all active:scale-95"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              Go to Your Dashboard
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          ) : (
-            <Link
-              href="/auth/signup"
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:shadow-emerald-900/30 transition-all active:scale-95"
-            >
-              Start Splitting for Free
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          )}
-          <a
-            href="#simulator"
-            className="macos-glass-card w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
-          >
-            <Sparkles className="w-4 h-4 text-emerald-500" />
-            <span className={isLight ? 'text-slate-800' : 'text-slate-200'}>Try Live Interactive Simulator</span>
-          </a>
         </div>
+      </header>
 
-        {/* Live Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-w-2xl mx-auto mb-12">
-          {[
-            { label: 'Platform Fee', val: '₹0 Always' },
-            { label: 'Daily Expense Cap', val: 'Unlimited' },
-            { label: 'Debt Reductions', val: 'Up to 70%' },
-            { label: 'UPI Settlement', val: 'Instant QR' },
-          ].map((m, i) => (
-            <div
-              key={i}
-              className="macos-liquid-surface p-2.5 sm:p-3 rounded-xl text-center transition-all hover:scale-[1.02]"
+      {/* =========================================================================
+          2. HERO SECTION — CLEAN, ACCESSIBLE & HUMAN
+      ========================================================================== */}
+      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden border-b border-slate-200 dark:border-slate-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-3xl mx-auto">
+            {/* Trust Pill */}
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/80 text-teal-800 dark:text-teal-300 text-xs font-semibold mb-6 shadow-2xs select-none"
             >
-              <span className={`text-[10px] sm:text-[11px] font-medium block uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                {m.label}
-              </span>
-              <span
-                className={`text-sm sm:text-base font-bold mt-0.5 block ${
-                  isLight ? 'text-emerald-750' : 'text-emerald-400'
-                }`}
+              <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+              <span>100% Free · Zero Ads · Zero Daily Expense Limits</span>
+            </motion.div>
+
+            {/* Main Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: 0.05 }}
+              className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight sm:leading-tight md:leading-tight"
+            >
+              Split group bills with friends. <br className="hidden sm:block" />
+              <span className="text-teal-600 dark:text-teal-400">Settle up instantly with UPI.</span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: 0.1 }}
+              className="mt-5 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto"
+            >
+              No complicated spreadsheets. No paywalls limiting you to 3 expenses a day.
+              Keep track of shared costs, automatically simplify debts, and pay back in seconds.
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: 0.15 }}
+              className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5"
+            >
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() => router.push('/signup')}
+                rightIcon={<ArrowRight className="w-4 h-4" />}
+                className="w-full sm:w-auto font-semibold shadow-sm"
               >
-                {m.val}
+                Start Splitting Bills — It's Free
+              </Button>
+              <a href="#demo" className="w-full sm:w-auto">
+                <Button variant="secondary" size="lg" className="w-full sm:w-auto">
+                  Try Interactive Demo
+                </Button>
+              </a>
+            </motion.div>
+
+            {/* Trust Checklist */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Works with GPay, PhonePe & Paytm
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> 1-Click Splitwise CSV Import
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Private & Encrypted
               </span>
             </div>
-          ))}
+          </div>
         </div>
+      </section>
 
-        {/* ========================================================================= */}
-        {/* INTERACTIVE BILL SPLIT SIMULATOR (Core Interactive Feature for Visitors) */}
-        {/* ========================================================================= */}
-        <div id="simulator" className="scroll-mt-28 text-left max-w-5xl mx-auto">
-          <div className="macos-glass-card p-6 sm:p-8 relative transition-all shadow-2xl">
-            <div
-              className={`flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b ${
-                isLight ? 'border-slate-300/60' : 'border-slate-800/80'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
-                    isLight
-                      ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-800'
-                      : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                  }`}
-                >
-                  <Sliders className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className={`text-lg sm:text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                      Live Interactive Split Simulator
-                    </h3>
-                    <span className="macos-glass-pill px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                      LIVE DEMO
-                    </span>
-                  </div>
-                  <p className={`text-xs sm:text-sm mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                    Adjust bill amount, member count, and split logic to see real-time penny-balanced settlement shares.
-                  </p>
-                </div>
-              </div>
+      {/* =========================================================================
+          3. INTERACTIVE LIVE BILL SIMULATOR (TRY IT RIGHT HERE)
+      ========================================================================== */}
+      <section id="demo" className="py-14 sm:py-20 bg-white dark:bg-[#0E1420] border-b border-slate-200 dark:border-slate-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-8">
+            <Badge variant="brand" className="mb-2">Hands-On Demo</Badge>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+              See How Effortless Splitting Really Is
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
+              Adjust the bill amount or friends count below to see how Owino calculates splits and generates instant payment QR codes.
+            </p>
+          </div>
 
-              {/* Split Strategy Pill Switcher */}
-              <div className="macos-liquid-surface flex items-center gap-1 p-1 rounded-xl text-xs overflow-x-auto max-w-full">
-                {(['EQUAL', 'PERCENTAGE', 'SHARES'] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => setSplitMode(mode)}
-                    className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                      splitMode === mode
-                        ? 'bg-emerald-600 text-white shadow-md'
-                        : isLight
-                        ? 'text-slate-600 hover:text-slate-900'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {mode === 'EQUAL' ? '= Equal' : mode === 'PERCENTAGE' ? '% Percentage' : '➗ Shares'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Bill Controls Grid */}
-            <div className="macos-liquid-surface grid grid-cols-1 md:grid-cols-2 gap-6 my-6 p-4.5 rounded-2xl">
-              {/* Left: Amount Input & Presets */}
+          {/* Interactive Calculator Card */}
+          <div className="bg-slate-50 dark:bg-[#121824] border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              {/* Controls Column */}
               <div>
-                <label
-                  className={`text-xs font-bold uppercase tracking-wider block mb-2 ${
-                    isLight ? 'text-slate-700' : 'text-slate-300'
-                  }`}
-                >
-                  Total Bill Amount (₹)
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  1. Choose a Bill Amount
                 </label>
-                <div className="relative">
-                  <span
-                    className={`absolute left-4 top-1/2 -translate-y-1/2 font-extrabold text-lg ${
-                      isLight ? 'text-emerald-750' : 'text-emerald-400'
-                    }`}
-                  >
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    value={billAmount}
-                    onChange={(e) => setBillAmount(Math.max(10, Number(e.target.value) || 0))}
-                    className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-lg font-bold border transition-colors focus:outline-none focus:border-emerald-500 ${
-                      isLight
-                        ? 'bg-white/80 border-slate-300/80 text-slate-900 shadow-inner'
-                        : 'bg-slate-900/80 border-slate-700 text-white shadow-inner'
-                    }`}
-                  />
-                </div>
-
-                {/* Bill Presets */}
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {PRESET_BILLS.map((b) => (
+                <div className="flex items-center gap-2 mb-4">
+                  {[1200, 3600, 6000, 9600].map((amt) => (
                     <button
-                      key={b.label}
-                      onClick={() => setBillAmount(b.amount)}
-                      className={`text-xs px-2.5 py-1 rounded-lg border font-medium flex items-center gap-1 transition-all ${
-                        billAmount === b.amount
-                          ? isLight
-                            ? 'border-emerald-600 bg-emerald-500/20 text-emerald-900 font-bold shadow-sm'
-                            : 'border-emerald-500 bg-emerald-950/60 text-emerald-300 font-bold'
-                          : isLight
-                          ? 'border-slate-300/60 bg-white/60 text-slate-700 hover:border-slate-400'
-                          : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700'
+                      key={amt}
+                      onClick={() => setTotalBill(amt)}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                        totalBill === amt
+                          ? 'bg-teal-600 text-white border-teal-600 shadow-xs'
+                          : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:border-slate-400'
                       }`}
                     >
-                      <span>{b.icon}</span>
-                      <span>{b.label}</span>
-                      <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-slate-300'}`}>
-                        ₹{b.amount.toLocaleString('en-IN')}
-                      </span>
+                      ₹{amt.toLocaleString('en-IN')}
                     </button>
                   ))}
                 </div>
+
+                <div className="relative mb-6">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    value={totalBill}
+                    onChange={(e) => setTotalBill(Math.max(1, Number(e.target.value) || 0))}
+                    className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#0A0E17] border border-slate-300 dark:border-slate-700 rounded-xl text-lg font-bold font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  2. Number of Friends Splitting
+                </label>
+                <div className="flex items-center gap-2 mb-6">
+                  {[2, 3, 4, 6].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => setMemberCount(num)}
+                      className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${
+                        memberCount === num
+                          ? 'bg-teal-600 text-white border-teal-600 shadow-xs'
+                          : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:border-slate-400'
+                      }`}
+                    >
+                      {num} People
+                    </button>
+                  ))}
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900/50 text-xs text-teal-900 dark:text-teal-200">
+                  <span className="font-bold">Rahul paid the whole bill.</span> Owino automatically calculates that each friend owes Rahul <strong>₹{perPersonShare.toLocaleString('en-IN')}</strong>.
+                </div>
               </div>
 
-              {/* Right: Member Count Slider */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label
-                    className={`text-xs font-bold uppercase tracking-wider ${
-                      isLight ? 'text-slate-700' : 'text-slate-300'
-                    }`}
-                  >
-                    Number of Friends Splitting
-                  </label>
-                  <span
-                    className={`text-xs font-bold px-2 py-0.5 rounded ${
-                      isLight
-                        ? 'bg-emerald-500/20 text-emerald-900 border border-emerald-400/30'
-                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    }`}
-                  >
-                    {memberCount} Friends
+              {/* Live Result Ledger Column */}
+              <div className="bg-white dark:bg-[#0A0E17] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-2xs">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Live Split Calculation</span>
+                  <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+                    Total: ₹{totalBill.toLocaleString('en-IN')}
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min={2}
-                  max={6}
-                  value={memberCount}
-                  onChange={(e) => setMemberCount(Number(e.target.value))}
-                  className={`w-full h-2 rounded-lg appearance-none cursor-pointer accent-emerald-600 my-3 ${
-                    isLight ? 'bg-slate-300/80' : 'bg-slate-800'
-                  }`}
-                />
-                <div className={`flex justify-between text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  <span>2 Friends</span>
-                  <span>4 Roommates</span>
-                  <span>6 Travelers</span>
-                </div>
 
-                <div className={`mt-3 text-xs flex items-center gap-1.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  <Gamepad2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>Interactive avatars feature custom gaming and cartoon characters!</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Simulated Live Member Cards (Gaming/Cartoon Avatars) */}
-            <div className="space-y-3">
-              <div
-                className={`flex items-center justify-between text-xs font-bold uppercase tracking-wider px-2 ${
-                  isLight ? 'text-slate-600' : 'text-slate-400'
-                }`}
-              >
-                <span>Participant & Avatar</span>
-                <span>Calculated Share</span>
-                <span className="text-right">Instant UPI Settlement</span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2.5">
-                {calculatedMembers.map((m) => (
-                  <div
-                    key={m.id}
-                    className="macos-liquid-surface p-3.5 rounded-2xl flex items-center justify-between gap-4 transition-all hover:scale-[1.008]"
-                  >
-                    {/* User Profile */}
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-11 h-11 rounded-2xl overflow-hidden border p-0.5 shrink-0 shadow-sm ${
-                          isLight
-                            ? 'border-emerald-400/40 bg-emerald-50'
-                            : 'border-emerald-500/30 bg-slate-800/80'
-                        }`}
-                      >
-                        <img src={m.avatar} alt={m.name} className="w-full h-full object-cover rounded-xl" />
+                {/* Member Breakdown */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs">
+                        R
                       </div>
                       <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                            {m.name}
-                          </span>
-                          {m.isPayer && (
-                            <span
-                              className={`px-1.5 py-0.2 rounded text-[10px] font-extrabold border ${
-                                isLight
-                                  ? 'bg-emerald-500/20 text-emerald-900 border-emerald-400/30'
-                                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                              }`}
-                            >
-                              Paid Full
-                            </span>
-                          )}
-                        </div>
-                        <span className={`text-xs block ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                          {m.note}
-                        </span>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white">Rahul (You)</div>
+                        <div className="text-[11px] text-slate-500">Paid ₹{totalBill} · Share: ₹{perPersonShare}</div>
                       </div>
                     </div>
-
-                    {/* Amount & Status */}
-                    <div className="text-right">
-                      <span className={`text-base font-extrabold block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                        ₹{m.share.toLocaleString('en-IN')}
-                      </span>
-                      <span
-                        className={`text-[11px] font-semibold ${
-                          m.isPayer
-                            ? isLight
-                              ? 'text-emerald-750'
-                              : 'text-emerald-400'
-                            : isLight
-                            ? 'text-amber-700'
-                            : 'text-amber-400'
-                        }`}
-                      >
-                        {m.isPayer
-                          ? `Gets back ₹${m.netOwed.toLocaleString('en-IN')}`
-                          : `Owes ₹${m.share.toLocaleString('en-IN')}`}
-                      </span>
-                    </div>
-
-                    {/* Action Button: QR Settlement */}
-                    <div className="shrink-0">
-                      {m.isPayer ? (
-                        <span
-                          className={`text-xs font-bold px-3 py-1.5 rounded-xl border flex items-center gap-1 ${
-                            isLight
-                              ? 'text-emerald-900 bg-emerald-500/15 border-emerald-400/40'
-                              : 'text-emerald-400 bg-emerald-950/40 border-emerald-500/20'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Received
-                        </span>
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            (e.currentTarget as HTMLElement)?.blur();
-                            handleOpenSimulatedUpiQr(m, m.share);
-                          }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-sm border ${
-                            isLight
-                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500'
-                              : 'bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white border-emerald-500/40'
-                          }`}
-                        >
-                          <QrCode className="w-3.5 h-3.5" />
-                          Scan UPI QR
-                        </button>
-                      )}
-                    </div>
+                    <BalanceChip amount={payerOwed} size="sm" />
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Bottom summary bar */}
-            <div
-              className={`mt-6 pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs ${
-                isLight ? 'border-slate-300/60 text-slate-600' : 'border-slate-800/80 text-slate-400'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>
-                  Penny-Balanced: Total shares sum precisely to{' '}
-                  <strong className={isLight ? 'text-slate-900' : 'text-white'}>
-                    ₹{billAmount.toLocaleString('en-IN')}
-                  </strong>{' '}
-                  with zero rounding discrepancies.
-                </span>
-              </div>
-              <Link
-                href="/auth/signup"
-                className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold flex items-center gap-1"
-              >
-                Split real expenses in your account
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* GREEDY DEBT GRAPH MINIMIZATION SHOWCASE */}
-      {/* ========================================================================= */}
-      <section
-        id="debt-minimizer"
-        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t ${
-          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
-        }`}
-      >
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold mb-2.5">
-            <Scale className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span className={isLight ? 'text-emerald-900' : 'text-emerald-300'}>
-              Mathematical Debt Graph Optimization
-            </span>
-          </div>
-          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Cut redundant payments by up to 70%.
-          </h2>
-          <p className={`mt-2.5 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-            In any group trip, circular IOUs create confusion. FairShare runs a greedy minimum-cash-flow graph reduction algorithm so you settle in the fewest possible direct transfers.
-          </p>
-
-          {/* Toggle Interactive Controller */}
-          <div className="macos-liquid-surface inline-flex flex-wrap items-center justify-center p-1.5 rounded-2xl mt-6 shadow-inner gap-1">
-            <button
-              type="button"
-              id="btn-debt-unoptimized"
-              onClick={() => setDebtViewMode('unoptimized')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                debtViewMode === 'unoptimized'
-                  ? isLight
-                    ? 'bg-rose-500/20 text-rose-900 border border-rose-400/50 shadow-sm ring-1 ring-rose-500/30'
-                    : 'bg-rose-500/25 text-rose-200 border border-rose-500/50 shadow ring-1 ring-rose-500/40'
-                  : isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-              }`}
-            >
-              Unoptimized Debts (5 Transfers)
-            </button>
-            <button
-              type="button"
-              id="btn-debt-optimized"
-              onClick={() => setDebtViewMode('optimized')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                debtViewMode === 'optimized'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/30 ring-1 ring-emerald-400/50'
-                  : isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-              }`}
-            >
-              FairShare Greedy Reduction (2 Transfers)
-            </button>
-            <button
-              type="button"
-              id="btn-debt-compare"
-              onClick={() => setDebtViewMode('compare')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                debtViewMode === 'compare'
-                  ? isLight
-                    ? 'bg-cyan-600 text-white shadow-md'
-                    : 'bg-cyan-500 text-slate-950 font-black shadow-md'
-                  : isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-              }`}
-            >
-              Compare Side-by-Side
-            </button>
-          </div>
-        </div>
-
-        {/* Visualizer Cards Container */}
-        <div
-          className={`transition-all duration-300 ${
-            debtViewMode === 'compare'
-              ? 'grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto'
-              : 'max-w-2xl mx-auto'
-          }`}
-        >
-          {/* Card 1: Before Reduction */}
-          {(debtViewMode === 'unoptimized' || debtViewMode === 'compare') && (
-            <div
-              className={`macos-glass-card p-6 sm:p-7 rounded-3xl relative transition-all ring-2 ring-rose-500/40 shadow-xl ${
-                debtViewMode === 'unoptimized' ? 'w-full animate-in fade-in zoom-in-95 duration-200' : ''
-              }`}
-            >
-              <div
-                className={`flex items-center justify-between pb-4 border-b mb-4 ${
-                  isLight ? 'border-slate-300/60' : 'border-slate-800'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
-                  <h4 className={`font-bold text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    Without Simplification (Debt Chaos)
-                  </h4>
-                </div>
-                <span className="macos-glass-pill px-2.5 py-0.5 text-xs font-bold text-rose-700 dark:text-rose-300">
-                  5 Separate Transfers
-                </span>
-              </div>
-
-              <p className={`text-xs mb-3 font-medium ${isLight ? 'text-rose-800' : 'text-rose-300/90'}`}>
-                ⚠️ Circular transactions: Money travels in loops between friends, wasting time and payment attempts.
-              </p>
-
-              <div className="space-y-2.5">
-                {[
-                  { from: 'Shadow Ninja', to: 'Pixel Mage', amt: 600, reason: 'Beach Shack Lunch' },
-                  { from: 'Pixel Mage', to: 'Robo Mecha', amt: 600, reason: 'Cab Ride' },
-                  { from: 'Robo Mecha', to: 'Astro Pilot', amt: 400, reason: 'Groceries' },
-                  { from: 'Astro Pilot', to: 'Shadow Ninja', amt: 200, reason: 'Coffee' },
-                  { from: 'Pixel Mage', to: 'Astro Pilot', amt: 300, reason: 'Snacks' },
-                ].map((t, idx) => (
-                  <div
-                    key={idx}
-                    className="macos-liquid-surface p-3 rounded-xl flex items-center justify-between text-xs hover:border-rose-500/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{t.from}</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-rose-400" />
-                      <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{t.to}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-extrabold text-rose-600 dark:text-rose-300">₹{t.amt}</span>
-                      <span className="block text-[10px] text-slate-400">{t.reason}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div
-                className={`mt-4 pt-3 border-t text-[11px] ${
-                  isLight ? 'border-slate-300/60 text-slate-600' : 'border-slate-800/80 text-slate-400'
-                }`}
-              >
-                Total Cash Circulated:{' '}
-                <strong className={isLight ? 'text-slate-900' : 'text-slate-200'}>
-                  ₹2,100 across 5 individual UPI payments
-                </strong>
-              </div>
-
-              {debtViewMode === 'unoptimized' && (
-                <div className="mt-5 pt-3 border-t border-rose-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <span className="text-xs text-rose-400 font-semibold">Want to see how FairShare fixes this?</span>
-                  <button
-                    type="button"
-                    onClick={() => setDebtViewMode('optimized')}
-                    className="w-full sm:w-auto py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/30 transition-all hover:scale-[1.02]"
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    Run Greedy Reduction (Cut to 2 Transfers)
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Card 2: After FairShare Greedy Simplification */}
-          {(debtViewMode === 'optimized' || debtViewMode === 'compare') && (
-            <div
-              className={`macos-glass-card p-6 sm:p-7 rounded-3xl relative transition-all ring-2 ring-emerald-500/40 shadow-xl ${
-                debtViewMode === 'optimized' ? 'w-full animate-in fade-in zoom-in-95 duration-200' : ''
-              }`}
-            >
-              <div
-                className={`flex items-center justify-between pb-4 border-b mb-4 ${
-                  isLight ? 'border-slate-300/60' : 'border-slate-800'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                  <h4 className={`font-bold text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    FairShare Greedy Optimized
-                  </h4>
-                </div>
-                <span className="macos-glass-pill px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                  Only 2 Direct Payments (60% Savings)
-                </span>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { from: 'Shadow Ninja', to: 'Robo Mecha', amt: 400, note: 'Direct final settlement' },
-                  { from: 'Pixel Mage', to: 'Robo Mecha', amt: 500, note: 'Direct final settlement' },
-                ].map((t, idx) => (
-                  <div
-                    key={idx}
-                    className="macos-liquid-surface p-4 rounded-xl flex items-center justify-between text-sm hover:border-emerald-500/30 transition-colors"
-                  >
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-rose-50/60 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
                     <div className="flex items-center gap-2.5">
-                      <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{t.from}</span>
-                      <ArrowRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{t.to}</span>
+                      <div className="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold flex items-center justify-center text-xs">
+                        P
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white">Priya Sharma</div>
+                        <div className="text-[11px] text-slate-500">Share: ₹{perPersonShare}</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span
-                        className={`font-extrabold text-base block ${
-                          isLight ? 'text-emerald-750' : 'text-emerald-400'
-                        }`}
-                      >
-                        ₹{t.amt}
-                      </span>
-                      <span className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-emerald-300/80'}`}>
-                        {t.note}
-                      </span>
+                    <BalanceChip amount={-perPersonShare} size="sm" />
+                  </div>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-rose-50/60 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold flex items-center justify-center text-xs">
+                        A
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white">Amit Verma</div>
+                        <div className="text-[11px] text-slate-500">Share: ₹{perPersonShare}</div>
+                      </div>
                     </div>
+                    <BalanceChip amount={-perPersonShare} size="sm" />
                   </div>
-                ))}
+                </div>
 
-                <div className="macos-liquid-surface p-4 rounded-xl text-xs">
-                  <div
-                    className={`flex items-center gap-2 font-bold mb-1 ${
-                      isLight ? 'text-emerald-750' : 'text-emerald-300'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    Mathematically Proven Balanced
+                {/* Settle Up Action */}
+                <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div className="text-xs text-slate-500">
+                    Priya wants to pay back now:
                   </div>
-                  <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>
-                    Everyone ends with the exact same net balance (+₹900 received, -₹900 paid), eliminating 3 redundant money transfers and UPI steps entirely.
-                  </span>
-                </div>
-              </div>
-
-              <div
-                className={`mt-4 pt-3 border-t text-[11px] font-semibold ${
-                  isLight ? 'border-slate-300/60 text-emerald-800' : 'border-slate-800/80 text-emerald-400'
-                }`}
-              >
-                Included free in all FairShare groups (No premium paywalls).
-              </div>
-
-              {debtViewMode === 'optimized' && (
-                <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs">
-                  <span className="text-emerald-500 font-semibold">✓ 3 redundant transactions eliminated</span>
-                  <button
-                    type="button"
-                    onClick={() => setDebtViewMode('compare')}
-                    className="text-cyan-400 hover:text-cyan-300 hover:underline font-bold text-[11px] transition-colors"
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setShowDemoQr(true)}
+                    leftIcon={<QrCode className="w-3.5 h-3.5" />}
                   >
-                    Compare side-by-side &rarr;
-                  </button>
+                    Simulate UPI QR
+                  </Button>
                 </div>
-              )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* NATURAL LANGUAGE & VOICE QUICK-ADD SHOWCASE */}
-      {/* ========================================================================= */}
-      <section
-        id="quick-add"
-        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t ${
-          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
-        }`}
-      >
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold mb-2.5">
-            <Zap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span className={isLight ? 'text-emerald-900' : 'text-emerald-300'}>
-              Natural Language & Web Speech Voice Engine
-            </span>
-          </div>
-          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Speak or type. Log in 1 second flat.
+      {/* =========================================================================
+          4. WHY OWINO VS SPLITWISE (NO ADS, NO LIMITS)
+      ========================================================================== */}
+      <section id="comparison" className="py-16 sm:py-24 max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <Badge variant="neutral" className="mb-2">Honest Comparison</Badge>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+            Why Thousands Are Leaving Splitwise for Owino
           </h2>
-          <p className={`mt-2.5 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-            Forget clicking through 6 tedious form steps. Just speak or write in universal shorthand:{' '}
-            <code className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-bold">
-              item amount [group]
-            </code>
-            . FairShare auto-categorizes, matches the group, and syncs across all devices live.
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
+            No 10-second paywall countdowns. No 3-expense daily limits. Built purely for simple expense splitting.
           </p>
         </div>
 
-        {/* Interactive Try-it-Out Bar */}
-        <div className="macos-glass-card max-w-3xl mx-auto p-4 sm:p-6 rounded-2xl shadow-xl">
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-1 w-full">
-              <input
-                type="text"
-                value={nlInput}
-                onChange={(e) => setNlInput(e.target.value)}
-                placeholder="e.g. Pizza 1200 Goa Trip, or Chai 40"
-                className={`w-full py-3.5 pl-4 pr-12 rounded-2xl text-sm sm:text-base font-medium outline-none transition-all ${
-                  isLight
-                    ? 'bg-white/80 border border-slate-300 text-slate-900 focus:border-emerald-500 shadow-inner'
-                    : 'bg-slate-950/70 border border-slate-700/80 text-white focus:border-emerald-500 shadow-inner'
-                }`}
-              />
-              <button
-                onClick={() => {
-                  setIsSimulatedListening(true);
-                  const samples = ['Pizza 1200 Goa Trip', 'Uber 350 Airport Ride', 'Chai 40', 'Movie 800 Weekend Fun'];
-                  const next = samples[(samples.indexOf(nlInput) + 1) % samples.length];
-                  setTimeout(() => {
-                    setNlInput(next);
-                    setIsSimulatedListening(false);
-                  }, 700);
-                }}
-                title="Simulate Voice Dictation"
-                className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${
-                  isSimulatedListening
-                    ? 'bg-rose-500 text-white animate-pulse'
-                    : 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30'
-                }`}
-              >
-                <Mic className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Syntax Preset Chips */}
-          <div className="flex flex-wrap items-center gap-2 mt-4">
-            <span className={`text-xs font-semibold ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              Try examples:
-            </span>
-            {[
-              { text: 'Pizza 1200 Goa Trip', icon: '🍕' },
-              { text: 'Chai 40', icon: '☕' },
-              { text: 'Uber 450 Weekend Outing', icon: '🚗' },
-              { text: 'Movie 800 @pixel', icon: '🎬' },
-              { text: 'Groceries 2400 Apartment Rent', icon: '🛒' },
-            ].map((ex) => (
-              <button
-                key={ex.text}
-                onClick={() => setNlInput(ex.text)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
-                  nlInput === ex.text
-                    ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/50 font-bold'
-                    : isLight
-                    ? 'bg-white/60 hover:bg-white text-slate-700 border-slate-300/80'
-                    : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300 border-slate-800'
-                }`}
-              >
-                {ex.icon} {ex.text}
-              </button>
-            ))}
-          </div>
-
-          {/* Instant Parsed Preview Card */}
-          <div
-            className={`mt-6 p-4 sm:p-5 rounded-2xl border ${
-              isLight
-                ? 'bg-emerald-500/5 border-emerald-500/20'
-                : 'bg-emerald-950/20 border-emerald-500/20'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                Live Instant Parsing Result
-              </span>
-              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-                Socket.io Live Sync Ready
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
-              <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
-                <div className="text-[10px] uppercase font-bold text-slate-500">Expense Item</div>
-                <div className={`font-bold text-sm sm:text-base mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  {parsedNl.item}
-                </div>
-              </div>
-              <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
-                <div className="text-[10px] uppercase font-bold text-slate-500">Amount</div>
-                <div className="font-extrabold text-sm sm:text-base mt-0.5 text-emerald-600 dark:text-emerald-400">
-                  ₹{parsedNl.amount.toLocaleString('en-IN')}
-                </div>
-              </div>
-              <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
-                <div className="text-[10px] uppercase font-bold text-slate-500">Category</div>
-                <div className={`font-bold text-sm sm:text-base mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  {parsedNl.category}
-                </div>
-              </div>
-              <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
-                <div className="text-[10px] uppercase font-bold text-slate-500">Destination</div>
-                <div className={`font-bold text-sm sm:text-base mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  {parsedNl.group}
-                </div>
-              </div>
-            </div>
+        {/* Comparison Table */}
+        <div className="bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-[#0A0E17] border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 uppercase">
+                  <th className="py-4 px-6">Feature</th>
+                  <th className="py-4 px-6 text-teal-700 dark:text-teal-400 bg-teal-50/50 dark:bg-teal-950/20">
+                    Owino (FairShare)
+                  </th>
+                  <th className="py-4 px-6 text-slate-600 dark:text-slate-400">
+                    Splitwise (Free Tier)
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
+                <tr>
+                  <td className="py-3.5 px-6 font-semibold text-slate-900 dark:text-white">
+                    Daily Expense Limit
+                  </td>
+                  <td className="py-3.5 px-6 text-emerald-600 dark:text-emerald-400 font-bold bg-teal-50/30 dark:bg-teal-950/10">
+                    ✓ Unlimited Forever (100% Free)
+                  </td>
+                  <td className="py-3.5 px-6 text-rose-600 dark:text-rose-400">
+                    ✕ Capped at 3 expenses / day
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-6 font-semibold text-slate-900 dark:text-white">
+                    Advertisements
+                  </td>
+                  <td className="py-3.5 px-6 text-emerald-600 dark:text-emerald-400 font-bold bg-teal-50/30 dark:bg-teal-950/10">
+                    ✓ Zero Ads, Zero Banners
+                  </td>
+                  <td className="py-3.5 px-6 text-rose-600 dark:text-rose-400">
+                    ✕ Banner ads & 10s wait paywalls
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-6 font-semibold text-slate-900 dark:text-white">
+                    Instant UPI QR Code Settlements
+                  </td>
+                  <td className="py-3.5 px-6 text-emerald-600 dark:text-emerald-400 font-bold bg-teal-50/30 dark:bg-teal-950/10">
+                    ✓ Dynamic UPI 2.0 QR for Any Bank
+                  </td>
+                  <td className="py-3.5 px-6 text-slate-500">
+                    ✕ Manual recording or US-only
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-6 font-semibold text-slate-900 dark:text-white">
+                    Debt Minimization (Greedy DAG)
+                  </td>
+                  <td className="py-3.5 px-6 text-emerald-600 dark:text-emerald-400 font-bold bg-teal-50/30 dark:bg-teal-950/10">
+                    ✓ Cuts total transactions by up to 70%
+                  </td>
+                  <td className="py-3.5 px-6 text-slate-500">
+                    Limited in free tier
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-6 font-semibold text-slate-900 dark:text-white">
+                    1-Click Historical Migration
+                  </td>
+                  <td className="py-3.5 px-6 text-emerald-600 dark:text-emerald-400 font-bold bg-teal-50/30 dark:bg-teal-950/10">
+                    ✓ Import all groups & expenses from CSV
+                  </td>
+                  <td className="py-3.5 px-6 text-slate-500">
+                    N/A
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-6 font-semibold text-slate-900 dark:text-white">
+                    Designed for All Ages
+                  </td>
+                  <td className="py-3.5 px-6 text-emerald-600 dark:text-emerald-400 font-bold bg-teal-50/30 dark:bg-teal-950/10">
+                    ✓ Crisp, high contrast, clean font
+                  </td>
+                  <td className="py-3.5 px-6 text-slate-500">
+                    Cluttered, dense mobile UI
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
+      </section>
 
-        {/* 4 Feature Pillars Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto mt-8">
-          {[
-            {
-              icon: <Mic className="w-4 h-4 text-emerald-500" />,
-              title: 'Voice Dictation',
-              desc: 'Use Web Speech recognition directly in Chrome, Edge, and Safari with zero plugins.',
-            },
-            {
-              icon: <Radio className="w-4 h-4 text-emerald-500" />,
-              title: 'Socket.io Live Sync',
-              desc: 'Expenses, settlements, and notifications reflect across all devices in real-time without refreshing.',
-            },
-            {
-              icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />,
-              title: 'Payee Confirmation',
-              desc: 'Group admins can toggle settlement confirmation rules to match their group trust model.',
-            },
-            {
-              icon: <AtSign className="w-4 h-4 text-emerald-500" />,
-              title: 'Unique @Usernames',
-              desc: 'Clean disambiguation when multiple friends share the same common first name.',
-            },
-          ].map((card, i) => (
-            <div
-              key={i}
-              className="macos-glass-card p-4 rounded-2xl text-left border hover:border-emerald-500/40 transition-colors"
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                {card.icon}
-                <h4 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  {card.title}
-                </h4>
+      {/* =========================================================================
+          5. HOW IT WORKS (3 SIMPLE STEPS)
+      ========================================================================== */}
+      <section className="py-14 bg-white dark:bg-[#0E1420] border-t border-b border-slate-200 dark:border-slate-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <Badge variant="brand" className="mb-2">Zero Learning Curve</Badge>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+              Split Any Expense in 3 Steps
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card padding="lg" className="flex flex-col items-start">
+              <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 font-extrabold flex items-center justify-center text-base mb-4">
+                1
               </div>
-              <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                {card.desc}
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
+                Create Group or Add Friend
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Add your roommates, travel buddies, or family in 2 clicks. You can even import entire groups from Splitwise with 1 file upload.
               </p>
-            </div>
-          ))}
-        </div>
-      </section>
+            </Card>
 
-      {/* ========================================================================= */}
-      {/* UNIVERSAL QR CODE ECOSYSTEM */}
-      {/* ========================================================================= */}
-      <section
-        id="qr-ecosystem"
-        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t ${
-          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
-        }`}
-      >
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <div className="macos-glass-pill inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold mb-2.5">
-            <QrCode className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span className={isLight ? 'text-emerald-900' : 'text-emerald-300'}>
-              Universal QR Code Infrastructure
-            </span>
-          </div>
-          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Point, scan, and settle. Zero typing needed.
-          </h2>
-          <p className={`mt-2.5 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-            Every group ledger, user profile, and settlement transaction automatically generates a high-contrast dynamic QR code readable by any smartphone camera or UPI app.
-          </p>
-
-          {/* QR Feature Tabs */}
-          <div className="macos-liquid-surface inline-flex p-1 rounded-xl mt-5 shadow-inner">
-            {[
-              { id: 'UPI', label: '1. Instant UPI QR' },
-              { id: 'GROUP', label: '2. Group Join QR' },
-              { id: 'CONNECT', label: '3. Personal Connect QR' },
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setQrTab(t.id as any)}
-                className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  qrTab === t.id
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : isLight
-                    ? 'text-slate-600 hover:text-slate-900'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* QR Showcase Card */}
-        <div className="macos-glass-card max-w-4xl mx-auto p-5 sm:p-7 rounded-2xl shadow-xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            {/* Left: Explanation */}
-            <div>
-              {qrTab === 'UPI' && (
-                <div>
-                  <span className="macos-glass-pill px-2.5 py-1 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
-                    BANK-TO-BANK SETTLEMENT
-                  </span>
-                  <h3 className={`text-2xl font-bold mt-3 mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    Instant UPI Deep-Link QR Codes
-                  </h3>
-                  <p className={`text-sm leading-relaxed mb-4 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                    Eliminate copy-pasting UPI IDs. When settling a shared expense or simplified debt, FairShare encodes the exact rupee amount, payee VPA, and reference note into an interactive QR code.
-                  </p>
-                  <ul className={`space-y-2 text-xs ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      Compatible with Google Pay, PhonePe, Paytm, and BHIM
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      Zero intermediary fees — direct bank transfer
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      Two-party verification marks it cleared on both sides
-                    </li>
-                  </ul>
-                </div>
-              )}
-
-              {qrTab === 'GROUP' && (
-                <div>
-                  <span className="macos-glass-pill px-2.5 py-1 text-[10px] font-bold text-teal-800 dark:text-teal-300">
-                    FRICTIONLESS ONBOARDING
-                  </span>
-                  <h3 className={`text-2xl font-bold mt-3 mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    Instant Group Join via Camera Scan
-                  </h3>
-                  <p className={`text-sm leading-relaxed mb-4 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                    Sitting together at a restaurant? Open your FairShare group, tap &quot;Group QR&quot;, and have everyone scan the screen with their phone camera. They&apos;re instantly added to the ledger without searching names or sharing invite links.
-                  </p>
-                  <ul className={`space-y-2 text-xs ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                      No app download required to view shared bills
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                      Optional passcode protection for private trips
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                      One-tap WhatsApp & Telegram sharing options
-                    </li>
-                  </ul>
-                </div>
-              )}
-
-              {qrTab === 'CONNECT' && (
-                <div>
-                  <span className="macos-glass-pill px-2.5 py-1 text-[10px] font-bold text-indigo-800 dark:text-indigo-300">
-                    IDENTITY & PEER NETWORKING
-                  </span>
-                  <h3 className={`text-2xl font-bold mt-3 mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    Personal Friend Connect QR Code
-                  </h3>
-                  <p className={`text-sm leading-relaxed mb-4 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                    Connect with friends, roommates, and colleagues in person. Your profile has a unique QR code linked to your account, gaming avatar, and preferred UPI ID.
-                  </p>
-                  <ul className={`space-y-2 text-xs ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                      1-click friend addition without typing emails
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                      Shows your equipped cartoon or gaming avatar
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                      High resolution PNG & SVG downloadable QR cards
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Right: Live Interactive Rendered QR Card */}
-            <div className="macos-liquid-surface flex flex-col items-center justify-center p-6 rounded-2xl">
-              <div className="p-3 bg-white rounded-2xl shadow-xl border border-slate-200">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                    qrTab === 'UPI'
-                      ? 'upi://pay?pa=fairshare@okhdfcbank&pn=ShadowNinja&am=1200&cu=INR&tn=FairShare%20Dinner'
-                      : qrTab === 'GROUP'
-                      ? 'https://fairshare.app/groups/join/demo-goa-trip'
-                      : 'https://fairshare.app/friends/connect/shadow-ninja'
-                  )}&color=059669&bgcolor=ffffff&margin=8`}
-                  alt="QR Code"
-                  className="w-44 h-44 object-contain"
-                />
+            <Card padding="lg" className="flex flex-col items-start">
+              <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 font-extrabold flex items-center justify-center text-base mb-4">
+                2
               </div>
-
-              <span className={`text-xs font-bold mt-3 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                {qrTab === 'UPI'
-                  ? 'UPI Pay: Shadow Ninja (₹1,200)'
-                  : qrTab === 'GROUP'
-                  ? 'Join Group: Goa Beach Villa'
-                  : 'Connect with: Shadow Ninja'}
-              </span>
-              <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                Scan with your smartphone camera
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* FEATURE DEEP-DIVE GRID */}
-      {/* ========================================================================= */}
-      <section
-        id="features"
-        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t ${
-          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
-        }`}
-      >
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="macos-glass-pill text-xs font-bold px-3 py-1 text-emerald-800 dark:text-emerald-400">
-            ENGINEERED FOR FINTECH EXCELLENCE
-          </span>
-          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mt-2.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Every feature you need. Zero gimmicks.
-          </h2>
-          <p className={`mt-2 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-            Engineered from scratch to replace cluttered, ad-supported apps with high-speed mathematical clarity.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {[
-            {
-              icon: <Scale className="w-4 h-4" />,
-              title: 'Greedy Graph Simplification',
-              desc: 'Solves complex multilateral debts with linear programming reduction so no circular money transfers occur.',
-            },
-            {
-              icon: <PieChart className="w-4 h-4" />,
-              title: '5 Precise Splitting Strategies',
-              desc: 'Split equally, by exact amount, percentage, weighted shares, or individual adjustment offsets with zero penny loss.',
-            },
-            {
-              icon: <QrCode className="w-4 h-4" />,
-              title: 'Universal QR Codes',
-              desc: 'Instant QR generation for group invites, UPI settlement payments, and personal friend connections.',
-            },
-            {
-              icon: <Gamepad2 className="w-4 h-4" />,
-              title: 'Gaming & Cartoon Avatars',
-              desc: 'Choose from 12+ playful avatars (Shadow Ninja, Pixel Mage, Robo Mecha) or upload your own avatar.',
-            },
-            {
-              icon: <TrendingUp className="w-4 h-4" />,
-              title: 'Category Budgets & Alerts',
-              desc: 'Set monthly budget limits for Food, Travel, and Utilities. Get real-time alerts at 80% and 100% caps.',
-            },
-            {
-              icon: <ShieldCheck className="w-4 h-4" />,
-              title: 'Two-Party Verification',
-              desc: 'Settlements require mutual confirmation from both the payer and payee to ensure complete accounting trust.',
-            },
-          ].map((f, i) => (
-            <div
-              key={i}
-              className="macos-glass-card p-4 sm:p-5 rounded-2xl transition-all group hover:-translate-y-0.5 hover:shadow-lg"
-            >
-              <div
-                className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-3 group-hover:scale-105 transition-transform ${
-                  isLight
-                    ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-800'
-                    : 'bg-emerald-950/60 border-emerald-500/30 text-emerald-400'
-                }`}
-              >
-                {f.icon}
-              </div>
-              <h3 className={`text-sm sm:text-base font-bold mb-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>{f.title}</h3>
-              <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                {f.desc}
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
+                Record Expenses As You Go
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Paid for groceries or hotel? Type the amount. Split it equally, by exact figures, shares, or percentages.
               </p>
-            </div>
-          ))}
-        </div>
-      </section>
+            </Card>
 
-      {/* ========================================================================= */}
-      {/* COMPARISON TABLE: FAIRSHARE VS SPLITWISE */}
-      {/* ========================================================================= */}
-      <section
-        id="comparison"
-        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t ${
-          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
-        }`}
-      >
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="macos-glass-pill text-xs font-bold px-3 py-1 text-emerald-800 dark:text-emerald-400">
-            TRANSPARENT VALUE
-          </span>
-          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mt-2.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Why people are switching to FairShare.
-          </h2>
-          <p className={`mt-2 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-            See how FairShare eliminates artificial limitations imposed by incumbent tools.
-          </p>
-        </div>
-
-        <div className="macos-glass-card rounded-2xl overflow-hidden shadow-xl">
-          <div
-            className={`grid grid-cols-3 p-3.5 sm:p-4 font-bold text-[11px] sm:text-xs uppercase tracking-wider border-b ${
-              isLight
-                ? 'bg-white/40 text-slate-800 border-slate-300/60'
-                : 'bg-slate-900/60 text-slate-300 border-slate-800'
-            }`}
-          >
-            <div>Feature</div>
-            <div className="text-center text-emerald-600 dark:text-emerald-400 font-bold">FairShare</div>
-            <div className="text-center text-slate-400">Other Split Apps</div>
-          </div>
-
-          <div
-            className={`divide-y text-xs sm:text-sm ${
-              isLight ? 'divide-slate-300/50' : 'divide-slate-800/70'
-            }`}
-          >
-            {[
-              { feat: 'Daily Expense Entries', fair: 'Unlimited Always', other: 'Capped at 3/day' },
-              { feat: 'Natural Language & Voice Add', fair: 'Included (Speech + Syntax)', other: 'Tedious multi-step forms' },
-              { feat: 'Real-Time Sync (Socket.io)', fair: 'Live Zero-Refresh Updates', other: 'Manual refresh / 10s lag' },
-              { feat: 'Payee Settlement Verification', fair: 'Admin Governance Controls', other: 'Unverified manual checks' },
-              { feat: 'Unique @Username Handles', fair: 'Clean Disambiguation', other: 'Name collision confusion' },
-              { feat: 'Debt Simplification Graph', fair: 'Free & Built-in', other: 'Locked behind Pro tier' },
-              { feat: 'Instant UPI Settlement QR', fair: 'Integrated (Zero fees)', other: 'Not available' },
-              { feat: 'Ad-Free Clean Experience', fair: '100% Ad-Free', other: 'Intrusive video & banner ads' },
-              { feat: 'Penny-Balancing Precision', fair: 'Exact Penny Match', other: 'Rounding discrepancies' },
-              { feat: 'Gaming & Cartoon Avatars', fair: 'Included', other: 'Generic initials only' },
-              { feat: 'Group Join QR Codes', fair: '1-Second Camera Scan', other: 'Manual email invites' },
-              { feat: 'Receipt Attachments', fair: 'Free Storage', other: 'Pro plan only' },
-            ].map((row, i) => (
-              <div
-                key={i}
-                className={`grid grid-cols-3 p-3 sm:p-3.5 items-center transition-colors ${
-                  isLight ? 'hover:bg-white/40' : 'hover:bg-slate-800/40'
-                }`}
-              >
-                <span className={`font-semibold text-xs sm:text-sm ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{row.feat}</span>
-                <span
-                  className={`text-center font-bold flex items-center justify-center gap-1.5 text-xs sm:text-sm ${
-                    isLight ? 'text-emerald-700' : 'text-emerald-400'
-                  }`}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  {row.fair}
-                </span>
-                <span className={`text-center text-xs sm:text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{row.other}</span>
+            <Card padding="lg" className="flex flex-col items-start">
+              <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 font-extrabold flex items-center justify-center text-base mb-4">
+                3
               </div>
-            ))}
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
+                Settle Up with UPI in 5 Seconds
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Tap Settle Up. Scan the generated QR code with GPay, PhonePe, or Paytm. Debts are cleared across both accounts in real-time.
+              </p>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* FAQ ACCORDION */}
-      {/* ========================================================================= */}
-      {/* ========================================================================= */}
-      {/* FAQ ACCORDION */}
-      {/* ========================================================================= */}
-      <section
-        id="faqs"
-        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto border-t ${
-          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
-        }`}
-      >
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+      {/* =========================================================================
+          6. FREQUENTLY ASKED QUESTIONS
+      ========================================================================== */}
+      <section id="faq" className="py-16 sm:py-24 max-w-4xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-12">
+          <Badge variant="neutral" className="mb-2">Common Questions</Badge>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
             Frequently Asked Questions
           </h2>
-          <p className={`mt-2 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-            Everything you need to know about FairShare, privacy, and settlements.
-          </p>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-3.5">
           {[
             {
-              q: 'Is FairShare genuinely 100% free with no hidden charges?',
-              a: 'Yes! There are no subscription paywalls, no artificial limits on daily expense logging, and zero platform fees for generating UPI payment QR codes.',
+              q: 'Is Owino really 100% free with no limits?',
+              a: 'Yes. Unlike Splitwise, which caps free users to 3 expenses per day and forces a 10-second countdown, Owino has zero daily limits, zero subscription paywalls, and zero ads.',
             },
             {
-              q: 'How does the greedy debt minimization algorithm work?',
-              a: 'Instead of having everyone settle individual IOUs with each other, FairShare calculates each member’s net balance (total paid minus total owed) and matches debtors with creditors to clear all balances in the minimum mathematical number of direct transfers.',
+              q: 'How do UPI settlements work?',
+              a: 'When you tap "Settle Up", Owino creates a standard UPI 2.0 dynamic payment QR code with the exact payee VPA and amount. Anyone can scan it using Google Pay, PhonePe, Paytm, BHIM, or any banking app.',
             },
             {
-              q: 'Do you charge transaction fees on UPI payments?',
-              a: 'No. FairShare generates standardized UPI deep-links and dynamic QR codes that open directly in your banking app (Google Pay, PhonePe, Paytm, BHIM). All funds move bank-to-bank directly with zero deductions.',
+              q: 'Can I bring my past data from Splitwise?',
+              a: 'Yes! Export your group or personal CSV file from Splitwise, upload it to Owino via our 1-click migration tool, and all historical balances, members, and transactions are restored in seconds.',
             },
             {
-              q: 'Can I split bills unequally or by percentage and shares?',
-              a: 'Yes. FairShare supports 5 split strategies: Equal, Exact Amounts, Percentages (with 100% validation), Weighted Shares (e.g., 2 shares for couples), and Custom Adjustments.',
+              q: 'Is my data private and secure?',
+              a: 'Yes. All data is isolated and protected by strict row-level authorization. We do not sell your data, we do not show advertisements, and we employ HTTPS/TLS 1.3 encryption across all communication.',
             },
             {
-              q: 'How do the gaming and cartoon avatars work?',
-              a: 'In Account Preferences, you can choose from curated cartoon and gaming characters (Shadow Ninja, Pixel Mage, Robo Mecha, Astro Pilot, and more) or upload your own custom picture.',
+              q: 'Can I use Owino on my mobile phone?',
+              a: 'Yes, Owino is built mobile-first. It runs smoothly on any smartphone browser and can be installed directly to your home screen as a fast Progressive Web App (PWA).',
             },
-          ].map((faq, index) => {
-            const isOpen = openFaq === index;
-            return (
-              <div
-                key={index}
-                className="macos-glass-card rounded-xl overflow-hidden transition-all"
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-[#121824] overflow-hidden"
+            >
+              <button
+                onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
+                className="w-full py-4 px-5 text-left flex items-center justify-between text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
               >
-                <button
-                  onClick={() => setOpenFaq(isOpen ? null : index)}
-                  className={`w-full p-3.5 sm:p-4 text-left flex items-center justify-between gap-4 font-semibold text-xs sm:text-sm transition-colors ${
-                    isLight
-                      ? 'text-slate-900 hover:text-emerald-700'
-                      : 'text-white hover:text-emerald-400'
-                  }`}
-                >
-                  <span>{faq.q}</span>
-                  {isOpen ? (
-                    <ChevronUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
-                  )}
-                </button>
-                {isOpen && (
-                  <div
-                    className={`px-4 pb-4 text-xs leading-relaxed border-t pt-2.5 ${
-                      isLight
-                        ? 'border-slate-300/60 text-slate-700'
-                        : 'border-slate-800/80 text-slate-300/90'
-                    }`}
-                  >
-                    {faq.a}
-                  </div>
+                <span>{item.q}</span>
+                {activeFaq === idx ? (
+                  <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
                 )}
-              </div>
-            );
-          })}
+              </button>
+              {activeFaq === idx && (
+                <div className="px-5 pb-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800/80 pt-3">
+                  {item.a}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* FINAL HIGH-CONVERTING CTA BANNER */}
-      {/* ========================================================================= */}
-      <section
-        className={`py-14 sm:py-18 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center border-t ${
-          isLight ? 'border-slate-300/60' : 'border-slate-800/80'
-        }`}
-      >
-        <div className="macos-glass-card p-6 sm:p-10 rounded-2xl relative overflow-hidden shadow-xl">
-          <div
-            className={`absolute top-0 right-0 w-64 h-64 blur-[90px] rounded-full pointer-events-none ${
-              isLight ? 'bg-emerald-400/25' : 'bg-emerald-500/15'
-            }`}
-          />
-
-          <BrandLogo size="md" className="justify-center mb-4" asLink={false} textColor={isLight ? "text-slate-900" : "text-white"} />
-          <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-2.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Start splitting bills stress-free today.
+      {/* =========================================================================
+          7. BOTTOM CTA CARD
+      ========================================================================== */}
+      <section className="py-12 pb-20 max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="bg-teal-600 dark:bg-teal-700 text-white rounded-2xl p-8 sm:p-12 text-center shadow-md">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            Ready to split bills without limits?
           </h2>
-          <p className={`text-xs sm:text-sm max-w-xl mx-auto mb-6 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-            Join roommates, travel squads, and couples who keep their expenses clear, transparent, and settled on time.
+          <p className="mt-3 text-teal-100 text-sm sm:text-base max-w-xl mx-auto">
+            Join thousands of roommates, friends, and families who split expenses with zero fees and instant UPI settlements.
           </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/auth/signup"
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 transition-all active:scale-95"
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={() => router.push('/signup')}
+              rightIcon={<ArrowRight className="w-4 h-4 text-slate-900" />}
+              className="bg-white hover:bg-slate-100 text-slate-900 font-bold border-none"
             >
-              Create Free Account
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/auth/login"
-              className="macos-liquid-surface w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all"
+              Get Started for Free
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => router.push('/login')}
+              className="border-white/40 text-white hover:bg-white/10"
             >
-              <span className={isLight ? 'text-slate-800' : 'text-slate-200'}>Sign In to Existing Account</span>
-            </Link>
+              Sign In to Your Account
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer
-        className={`border-t py-12 px-4 sm:px-6 text-xs transition-colors ${
-          isLight
-            ? 'bg-slate-200/50 border-slate-300 text-slate-600'
-            : 'bg-[#05070A] border-slate-800 text-slate-400'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto space-y-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-            {/* Col 1: Brand & NAP */}
-            <div className="col-span-2 space-y-3">
-              <BrandLogo size="sm" textColor={isLight ? "text-slate-900" : "text-white"} />
-              <p className="text-xs leading-relaxed max-w-sm">
-                Owino (FairShare) is an open-architecture, privacy-first group expense ledger and debt minimization SaaS.
-                Built to eliminate multi-party payment chaos with greedy DAG graph algorithms and dynamic UPI 2.0 settlements.
-              </p>
-              <div className="text-[11px] space-y-1 font-mono text-slate-500">
-                <p><strong>Entity:</strong> Owino FairShare Technologies Pvt. Ltd.</p>
-                <p><strong>HQ:</strong> FinTech Innovation Hub, 4th Block Koramangala, Bengaluru 560034</p>
-                <p><strong>Contact:</strong> <a href="mailto:support@fairshare.io" className="text-emerald-500 hover:underline">support@fairshare.io</a></p>
+      {/* =========================================================================
+          8. COMPLETE FOOTER (LEGAL, FEATURES, PRIVACY & TERMS)
+      ========================================================================== */}
+      <footer className="bg-white dark:bg-[#0A0E17] border-t border-slate-200 dark:border-slate-800 py-12 text-xs text-slate-500 dark:text-slate-400">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+            {/* Col 1: Brand */}
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 mb-3">
+                <BrandLogo size="sm" />
+                <span className="font-bold text-sm text-slate-900 dark:text-white">Owino FairShare</span>
               </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Smart expense splitting and automated debt minimization. Built for modern financial transparency.
+              </p>
             </div>
 
-            {/* Col 2: Solutions */}
-            <div className="space-y-2.5">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Solutions</h4>
+            {/* Col 2: Product */}
+            <div>
+              <div className="font-semibold text-slate-900 dark:text-white mb-3">Product</div>
               <ul className="space-y-2">
-                <li><Link href="/features/debt-simplification" className="hover:text-emerald-400 transition-colors">Debt Minimization (DAG)</Link></li>
-                <li><Link href="/features/upi-settlements" className="hover:text-emerald-400 transition-colors">Dynamic UPI 2.0 QR</Link></li>
-                <li><Link href="/features/splitwise-migration" className="hover:text-emerald-400 transition-colors">1-Click Splitwise Importer</Link></li>
-                <li><Link href="/expenses/split-bill" className="hover:text-emerald-400 transition-colors">Itemized Bill Splitter</Link></li>
-                <li><Link href="/pricing" className="hover:text-emerald-400 transition-colors font-semibold text-emerald-400">Pricing &amp; Free Plan</Link></li>
+                <li><Link href="/dashboard" className="hover:text-teal-600 transition-colors">Dashboard</Link></li>
+                <li><Link href="/expenses" className="hover:text-teal-600 transition-colors">Expenses</Link></li>
+                <li><Link href="/groups" className="hover:text-teal-600 transition-colors">Expense Groups</Link></li>
+                <li><Link href="/settlements" className="hover:text-teal-600 transition-colors">UPI Settlements</Link></li>
+                <li><Link href="/split-bill" className="hover:text-teal-600 transition-colors">Split Bill Page</Link></li>
               </ul>
             </div>
 
-            {/* Col 3: Resources & Trust */}
-            <div className="space-y-2.5">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Resources</h4>
+            {/* Col 3: Comparison & Migration */}
+            <div>
+              <div className="font-semibold text-slate-900 dark:text-white mb-3">Resources</div>
               <ul className="space-y-2">
-                <li><Link href="/research" className="hover:text-emerald-400 transition-colors">Algorithmic Research Paper</Link></li>
-                <li><Link href="/case-studies" className="hover:text-emerald-400 transition-colors">Real-World Case Studies</Link></li>
-                <li><Link href="/reviews" className="hover:text-emerald-400 transition-colors">Customer Reviews (4.9★)</Link></li>
-                <li><Link href="/faq" className="hover:text-emerald-400 transition-colors">Frequently Asked Questions</Link></li>
-                <li><Link href="/directories" className="hover:text-emerald-400 transition-colors">Verified Directories</Link></li>
-                <li><a href="/llms.txt" className="hover:text-emerald-400 transition-colors font-mono text-[11px]">llms.txt (AI Crawlers)</a></li>
+                <li><Link href="/compare/splitwise" className="hover:text-teal-600 transition-colors">Splitwise Alternative</Link></li>
+                <li><Link href="/features/splitwise-migration" className="hover:text-teal-600 transition-colors">1-Click CSV Import</Link></li>
+                <li><a href="#demo" className="hover:text-teal-600 transition-colors">Interactive Demo</a></li>
+                <li><Link href="/reports" className="hover:text-teal-600 transition-colors">Expense Reports</Link></li>
               </ul>
             </div>
 
-            {/* Col 4: Comparison & Legal */}
-            <div className="space-y-2.5">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Compare &amp; Legal</h4>
+            {/* Col 4: Legal & Privacy */}
+            <div>
+              <div className="font-semibold text-slate-900 dark:text-white mb-3">Legal & Trust</div>
               <ul className="space-y-2">
-                <li><Link href="/compare/splitwise" className="hover:text-emerald-400 transition-colors font-semibold text-emerald-400">FairShare vs Splitwise</Link></li>
-                <li><Link href="/privacy" className="hover:text-emerald-400 transition-colors">Privacy Policy (DPDP)</Link></li>
-                <li><Link href="/terms" className="hover:text-emerald-400 transition-colors">Terms of Service</Link></li>
-                <li><Link href="/privacy#security" className="hover:text-emerald-400 transition-colors">256-Bit TLS Security</Link></li>
-                <li><a href="https://github.com/vatsal3030/Expense-Tracker" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-colors">GitHub Repository</a></li>
+                <li><Link href="/legal/terms" className="hover:text-teal-600 transition-colors">Terms of Service</Link></li>
+                <li><Link href="/legal/privacy" className="hover:text-teal-600 transition-colors">Privacy Policy</Link></li>
+                <li><span className="text-emerald-600 dark:text-emerald-400 font-semibold">100% Free Forever</span></li>
+                <li><span className="text-slate-500">No Ads · No Tracking</span></li>
               </ul>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-[11px] text-slate-500">
-            <p>
-              © 2026 Owino FairShare Technologies Pvt. Ltd. All rights reserved. Mathematical invariance strictly conserved.
-            </p>
-            <p className="flex items-center gap-3 font-mono text-[10px]">
-              <span>🔒 256-Bit TLS</span>
-              <span>⚡ DAG Minimization</span>
-              <span>📱 UPI 2.0</span>
-              <span>🚀 Zero Limits</span>
-            </p>
+          <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>© {new Date().getFullYear()} Owino FairShare. All rights reserved.</div>
+            <div className="flex items-center gap-4 text-xs">
+              <Link href="/legal/privacy" className="hover:text-slate-900 dark:hover:text-white transition-colors">Privacy</Link>
+              <Link href="/legal/terms" className="hover:text-slate-900 dark:hover:text-white transition-colors">Terms</Link>
+              <a href="https://github.com/vatsal3030/Expense-Tracker" target="_blank" rel="noopener noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1">
+                GitHub <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Global Interactive QR Modal for Simulation */}
-      <QrCodeModal
-        open={qrModal.open}
-        onClose={() => setQrModal({ ...qrModal, open: false })}
-        title={qrModal.title}
-        subtitle={qrModal.subtitle}
-        value={qrModal.value}
-        badgeText={qrModal.badgeText}
-        downloadFileName="fairshare-demo-qr"
-      />
+      {/* Demo QR Code Modal */}
+      {showDemoQr && (
+        <QrCodeModal
+          open={showDemoQr}
+          onClose={() => setShowDemoQr(false)}
+          title={`Scan & Pay ₹${perPersonShare.toLocaleString('en-IN')}`}
+          subtitle="Instant settlement to Rahul via any UPI app (GPay, PhonePe, Paytm)"
+          value={`upi://pay?pa=rahul@okhdfcbank&pn=Rahul&am=${perPersonShare}&cu=INR&tn=Dinner%20Bill`}
+          badgeText="Dynamic UPI 2.0"
+          downloadFileName="fairshare-settlement-qr.png"
+        />
+      )}
     </div>
   );
 }
