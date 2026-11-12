@@ -116,23 +116,26 @@ export default function LandingPage() {
         return;
       }
       const hash = window.location.hash;
-      if (hash && (hash.includes('access_token') || hash.includes('refresh_token') || hash.includes('type='))) {
+      const hadAuthHash = hash && (hash.includes('access_token') || hash.includes('refresh_token') || hash.includes('type='));
+
+      if (hadAuthHash) {
         if (hash.includes('type=recovery')) {
           router.replace('/auth/reset-password');
           return;
         }
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        const checkAndRedirect = async () => {
+          const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             router.replace('/dashboard');
-          } else {
-            setTimeout(async () => {
-              const { data } = await supabase.auth.getSession();
-              if (data?.session) {
-                router.replace('/dashboard');
-              }
-            }, 400);
+          }
+        };
+        checkAndRedirect();
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+            router.replace('/dashboard');
           }
         });
+        return () => subscription.unsubscribe();
       }
     }
   }, [router]);

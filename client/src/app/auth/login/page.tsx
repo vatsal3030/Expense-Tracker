@@ -125,12 +125,14 @@ function LoginForm() {
   }, []);
 
   const getEffectiveRedirect = () => {
-    if (redirectTarget && redirectTarget !== '/dashboard' && redirectTarget !== '/' && redirectTarget !== '/#') return redirectTarget;
     try {
       const pendingInvite = typeof window !== 'undefined' ? localStorage.getItem('fairshare_pending_invite') : null;
       if (pendingInvite) return `/friends?invite=${pendingInvite}`;
     } catch {}
-    return redirectTarget || '/dashboard';
+    if (redirectTarget && redirectTarget !== '/' && redirectTarget !== '/#' && !redirectTarget.startsWith('/#')) {
+      return redirectTarget;
+    }
+    return '/dashboard';
   };
 
   useEffect(() => {
