@@ -16,7 +16,7 @@
     "start:settlement": "node dist/services/settlement.service.js",
     "start:notification": "node dist/services/notification.service.js",
     "lint": "eslint src/",
-    "test": "tsx --test tests/routes.test.ts",
+    "test": "tsx --test tests/routes.test.ts tests/security.test.ts",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

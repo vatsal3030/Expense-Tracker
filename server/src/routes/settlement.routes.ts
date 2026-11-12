@@ -40,9 +40,25 @@ settlementRouter.post(
         return;
       }
 
-      // Check group setting: Does group require explicit payee confirmation?
+      // Check group setting & authorization: Does group require explicit payee confirmation?
       let autoConfirm = false;
       if (groupId) {
+        const groupMembers = await prisma.groupMember.findMany({
+          where: { groupId },
+          select: { userId: true },
+        });
+        const memberIdSet = new Set(groupMembers.map((m) => m.userId));
+
+        if (!memberIdSet.has(req.user!.id)) {
+          res.status(403).json({ success: false, error: 'Access denied: You are not a member of this group.' });
+          return;
+        }
+
+        if (!memberIdSet.has(payeeId)) {
+          res.status(400).json({ success: false, error: 'Payee must be an active member of this group.' });
+          return;
+        }
+
         const grp = await prisma.group.findUnique({
           where: { id: groupId },
           select: { description: true },

@@ -23,7 +23,16 @@ activityRouter.get('/', async (req: AuthenticatedRequest, res: Response): Promis
       ],
     };
 
-    if (groupId) where.groupId = groupId;
+    if (groupId) {
+      const isMember = await prisma.groupMember.findFirst({
+        where: { groupId: String(groupId), userId: req.user!.id },
+      });
+      if (!isMember) {
+        res.status(403).json({ success: false, error: 'Access denied: You are not a member of this group.' });
+        return;
+      }
+      where.groupId = groupId;
+    }
 
     const [activities, total] = await Promise.all([
       prisma.activity.findMany({

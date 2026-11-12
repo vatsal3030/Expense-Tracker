@@ -43,7 +43,7 @@ setInterval(() => {
 /**
  * Core verification worker with deduplication and caching
  */
-async function verifyAndResolveUser(token: string): Promise<{ id: string; email: string; supabaseId: string } | null> {
+export async function verifyAndResolveUser(token: string): Promise<{ id: string; email: string; supabaseId: string } | null> {
   // 1. Check in-memory token cache
   const cached = tokenCache.get(token);
   if (cached && cached.expiresAt > Date.now()) {

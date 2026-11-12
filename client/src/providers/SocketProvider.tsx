@@ -25,7 +25,7 @@ export function useSocket() {
 }
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
-  const { user, profile } = useAuth();
+  const { user, profile, session } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
@@ -69,6 +69,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      auth: {
+        token: session?.access_token,
+      },
     });
 
     s.on('connect', () => {

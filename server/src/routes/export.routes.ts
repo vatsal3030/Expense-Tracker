@@ -170,6 +170,13 @@ exportRouter.get('/report', async (req: AuthenticatedRequest, res: Response): Pr
     };
 
     if (groupId) {
+      const membership = await prisma.groupMember.findFirst({
+        where: { groupId: String(groupId), userId: req.user!.id },
+      });
+      if (!membership) {
+        res.status(403).json({ success: false, error: 'Access denied: You are not a member of this group.' });
+        return;
+      }
       whereClause.groupId = groupId as string;
     } else {
       whereClause.OR = [

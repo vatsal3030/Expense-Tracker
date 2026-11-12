@@ -8,13 +8,16 @@ export const adminRouter = Router();
 adminRouter.use(authenticate);
 
 // Restricted to authorized platform administrators only
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'rajkotgamer74@gmail.com,vatsalvadgama30@gmail.com,admin@fairshare.com')
-  .split(',')
-  .map((e) => e.trim().toLowerCase());
+const getAdminEmails = (): string[] => {
+  const envEmails = process.env.ADMIN_EMAILS;
+  if (!envEmails) return [];
+  return envEmails.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+};
 
 adminRouter.use((req: AuthenticatedRequest, res: Response, next) => {
+  const adminEmails = getAdminEmails();
   const userEmail = req.user?.email?.toLowerCase();
-  if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
+  if (!userEmail || !adminEmails.includes(userEmail)) {
     res.status(403).json({ success: false, error: 'Access denied: Platform Administrator privileges required.' });
     return;
   }
@@ -206,6 +209,19 @@ adminRouter.patch('/users/:id/toggle-status', async (req: AuthenticatedRequest, 
       data: { isActive: !user.isActive },
       select: { id: true, name: true, email: true, isActive: true },
     });
+
+    // Administrative Security Audit Trail
+    console.info(JSON.stringify({
+      event: 'ADMIN_USER_STATUS_TOGGLED',
+      adminId: req.user!.id,
+      adminEmail: req.user!.email,
+      targetUserId: updated.id,
+      targetUserEmail: updated.email,
+      previousActiveState: user.isActive,
+      newActiveState: updated.isActive,
+      timestamp: new Date().toISOString(),
+      ip: req.ip || req.socket.remoteAddress,
+    }));
 
     res.json({
       success: true,

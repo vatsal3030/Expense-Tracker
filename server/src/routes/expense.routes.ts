@@ -77,13 +77,27 @@ expenseRouter.post(
         userId: idMap.get(s.userId) || s.userId,
       }));
 
-      // Validate that payer is in the group (if group expense)
+      // Validate that creator, payer, and all split participants are members of the group
       if (groupId) {
-        const payerMembership = await prisma.groupMember.findUnique({
-          where: { groupId_userId: { groupId, userId: resolvedPaidById } },
+        const groupMembers = await prisma.groupMember.findMany({
+          where: { groupId },
+          select: { userId: true },
         });
-        if (!payerMembership) {
+        const memberIdSet = new Set(groupMembers.map((m) => m.userId));
+
+        if (!memberIdSet.has(req.user!.id)) {
+          res.status(403).json({ success: false, error: 'Access denied: You are not a member of this group.' });
+          return;
+        }
+
+        if (!memberIdSet.has(resolvedPaidById)) {
           res.status(400).json({ success: false, error: 'Payer must be a group member.' });
+          return;
+        }
+
+        const invalidSplitMembers = resolvedSplits.filter((s: any) => !memberIdSet.has(s.userId));
+        if (invalidSplitMembers.length > 0) {
+          res.status(400).json({ success: false, error: 'All split participants must be active group members.' });
           return;
         }
       }

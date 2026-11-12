@@ -2,11 +2,26 @@ import { Router, Response } from 'express';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import supabaseAdmin from '../lib/supabase';
 import appCache from '../lib/cache';
 
 export const authRouter = Router();
+
+// Strict Rate Limiting for Authentication (Brute-Force & Credential Stuffing Prevention)
+const isDev = process.env.NODE_ENV !== 'production';
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isDev ? 100 : 15, // 15 attempts per 15 minutes in production
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many authentication attempts. Please try again after 15 minutes.' },
+});
+
+authRouter.use('/login', authRateLimiter);
+authRouter.use('/signup', authRateLimiter);
+authRouter.use('/reset-password', authRateLimiter);
 
 // POST /api/auth/signup — Register a new user
 const signupSchema = z.object({

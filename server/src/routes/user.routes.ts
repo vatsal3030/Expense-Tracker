@@ -31,9 +31,10 @@ userRouter.get('/profile', async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'rajkotgamer74@gmail.com,vatsalvadgama30@gmail.com,admin@fairshare.com')
+    const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
       .split(',')
-      .map((e) => e.trim().toLowerCase());
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
 
     const isAdmin = Boolean(user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
 
@@ -286,10 +287,17 @@ userRouter.get('/search', async (req: AuthenticatedRequest, res: Response): Prom
         }
       }
 
+      // Privacy protection: mask email for strangers unless searching exact email or already friends
+      const isExactSearch = u.email.toLowerCase() === query.toLowerCase().trim();
+      const isFriend = friendshipStatus === 'FRIENDS';
+      const displayEmail = (isFriend || isExactSearch)
+        ? u.email
+        : u.email.replace(/^(.)(.*)(@.*)$/, (_, first, mid, rest) => `${first}${'*'.repeat(Math.min(mid.length, 5))}${rest}`);
+
       return {
         id: u.id,
         name: u.name,
-        email: u.email,
+        email: displayEmail,
         avatarUrl: u.avatarUrl,
         friendshipStatus,
         friendshipId,

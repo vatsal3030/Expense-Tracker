@@ -29,6 +29,10 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 fxRouter.get('/rates', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const base = ((req.query.base as string) || 'USD').toUpperCase();
+    if (!SUPPORTED_CURRENCIES.includes(base)) {
+      res.status(400).json({ success: false, error: `Invalid currency '${base}'. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}` });
+      return;
+    }
 
     // Check in-memory cache first (1 hour TTL)
     const cacheKey = `fx:rates:${base}`;
@@ -90,6 +94,10 @@ fxRouter.get('/rates', async (req: AuthenticatedRequest, res: Response): Promise
     // Fallback: Try database cached rates
     try {
       const base = ((req.query.base as string) || 'USD').toUpperCase();
+    if (!SUPPORTED_CURRENCIES.includes(base)) {
+      res.status(400).json({ success: false, error: `Invalid currency '${base}'. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}` });
+      return;
+    }
       const dbRates = await prisma.exchangeRate.findMany({
         where: { baseCurrency: base },
       });

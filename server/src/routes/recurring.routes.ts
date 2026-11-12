@@ -216,6 +216,18 @@ recurringRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response):
 // =============================================================================
 recurringRouter.post('/process', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    // Security check: restrict cron execution to internal service secret or administrators
+    const cronSecret = process.env.CRON_SECRET;
+    const providedSecret = req.headers['x-cron-secret'];
+    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+    const userEmail = req.user?.email?.toLowerCase();
+
+    const isAuthorized = (cronSecret && providedSecret === cronSecret) || (userEmail && adminEmails.includes(userEmail));
+    if (!isAuthorized) {
+      res.status(403).json({ success: false, error: 'Unauthorized: Batch execution requires CRON secret or Administrator role.' });
+      return;
+    }
+
     const now = new Date();
     const dueRules = await prisma.recurringExpense.findMany({
       where: {
